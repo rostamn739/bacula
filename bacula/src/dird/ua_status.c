@@ -34,7 +34,9 @@ extern char my_name[];
 extern time_t daemon_start_time;
 extern struct s_last_job last_job;
 
-static void print_jobs_scheduled(UAContext *ua);
+static void list_scheduled_jobs(UAContext *ua);
+static void list_running_jobs(UAContext *ua);
+static void list_terminated_jobs(UAContext *ua);
 static void do_storage_status(UAContext *ua, STORE *store);
 static void do_client_status(UAContext *ua, CLIENT *client);
 static void do_director_status(UAContext *ua, char *cmd);
@@ -190,133 +192,28 @@ static void do_all_status(UAContext *ua, char *cmd)
 
 static void do_director_status(UAContext *ua, char *cmd)
 {
-   JCR *jcr;
-   int njobs = 0;
-   char *msg;
-   char dt[MAX_TIME_LENGTH], b1[30], b2[30];
-   int pool_mem = FALSE;
+   char dt[MAX_TIME_LENGTH];
 
    bsendmsg(ua, "%s Version: " VERSION " (" BDATE ") %s %s %s\n", my_name,
 	    HOST_OS, DISTNAME, DISTVER);
    bstrftime(dt, sizeof(dt), daemon_start_time);
+   strcpy(dt+7, dt+9);	   /* cut century */
    bsendmsg(ua, _("Daemon started %s, %d Job%s run.\n"), dt, last_job.NumJobs,
         last_job.NumJobs == 1 ? "" : "s");
-   if (last_job.NumJobs > 0) {
-      char termstat[30];
+   /*
+    * List scheduled Jobs
+    */
+   list_scheduled_jobs(ua);
 
-      bstrftime(dt, sizeof(dt), last_job.end_time);
-      bsendmsg(ua, _("Last Job %s finished at %s\n"), last_job.Job, dt);
-      jobstatus_to_ascii(last_job.JobStatus, termstat, sizeof(termstat));
-	   
-      bsendmsg(ua, _("  Files=%s Bytes=%s Termination Status=%s\n"), 
-	   edit_uint64_with_commas(last_job.JobFiles, b1),
-	   edit_uint64_with_commas(last_job.JobBytes, b2),
-	   termstat);
-   }
-   lock_jcr_chain();
-   for (jcr=NULL; (jcr=get_next_jcr(jcr)); njobs++) {
-      if (jcr->JobId == 0) {	  /* this is us */
-	 bstrftime(dt, sizeof(dt), jcr->start_time);
-         bsendmsg(ua, _("Console connected at %s\n"), dt);
-	 free_locked_jcr(jcr);
-	 njobs--;
-	 continue;
-      }
-      switch (jcr->JobStatus) {
-      case JS_Created:
-         msg = _("is waiting execution");
-	 break;
-      case JS_Running:
-         msg = _("is running");
-	 break;
-      case JS_Blocked:
-         msg = _("is blocked");
-	 break;
-      case JS_Terminated:
-         msg = _("has terminated");
-	 break;
-      case JS_ErrorTerminated:
-         msg = _("has erred");
-	 break;
-      case JS_Canceled:
-         msg = _("has been canceled");
-	 break;
-      case JS_WaitFD:
-	 msg = (char *) get_pool_memory(PM_FNAME);
-         Mmsg(&msg, _("is waiting on Client %s"), jcr->client->hdr.name);
-	 pool_mem = TRUE;
-	 break;
-      case JS_WaitSD:
-	 msg = (char *) get_pool_memory(PM_FNAME);
-         Mmsg(&msg, _("is waiting on Storage %s"), jcr->store->hdr.name);
-	 pool_mem = TRUE;
-	 break;
-      case JS_WaitStoreRes:
-         msg = _("is waiting on max Storage jobs");
-	 break;
-      case JS_WaitClientRes:
-         msg = _("is waiting on max Client jobs");
-	 break;
-      case JS_WaitJobRes:
-         msg = _("is waiting on max Job jobs");
-	 break;
-      case JS_WaitPriority:
-         msg = _("is waiting for higher priority jobs to finish");
-	 break;
-      case JS_WaitMaxJobs:
-         msg = _("is waiting on max total jobs");
-	 break;
-      case JS_WaitStartTime:
-         msg = _("is waiting for its start time");
-	 break;
+   /* 
+    * List running jobs
+    */
+   list_running_jobs(ua);
 
-
-      default:
-	 msg = (char *) get_pool_memory(PM_FNAME);
-         Mmsg(&msg, _("is in unknown state %c"), jcr->JobStatus);
-	 pool_mem = TRUE;
-	 break;
-      }
-      /* 
-       * Now report Storage daemon status code 
-       */
-      switch (jcr->SDJobStatus) {
-      case JS_WaitMount:
-	 if (pool_mem) {
-	    free_pool_memory(msg);
-	    pool_mem = FALSE;
-	 }
-         msg = _("is waiting for a mount request");
-	 break;
-      case JS_WaitMedia:
-	 if (pool_mem) {
-	    free_pool_memory(msg);
-	    pool_mem = FALSE;
-	 }
-         msg = _("is waiting for an appendable Volume");
-	 break;
-      case JS_WaitFD:
-	 if (!pool_mem) {
-	    msg = (char *) get_pool_memory(PM_FNAME);
-	    pool_mem = TRUE;
-	 }
-         Mmsg(&msg, _("is waiting for Client %s to connect to Storage %s"),
-	      jcr->client->hdr.name, jcr->store->hdr.name);
-	 break;
-      }
-      bsendmsg(ua, _("JobId %d Job %s %s.\n"), jcr->JobId, jcr->Job, msg);
-      if (pool_mem) {
-	 free_pool_memory(msg);
-	 pool_mem = FALSE;
-      }
-      free_locked_jcr(jcr);
-   }
-   unlock_jcr_chain();
-
-   if (njobs == 0) {
-      bsendmsg(ua, _("No jobs are running.\n"));
-   }
-   print_jobs_scheduled(ua);
+   /* 
+    * List terminated jobs
+    */
+   list_terminated_jobs(ua);
    bsendmsg(ua, "====\n");
 }
 
@@ -398,6 +295,7 @@ static void prt_runhdr(UAContext *ua)
 static void prt_runtime(UAContext *ua, JOB *job, int level, time_t runtime, POOL *pool)
 {
    char dt[MAX_TIME_LENGTH];	   
+   char *level_ptr;
    bool ok = false;
    bool close_db = false;
    JCR *jcr = ua->jcr;
@@ -417,9 +315,18 @@ static void prt_runtime(UAContext *ua, JOB *job, int level, time_t runtime, POOL
       }
    }
    bstrftime(dt, sizeof(dt), runtime);
+   strcpy(dt+7, dt+9);	   /* cut century */
+   switch (job->JobType) {
+   case JT_ADMIN:
+   case JT_RESTORE:
+      level_ptr = " ";
+      break;
+   default:
+      level_ptr = level_to_str(level);
+      break;
+   }
    bsendmsg(ua, _("%-14s %-8s %-18s %-18s %s\n"), 
-      level_to_str(level), job_type_to_str(job->JobType), dt, job->hdr.name,
-      mr.VolumeName);
+      level_ptr, job_type_to_str(job->JobType), dt, job->hdr.name, mr.VolumeName);
    if (close_db) {
       db_close_database(jcr, jcr->db);
    }
@@ -428,109 +335,269 @@ static void prt_runtime(UAContext *ua, JOB *job, int level, time_t runtime, POOL
 }
 
 /*	    
- * Find all jobs to be run this hour
- * and the next hour.
+ * Find all jobs to be run in roughly the
+ *  next 24 hours.
  */
-static void print_jobs_scheduled(UAContext *ua)
+static void list_scheduled_jobs(UAContext *ua)
 {
-   time_t now, runtime, tomorrow;
+   time_t runtime;
    RUN *run;
    JOB *job;
-   SCHED *sched;
-   struct tm tm;
-   int mday, wday, month, wpos, tmday, twday, tmonth, twpos, i, hour;
-   int tod, tom;
-   int found;
-   int hdr_printed = FALSE;
-   int level;
+   int level, num_jobs = 0;
+   bool hdr_printed = false;
 
    Dmsg0(200, "enter find_runs()\n");
-
-   now = time(NULL);
-   localtime_r(&now, &tm);
-   mday = tm.tm_mday - 1;
-   wday = tm.tm_wday;
-   month = tm.tm_mon;
-   wpos = (tm.tm_mday - 1) / 7;
-
-   tomorrow = now + 60 * 60 * 24;
-   localtime_r(&tomorrow, &tm);
-   tmday = tm.tm_mday - 1;
-   twday = tm.tm_wday;
-   tmonth = tm.tm_mon;
-   twpos  = (tm.tm_mday - 1) / 7;
 
    /* Loop through all jobs */
    LockRes();
    for (job=NULL; (job=(JOB *)GetNextRes(R_JOB, (RES *)job)); ) {
-      level = job->level;   
-      sched = job->schedule;
-      if (sched == NULL) {	      /* scheduled? */
-	 continue;		      /* no, skip this job */
-      }
-      for (run=sched->run; run; run=run->next) {
+      for (run=NULL; (run = find_next_run(run, job, runtime)); ) {
+	 level = job->level;   
 	 if (run->level) {
 	    level = run->level;
 	 }
-	 /* 
-	  * Find runs in next 24 hours
-	  */
-	 tod = (bit_is_set(mday, run->mday) || bit_is_set(wday, run->wday)) && 
-		bit_is_set(month, run->month) && bit_is_set(wpos, run->wpos);
-
-	 tom = (bit_is_set(tmday, run->mday) || bit_is_set(twday, run->wday)) &&
-		bit_is_set(tmonth, run->month) && bit_is_set(wpos, run->wpos);
-
-         Dmsg2(200, "tod=%d tom=%d\n", tod, tom);
-	 found = FALSE;
-	 if (tod) {		      /* Jobs scheduled today (next 24 hours) */
-	    /* find time (time_t) job is to be run */
-	    localtime_r(&now, &tm);
-	    hour = 0;
-	    for (i=tm.tm_hour; i < 24; i++) {
-	       if (bit_is_set(i, run->hour)) {
-		  tm.tm_hour = i;
-		  tm.tm_min = run->minute;
-		  tm.tm_sec = 0;
-		  runtime = mktime(&tm);
-		  if (runtime > now) {
-		     if (!hdr_printed) {
-			hdr_printed = TRUE;
-			prt_runhdr(ua);
-		     }
-		     prt_runtime(ua, job, level, runtime, run->pool);
-		     found = TRUE;
-		     break;
-		  }
-	       }
-	    }
+	 if (!hdr_printed) {
+	    prt_runhdr(ua);
+	    hdr_printed = true;
 	 }
+	 prt_runtime(ua, job, level, runtime, run->pool);
+	 num_jobs++;
+      }
 
-//       Dmsg2(200, "runtime=%d now=%d\n", runtime, now);
-	 if (!found && tom) {		 /* look at jobs scheduled tomorrow */
-	    localtime_r(&tomorrow, &tm);
-	    hour = 0;
-	    for (i=0; i < 24; i++) {
-	       if (bit_is_set(i, run->hour)) {
-		  hour = i;
-		  break;
-	       }
-	    }
-	    tm.tm_hour = hour;
-	    tm.tm_min = run->minute;
-	    tm.tm_sec = 0;
-	    runtime = mktime(&tm);
-            Dmsg2(200, "truntime=%d now=%d\n", runtime, now);
-	    if (runtime < tomorrow) {
-	       if (!hdr_printed) {
-		  hdr_printed = TRUE;
-		  prt_runhdr(ua);
-	       }
-	       prt_runtime(ua, job, level, runtime, run->pool);
-	    }
-	 }
-      } /* end for loop over runs */ 
    } /* end for loop over resources */
    UnlockRes();
+   if (num_jobs == 0) {
+      bsendmsg(ua, _("No Scheduled Jobs.\n"));
+   } else {
+      bsendmsg(ua, "\n");
+   }
    Dmsg0(200, "Leave find_runs()\n");
+}
+
+static void list_running_jobs(UAContext *ua)
+{
+   JCR *jcr;
+   int njobs = 0;
+   char *msg;
+   char dt[MAX_TIME_LENGTH];
+   char level[10];
+   bool pool_mem = false;
+
+   lock_jcr_chain();
+   for (jcr=NULL; (jcr=get_next_jcr(jcr)); njobs++) {
+      if (jcr->JobId == 0) {	  /* this is us */
+	 /* this is a console or other control job. We only show console
+	  * jobs in the status output.
+	  */
+	 if (jcr->JobType == JT_CONSOLE) {
+	    bstrftime(dt, sizeof(dt), jcr->start_time);
+	    strcpy(dt+7, dt+9);  /* cut century */
+            bsendmsg(ua, _("Console connected at %s\n"), dt);
+	 }
+	 njobs--;
+      }
+      free_locked_jcr(jcr);
+   }
+   if (njobs == 0) {
+      unlock_jcr_chain();
+      bsendmsg(ua, _("No Running Jobs.\n"));
+      return;
+   }
+   njobs = 0;
+   bsendmsg(ua, _("\nRunning Jobs:\n"));
+   bsendmsg(ua, _("Level JobId  Job                        Status\n"));
+   bsendmsg(ua, _("====================================================================\n"));
+   for (jcr=NULL; (jcr=get_next_jcr(jcr)); njobs++) {
+      if (jcr->JobId == 0) {	  /* this is us */
+	 njobs--;
+	 free_locked_jcr(jcr);
+	 continue;
+      }
+      switch (jcr->JobStatus) {
+      case JS_Created:
+         msg = _("is waiting execution");
+	 break;
+      case JS_Running:
+         msg = _("is running");
+	 break;
+      case JS_Blocked:
+         msg = _("is blocked");
+	 break;
+      case JS_Terminated:
+         msg = _("has terminated");
+	 break;
+      case JS_ErrorTerminated:
+         msg = _("has erred");
+	 break;
+      case JS_Error:
+         msg = _("has errors");
+	 break;
+      case JS_FatalError:
+         msg = _("has a fatal error");
+	 break;
+      case JS_Differences:
+         msg = _("has verify differences");
+	 break;
+      case JS_Canceled:
+         msg = _("has been canceled");
+	 break;
+      case JS_WaitFD:
+	 msg = (char *) get_pool_memory(PM_FNAME);
+         Mmsg(&msg, _("is waiting on Client %s"), jcr->client->hdr.name);
+	 pool_mem = true;
+	 break;
+      case JS_WaitSD:
+	 msg = (char *) get_pool_memory(PM_FNAME);
+         Mmsg(&msg, _("is waiting on Storage %s"), jcr->store->hdr.name);
+	 pool_mem = true;
+	 break;
+      case JS_WaitStoreRes:
+         msg = _("is waiting on max Storage jobs");
+	 break;
+      case JS_WaitClientRes:
+         msg = _("is waiting on max Client jobs");
+	 break;
+      case JS_WaitJobRes:
+         msg = _("is waiting on max Job jobs");
+	 break;
+      case JS_WaitMaxJobs:
+         msg = _("is waiting on max total jobs");
+	 break;
+      case JS_WaitStartTime:
+         msg = _("is waiting for its start time");
+	 break;
+      case JS_WaitPriority:
+         msg = _("is waiting for higher priority jobs to finish");
+	 break;
+
+      default:
+	 msg = (char *) get_pool_memory(PM_FNAME);
+         Mmsg(&msg, _("is in unknown state %c"), jcr->JobStatus);
+	 pool_mem = true;
+	 break;
+      }
+      /* 
+       * Now report Storage daemon status code 
+       */
+      switch (jcr->SDJobStatus) {
+      case JS_WaitMount:
+	 if (pool_mem) {
+	    free_pool_memory(msg);
+	    pool_mem = false;
+	 }
+         msg = _("is waiting for a mount request");
+	 break;
+      case JS_WaitMedia:
+	 if (pool_mem) {
+	    free_pool_memory(msg);
+	    pool_mem = false;
+	 }
+         msg = _("is waiting for an appendable Volume");
+	 break;
+      case JS_WaitFD:
+	 if (!pool_mem) {
+	    msg = (char *) get_pool_memory(PM_FNAME);
+	    pool_mem = true;
+	 }
+         Mmsg(&msg, _("is waiting for Client %s to connect to Storage %s"),
+	      jcr->client->hdr.name, jcr->store->hdr.name);
+	 break;
+      }
+      switch (jcr->JobType) {
+      case JT_ADMIN:
+      case JT_RESTORE:
+         bstrncpy(level, "    ", sizeof(level));
+	 break;
+      default:
+	 bstrncpy(level, level_to_str(jcr->JobLevel), sizeof(level));
+	 level[4] = 0;
+	 break;
+      }
+
+      bsendmsg(ua, _("%-4s %6d  %-20s %s\n"), 
+	 level, 
+	 jcr->JobId,
+	 jcr->Job,
+	 msg);
+
+      if (pool_mem) {
+	 free_pool_memory(msg);
+	 pool_mem = false;
+      }
+      free_locked_jcr(jcr);
+   }
+   unlock_jcr_chain();
+
+   bsendmsg(ua, "\n");
+}
+
+static void list_terminated_jobs(UAContext *ua)
+{
+   char dt[MAX_TIME_LENGTH], b1[30], b2[30];
+   char level[10];
+
+   if (last_jobs->empty()) {
+      bsendmsg(ua, _("No Terminated Jobs.\n"));
+      return;
+   }
+   lock_last_jobs_list();
+   struct s_last_job *je;
+   bsendmsg(ua, _("\nTerminated Jobs:\n"));
+   bsendmsg(ua, _(" JobId  Level   Files          Bytes Status   Finished        Name \n"));
+   bsendmsg(ua, _("======================================================================\n"));
+   for (je=NULL; (je=(s_last_job *)last_jobs->next(je)); ) {
+      char JobName[MAX_NAME_LENGTH];
+      char *termstat;
+
+      bstrftime(dt, sizeof(dt), je->end_time);
+      strcpy(dt+7, dt+9);     /* cut century */
+      switch (je->JobType) {
+      case JT_ADMIN:
+      case JT_RESTORE:
+         bstrncpy(level, "    ", sizeof(level));
+	 break;
+      default:
+	 bstrncpy(level, level_to_str(je->JobLevel), sizeof(level));
+	 level[4] = 0;
+	 break;
+      }
+      switch (je->JobStatus) {
+      case JS_Created:
+         termstat = "Created";
+	 break;
+      case JS_FatalError:
+      case JS_ErrorTerminated:
+         termstat = "Error";
+	 break;
+      case JS_Differences:
+         termstat = "Diffs";
+	 break;
+      case JS_Canceled:
+         termstat = "Cancel";
+	 break;
+      case JS_Terminated:
+         termstat = "OK";
+	 break;
+      default:
+         termstat = "Other";
+	 break;
+      }
+      bstrncpy(JobName, je->Job, sizeof(JobName));
+      /* There are three periods after the Job name */
+      char *p;
+      for (int i=0; i<3; i++) {
+         if ((p=strrchr(JobName, '.')) != NULL) {
+	    *p = 0;
+	 }
+      }
+      bsendmsg(ua, _("%6d  %-4s %8s %14s %-7s  %-8s %s\n"), 
+	 je->JobId,
+	 level, 
+	 edit_uint64_with_commas(je->JobFiles, b1),
+	 edit_uint64_with_commas(je->JobBytes, b2), 
+	 termstat,
+	 dt, JobName);
+   }
+   bsendmsg(ua, "\n");
+   unlock_last_jobs_list();
 }

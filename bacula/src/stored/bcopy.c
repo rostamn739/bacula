@@ -57,11 +57,11 @@ static void usage()
 "Usage: bcopy [-d debug_level] <input-archive> <output-archive>\n"
 "       -b bootstrap      specify a bootstrap file\n"
 "       -c <file>         specify configuration file\n"
-"       -dnn              set debug level to nn\n"
+"       -d <nn>           set debug level to nn\n"
 "       -v                verbose\n"
 "       -i                specify input Volume names (separated by |)\n"
 "       -o                specify output Volume names (separated by |)\n"
-"       -w dir            specify working directory (default /tmp)\n"
+"       -w <dir>          specify working directory (default /tmp)\n"
 "       -?                print this message\n\n"));
    exit(1);
 }
@@ -254,7 +254,7 @@ static int record_cb(JCR *in_jcr, DEVICE *dev, DEV_BLOCK *block, DEV_RECORD *rec
 /* Dummies to replace askdir.c */
 int	dir_get_volume_info(JCR *jcr, enum get_vol_info_rw  writing) { return 1;}
 int	dir_find_next_appendable_volume(JCR *jcr) { return 1;}
-int	dir_update_volume_info(JCR *jcr, VOLUME_CAT_INFO *vol, int relabel) { return 1; }
+int	dir_update_volume_info(JCR *jcr, DEVICE *dev, int relabel) { return 1; }
 int	dir_create_jobmedia_record(JCR *jcr) { return 1; }
 int	dir_ask_sysop_to_mount_next_volume(JCR *jcr, DEVICE *dev) { return 1; }
 int	dir_update_file_attributes(JCR *jcr, DEV_RECORD *rec) { return 1;}

@@ -377,6 +377,20 @@ try_again:
 
    Dmsg0(40, "Opened connection with Director daemon\n");
 
+   sendit(_("Enter a period to cancel a command.\n"));
+
+   char *env = getenv("HOME");
+   if (env) {
+      FILE *fd;
+      pm_strcpy(&UA_sock->msg, env);
+      pm_strcat(&UA_sock->msg, "/.bconsolerc");
+      fd = fopen(UA_sock->msg, "r");
+      if (fd) {
+	read_and_process_input(fd, UA_sock);
+	fclose(fd);
+      }
+   }
+
    read_and_process_input(stdin, UA_sock);
 
    if (UA_sock) {
@@ -423,9 +437,8 @@ get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec)
    if (!line) {
       exit(1);
    }
-   strcpy(sock->msg, line);
-   strip_trailing_junk(sock->msg);
-   sock->msglen = strlen(sock->msg);
+   strip_trailing_junk(line);
+   sock->msglen = pm_strcpy(&sock->msg, line);
    if (sock->msglen) {
       add_history(sock->msg);
    }
