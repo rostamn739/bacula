@@ -155,7 +155,7 @@ void get_level_since_time(JCR *jcr, char *since, int since_len)
          bstrncpy(since, ", since=", since_len);
 	 bstrncat(since, jcr->stime, since_len);
       }
-      Dmsg1(115, "Last start time = %s\n", jcr->stime);
+      Dmsg1(100, "Last start time = %s\n", jcr->stime);
       break;
    }
 }
@@ -250,6 +250,7 @@ static int send_list(JCR *jcr, int list)
 	    } else {
                bstrncpy(buf, "0 ", sizeof(buf));
 	    }
+            Dmsg1(100, "Opts=%s\n", buf);
 	    optlen = strlen(buf);
 	    while (fgets(buf+optlen, sizeof(buf)-optlen, bpipe->rfd)) {
                fd->msglen = Mmsg(&fd->msg, "%s", buf);
@@ -279,6 +280,7 @@ static int send_list(JCR *jcr, int list)
 	    } else {
                bstrncpy(buf, "0 ", sizeof(buf));
 	    }
+            Dmsg1(100, "Opts=%s\n", buf);
 	    optlen = strlen(buf);
 	    while (fgets(buf+optlen, sizeof(buf)-optlen, ffd)) {
                fd->msglen = Mmsg(&fd->msg, "%s", buf);
@@ -293,15 +295,15 @@ static int send_list(JCR *jcr, int list)
             p++;                      /* skip over \ */
 	    /* Note, fall through wanted */
 	 default:
+            Dmsg2(100, "numopts=%d opts=%s\n", ie->num_opts, NPRT(ie->opts_list[0]->opts));
 	    if (ie->num_opts) {
 	       pm_strcpy(&fd->msg, ie->opts_list[0]->opts);
                pm_strcat(&fd->msg, " ");
 	    } else {
                pm_strcpy(&fd->msg, "0 ");
 	    }
-	    pm_strcat(&fd->msg, p);
+	    fd->msglen = pm_strcat(&fd->msg, p);
             Dmsg1(100, "Inc/Exc name=%s\n", fd->msg);
-	    fd->msglen = strlen(fd->msg);
 	    if (!bnet_send(fd)) {
                Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
 	       goto bail_out;

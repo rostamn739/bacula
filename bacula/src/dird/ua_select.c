@@ -84,6 +84,12 @@ int find_arg_keyword(UAContext *ua, char **list)
    return -1;
 }
 
+/* 
+ * Given one keyword, find the first one that
+ *   is in the argument list.
+ * Returns: argk index (always gt 0)
+ *	    -1 if not found
+ */
 int find_arg(UAContext *ua, char *keyword)
 {
    for (int i=1; i<ua->argc; i++) {
@@ -341,7 +347,7 @@ int select_client_dbr(UAContext *ua, CLIENT_DBR *cr)
       return 0;
    }
    if (num_clients <= 0) {
-      bsendmsg(ua, _("No clients defined. Run a job to create one.\n"));
+      bsendmsg(ua, _("No clients defined. You must run a job before using this command.\n"));
       return 0;
    }
      

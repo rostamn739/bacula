@@ -414,7 +414,7 @@ static void weofcmd()
 static void eomcmd()
 {
    if (!eod_dev(dev)) {
-      Pmsg1(0, _("Bad status from MTEOD. ERR=%s\n"), strerror_dev(dev));
+      Pmsg1(0, "%s", strerror_dev(dev));
       return;
    } else {
       Pmsg0(0, _("Moved to end of medium.\n"));
@@ -435,10 +435,9 @@ static void eodcmd()
  */
 static void bsfcmd()
 {
-   int stat;
 
-   if ((stat=bsf_dev(dev, 1)) < 0) {
-      Pmsg1(0, _("Bad status from bsf. ERR=%s\n"), strerror(errno));
+   if (!bsf_dev(dev, 1)) {
+      Pmsg1(0, _("Bad status from bsf. ERR=%s\n"), strerror_dev(dev));
    } else {
       Pmsg0(0, _("Backspaced one file.\n"));
    }
@@ -449,10 +448,8 @@ static void bsfcmd()
  */
 static void bsrcmd()
 {
-   int stat;
-
-   if ((stat=bsr_dev(dev, 1)) < 0) {
-      Pmsg1(0, _("Bad status from bsr. ERR=%s\n"), strerror(errno));
+   if (!bsr_dev(dev, 1)) {
+      Pmsg1(0, _("Bad status from bsr. ERR=%s\n"), strerror_dev(dev));
    } else {
       Pmsg0(0, _("Backspaced one record.\n"));
    }
@@ -464,7 +461,7 @@ static void bsrcmd()
  */
 static void capcmd()
 {
-   printf(_("Device capabilities:\n"));
+   printf(_("Configured device capabilities:\n"));
    printf("%sEOF ", dev->capabilities & CAP_EOF ? "" : "!");
    printf("%sBSR ", dev->capabilities & CAP_BSR ? "" : "!");
    printf("%sBSF ", dev->capabilities & CAP_BSF ? "" : "!");
@@ -613,17 +610,17 @@ static int re_read_block_test()
    }
    weofcmd();
    weofcmd();
-   if (bsf_dev(dev, 1) != 0) {
-      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror(dev->dev_errno));
+   if (!bsf_dev(dev, 1)) {
+      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
-   if (bsf_dev(dev, 1) != 0) {
-      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror(dev->dev_errno));
+   if (!bsf_dev(dev, 1)) {
+      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg0(0, "Backspaced over two EOFs OK.\n");
-   if (bsr_dev(dev, 1) != 0) {
-      Pmsg1(0, _("Backspace record failed! ERR=%s\n"), strerror(dev->dev_errno));
+   if (!bsr_dev(dev, 1)) {
+      Pmsg1(0, _("Backspace record failed! ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg0(0, "Backspace record OK.\n");
@@ -780,7 +777,7 @@ all_done:
         "End of File mark.\n"
         "1 block of 64448 bytes in file 4\n" 
         "End of File mark.\n"
-        "Total files=4, blocks=7, bytes = 451136\n"
+        "Total files=4, blocks=7, bytes = 451,136\n"
         "=== End sample correct output ===\n\n"));
 
    Pmsg0(-1, _("If the above scan output is not identical to the\n"
@@ -1735,6 +1732,7 @@ static void helpcmd()
 {
    unsigned int i;
    usage();
+   printf(_("Interactive commands:\n"));
    printf(_("  Command    Description\n  =======    ===========\n"));
    for (i=0; i<comsize; i++)
       printf("  %-10s %s\n", commands[i].key, commands[i].help);
@@ -1745,9 +1743,9 @@ static void usage()
 {
    fprintf(stderr, _(
 "\nVersion: " VERSION " (" BDATE ")\n\n"
-"Usage: btape [-c config_file] [-d debug_level] [device_name]\n"
+"Usage: btape <options> <device_name>\n"
 "       -c <file>   set configuration file to file\n"
-"       -dnn        set debug level to nn\n"
+"       -d <nn>     set debug level to nn\n"
 "       -s          turn off signals\n"
 "       -t          open the default tape device\n"
 "       -?          print this message.\n"  

@@ -1,5 +1,5 @@
                  Kern's ToDo List
-                26 September 2003 
+                30 September 2003 
 
 Documentation to do: (any release a little bit at a time)
 - Document running a test version.
@@ -13,6 +13,7 @@ Documentation to do: (any release a little bit at a time)
   hours of operation.
 - Lookup HP cleaning recommendations.
 - Lookup HP tape replacement recommendations (see trouble shooting autochanger)
+- Create a man page for each binary (Debian package requirement).
           
 Testing to do: (painful)
 - that ALL console command line options work and are always implemented
@@ -21,28 +22,142 @@ Testing to do: (painful)
 - Test cancel at EOM.       
 - Test not zeroing Autochanger slot when it is wrong.
 - Figure out how to use ssh or stunnel to protect Bacula communications.
-- Test connect timeouts.
 
-For 1.32 Testing/Documentation:
+For 1.33 Testing/Documentation:
+- bextract is sending everything to the log file ****FIXME****
 - Document new records in Director. SDAddress SDDeviceName, SDPassword.
   FDPassword, FDAddress, DBAddress, DBPort, DBPassword.
-- Document that it is safe to use the drive when the lights stop flashing.
 - Document new Include/Exclude ...
-- Document all the status codes JobLevel, JobType, JobStatus.
 - Add test of exclusion, test multiple Include {} statements.
 - Add counter variable test.
+- Document ln -sf /usr/lib/libncurses.so /usr/lib/libtermcap.so
+  and install the esound-dev  package for compiling Console on SuSE.
+- Add an example of using a FIFO in dirdconf.wml 
+- Add an item to the FAQ about running jobs in different timezones.
                 
-For 1.32:
-- Add GUI interface to manual
-- Document that Volume pruning can delete last Full backup and
-  hence you will not have a valid backup.
-- Clarify the fact that having the Bacula cygwin1.dll loaded
-  is not the same as having cygwin installed.
-- Fix sparse file handeling so that it always reads a multiple
-  of 512. Currently, it subtracts 8 bytes (for faddr).
-- Separate Dir heartbeat in FD from the SD heartbeat.
+For 1.32c
+- Add Volume name to "I cannot write on this volume because"
 
 For 1.33
+- Write your PID file and chwon root:wheel before drop.
+- Make sure there is no symlink in a file before creating a
+  file (attack).
+- Look at mktemp or mkstemp(3).
+    mktemp and mkstemp create files with predictable names too.  That's
+    not the vulnerability.  The vulnerability is in creating files without
+    using the O_EXCL flag, which means "only create this file if it doesn't
+    exist, including if the file is a dangling symlink."
+
+    It is *NOT* enough to do the equivalent of
+
+      if doesn't exist $filename
+       then create $filename
+
+    because between the test and the create another process could have
+    gotten the CPU and created the file.  You must use atomic functions
+    (those that don't get interrupted by other processes) and O_EXCL is
+    the only way for this particular example.
+- Keep last 5 or 10 completed jobs and show them in a similar
+  list.
+- Make a Running Jobs: output similar to current Scheduled Jobs:
+- Use ioctl() fsf if it exists. Figure out where we are from
+  the mt_status command. Use slow fsf only if other does
+  not work.
+- Add flag to write only one EOF mark on the tape.
+- Mount a tape that is not right for the job (wrong # files on tape)
+  Bacula asks for another tape, fix problems with first tape and
+  say "mount". All works OK, but status shows:
+   Device /dev/nst0 open but no Bacula volume is mounted.
+       Total Bytes=1,153,820,213 Blocks=17,888 Bytes/block=64,502
+       Positioned at File=9 Block=3,951
+   Full Backup job Rufus.2003-10-26_16.45.31 using Volume "DLT-24Oct03" on device /dev/nst0
+       Files=21,003 Bytes=253,954,408 Bytes/sec=2,919,016
+       FDReadSeqNo=192,134 in_msg=129830 out_msg=5 fd=7
+- Automatically create pools, but instead of looking for what
+  in in Job records, walk through the pool resources.
+- Check and double check tree code, why does it take so long?
+- Upgrade to cygwin 1.5
+- Fix time difference problem between Bacula and Client
+  so that everything is in GMT.
+- Finish implementation of Verify=DiskToCatalog
+- Change console to bconsole.
+- Change smtp to bsmtp.
+- Possibly up network buffers to 65K.
+- Add device name to "Current Volume not acceptable because ..."
+- Make sure that Bacula rechecks the tape after the 20 min wait.
+- Set IO_NOWAIT on Bacula TCP/IP packets.
+- Try doing a raw partition backup and restore by mounting a
+  Windows partition.
+- Report CVS problems to SourceForge.
+- Implement .consolerc for Console
+- Is it really important to make Job name the same to find the
+  Full backup to avoid promoting an Incremental job?
+- Start label, then run job when tape labeled, it should broadcast.
+- Zap illegal characters in job name for mail files (e.g. /).
+- From Lars Köllers:
+    Yes, it would allow to highly automatic the request for new tapes. If a 
+    tape is empty, bacula reads the barcodes (native or simulated), and if 
+    an unused tape is found, it runs the label command with all the 
+    necessary parameters.
+
+    By the way can bacula automatically "move" an empry/purged volume say 
+    in the "short" pool to the "long" pool if this pool runs out of volume 
+    space?
+- Either restrict the characters in a name, or fix the problem 
+  emailing with names containing / (smtp command line breaks).
+- Eliminate orphaned jobs: dbcheck, normal pruning, delete job command.
+  Hm.  Well, there are the remaining orphaned job records:
+
+     |   105 | Llioness Save  | 0000-00-00 00:00:00 | B    | D     |        0 |             0 | f         |
+     |   110 | Llioness Save  | 0000-00-00 00:00:00 | B    | I     |        0 |             0 | f         |
+     |   115 | Llioness Save  | 2003-09-10 02:22:03 | B    | I     |        0 |             0 | A         |
+     |   128 | Catalog Save   | 2003-09-11 03:53:32 | B    | I     |        0 |             0 | C         |
+     |   131 | Catalog Save   | 0000-00-00 00:00:00 | B    | I     |        0 |             0 | f         |
+
+     As you can see, three of the five are failures.  I already deleted the
+     one restore and one other failure using the by-client option.  Deciding
+     what is an orphaned job is a tricky problem though, I agree.  All these
+     records have or had 0 files/ 0 bytes, except for the restore.  With no
+     files, of course, I don't know of the job ever actually becomes
+     associated with a Volume.
+
+     (I'm not sure if this is documented anywhere -- what are the meanings of
+     all the possible JobStatus codes?)
+
+     Looking at my database, it appears to me as though all the "orphaned"
+     jobs fit into one of two categories:
+
+     1)  The Job record has a StartTime but no EndTime, and the job is not
+         currently running;
+     or
+     2)  The Job record has an EndTime, indicating that it completed, but
+         it has no associated JobMedia record.
+
+
+     This does suggest an approach.  If failed jobs (or jobs that, for some
+     other reason, write no files) are associated with a volume via a
+     JobMedia record, then they should be purged when the associated volume
+     is purged.  I see two ways to handle jobs that are NOT associated with a
+     specific volume:
+
+     1)  purge them automatically whenever any volume is manually purged;
+     or
+     2)  add an option to the purge command to manually purge all jobs with
+         no associated volume.
+
+     I think Restore jobs also fall into category 2 above ....  so one might
+     want to make that "The Job record has an EndTime,, but no associated
+     JobMedia record, and is not a Restore job."  
+- Implement RestoreJobRetention? Maybe better "JobRetention" in a Job,
+  which would take precidence over the Catalog "JobRetention".
+- Implement Label Format in Add and Label console commands.
+- make "btape /tmp" work.
+- Make sure a rescheduled job is properly reported by status.
+- Walk through the Pool records rather than the Job records
+  in dird.c to create/update pools.
+- What to do about "list files job=xxx".
+- Implement scan: for every slot it finds, zero the slot of
+  Volume other volume having that slot.
 - When job rescheduled, status gives is waiting for Client Rufus 
   to connect to Storage File. Dir needs to inform SD that job
   is rescheduled.
@@ -58,7 +173,6 @@ For 1.33
   rather than lowest MediaId.
 - Available volumes for autochangers (see patrick@baanboard.com 3 Sep 03 
   and 4 Sep) scan slots.
-- Upgrade to cygwin 1.5
 - Get MySQL 3.23.58
 - Get and test MySQL 4.0
 - Do a complete audit of all pthreads_mutex, cond, ... to ensure that
@@ -71,7 +185,7 @@ For 1.33
 - Use system dependent calls to get more precise info on tape errors.
 - Add heartbeat from FD to SD if hb interval expires.
 - Suppress read error on blank tape when doing a label.
-- Can we dynamically change FileSets.
+- Can we dynamically change FileSets?
 - If pool specified to label command and Label Format is specified,
   automatically generate the Volume name.
 - Take a careful look a the Basic recycling algorithm.  When Bacula
@@ -119,7 +233,6 @@ For 1.33
 - Make things like list where a file is saved case independent for
   Windows.
 - Edit the Client/Storage name into authentication failure messages.
-- Implement job in VerifyToCatalog
 - Implement migrate
 - Implement a PostgreSQL driver.
 - Bacula needs to propagate SD errors.
@@ -131,7 +244,8 @@ For 1.33
   > > prod4-sd: End of medium on Volume "REU007" Bytes=16,303,521,933 
 
 - Use autochanger to handle multiple devices.
-- Fix packet too big problem.
+- Fix packet too big problem. This is most likely a Windows TCP stack 
+  problem.
 - Add SuSE install doc to list.
 - Check and rechedk "Invalid block number"
 - Make bextract release the drive properly between tapes 
@@ -957,3 +1071,39 @@ Done: (see kernsdone for more)
 - Add regression testing to the manual
 - End time: in job output of rescheduled job is time of first run.
 - Document list nextvol and status output.
+- Separate Dir heartbeat in FD from the SD heartbeat.
+- Fix sparse file handeling so that it always reads a multiple
+  of 512. Currently, it subtracts 8 bytes (for faddr).
+  Kludged with #ifdef for FreeBSD.
+- Document that Volume pruning can delete last Full backup and
+  hence you will not have a valid backup.
+- Clarify the fact that having the Bacula cygwin1.dll loaded
+  is not the same as having cygwin installed.
+- Document that it is safe to use the drive when the lights stop flashing.
+- Document all the status codes JobLevel, JobType, JobStatus.
+- Add GUI interface to manual
+- Combine the 3 places that search run records for the next
+  job. Use find_job_pool() modified in ua_output.c
+- Test connect timeouts.
+- Fix FreeBSD build with tcp_wrapper -- should not have -lnsl
+- Implement fast block rejection.
+- I want to restore by file to some date.
+---- 1.32b released
+- Figure out a way to move Volumes from one pool to another.
+- Implement a RunAfterFailedJob
+- Limit the number of block checksum/header BB01, ... errors printed.
+- If last Full back is purged and an Incremental or Differential remains,
+  Bacula does not promote the Incremental to a Full.
+- Document verify_disk_to_catalog
+- Document delete job command.
+- Document update volume pool and other command line keywords.
+- Add VerifyJob to "run" summary (yes/mod/no) prompt.
+- For listing, eliminate multiple JobIds in restore Jobs listing.
+- Document to start higher priorty jobs before lower ones.
+- suppress "Do not forget to mount the drive!!!" if error
+- Change error message when closing brace left off ...
+- Implement a move Volume from one pool to another.
+- Implement delete Job.
+- Document need to put LabelFormat in quotes.
+- Implement job in VerifyToCatalog
+- Eliminate ua_retention.c (retentioncmd) if possible.

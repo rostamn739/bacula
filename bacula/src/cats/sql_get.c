@@ -48,7 +48,7 @@
  */
 
 /* Forward referenced functions */
-static int db_get_file_record(JCR *jcr, B_DB *mdb, FILE_DBR *fdbr);
+static int db_get_file_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr, FILE_DBR *fdbr);
 static int db_get_filename_record(JCR *jcr, B_DB *mdb);
 static int db_get_path_record(JCR *jcr, B_DB *mdb);
 
@@ -67,10 +67,10 @@ extern void split_path_and_filename(JCR *jcr, B_DB *mdb, char *fname);
  *  Returns: 0 on failure
  *	     1 on success with the File record in FILE_DBR
  */
-int db_get_file_attributes_record(JCR *jcr, B_DB *mdb, char *fname, FILE_DBR *fdbr)
+int db_get_file_attributes_record(JCR *jcr, B_DB *mdb, char *fname, JOB_DBR *jr, FILE_DBR *fdbr)
 {
    int stat;
-   Dmsg1(20, "Enter get_file_from_catalog fname=%s \n", fname);
+   Dmsg1(100, "db_get_file_att_record fname=%s \n", fname);
 
    db_lock(mdb);
    split_path_and_filename(jcr, mdb, fname);
@@ -79,7 +79,7 @@ int db_get_file_attributes_record(JCR *jcr, B_DB *mdb, char *fname, FILE_DBR *fd
 
    fdbr->PathId = db_get_path_record(jcr, mdb);
 
-   stat = db_get_file_record(jcr, mdb, fdbr);
+   stat = db_get_file_record(jcr, mdb, jr, fdbr);
 
    db_unlock(mdb);
 
@@ -99,15 +99,23 @@ int db_get_file_attributes_record(JCR *jcr, B_DB *mdb, char *fname, FILE_DBR *fd
  *    "normal" if a new file is found during Verify.
  */
 static
-int db_get_file_record(JCR *jcr, B_DB *mdb, FILE_DBR *fdbr)
+int db_get_file_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr, FILE_DBR *fdbr)
 {
    SQL_ROW row;
    int stat = 0;
 
+   if (jcr->JobLevel == L_VERIFY_DISK_TO_CATALOG) {
    Mmsg(&mdb->cmd, 
-"SELECT FileId, LStat, MD5 from File where File.JobId=%u and File.PathId=%u and \
-File.FilenameId=%u", fdbr->JobId, fdbr->PathId, fdbr->FilenameId);
-
+"SELECT FileId, LStat, MD5 FROM File,Job WHERE "
+"File.JobId=Job.JobId AND File.PathId=%u AND "
+"File.FilenameId=%u AND Job.Type='B' AND Job.JobSTATUS='T' AND "
+"ClientId=%u ORDER BY StartTime DESC LIMIT 1",
+      fdbr->PathId, fdbr->FilenameId, jr->ClientId);
+   } else {
+      Mmsg(&mdb->cmd, 
+"SELECT FileId, LStat, MD5 FROM File WHERE File.JobId=%u AND File.PathId=%u AND "
+"File.FilenameId=%u", fdbr->JobId, fdbr->PathId, fdbr->FilenameId);
+   }
    Dmsg3(050, "Get_file_record JobId=%u FilenameId=%u PathId=%u\n",
       fdbr->JobId, fdbr->FilenameId, fdbr->PathId);
       
@@ -254,15 +262,15 @@ int db_get_job_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr)
 
    db_lock(mdb);
    if (jr->JobId == 0) {
-      Mmsg(&mdb->cmd, "SELECT VolSessionId,VolSessionTime,\
-PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,\
-Type,Level \
-FROM Job WHERE Job='%s'", jr->Job);
+      Mmsg(&mdb->cmd, "SELECT VolSessionId,VolSessionTime,"
+"PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
+"Type,Level,ClientId "
+"FROM Job WHERE Job='%s'", jr->Job);
     } else {
-      Mmsg(&mdb->cmd, "SELECT VolSessionId,VolSessionTime,\
-PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,\
-Type,Level \
-FROM Job WHERE JobId=%u", jr->JobId);
+      Mmsg(&mdb->cmd, "SELECT VolSessionId,VolSessionTime,"
+"PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
+"Type,Level,ClientId "
+"FROM Job WHERE JobId=%u", jr->JobId);
     }
 
    if (!QUERY_DB(jcr, mdb, mdb->cmd)) {
@@ -288,6 +296,7 @@ FROM Job WHERE JobId=%u", jr->JobId);
    jr->JobStatus = (int)*row[9];
    jr->Type = (int)*row[10];
    jr->Level = (int)*row[11];
+   jr->ClientId = str_to_uint64(row[12]);
    sql_free_result(mdb);
 
    db_unlock(mdb);

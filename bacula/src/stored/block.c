@@ -131,11 +131,11 @@ DEV_BLOCK *new_block(DEVICE *dev)
  * Only the first block checksum error was reported.
  *   If there are more, report it now.
  */
-void print_block_errors(JCR *jcr, DEV_BLOCK *block)
+void print_block_read_errors(JCR *jcr, DEV_BLOCK *block)
 {
-   if (block->checksum_errors > 1) {
-      Jmsg(jcr, M_ERROR, 0, _("%d block checksum errors ignored.\n"),
-	 block->checksum_errors);
+   if (block->read_errors > 1) {
+      Jmsg(jcr, M_ERROR, 0, _("%d block read errors ignored.\n"),
+	 block->read_errors);
    }
 }
 
@@ -223,7 +223,10 @@ static int unser_block_header(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
       if (strncmp(Id, BLKHDR1_ID, BLKHDR_ID_LENGTH) != 0) {
          Mmsg2(&dev->errmsg, _("Buffer ID error. Wanted: %s, got %s. Buffer discarded.\n"),
 	    BLKHDR1_ID, Id);
-	 Emsg0(M_ERROR, 0, dev->errmsg);
+	 if (block->read_errors == 0 || verbose >= 2) {
+            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+	 }
+	 block->read_errors++;
 	 return 0;
       }
    } else if (Id[3] == '2') {
@@ -235,12 +238,18 @@ static int unser_block_header(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
       if (strncmp(Id, BLKHDR2_ID, BLKHDR_ID_LENGTH) != 0) {
          Mmsg2(&dev->errmsg, _("Buffer ID error. Wanted: %s, got %s. Buffer discarded.\n"),
 	    BLKHDR2_ID, Id);
-	 Emsg0(M_ERROR, 0, dev->errmsg);
+	 if (block->read_errors == 0 || verbose >= 2) {
+            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+	 }
+	 block->read_errors++;
 	 return 0;
       }
    } else {
       Mmsg1(&dev->errmsg, _("Expected block-id BB01 or BB02, got %s. Buffer discarded.\n"), Id);
-      Emsg0(M_ERROR, 0, dev->errmsg);
+      if (block->read_errors == 0 || verbose >= 2) {
+         Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+      }
+      block->read_errors++;
       return 0;
    }
 
@@ -248,7 +257,10 @@ static int unser_block_header(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
    if (block_len > MAX_BLOCK_LENGTH) {
       Mmsg1(&dev->errmsg,  _("Block length %u is insane (too large), probably due to a bad archive.\n"),
 	 block_len);
-      Emsg0(M_ERROR, 0, dev->errmsg);
+      if (block->read_errors == 0 || verbose >= 2) {
+         Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+      }
+      block->read_errors++;
       return 0;
    }
 
@@ -268,14 +280,13 @@ static int unser_block_header(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
       BlockCheckSum = bcrc32((uint8_t *)block->buf+BLKHDR_CS_LENGTH,
 			 block_len-BLKHDR_CS_LENGTH);
       if (BlockCheckSum != CheckSum) {
-         Dmsg2(00, "Block checksum mismatch: calc=%x blk=%x\n", BlockCheckSum,
-	    CheckSum);
          Mmsg3(&dev->errmsg, _("Block checksum mismatch in block %u: calc=%x blk=%x\n"), 
 	    (unsigned)BlockNumber, BlockCheckSum, CheckSum);
-	 if (block->checksum_errors == 0) {
+	 if (block->read_errors == 0 || verbose >= 2) {
             Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
 	 }
-	 block->checksum_errors++;
+	 block->read_errors++;
+	 return 0;
       }
    }
    return 1;
@@ -399,7 +410,8 @@ int write_block_to_dev(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
       Jmsg(jcr, M_INFO, 0, _("User defined maximum volume capacity %s exceeded on device %s.\n"),
 	    edit_uint64(max_cap, ed1),	dev->dev_name);
       block->write_failed = true;
-      weof_dev(dev, 2); 	      /* end the tape */
+      weof_dev(dev, 1); 	      /* end the tape */
+      weof_dev(dev, 1);
       dev->state |= (ST_EOF | ST_EOT | ST_WEOT);
       return 0;   
    }
@@ -472,7 +484,8 @@ int write_block_to_dev(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
 	 wlen, stat, dev->block_num, block->BlockNumber, dev->dev_errno, strerror(dev->dev_errno));
 
       block->write_failed = true;
-      if (weof_dev(dev, 2) != 0) {	   /* end the tape */
+      weof_dev(dev,1);
+      if (weof_dev(dev, 1) != 0) {	   /* end the tape */
          Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
       }
       dev->state |= (ST_EOF | ST_EOT | ST_WEOT);
@@ -489,12 +502,12 @@ int write_block_to_dev(JCR *jcr, DEVICE *dev, DEV_BLOCK *block)
       if (dev->state & ST_TAPE && dev_cap(dev, CAP_BSR)) {
 
 	 /* Now back up over what we wrote and read the last block */
-	 if (bsf_dev(dev, 1) != 0 || bsf_dev(dev, 1) != 0) {
+	 if (!bsf_dev(dev, 1) || !bsf_dev(dev, 1)) {
 	    ok = false;
             Jmsg(jcr, M_ERROR, 0, _("Backspace file at EOT failed. ERR=%s\n"), strerror(dev->dev_errno));
 	 }
 	 /* Backspace over record */
-	 if (ok && bsr_dev(dev, 1) != 0) {
+	 if (ok && !bsr_dev(dev, 1)) {
 	    ok = false;
             Jmsg(jcr, M_ERROR, 0, _("Backspace record at EOT failed. ERR=%s\n"), strerror(dev->dev_errno));
 	    /*
@@ -585,7 +598,7 @@ int read_block_from_dev(JCR *jcr, DEVICE *dev, DEV_BLOCK *block, bool check_bloc
    ssize_t stat;
    int looping;
    uint32_t BlockNumber;
-   int retry = 0;
+   int retry;
 
    if (dev_state(dev, ST_EOT)) {
       return 0;
@@ -601,12 +614,14 @@ reread:
       block->read_len = 0;
       return 0;
    }
+   retry = 0;
    do {
       stat = read(dev->fd, block->buf, (size_t)block->buf_len);
       if (retry == 1) {
 	 dev->VolCatInfo.VolCatErrors++;   
       }
    } while (stat == -1 && (errno == EINTR || errno == EIO) && retry++ < 11);
+// Dmsg1(000, "read stat = %d\n", stat);
    if (stat < 0) {
       Dmsg1(90, "Read device got: ERR=%s\n", strerror(errno));
       clrerror_dev(dev, -1);
@@ -646,7 +661,6 @@ reread:
 
    BlockNumber = block->BlockNumber + 1;
    if (!unser_block_header(jcr, dev, block)) {
-      Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
       block->read_len = 0;
       return 0;
    }
@@ -664,8 +678,8 @@ reread:
       /* Attempt to reposition to re-read the block */
       if (dev->state & ST_TAPE) {
          Dmsg0(100, "Backspace record for reread.\n");
-	 if (bsr_dev(dev, 1) != 0) {
-            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+	 if (!bsr_dev(dev, 1)) {
+            Jmsg(jcr, M_ERROR, 0, "%s", strerror_dev(dev));
 	    block->read_len = 0;
 	    return 0;
 	 }
