@@ -1,4 +1,10 @@
 
+2003-10-04 Version 1.32a 04Sep03 Release
+- Fix sparse file option -- is_buffer_zero().
+- Clarification fixes to btape's help.
+- Pull in some manual updates.
+- Update testls to zap permissions on soft links.
+
 2003-10-01 Version 1.32 30Sep03 Release
 28Sep03
 - Enhance manual faq, regression ...
