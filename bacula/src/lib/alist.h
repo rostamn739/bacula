@@ -3,7 +3,7 @@
  */
 
 /*
-   Copyright (C) 2003-2004 Kern Sibbald and John Walker
+   Copyright (C) 2003-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -24,7 +24,7 @@
 
  */
 
-/* 
+/*
  * There is a lot of extra casting here to work around the fact
  * that some compilers (Sun and Visual C++) do not accept
  * (void *) as an lvalue on the left side of an equal.
@@ -32,7 +32,9 @@
  * Loop var through each member of list
  */
 #define foreach_alist(var, list) \
-    for((*((void **)&(var))=(void*)((list)->first())); (var); (*((void **)&(var))=(void*)((list)->next())))
+    for((*((void **)&(var))=(void*)((list)->first())); \
+         (var); \
+         (*((void **)&(var))=(void*)((list)->next())))
 
 #ifdef the_easy_way
 #define foreach_alist(var, list) \
@@ -46,7 +48,7 @@ enum {
   not_owned_by_alist = false
 };
 
-/* 
+/*
  * Array list -- much like a simplified STL vector
  *   array of pointers to inserted items
  */
@@ -86,10 +88,11 @@ inline void * alist::operator [](int index) const {
 
 inline bool alist::empty() const
 {
-   return num_items == 0;
+   /* Check for null pointer */
+   return this ? num_items == 0 : true;
 }
 
-/*                            
+/*
  * This allows us to do explicit initialization,
  *   allowing us to mix C++ classes inside malloc'ed
  *   C structures. Define before called in constructor.
@@ -111,17 +114,22 @@ inline alist::alist(int num, bool own) {
 inline alist::~alist() {
    destroy();
 }
-   
+
 
 
 /* Current size of list */
-inline int alist::size() const 
+inline int alist::size() const
 {
-   return num_items;
+   /*
+    * Check for null pointer, which allows test
+    *  on size to succeed even if nothing put in
+    *  alist.
+    */
+   return this ? num_items : 0;
 }
 
 /* How much to grow by each time */
-inline void alist::grow(int num) 
+inline void alist::grow(int num)
 {
    num_grow = num;
 }

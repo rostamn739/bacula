@@ -322,32 +322,47 @@ void do_restore(JCR *jcr)
 #endif
 	 break;
 
-      case STREAM_UNIX_ATTRIBUTES_ACL:	 
+      case STREAM_UNIX_ATTRIBUTES_ACCESS_ACL:	 
 #ifdef HAVE_ACL
 	 /* Recover ACL from stream and check it */
 	 acl = acl_from_text(sd->msg);
 	 if (acl_valid(acl) != 0) {
-            Jmsg1(jcr, M_WARNING, 0, "Failure in the ACL of %s! FD is not able to restore it!\n", jcr->last_fname);
-	    acl_free(acl);
-	 }
-	 
-	 /* Try to restore ACL */
-	 if (attr->type == FT_DIREND) {
-	    /* Directory */
-	    if (acl_set_file(jcr->last_fname, ACL_TYPE_DEFAULT, acl) != 0 &&
-		acl_set_file(jcr->last_fname, ACL_TYPE_ACCESS, acl) != 0) {
-               Jmsg1(jcr, M_WARNING, 0, "Error! Can't restore ACL of directory: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
-	    }
-	 /* File or Link */
+            Jmsg1(jcr, M_WARNING, 0, "Failure in the Access ACL of %s! FD is not able to restore it!\n", jcr->last_fname);
+            Dmsg1(200, "Acc. ACL of file/dir: %s is not valid!\n", jcr->last_fname);
+            Dmsg1(200, "Acc. ACL value=%s\n", acl);
 	 } else if (acl_set_file(jcr->last_fname, ACL_TYPE_ACCESS, acl) != 0) {
-            Jmsg1(jcr, M_WARNING, 0, "Error! Can't restore ACL of file: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
-	 }
+            Jmsg1(jcr, M_WARNING, 0, "Error! Can't restore Access ACL of file/directory: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
+            Dmsg1(200, "Error! Can't restore Access ACL of file/directory: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
+            Dmsg1(200, "Acc. ACL value=%s\n", acl);
+	 } else {
+            Dmsg1(200, "Access ACL of file/directory: %s successfully restored!", jcr->last_fname);
+         }
 	 acl_free(acl);
-         Dmsg1(200, "ACL of file: %s successfully restored!", jcr->last_fname);
-	 break;
+         break;
 #else 
 	 non_support_acl++;
 	 break; 		      /* unconfigured, ignore */
+#endif
+
+      case STREAM_UNIX_ATTRIBUTES_DEFAULT_ACL:
+#ifdef HAVE_ACL
+         acl = acl_from_text(sd->msg);
+         if (acl_valid(acl) != 0) {
+            Jmsg1(jcr, M_WARNING, 0, "Failure in the Default ACL of %s! FD is not able to restore it!\n", jcr->last_fname);
+            Dmsg1(200, "Def. ACL of file/dir: %s is not valid!\n", jcr->last_fname);
+            Dmsg1(200, "Def. ACL value=%s\n", acl);
+         } else if (acl_set_file(jcr->last_fname, ACL_TYPE_DEFAULT, acl) != 0) {
+            Jmsg1(jcr, M_WARNING, 0, "Error! Can't restore Default ACL of file/directory: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
+            Dmsg1(200, "Error! Can't restore Default ACL of file/directory: %s! Maybe system does not support ACLs!\n", jcr->last_fname);
+            Dmsg1(200, "Def. ACL value=%s\n", acl);
+         } else {
+            Dmsg1(200, "Default ACL of file/directory: %s successfully restored!", jcr->last_fname);
+         }
+         acl_free(acl);
+         break;
+#else
+      non_support_acl++;
+      break;
 #endif	 
 	 
       case STREAM_MD5_SIGNATURE:

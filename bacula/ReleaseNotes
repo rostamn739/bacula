@@ -1,81 +1,119 @@
 
-          Release Notes for Bacula 1.36.0
+          Release Notes for Bacula 1.36.2
 
-  Bacula code: Total files = 396 Total lines = 116,418 (*.h *.c *.in)
+  Bacula code: Total files = 398 Total lines = 117,915 (*.h *.c *.in)
 
+Major Changes to version 1.36.2:
+- Applied all fixes for bugs since version 1.36.1 (see below)
+- Added new directives from 1.37 code (see below).
+- Applied Tim's patch for ACLS.
+- Eight new options keywords in a FileSet resource:
+  ignorecase, fstype, hfsplussupport, wilddir, wildfile, regexdir,
+  and regexfile, hardlinks. See below for details.
+- Fix deadlock in multiple simultaneous jobs.
+- Fix tape "truncation"/"number of files" after restore bug.
+- Fix ClientRun jobs on Win32 to faile if the 
+  return code is not zero.
 
-Major Changes:
-- Tray monitor program (really cool)
-- Bacula Rescue CDROM (easy to make and essential for emergencies)
-- Bacula CD Image Manager
-- General bug fixes/stabilization
-- French translation of manual by Ludovic Strappazon well    
-  underway.
-- UTF-8 is supported in conio.
-- Improved conf scanning code allowing FileSet components to
-  be put on a single line (previously everything had to be on
-  a different line).
-- Win32 files restored to an alternate directory will have the
-  colon following the drive letter turned into a / e.g. c: 
-  becomes c/. Previously the c: was stripped. This applies only
-  to files written to an alternate directory (i.e. using a where=).
-- Certain open files (Word for example) can now be saved on
-  Win32 systems.
-- Default for Wild-cards on Win32 systems is to fold case this       
-  should correct most of the problems users are having with
-  exclusion on Win32.
-- Lots of improvements in the Rescue scripts -- better 
-  network detection, better mounting code, ...
-- The attributes spool file can now exceed 2GB.
-- Significant speed improvements when running PostgreSQL.
-- Significantly faster restore command with very large 
-  FileSets while building the in memory directory tree.
-- Patches directory in the source will have all patches
-  that have not been applied and released (new releases are
-  only generated when really critical bugs are found).
-- Bacula forces the tape drive into variable block mode
-  on most systems (providing Bacula is running in variable
-  block mode).
-- dbcheck updated to remove many more orphaned records.
-- Support for IPv6 (untested).
-- Modifications to the license to termination clause for
-  more protection from SCO type predators. No change for
-  normal users.
-- SIGHUP to Director causes it to reload conf file.
-
-- Many improvements in the documentation.
-
-New Directives:
-- Added "Rerun Failed levels = yes/no" in the Job resource
-  of the Director. It will upgrade the current job to a 
-  higher level (Full or Differential) if a previous job
-  of that level failed.
-- Added "Ignore FileSet Changes = yes/no" in the FileSet
-  directive of the Director. It prevents the Director from
-  immediately upgrading the job to a Full save if you modify
-  the contents of the FileSet. Not recommended. 
-- Added "Block positioning = yes/no" in Device resource in SD.
-  If set to no, Bacula should (as yet untested) be able to
-  recover data from tapes where the drive was set to fixed
-  blocksize but Bacula is in variable block size.
-- Added "Multiple connections = yes/no" in Catalog record for
-  allowing multiple simultaneous connections to the database.
-  This is a major performance improvement for PostgreSQL and
-  SQLite, but it is untested, so please test before putting
-  it into production.
-- Alert Command in SD permits checking for tape drive 
-  alerts at the end of every job (or doing anything you want).
-  An example of the command is in the default bacula-sd.conf
-  file as well as in the Storage Configuration chapter of
-  the manual.
+New Directives in 1.36.2:
+- New Options keywords in a FileSet directive:
+  - WildDir xxx
+    Will do a wild card match against directories (files will not
+    be matched).
+  - WildFile xxx
+    Will do a wild card match against files (directories will not
+    be matched).
+  - RegexDir xxx
+    Will do a regular expression match against directories (files
+    will not be matched).
+  - RegexFile xxx
+    Will do a regular expression match against files( directories
+    will not be matched).
+  - IgnoreCase = yes | no
+    Will ignore case in wild card and regular expression matches.
+    This is handy for Windows where filename case is not significant.
+  - FsType = string
+    where string is a filesystem type: ext2, jfs, ntfs, proc,
+    reiserfs, xfs, usbdevfs, sysfs, smbfs, iso9660.  For ext3
+    systems, use ext2.  You may have multiple fstype directives
+    and thus permit multiple filesystem types.  If the type
+    specified on the fstype directive does not match the
+    filesystem for a particular directive, that directory will
+    not be backed up.  This directive can be used to prevent
+    backing up non-local filesystems.
+  - HFS Plus Support = yes | no 
+    If set, Mac OS X resource forks will be saved and restored.
+- In FileSet, you can exclude backing up of hardlinks (if you have
+  a lot, it can be very expensive), by using:
+    HardLinks = no
+  in the Options section. Patch supplied by David R Bosso. Thanks.
 
 New Commands:
-- umount -- same as unmount.
-- delete job now permits multiple jobids and ranges, e.g.:
-    delete job jobid=1,3,5,11-16
-- reload -- reloads bacula-dir.conf in Director.
+- None since 1.36.1
 
-Items to note!!!
+Items to note for 1.36.2!!!
+- Dan has reminded us that the arguments for make_catalog_backup
+  changed from 1.34.x to 1.36.1. The old arguments were typically
+  "-U bacula".  The new arguments are typically "bacula bacula",
+  where the first is the database name, and the second is the
+  user name.
+
+Patches applied:
+
+03Dec04  1.36.1-pool.patch
+ This patch should hold jobs in the Director's start queue if
+ more than one simultaneous backup job wants to use the same
+ Storage device with two different Pools (i.e. 2 Volumes).
+
+03Dec04  1.16.1-slots.patch
+ This patch should fix "update slots" with two different
+ magazines in different pools by checking the pool when zapping
+ the InChanger.
+
+18Dec04 1.36.1-spool.patch
+ This patch fixes the despooling size printed in the Job 
+ report. Previously, it reported the total size for the
+ device. This patch makes it report the size for the job.
+
+21Dec04 1.36.1-store.patch
+ This patch fixes a problem with overriding storage daemon
+ specifications. Previously they were not always honored.
+ This implements more uniform handling. It also eliminates
+ an orphaned buffer situation using JobDefs.
+
+21Dec04 1.36.1-reload.patch
+ This patch fixes Bacula so that it does not exit if there
+ is a syntax error in its conf file during a reload command.
+
+24Dec04 1.36.1-fileset.patch
+ This patch should correct a seg fault in the FD that occurs
+ at the end of a job when the job uses old style include/excludes.
+ Old style include/excludes are deprecated and should be
+ converted to the new style as soon as possible.
+
+30Jan05 1.36.1-acl.patch
+ This patch fixes some typos with ACL checking that results
+ in the incorrect name being used for the check.
+ This fixes possible security problems with unwanted 
+ access by restricted consoles.
+
+15Feb05 1.36.1-truncate.patch
+ This patch fixes a bug where a tape gets "truncated" after
+ doing a restore. The number of files in the catalog do not
+ agree with what Bacula thinks is on tape, then the tape is
+ marked in error.
+
+===
+Items to note for version 1.36.1:
+- The output from Job reports has been modified to include the 
+  seconds on the start/end times, the Storage device used, and to
+  indent the output differently.
+- If you created a PostgreSQL database under version 1.36.0, there
+  are two things you might want to do. 1. manually remove some
+  of the File table indexes to improve backup performance. See the
+  make_postgresql_tables script. 2. run fix_postgresql_tables (in
+  src/cats and updatedb) to correct a table. This is necessary only
+  if you are creating disk Volumes greater than 2GB.
 - As of 1.35.5 you MUST do a database update.
   
   cd scripts-dir (or src/cats)
@@ -85,11 +123,47 @@ Items to note!!!
   of the new FileSet features such as regular expressions.
 - Regular expressions are not supported in the Win32 FD.
 
-Other Items:
-- Much better error messages from system errors particularly
-  on Win32 and in running scripts.
-- Many improvements in the SD.
-- Full support for 64 bit machines.
-- btape improved test and fill commands.
-- See the ChangeLog for additional details.
 
+Major Changes to version 1.36.1:
+- There is a new Win32 pebuilder rescue disk thanks to Scott. This
+  is worth the effort to checkout.
+- A number of indexes have been removed from the PostgreSQL
+  database to improve performance during backups. You may need to
+  add these indexes if you do Verifies. See the scripts.
+- We now have a Gentoo ebuild -- thanks Scott.
+- There are a number of new ./configure options for the 
+  bimagemgr. Please see the documentation or ./configure --help
+- The RedHat autostart scripts disable using /lib/tls. If you
+  don't want this you will need to turn it off.
+- Corrected a problem with the default SD and FD conf files that
+  incorrectly set Maximum Concurrent Jobs = 1. This prevented
+  running a job and obtaining the status at the same time.
+- All daemon messages are now prefixed with a short date/time,
+  and queued messages (generated in the comm routines) have the
+  time the message was generated rather than the time the message
+  was sent (usually much later).
+- Fixed a bug with the autochanger code not respecting the InChanger
+  flag.
+
+Other Items:
+- It is now possible to build the Rescue CDROM using a pre-installed
+  static Bacula FD.
+- Corrected a bug in the traceback code when Bacula was executed without
+  a path. Tracebacks should now work in more cases.
+- Corrected a typo in the traceback script.
+- Fixed the mtx autochanger script so that it correctly waits on
+  Linux systems (if you manually enable the code).
+- Added grant all on cdimages for PostgreSQL users of bimagemgr.
+- The actual Job start time is now correctly recorded in the catalog.
+- You can now specify a JobId (or multiple ones separated by commas) on
+  the restore command line.
+- A -d50 will now turn on lots of debug code if you are having
+  authentication errors.
+- Found a workaround to a /lib/tls pthreads bug (a library seg fault).
+- Added an ALERT message class for Alert messages.
+- Fixed a seg fault in the restore tree routine when attempting
+  to select certain files in the root directory.
+- Allow other jobs to request new Volumes while operator intervention
+  is needed -- previously all stalled.
+- Enhancements to btape test (don't loop if certain tape errors occur).
+- Improvements to the Win32 install.

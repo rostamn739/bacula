@@ -7,7 +7,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -47,7 +47,8 @@ static char use_device[] = "use device=%127s media_type=%127s pool_name=%127s po
 /* Responses sent to Director daemon */
 static char OKjob[]     = "3000 OK Job SDid=%u SDtime=%u Authorization=%s\n";
 static char OK_device[] = "3000 OK use device\n";
-static char NO_device[] = "3914 Device \"%s\" not in SD Device resources.\n";
+static char NO_device[] = "3924 Device \"%s\" not in SD Device resources.\n";
+static char NOT_open[]  = "3925 Device \"%s\" could not be opened or does not exist.\n";
 static char BAD_use[]   = "3913 Bad use command: %s\n";
 static char BAD_job[]   = "3915 Bad Job command: %s\n";
 
@@ -258,12 +259,20 @@ static bool use_device_cmd(JCR *jcr)
       foreach_res(device, R_DEVICE) {
 	 /* Find resource, and make sure we were able to open it */
 	 if (fnmatch(dev_name.c_str(), device->hdr.name, 0) == 0 && 
-	     device->dev && strcmp(device->media_type, media_type.c_str()) == 0) {
+	     strcmp(device->media_type, media_type.c_str()) == 0) {
 	    const int name_len = MAX_NAME_LENGTH;
 	    DCR *dcr;
 	    UnlockRes();
+	    if (!device->dev) {
+               Jmsg(jcr, M_FATAL, 0, _("\n"
+                  "     Archive \"%s\" requested by DIR could not be opened or does not exist.\n"),
+		    dev_name.c_str());
+	       bnet_fsend(dir, NOT_open, dev_name.c_str());
+	       return false;
+	    }  
 	    dcr = new_dcr(jcr, device->dev);
 	    if (!dcr) {
+               bnet_fsend(dir, _("3926 Could not get dcr for device: %s\n"), dev_name.c_str());
 	       return false;
 	    }
             Dmsg1(120, "Found device %s\n", device->hdr.name);

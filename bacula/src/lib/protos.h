@@ -4,7 +4,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000, 2001, 2002 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -73,10 +73,10 @@ bool       bnet_sig              (BSOCK *bs, int sig);
 int        bnet_ssl_server       (BSOCK *bsock, char *password, int ssl_need, int ssl_has);
 int        bnet_ssl_client       (BSOCK *bsock, char *password, int ssl_need);
 BSOCK *    bnet_connect            (JCR *jcr, int retry_interval,
-               int max_retry_time, const char *name, char *host, char *service, 
+               int max_retry_time, const char *name, char *host, char *service,
                int port, int verbose);
 void       bnet_close            (BSOCK *bsock);
-BSOCK *    init_bsock            (JCR *jcr, int sockfd, const char *who, const char *ip, 
+BSOCK *    init_bsock            (JCR *jcr, int sockfd, const char *who, const char *ip,
                                   int port, struct sockaddr *client_addr);
 BSOCK *    dup_bsock             (BSOCK *bsock);
 void       term_bsock            (BSOCK *bsock);
@@ -117,6 +117,7 @@ int64_t          str_to_int64(char *str);
 char *           edit_uint64_with_commas   (uint64_t val, char *buf);
 char *           add_commas              (char *val, char *buf);
 char *           edit_uint64             (uint64_t val, char *buf);
+char *           edit_int64              (int64_t val, char *buf);
 int              duration_to_utime       (char *str, utime_t *value);
 int              size_to_uint64(char *str, int str_len, uint64_t *rtn_value);
 char             *edit_utime             (utime_t val, char *buf, int buf_len);
@@ -159,7 +160,7 @@ void       set_trace             (int trace_flag);
 void       set_exit_on_error     (int value);
 
 /* bnet_server.c */
-void       bnet_thread_server(dlist *addr, int max_clients, workq_t *client_wq, 
+void       bnet_thread_server(dlist *addr, int max_clients, workq_t *client_wq,
                    void *handle_client_request(void *bsock));
 void       bnet_stop_thread_server(pthread_t tid);
 void             bnet_server             (int port, void handle_client_request(BSOCK *bsock));
@@ -173,6 +174,11 @@ void free_getuser_cache();
 char *getgroup (gid_t gid);
 void free_getgroup_cache();
 
+/* python.c */
+typedef int (EVENT_HANDLER)(JCR *jcr, const char *event);
+void init_python_interpreter(const char *progname, const char *scripts);
+void term_python_interpreter();
+extern EVENT_HANDLER *generate_event;
 
 /* signal.c */
 void             init_signals             (void terminate(int sig));
@@ -185,9 +191,9 @@ bool             skip_spaces             (char **msg);
 bool             skip_nonspaces          (char **msg);
 int              fstrsch                 (const char *a, const char *b);
 char            *next_arg(char **s);
-int              parse_args(POOLMEM *cmd, POOLMEM **args, int *argc, 
+int              parse_args(POOLMEM *cmd, POOLMEM **args, int *argc,
                         char **argk, char **argv, int max_args);
-void            split_path_and_filename(const char *fname, POOLMEM **path, 
+void            split_path_and_filename(const char *fname, POOLMEM **path,
                         int *pnl, POOLMEM **file, int *fnl);
 int             bsscanf(const char *buf, const char *fmt, ...);
 
@@ -204,6 +210,7 @@ char *           encode_mode             (mode_t mode, char *buf);
 int              do_shell_expansion      (char *name, int name_len);
 void             jobstatus_to_ascii      (int JobStatus, char *msg, int maxlen);
 int              run_program             (char *prog, int wait, POOLMEM *results);
+int              run_program_full_output (char *prog, int wait, POOLMEM *results);
 const char *     job_type_to_str         (int type);
 const char *     job_status_to_str       (int stat);
 const char *     job_level_to_str        (int level);

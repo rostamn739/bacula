@@ -21,7 +21,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -45,6 +45,8 @@
 
 /* Forward referenced functions */
 static char *find_msg_start(char *msg);
+
+static char Job_status[] = "Status Job=%127s JobStatus=%d\n";
 
 static char OK_msg[] = "1000 OK\n";
 
@@ -191,6 +193,15 @@ int bget_dirmsg(BSOCK *bs)
 	 mount_request(jcr, bs, msg);
 	 free_jcr(jcr);
 	 continue;
+      }
+      if (bs->msg[0] == 'S') {       /* Status change */
+	int JobStatus;
+	char Job[MAX_NAME_LENGTH];
+	if (sscanf(bs->msg, Job_status, &Job, &JobStatus) == 2) {
+	   jcr->SDJobStatus = JobStatus; /* current status */
+	   free_jcr(jcr);
+	   continue;
+	}
       }
       return n;
    }

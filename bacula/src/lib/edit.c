@@ -1,13 +1,13 @@
 /*
- *   edit.c  edit string to ascii, and ascii to internal 
- * 
+ *   edit.c  edit string to ascii, and ascii to internal
+ *
  *    Kern Sibbald, December MMII
  *
  *   Version $Id$
  */
 
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -30,7 +30,7 @@
 #include <math.h>
 
 /* We assume ASCII input and don't worry about overflow */
-uint64_t str_to_uint64(char *str) 
+uint64_t str_to_uint64(char *str)
 {
    register char *p = str;
    register uint64_t value = 0;
@@ -51,7 +51,7 @@ uint64_t str_to_uint64(char *str)
    return value;
 }
 
-int64_t str_to_int64(char *str) 
+int64_t str_to_int64(char *str)
 {
    register char *p = str;
    register int64_t value;
@@ -84,7 +84,7 @@ int64_t str_to_int64(char *str)
  */
 char *edit_uint64_with_commas(uint64_t val, char *buf)
 {
-   /*  
+   /*
     * Replacement for sprintf(buf, "%" llu, val)
     */
    char mbuf[50];
@@ -109,7 +109,7 @@ char *edit_uint64_with_commas(uint64_t val, char *buf)
  */
 char *edit_uint64(uint64_t val, char *buf)
 {
-   /*  
+   /*
     * Replacement for sprintf(buf, "%" llu, val)
     */
    char mbuf[50];
@@ -127,6 +127,35 @@ char *edit_uint64(uint64_t val, char *buf)
    return buf;
 }
 
+char *edit_int64(int64_t val, char *buf)
+{
+   /*
+    * Replacement for sprintf(buf, "%" llu, val)
+    */
+   char mbuf[50];
+   bool negative = false;
+   mbuf[sizeof(mbuf)-1] = 0;
+   int i = sizeof(mbuf)-2;		   /* edit backward */
+   if (val == 0) {
+      mbuf[i--] = '0';
+   } else {
+      if (val < 0) {
+	 negative = true;
+	 val = -val;
+      }
+      while (val != 0) {
+         mbuf[i--] = "0123456789"[val%10];
+	 val /= 10;
+      }
+   }
+   if (negative) {
+      mbuf[i--] = '-';
+   }
+   strcpy(buf, &mbuf[i+1]);
+   return buf;
+}
+
+
 /*
  * Given a string "str", separate the integer part into
  *   str, and the modifier into mod.
@@ -134,7 +163,7 @@ char *edit_uint64(uint64_t val, char *buf)
 static bool get_modifier(char *str, char *num, int num_len, char *mod, int mod_len)
 {
    int i, len, num_begin, num_end, mod_begin, mod_end;
-	 
+
    /*
     * Look for modifier by walking back looking for the first
     *	space or digit.
@@ -202,12 +231,12 @@ int duration_to_utime(char *str, utime_t *value)
    char num_str[50];
    /*
     * The "n" = mins and months appears before minutes so that m maps
-    *   to months. These "kludges" make it compatible with pre 1.31 
+    *   to months. These "kludges" make it compatible with pre 1.31
     *	Baculas.
     */
-   static const char *mod[] = {"n", "seconds", "months", "minutes", 
+   static const char *mod[] = {"n", "seconds", "months", "minutes",
                   "hours", "days", "weeks",   "quarters",   "years", NULL};
-   static const int32_t mult[] = {60,	1, 60*60*24*30, 60, 
+   static const int32_t mult[] = {60,	1, 60*60*24*30, 60,
 		  60*60, 60*60*24, 60*60*24*7, 60*60*24*91, 60*60*24*365};
 
    while (*str) {
@@ -260,7 +289,7 @@ char *edit_utime(utime_t val, char *buf, int buf_len)
 	 bstrncat(buf, mybuf, buf_len);
       }
    }
-   if (val == 0 && strlen(buf) == 0) {	   
+   if (val == 0 && strlen(buf) == 0) {
       bstrncat(buf, "0 secs", buf_len);
    } else if (val != 0) {
       bsnprintf(mybuf, sizeof(mybuf), "%d sec%s", (uint32_t)val, val>1?"s":"");
@@ -340,7 +369,7 @@ bool is_a_number(const char *n)
 }
 
 /*
- * Check if the specified string is an integer	 
+ * Check if the specified string is an integer
  */
 bool is_an_integer(const char *n)
 {
@@ -355,7 +384,7 @@ bool is_an_integer(const char *n)
 /*
  * Check if Bacula Resoure Name is valid
  */
-/* 
+/*
  * Check if the Volume name has legal characters
  * If ua is non-NULL send the message
  */
@@ -396,7 +425,7 @@ bool is_name_valid(char *name, POOLMEM **msg)
 
 /*
  * Add commas to a string, which is presumably
- * a number.  
+ * a number.
  */
 char *add_commas(char *val, char *buf)
 {
@@ -420,7 +449,7 @@ char *add_commas(char *val, char *buf)
 	  *q-- = *p--;
       }
       *q-- = ',';
-   }   
+   }
    return buf;
 }
 

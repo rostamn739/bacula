@@ -174,7 +174,7 @@ struct JCR {
    POOLMEM *fname;                    /* name to put into catalog */
    POOLMEM *stime;                    /* start time for incremental/differential */
    JOB_DBR jr;                        /* Job DB record for current job */
-   JOB_DBR *verify_jr;                /* Pointer to target job */
+   JOB_DBR verify_jr;                 /* Pointer to target job */
    uint32_t RestoreJobId;             /* Id specified by UA */
    POOLMEM *client_uname;             /* client uname */ 
    int replace;                       /* Replace option */

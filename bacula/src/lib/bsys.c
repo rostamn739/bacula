@@ -1,14 +1,14 @@
 /*
  * Miscellaneous Bacula memory and thread safe routines
  *   Generally, these are interfaces to system or standard
- *   library routines. 
- * 
+ *   library routines.
+ *
  *  Bacula utility functions are in util.c
  *
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2004 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -35,6 +35,55 @@
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
+
+static pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t timer = PTHREAD_COND_INITIALIZER;
+
+/*
+ * This routine will sleep (sec, microsec).  Note, however, that if a
+ *   signal occurs, it will return early.  It is up to the caller
+ *   to recall this routine if he/she REALLY wants to sleep the
+ *   requested time.
+ */
+int bmicrosleep(time_t sec, long usec)
+{
+   struct timespec timeout;
+   struct timeval tv;
+   struct timezone tz;
+   int stat;
+
+   timeout.tv_sec = sec;
+   timeout.tv_nsec = usec * 1000;
+
+#ifdef HAVE_NANOSLEEP
+   stat = nanosleep(&timeout, NULL);
+   if (!(stat < 0 && errno == ENOSYS)) {
+      return stat;
+   }
+   /* If we reach here it is because nanosleep is not supported by the OS */
+#endif
+
+   /* Do it the old way */
+   gettimeofday(&tv, &tz);
+   timeout.tv_nsec += tv.tv_usec * 1000;
+   timeout.tv_sec += tv.tv_sec;
+   while (timeout.tv_nsec >= 1000000000) {
+      timeout.tv_nsec -= 1000000000;
+      timeout.tv_sec++;
+   }
+
+   Dmsg2(200, "pthread_cond_timedwait sec=%d usec=%d\n", sec, usec);
+   /* Note, this unlocks mutex during the sleep */
+   P(timer_mutex);
+   stat = pthread_cond_timedwait(&timer, &timer_mutex, &timeout);
+   if (stat != 0) {
+      berrno be;
+      Dmsg2(200, "pthread_cond_timedwait stat=%d ERR=%s\n", stat,
+	 be.strerror(stat));
+   }
+   V(timer_mutex);
+   return stat;
+}
 
 /*
  * Guarantee that the string is properly terminated */
@@ -126,7 +175,7 @@ void *bcalloc (size_t size1, size_t size2)
 /*
  * Implement snprintf
  */
-int bsnprintf(char *str, int32_t size, const char *fmt,  ...) 
+int bsnprintf(char *str, int32_t size, const char *fmt,  ...)
 {
    va_list   arg_ptr;
    int len;
@@ -150,15 +199,16 @@ int bvsnprintf(char *str, int32_t size, const char  *format, va_list ap)
 
 #else
 
-   int len;
+   int len, buflen;
    char *buf;
-   buf = get_memory(BIG_BUF);
+   buflen = size > BIG_BUF ? size : BIG_BUF;
+   buf = get_memory(buflen);
    len = vsprintf(buf, format, ap);
-   if (len >= BIG_BUF) {
+   if (len >= buflen) {
       Emsg0(M_ABORT, 0, _("Buffer overflow.\n"));
    }
-   memcpy(str, buf, size);
-   str[size-1] = 0;
+   memcpy(str, buf, len);
+   str[len] = 0;		/* len excludes the null */
    free_memory(buf);
    return len;
 #endif
@@ -170,7 +220,7 @@ struct tm *localtime_r(const time_t *timep, struct tm *tm)
 {
     static pthread_mutex_t mutex;
     static bool first = true;
-    struct tm *ltm, 
+    struct tm *ltm,
 
     if (first) {
        pthread_mutex_init(&mutex, NULL);
@@ -262,7 +312,7 @@ void _p(char *file, int line, pthread_mutex_t *m)
       } else {
          e_msg(file, line, M_ERROR, 0, _("Possible mutex deadlock resolved.\n"));
       }
-	 
+
    }
 }
 
@@ -314,7 +364,7 @@ void create_pid_file(char *dir, const char *progname, int port)
    if (stat(fname, &statp) == 0) {
       /* File exists, see what we have */
       *pidbuf = 0;
-      if ((pidfd = open(fname, O_RDONLY|O_BINARY, 0)) < 0 || 
+      if ((pidfd = open(fname, O_RDONLY|O_BINARY, 0)) < 0 ||
 	   read(pidfd, &pidbuf, sizeof(pidbuf)) < 0 ||
            sscanf(pidbuf, "%d", &oldpid) != 1) {
          Emsg2(M_ERROR_TERM, 0, _("Cannot open pid file. %s ERR=%s\n"), fname, strerror(errno));
@@ -368,7 +418,7 @@ struct s_state_hdr {
    uint64_t reserved[20];
 };
 
-static struct s_state_hdr state_hdr = { 
+static struct s_state_hdr state_hdr = {
    "Bacula State\n",
    3,
    0
@@ -389,17 +439,17 @@ void read_state_file(char *dir, const char *progname, int port)
    /* If file exists, see what we have */
 // Dmsg1(10, "O_BINARY=%d\n", O_BINARY);
    if ((sfd = open(fname, O_RDONLY|O_BINARY, 0)) < 0) {
-      Dmsg3(010, "Could not open state file. sfd=%d size=%d: ERR=%s\n", 
+      Dmsg3(010, "Could not open state file. sfd=%d size=%d: ERR=%s\n",
 		    sfd, sizeof(hdr), strerror(errno));
 	   goto bail_out;
    }
    if ((stat=read(sfd, &hdr, hdr_size)) != hdr_size) {
-      Dmsg4(010, "Could not read state file. sfd=%d stat=%d size=%d: ERR=%s\n", 
+      Dmsg4(010, "Could not read state file. sfd=%d stat=%d size=%d: ERR=%s\n",
 		    sfd, (int)stat, hdr_size, strerror(errno));
       goto bail_out;
    }
    if (hdr.version != state_hdr.version) {
-      Dmsg2(010, "Bad hdr version. Wanted %d got %d\n", 
+      Dmsg2(010, "Bad hdr version. Wanted %d got %d\n",
 	 state_hdr.version, hdr.version);
    }
    hdr.id[13] = 0;
@@ -437,12 +487,12 @@ void write_state_file(char *dir, const char *progname, int port)
    }
 // Dmsg1(010, "Wrote header of %d bytes\n", sizeof(state_hdr));
    state_hdr.last_jobs_addr = sizeof(state_hdr);
-   state_hdr.reserved[0] = write_last_jobs_list(sfd, state_hdr.last_jobs_addr);   
+   state_hdr.reserved[0] = write_last_jobs_list(sfd, state_hdr.last_jobs_addr);
 // Dmsg1(010, "write last job end = %d\n", (int)state_hdr.reserved[0]);
    if (lseek(sfd, 0, SEEK_SET) < 0) {
       Dmsg1(000, "lseek error: ERR=%s\n", strerror(errno));
       goto bail_out;
-   }  
+   }
    if (write(sfd, &state_hdr, sizeof(state_hdr)) != sizeof(state_hdr)) {
       Pmsg1(000, "Write final hdr error: ERR=%s\n", strerror(errno));
    }
@@ -489,64 +539,16 @@ void drop(char *uid, char *gid)
       }
    }
 #endif
-	  
+
 }
 
-static pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t timer = PTHREAD_COND_INITIALIZER;
-
-/*
- * This routine will sleep (sec, microsec).  Note, however, that if a 
- *   signal occurs, it will return early.  It is up to the caller
- *   to recall this routine if he/she REALLY wants to sleep the
- *   requested time.
- */
-int bmicrosleep(time_t sec, long usec)
-{
-   struct timespec timeout;
-   struct timeval tv;
-   struct timezone tz;
-   int stat;
-
-   timeout.tv_sec = sec;
-   timeout.tv_nsec = usec * 1000;
-
-#ifdef HAVE_NANOSLEEP
-   stat = nanosleep(&timeout, NULL);
-   if (!(stat < 0 && errno == ENOSYS)) {
-      return stat;		     
-   }
-   /* If we reach here it is because nanosleep is not supported by the OS */
-#endif
-
-   /* Do it the old way */
-   gettimeofday(&tv, &tz);
-   timeout.tv_nsec += tv.tv_usec * 1000;
-   timeout.tv_sec += tv.tv_sec;
-   while (timeout.tv_nsec >= 1000000000) {
-      timeout.tv_nsec -= 1000000000;
-      timeout.tv_sec++;
-   }
-
-   Dmsg2(200, "pthread_cond_timedwait sec=%d usec=%d\n", sec, usec);
-   /* Note, this unlocks mutex during the sleep */
-   P(timer_mutex);
-   stat = pthread_cond_timedwait(&timer, &timer_mutex, &timeout);
-   if (stat != 0) {
-      berrno be;
-      Dmsg2(200, "pthread_cond_timedwait stat=%d ERR=%s\n", stat,
-	 be.strerror(stat));
-   }
-   V(timer_mutex);
-   return stat;
-}
 
 /* BSDI does not have this.  This is a *poor* simulation */
 #ifndef HAVE_STRTOLL
 long long int
 strtoll(const char *ptr, char **endptr, int base)
 {
-   return (long long int)strtod(ptr, endptr);	
+   return (long long int)strtod(ptr, endptr);
 }
 #endif
 
@@ -558,7 +560,7 @@ strtoll(const char *ptr, char **endptr, int base)
 char *bfgets(char *s, int size, FILE *fd)
 {
    char *p = s;
-   int ch;	 
+   int ch;
    *p = 0;
    for (int i=0; i < size-1; i++) {
       do {
@@ -584,7 +586,7 @@ char *bfgets(char *s, int size, FILE *fd)
 	    ungetc(ch, fd); /* Push next character back to fd */
 	 }
 	 break;
-      }      
+      }
       if (ch == '\n') {
 	 break;
       }

@@ -1,6 +1,6 @@
 /*
  *   scan.c -- scanning routines for Bacula
- * 
+ *
  *    Kern Sibbald, MM	separated from util.c MMIII
  *
  *   Version $Id$
@@ -55,9 +55,9 @@ void strip_trailing_slashes(char *dir)
 
 /*
  * Skip spaces
- *  Returns: 0 on failure (EOF) 	    
+ *  Returns: 0 on failure (EOF)
  *	     1 on success
- *	     new address in passed parameter 
+ *	     new address in passed parameter
  */
 bool skip_spaces(char **msg)
 {
@@ -74,9 +74,9 @@ bool skip_spaces(char **msg)
 
 /*
  * Skip nonspaces
- *  Returns: 0 on failure (EOF) 	    
+ *  Returns: 0 on failure (EOF)
  *	     1 on success
- *	     new address in passed parameter 
+ *	     new address in passed parameter
  */
 bool skip_nonspaces(char **msg)
 {
@@ -122,7 +122,7 @@ fstrsch(const char *a, const char *b)	/* folded case search */
 }
 
 
-/* 
+/*
  * Return next argument from command line.  Note, this
  * routine is destructive.
  */
@@ -134,8 +134,8 @@ char *next_arg(char **s)
    /* skip past spaces to next arg */
    for (p=*s; *p && B_ISSPACE(*p); ) {
       p++;
-   }	
-   Dmsg1(400, "Next arg=%s\n", p);
+   }
+   Dmsg1(900, "Next arg=%s\n", p);
    for (n = q = p; *p ; ) {
       if (*p == '\\') {
 	 p++;
@@ -164,15 +164,15 @@ char *next_arg(char **s)
    }
    *q = 0;
    *s = p;
-   Dmsg2(400, "End arg=%s next=%s\n", n, p);
+   Dmsg2(900, "End arg=%s next=%s\n", n, p);
    return n;
-}   
+}
 
 /*
  * This routine parses the input command line.
  * It makes a copy in args, then builds an
  *  argc, argv like list where
- *    
+ *
  *  argc = count of arguments
  *  argk[i] = argument keyword (part preceding =)
  *  argv[i] = argument value (part after =)
@@ -185,11 +185,11 @@ char *next_arg(char **s)
  *  argk[1] = arg2
  *  argv[1] = abc
  *  argk[2] = arg3
- *  argv[2] = 
+ *  argv[2] =
  */
 
-int parse_args(POOLMEM *cmd, POOLMEM **args, int *argc, 
-	       char **argk, char **argv, int max_args) 
+int parse_args(POOLMEM *cmd, POOLMEM **args, int *argc,
+	       char **argk, char **argv, int max_args)
 {
    char *p, *q, *n;
 
@@ -199,7 +199,7 @@ int parse_args(POOLMEM *cmd, POOLMEM **args, int *argc,
    *argc = 0;
    /* Pick up all arguments */
    while (*argc < max_args) {
-      n = next_arg(&p);   
+      n = next_arg(&p);
       if (*n) {
 	 argk[*argc] = n;
 	 argv[(*argc)++] = NULL;
@@ -250,7 +250,7 @@ void split_path_and_filename(const char *fname, POOLMEM **path, int *pnl,
    int len = slen = strlen(fname);
 
    /*
-    * Find path without the filename.  
+    * Find path without the filename.
     * I.e. everything after the last / is a "filename".
     * OK, maybe it is a directory name, but we treat it like
     * a filename. If we don't find a / then the whole name
@@ -292,7 +292,7 @@ void split_path_and_filename(const char *fname, POOLMEM **path, int *pnl,
 }
 
 /*
- * Extremely simple sscanf. Handles only %(u,d,ld,lu,lld,llu,c,nns) 
+ * Extremely simple sscanf. Handles only %(u,d,ld,lu,lld,llu,c,nns)
  */
 const int BIG = 1000;
 int bsscanf(const char *buf, const char *fmt, ...)
@@ -420,7 +420,7 @@ int main(int argc, char *argv[])
    int cnt;
    char *helloreq= "Hello *UserAgent* calling\n";
    char *hello = "Hello %127s calling\n";
-   char *catreq = 
+   char *catreq =
 "CatReq Job=NightlySave.2004-06-11_19.11.32 CreateJobMedia FirstIndex=1 LastIndex=114 StartFile=0 EndFile=0 StartBlock=208 EndBlock=2903248";
 static char Create_job_media[] = "CatReq Job=%127s CreateJobMedia "
   "FirstIndex=%u LastIndex=%u StartFile=%u EndFile=%u "
@@ -454,7 +454,7 @@ struct VOLUME_CAT_INFO {
    uint64_t VolWriteTime;	      /* time spent writing this Volume */
    char VolCatStatus[20];	      /* Volume status */
    char VolCatName[MAX_NAME_LENGTH];  /* Desired volume to mount */
-};		  
+};
    struct VOLUME_CAT_INFO vol;
 
 #ifdef xxx

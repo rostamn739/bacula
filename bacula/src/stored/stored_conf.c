@@ -165,19 +165,23 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, const char *fm
       break;
    case R_STORAGE:
       sendit(sock, "Storage: name=%s SDaddr=%s SDport=%d SDDport=%d HB=%s\n",
-	   res->res_store.hdr.name, 
-	   NPRT(get_first_address(res->res_store.sdaddrs, buf, sizeof(buf))),
-	   get_first_port_host_order(res->res_store.sdaddrs), 
-	   get_first_port_host_order(res->res_store.sddaddrs),
-	   edit_utime(res->res_store.heartbeat_interval, buf, sizeof(buf)));
-	  foreach_dlist(p, res->res_store.sdaddrs) {
-                sendit(sock, "        SDaddr=%s SDport=%d\n", 
-			     p->get_address(buf, sizeof(buf)), p->get_port_host_order());
-	  }
-	  foreach_dlist(p, res->res_store.sddaddrs) {
-                sendit(sock, "        SDDaddr=%s SDDport=%d\n", 
-			     p->get_address(buf, sizeof(buf)), p->get_port_host_order());
-	  }
+	     res->res_store.hdr.name, 
+	     NPRT(get_first_address(res->res_store.sdaddrs, buf, sizeof(buf))),
+	     get_first_port_host_order(res->res_store.sdaddrs), 
+	     get_first_port_host_order(res->res_store.sddaddrs),
+	     edit_utime(res->res_store.heartbeat_interval, buf, sizeof(buf)));
+      if (res->res_store.sdaddrs) {
+	 foreach_dlist(p, res->res_store.sdaddrs) {
+            sendit(sock, "        SDaddr=%s SDport=%d\n", 
+		   p->get_address(buf, sizeof(buf)), p->get_port_host_order());
+	 }
+      }
+      if (res->res_store.sddaddrs) {
+	 foreach_dlist(p, res->res_store.sddaddrs) {
+            sendit(sock, "        SDDaddr=%s SDDport=%d\n", 
+		   p->get_address(buf, sizeof(buf)), p->get_port_host_order());
+	 }
+      }
       break;
    case R_DEVICE:
       sendit(sock, "Device: name=%s MediaType=%s Device=%s\n",

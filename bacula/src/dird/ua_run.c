@@ -8,7 +8,7 @@
  */
 
 /*
-   Copyright (C) 2001-2004 Kern Sibbald and John Walker
+   Copyright (C) 2001-2004 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -41,6 +41,12 @@ extern struct s_kw ReplaceOptions[];
  *
  * For Restore Jobs
  *     run <job-name> jobid=nn
+ *
+ *  Returns: 0 on error
+ *	     JobId if OK
+ *
+ *  Returns: 0 on error
+ *	     JobId if OK
  *
  */
 int run_cmd(UAContext *ua, const char *cmd)
@@ -101,7 +107,7 @@ int run_cmd(UAContext *ua, const char *cmd)
    catalog_name = NULL;
 
    for (i=1; i<ua->argc; i++) {
-      Dmsg2(200, "Doing arg %d = %s\n", i, ua->argk[i]);
+      Dmsg2(800, "Doing arg %d = %s\n", i, ua->argk[i]);
       kw_ok = false;
       /* Keep looking until we find a good keyword */
       for (j=0; !kw_ok && kw[j]; j++) {
@@ -111,12 +117,12 @@ int run_cmd(UAContext *ua, const char *cmd)
                bsendmsg(ua, _("Value missing for keyword %s\n"), ua->argk[i]);
 	       return 1;
 	    }
-            Dmsg1(200, "Got keyword=%s\n", kw[j]);
+            Dmsg1(800, "Got keyword=%s\n", kw[j]);
 	    switch (j) {
 	    case 0: /* job */
 	       if (job_name) {
                   bsendmsg(ua, _("Job name specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       job_name = ua->argv[i];
 	       kw_ok = true;
@@ -124,7 +130,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 1: /* JobId */
 	       if (jid) {
                   bsendmsg(ua, _("JobId specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       jid = ua->argv[i];
 	       kw_ok = true;
@@ -133,7 +139,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 3: /* fd */
 	       if (client_name) {
                   bsendmsg(ua, _("Client specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       client_name = ua->argv[i];
 	       kw_ok = true;
@@ -141,7 +147,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 4: /* fileset */
 	       if (fileset_name) {
                   bsendmsg(ua, _("FileSet specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       fileset_name = ua->argv[i];
 	       kw_ok = true;
@@ -149,7 +155,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 5: /* level */
 	       if (level_name) {
                   bsendmsg(ua, _("Level specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       level_name = ua->argv[i];
 	       kw_ok = true;
@@ -158,7 +164,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 7: /* sd */
 	       if (store_name) {
                   bsendmsg(ua, _("Storage specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       store_name = ua->argv[i];
 	       kw_ok = true;
@@ -166,7 +172,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 8: /* pool */
 	       if (pool_name) {
                   bsendmsg(ua, _("Pool specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       pool_name = ua->argv[i];
 	       kw_ok = true;
@@ -174,7 +180,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 9: /* where */
 	       if (where) {
                   bsendmsg(ua, _("Where specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       where = ua->argv[i];
 	       kw_ok = true;
@@ -182,7 +188,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 10: /* bootstrap */
 	       if (bootstrap) {
                   bsendmsg(ua, _("Bootstrap specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       bootstrap = ua->argv[i];
 	       kw_ok = true;
@@ -190,7 +196,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 11: /* replace */
 	       if (replace) {
                   bsendmsg(ua, _("Replace specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       replace = ua->argv[i];
 	       kw_ok = true;
@@ -198,7 +204,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 12: /* When */
 	       if (when) {
                   bsendmsg(ua, _("When specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       when = ua->argv[i];
 	       kw_ok = true;
@@ -206,7 +212,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 13:  /* Priority */
 	       if (Priority) {
                   bsendmsg(ua, _("Priority specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       Priority = atoi(ua->argv[i]);
 	       if (Priority <= 0) {
@@ -221,7 +227,7 @@ int run_cmd(UAContext *ua, const char *cmd)
 	    case 15: /* Verify Job */
 	       if (verify_job_name) {
                   bsendmsg(ua, _("Verify Job specified twice.\n"));
-		  return 1;
+		  return 0;
 	       }
 	       verify_job_name = ua->argv[i];
 	       kw_ok = true;
@@ -255,21 +261,22 @@ int run_cmd(UAContext *ua, const char *cmd)
             Dmsg1(200, "Set jobname=%s\n", job_name);
 	 } else {
             bsendmsg(ua, _("Invalid keyword: %s\n"), ua->argk[i]);
-	    return 1;
+	    return 0;
 	 }
       }
    } /* end argc loop */
 	     
-   Dmsg0(200, "Done scan.\n");
+   Dmsg0(800, "Done scan.\n");
 
    CAT *catalog = NULL;
    if (catalog_name != NULL) {
        catalog = (CAT *)GetResWithName(R_CATALOG, catalog_name);
        if (catalog == NULL) {
             bsendmsg(ua, _("Catalog \"%s\" not found\n"), catalog_name);
-	   return 1;
+	   return 0;
        }
    }
+   Dmsg1(200, "Using catalog=%s\n", catalog_name);
 
    if (job_name) {
       /* Find Job */
@@ -287,11 +294,11 @@ int run_cmd(UAContext *ua, const char *cmd)
       job = select_job_resource(ua);
    }
    if (!job) {
-      return 1;
+      return 0;
    } else if (!acl_access_ok(ua, Job_ACL, job->hdr.name)) {
       bsendmsg(ua, _("No authorization. Job \"%s\".\n"),
 	 job->hdr.name);
-      return 1;
+      return 0;
    }
 
    if (store_name) {
@@ -310,8 +317,9 @@ int run_cmd(UAContext *ua, const char *cmd)
    } else if (!acl_access_ok(ua, Storage_ACL, store->hdr.name)) {
       bsendmsg(ua, _("No authorization. Storage \"%s\".\n"),
 	       store->hdr.name);
-      return 1;
+      return 0;
    }
+   Dmsg1(200, "Using storage=%s\n", store->hdr.name);
 
    if (pool_name) {
       pool = (POOL *)GetResWithName(R_POOL, pool_name);
@@ -325,12 +333,13 @@ int run_cmd(UAContext *ua, const char *cmd)
       pool = job->pool; 	    /* use default */
    }
    if (!pool) {
-      return 1;
-   } else if (!acl_access_ok(ua, Pool_ACL, store->hdr.name)) {
+      return 0;
+   } else if (!acl_access_ok(ua, Pool_ACL, pool->hdr.name)) {
       bsendmsg(ua, _("No authorization. Pool \"%s\".\n"),
 	       pool->hdr.name);
-      return 1;
+      return 0;
    }
+   Dmsg1(200, "Using pool\n", pool->hdr.name);
 
    if (client_name) {
       client = (CLIENT *)GetResWithName(R_CLIENT, client_name);
@@ -344,12 +353,13 @@ int run_cmd(UAContext *ua, const char *cmd)
       client = job->client;	      /* use default */
    }
    if (!client) {
-      return 1;
-   } else if (!acl_access_ok(ua, Client_ACL, store->hdr.name)) {
+      return 0;
+   } else if (!acl_access_ok(ua, Client_ACL, client->hdr.name)) {
       bsendmsg(ua, _("No authorization. Client \"%s\".\n"),
 	       client->hdr.name);
-      return 1;
+      return 0;
    }
+   Dmsg1(200, "Using client=%s\n", client->hdr.name);
 
    if (fileset_name) {
       fileset = (FILESET *)GetResWithName(R_FILESET, fileset_name);
@@ -361,11 +371,11 @@ int run_cmd(UAContext *ua, const char *cmd)
       fileset = job->fileset;		/* use default */
    }
    if (!fileset) {
-      return 1;
-   } else if (!acl_access_ok(ua, FileSet_ACL, store->hdr.name)) {
+      return 0;
+   } else if (!acl_access_ok(ua, FileSet_ACL, fileset->hdr.name)) {
       bsendmsg(ua, _("No authorization. FileSet \"%s\".\n"),
 	       fileset->hdr.name);
-      return 1;
+      return 0;
    }
 
    if (verify_job_name) {
@@ -386,7 +396,7 @@ int run_cmd(UAContext *ua, const char *cmd)
    set_jcr_defaults(jcr, job);
 
    jcr->verify_job = verify_job;
-   jcr->store = store;
+   set_storage(jcr, store);
    jcr->client = client;
    jcr->fileset = fileset;
    jcr->pool = pool;
@@ -460,7 +470,7 @@ try_again:
    }
 
    /* Run without prompting? */
-   if (find_arg(ua, _("yes")) > 0) {
+   if (ua->batch || find_arg(ua, _("yes")) > 0) {
       goto start_job;
    }
 
@@ -701,7 +711,7 @@ Priority:    %d\n"),
 	 /* Storage */
 	 store = select_storage_resource(ua);
 	 if (store) {
-	    jcr->store = store;
+	    set_storage(jcr, store);
 	    goto try_again;
 	 }
 	 break;
@@ -847,7 +857,7 @@ start_job:
       } else {
          bsendmsg(ua, _("Job started. JobId=%u\n"), JobId);
       }
-      return 1;
+      return JobId;
    }
 
 bail_out:

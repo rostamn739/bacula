@@ -15,14 +15,6 @@
   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bacula.h"
- 
-#ifndef HAVE_FNMATCH
-
-/* Enable GNU extensions in fnmatch.h.	*/
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE	1
-#endif
-
 #include "fnmatch.h"
 
 
@@ -235,5 +227,3 @@ fnmatch (const char *pattern, const char *string, int flags)
 }
 
 #endif	/* _LIBC or not __GNU_LIBRARY__.  */
-
-#endif /* !HAVE_FNMATCH */

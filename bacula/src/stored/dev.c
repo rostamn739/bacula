@@ -1187,9 +1187,15 @@ weof_dev(DEVICE *dev, int num)
    }
    dev->file_size = 0;
 
-   if (!(dev_state(dev, ST_TAPE))) {
+   if (!dev->is_tape()) {
       return 0;
    }
+   if (!dev->can_append()) {
+      Mmsg0(dev->errmsg, _("Attempt to WEOF on non-appendable Volume\n"));
+      Emsg0(M_FATAL, 0, dev->errmsg);
+      return -1;
+   }
+
    dev->state &= ~(ST_EOT | ST_EOF);  /* remove EOF/EOT flags */
    Dmsg0(29, "weof_dev\n");
    mt_com.mt_op = MTWEOF;

@@ -282,7 +282,7 @@ static void do_storage_status(UAContext *ua, STORE *store)
 {
    BSOCK *sd;
 
-   ua->jcr->store = store;
+   set_storage(ua->jcr, store);
    /* Try connecting for up to 15 seconds */
    bsendmsg(ua, _("Connecting to Storage daemon %s at %s:%d\n"), 
       store->hdr.name, store->address, store->SDport);
@@ -665,6 +665,19 @@ static void list_terminated_jobs(UAContext *ua)
       char JobName[MAX_NAME_LENGTH];
       const char *termstat;
 
+      bstrncpy(JobName, je->Job, sizeof(JobName));
+      /* There are three periods after the Job name */
+      char *p;
+      for (int i=0; i<3; i++) {
+         if ((p=strrchr(JobName, '.')) != NULL) {
+	    *p = 0;
+	 }
+      }
+
+      if (!acl_access_ok(ua, Job_ACL, JobName)) {
+	 continue;
+      }
+
       bstrftime_nc(dt, sizeof(dt), je->end_time);
       switch (je->JobType) {
       case JT_ADMIN:
@@ -696,14 +709,6 @@ static void list_terminated_jobs(UAContext *ua)
       default:
          termstat = "Other";
 	 break;
-      }
-      bstrncpy(JobName, je->Job, sizeof(JobName));
-      /* There are three periods after the Job name */
-      char *p;
-      for (int i=0; i<3; i++) {
-         if ((p=strrchr(JobName, '.')) != NULL) {
-	    *p = 0;
-	 }
       }
       bsendmsg(ua, _("%6d  %-6s %8s %14s %-7s  %-8s %s\n"), 
 	 je->JobId,

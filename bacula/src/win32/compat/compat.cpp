@@ -98,30 +98,30 @@ wchar_win32_path(const char *name, WCHAR *win32_name)
     }
 }
 
-int
-umask(int)
+int umask(int)
 {
-    return 0;
+   return 0;
 }
 
-int
-chmod(const char *, mode_t)
+int chmod(const char *, mode_t)
 {
-    return 0;
+   return 0;
 }
 
-int
-chown(const char *k, uid_t, gid_t)
+int chown(const char *k, uid_t, gid_t)
 {
-    return 0;
+   return 0;
 }
 
-int
-lchown(const char *k, uid_t, gid_t)
+int lchown(const char *k, uid_t, gid_t)
 {
-    return 0;
+   return 0;
 }
 
+bool fstype(const char *fname, char *fs, int fslen)
+{
+   return true;                       /* accept anything */
+}
 
 
 long int
@@ -133,7 +133,7 @@ random(void)
 void
 srandom(unsigned int seed)
 {
-    srand(seed);
+   srand(seed);
 }
 // /////////////////////////////////////////////////////////////////
 // convert from Windows concept of time to Unix concept of time
@@ -1090,13 +1090,13 @@ cleanup:
 int
 kill(int pid, int signal)
 {
-    int rval = 0;
-    if (!TerminateProcess((HANDLE)pid, (UINT) signal)) {
-        rval = -1;
-        errno = b_errno_win32;
-    }
-    CloseHandle((HANDLE)pid);
-    return rval;
+   int rval = 0;
+   if (!TerminateProcess((HANDLE)pid, (UINT) signal)) {
+      rval = -1;
+      errno = b_errno_win32;
+   }
+   CloseHandle((HANDLE)pid);
+   return rval;
 }
 
 #ifndef HAVE_MINGW
@@ -1104,37 +1104,45 @@ kill(int pid, int signal)
 int
 close_bpipe(BPIPE *bpipe)
 {
-    int rval = 0;
-    if (bpipe->rfd) fclose(bpipe->rfd);
-    if (bpipe->wfd) fclose(bpipe->wfd);
+   int rval = 0;
+   int32_t remaining_wait = bpipe->wait;
 
-    if (bpipe->wait) {
-        int remaining_wait = bpipe->wait;
-        do {
-            DWORD exitCode;
-            if (!GetExitCodeProcess((HANDLE)bpipe->worker_pid, &exitCode)) {
-                const char *err = errorString();
-                rval = b_errno_win32;
-                d_msg(__FILE__, __LINE__, 0,
-                      "GetExitCode error %s\n", err);
-                LocalFree((void *)err);
-                break;
-            }
+   if (remaining_wait == 0) {         /* wait indefinitely */
+      remaining_wait = INT32_MAX;
+   }
+   for ( ;; ) {
+      DWORD exitCode;
+      if (!GetExitCodeProcess((HANDLE)bpipe->worker_pid, &exitCode)) {
+         const char *err = errorString();
+         rval = b_errno_win32;
+         d_msg(__FILE__, __LINE__, 0,
+               "GetExitCode error %s\n", err);
+         LocalFree((void *)err);
+         break;
+      }
+      if (exitCode == STILL_ACTIVE) {
+         if (remaining_wait <= 0) {
+            rval = ETIME;             /* timed out */
+            break;
+         }
+         bmicrosleep(1, 0);           /* wait one second */
+         remaining_wait--;
+      } else if (exitCode != 0) {
+         /* Truncate exit code as it doesn't seem to be correct */
+         rval = (exitCode & 0xFF) | b_errno_exit;
+         break;
+      } else {
+         break;                       /* Shouldn't get here */
+      }
+   }
 
-            if (exitCode == STILL_ACTIVE) {
-                bmicrosleep(1, 0);             /* wait one second */
-                remaining_wait--;
-            }
-            else break;
-        } while(remaining_wait);
-        rval = ETIME;                 /* timed out */
-    }
-
-    if (bpipe->timer_id) {
-        stop_child_timer(bpipe->timer_id);
-    }
-    free((void *)bpipe);
-    return rval;
+   if (bpipe->timer_id) {
+       stop_child_timer(bpipe->timer_id);
+   }
+   if (bpipe->rfd) fclose(bpipe->rfd);
+   if (bpipe->wfd) fclose(bpipe->wfd);
+   free((void *)bpipe);
+   return rval;
 }
 
 int

@@ -63,7 +63,7 @@
  *  Note, when written, it is serialized.
 
    uint32_t CheckSum;
-   uint32_t block_len; 
+   uint32_t block_len;
    uint32_t BlockNumber;
    char     Id[BLKHDR_ID_LENGTH];
 
@@ -72,6 +72,8 @@
    uint32_t VolSessionId;
    uint32_t VolSessionTime;
  */
+
+class DEVICE;                         /* for forward reference */
 
 /*
  * DEV_BLOCK for reading and writing blocks.
@@ -84,7 +86,7 @@
  */
 struct DEV_BLOCK {
    DEV_BLOCK *next;                   /* pointer to next one */
-   void *dev;                         /* pointer to device (DEVICE not defined yet) */
+   DEVICE *dev;                       /* pointer to device */
    /* binbuf is the number of bytes remaining in the buffer.
     *   For writes, it is bytes not yet written.
     *   For reads, it is remaining bytes not yet read.

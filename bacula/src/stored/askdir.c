@@ -7,7 +7,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -40,7 +40,7 @@ static char Create_job_media[] = "CatReq Job=%s CreateJobMedia"
    " FirstIndex=%u LastIndex=%u StartFile=%u EndFile=%u" 
    " StartBlock=%u EndBlock=%u\n";
 static char FileAttributes[] = "UpdCat Job=%s FileAttributes ";
-static char Job_status[]     = "3012 Job %s jobstatus %d\n";
+static char Job_status[]     = "Status Job=%s JobStatus=%d\n";
 
 
 /* Responses received from the Director */

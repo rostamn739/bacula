@@ -1,5 +1,5 @@
-/* 
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+/*
+   Copyright (C) 2000-20054 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -23,16 +23,21 @@
 
    Thanks to the TAR programmers.
 
+     Version $Id$
+
  */
 
 #include "bacula.h"
 #include "find.h"
+#ifdef HAVE_DARWIN_OS
+#include <sys/attr.h>
+#endif
 
 extern int32_t name_max;	      /* filename max length */
 extern int32_t path_max;	      /* path name max length */
 
 /*
- * Structure for keeping track of hard linked files, we   
+ * Structure for keeping track of hard linked files, we
  *   keep an entry for each hardlinked file that we save,
  *   which is the first one found. For all the other files that
  *   are linked to this one, we save only the directory
@@ -56,19 +61,48 @@ static void free_dir_ff_pkt(FF_PKT *dir_ff_pkt)
 }
 
 /*
- * Find a single file.			      
+ * Check to see if we allow the file system type of a file or directory.
+ * If we do not have a list of file system types, we accept anything.
+ */
+static int accept_fstype(FF_PKT *ff, void *dummy) {
+   int i;
+   char fs[1000];
+   bool accept = true;
+
+   if (ff->fstypes.size()) {
+      accept = false;
+      if (!fstype(ff->fname, fs, sizeof(fs))) {
+         Dmsg1(50, "Cannot determine file system type for \"%s\"\n", ff->fname);
+      } else {
+	 for (i = 0; i < ff->fstypes.size(); ++i) {
+	    if (strcmp(fs, (char *)ff->fstypes.get(i)) == 0) {
+               Dmsg2(100, "Accepting fstype %s for \"%s\"\n", fs, ff->fname);
+	       accept = true;
+	       break;
+	    }
+            Dmsg3(200, "fstype %s for \"%s\" does not match %s\n", fs,
+		  ff->fname, ff->fstypes.get(i));
+	 }
+      }
+   }
+   return accept;
+}
+
+/*
+ * Find a single file.
  * handle_file is the callback for handling the file.
  * p is the filename
- * parent_device is the device we are currently on 
- * top_level is 1 when not recursing or 0 when 
- *  decending into a directory.
+ * parent_device is the device we are currently on
+ * top_level is 1 when not recursing or 0 when
+ *  descending into a directory.
  */
 int
-find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt), 
+find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
 	       void *pkt, char *fname, dev_t parent_device, int top_level)
 {
    struct utimbuf restore_times;
    int rtn_stat;
+   int len;
 
    ff_pkt->fname = ff_pkt->link = fname;
 
@@ -87,8 +121,19 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
    restore_times.actime = ff_pkt->statp.st_atime;
    restore_times.modtime = ff_pkt->statp.st_mtime;
 
+   /*
+    * We check for allowed fstypes at top_level and fstype change (below).
+    */
+   if (top_level && !accept_fstype(ff_pkt, NULL)) {
+      ff_pkt->type = FT_INVALIDFS;
+      if (ff_pkt->flags & FO_KEEPATIME) {
+	 utime(fname, &restore_times);
+      }
+      Jmsg1(jcr, M_ERROR, 0, _("Top level directory \"%s\" has an unlisted fstype\n"), fname);
+      return 1;      /* Just ignore this error - or the whole backup is cancelled */
+   }
 
-   /* 
+   /*
     * If this is an Incremental backup, see if file was modified
     * since our last "save_time", presumably the last Full save
     * or Incremental.
@@ -97,13 +142,30 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
       Dmsg1(300, "Non-directory incremental: %s\n", ff_pkt->fname);
       /* Not a directory */
       if (ff_pkt->statp.st_mtime < ff_pkt->save_time
-	  && ((ff_pkt->flags & FO_MTIMEONLY) || 
+	  && ((ff_pkt->flags & FO_MTIMEONLY) ||
 	      ff_pkt->statp.st_ctime < ff_pkt->save_time)) {
 	 /* Incremental option, file not changed */
 	 ff_pkt->type = FT_NOCHG;
 	 return handle_file(ff_pkt, pkt);
       }
    }
+
+#ifdef HAVE_DARWIN_OS
+   if (S_ISREG(ff_pkt->statp.st_mode) && ff_pkt->flags & FO_HFSPLUS) {
+       /* TODO: initialise attrList once elsewhere? */
+       struct attrlist attrList;
+       memset(&attrList, 0, sizeof(attrList));
+       attrList.bitmapcount = ATTR_BIT_MAP_COUNT;
+       attrList.commonattr = ATTR_CMN_FNDRINFO;
+       attrList.fileattr = ATTR_FILE_RSRCLENGTH;
+       if (getattrlist(fname, &attrList, &ff_pkt->hfsinfo,
+		sizeof(ff_pkt->hfsinfo), 0) != 0) {
+	  ff_pkt->type = FT_NOSTAT;
+	  ff_pkt->ff_errno = errno;
+	  return handle_file(ff_pkt, pkt);
+       }
+   }
+#endif
 
 /* ***FIXME*** implement this */
 #if xxxxxxx
@@ -114,14 +176,15 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
    }
 #endif
    ff_pkt->LinkFI = 0;
-   /* 
+   /*
     * Handle hard linked files
     *
     * Maintain a list of hard linked files already backed up. This
-    *  allows us to ensure that the data of each file gets backed 
+    *  allows us to ensure that the data of each file gets backed
     *  up only once.
     */
-   if (ff_pkt->statp.st_nlink > 1
+   if (!(ff_pkt->flags & FO_NO_HARDLINK)
+       && ff_pkt->statp.st_nlink > 1
        && (S_ISREG(ff_pkt->statp.st_mode)
 	   || S_ISCHR(ff_pkt->statp.st_mode)
 	   || S_ISBLK(ff_pkt->statp.st_mode)
@@ -132,7 +195,7 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
 
       /* Search link list of hard linked files */
       for (lp = ff_pkt->linklist; lp; lp = lp->next)
-	 if (lp->ino == (ino_t)ff_pkt->statp.st_ino && 
+	 if (lp->ino == (ino_t)ff_pkt->statp.st_ino &&
 	     lp->dev == (dev_t)ff_pkt->statp.st_dev) {
              /* If we have already backed up the hard linked file don't do it again */
 	     if (strcmp(lp->name, fname) == 0) {
@@ -147,10 +210,11 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
 	 }
 
       /* File not previously dumped. Chain it into our list. */
-      lp = (struct f_link *)bmalloc(sizeof(struct f_link) + strlen(fname) +1);
+      len = strlen(fname) + 1;
+      lp = (struct f_link *)bmalloc(sizeof(struct f_link) + len);
       lp->ino = ff_pkt->statp.st_ino;
       lp->dev = ff_pkt->statp.st_dev;
-      strcpy(lp->name, fname);
+      bstrncpy(lp->name, fname, len);
       lp->next = ff_pkt->linklist;
       ff_pkt->linklist = lp;
       ff_pkt->linked = lp;	      /* mark saved link */
@@ -185,7 +249,7 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
 
       size = readlink(fname, buffer, path_max + name_max + 101);
       if (size < 0) {
-	 /* Could not follow link */				 
+	 /* Could not follow link */
 	 ff_pkt->type = FT_NOFOLLOW;
 	 ff_pkt->ff_errno = errno;
 	 rtn_stat = handle_file(ff_pkt, pkt);
@@ -208,11 +272,12 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
       struct dirent *entry, *result;
       char *link;
       int link_len;
-      int len;	 
+      int len;
       int status;
       dev_t our_device = ff_pkt->statp.st_dev;
+      bool recurse = true;
 
-      /*  
+      /*
        * If we are using Win32 (non-portable) backup API, don't check
        *  access as everything is more complicated, and
        *  in principle, we should be able to access everything.
@@ -250,9 +315,9 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
       } else {
 	 ff_pkt->type = FT_DIRBEGIN;
       }
-      /* 
+      /*
        * Note, we return the directory to the calling program (handle_file)
-       * when we first see the directory (FT_DIRBEGIN. 
+       * when we first see the directory (FT_DIRBEGIN.
        * This allows the program to apply matches and make a
        * choice whether or not to accept it.  If it is accepted, we
        * do not immediately save it, but do so only after everything
@@ -286,43 +351,45 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
       dir_ff_pkt->excluded_files_list = NULL;
       dir_ff_pkt->excluded_paths_list = NULL;
       dir_ff_pkt->linklist = NULL;
-	
-      ff_pkt->link = ff_pkt->fname;     /* reset "link" */
 
-      /* 
-       * Do not decend into subdirectories (recurse) if the
+      /*
+       * Do not descend into subdirectories (recurse) if the
        * user has turned it off for this directory.
+       *
+       * If we are crossing file systems, we are either not allowed
+       * to cross, or we may be restricted by a list of permitted
+       * file systems.
        */
       if (ff_pkt->flags & FO_NO_RECURSION) {
-	 /* No recursion into this directory */
 	 ff_pkt->type = FT_NORECURSE;
+	 recurse = false;
+      } else if (!top_level && parent_device != ff_pkt->statp.st_dev) {
+	 if(!(ff_pkt->flags & FO_MULTIFS)) {
+	    ff_pkt->type = FT_NOFSCHG;
+	    recurse = false;
+	 } else if (!accept_fstype(ff_pkt, NULL)) {
+	    ff_pkt->type = FT_INVALIDFS;
+	    recurse = false;
+	 }
+      }
+      if (!recurse) {
 	 rtn_stat = handle_file(ff_pkt, pkt);
 	 if (ff_pkt->linked) {
 	    ff_pkt->linked->FileIndex = ff_pkt->FileIndex;
 	 }
 	 free(link);
 	 free_dir_ff_pkt(dir_ff_pkt);
+         ff_pkt->link = ff_pkt->fname;     /* reset "link" */
+	 if (ff_pkt->flags & FO_KEEPATIME) {
+	    utime(fname, &restore_times);
+	 }
 	 return rtn_stat;
       }
 
-      /* 
-       * See if we are crossing file systems, and
-       * avoid doing so if the user only wants to dump one file system.
-       */
-      if (!top_level && !(ff_pkt->flags & FO_MULTIFS) &&
-	   parent_device != ff_pkt->statp.st_dev) {
-	 /* returning here means we do not handle this directory */
-	 ff_pkt->type = FT_NOFSCHG;
-	 rtn_stat = handle_file(ff_pkt, pkt);
-	 if (ff_pkt->linked) {
-	    ff_pkt->linked->FileIndex = ff_pkt->FileIndex;
-	 }
-	 free(link);
-	 free_dir_ff_pkt(dir_ff_pkt);
-	 return rtn_stat;
-      }
-      /* 
-       * Decend into or "recurse" into the directory to read
+      ff_pkt->link = ff_pkt->fname;     /* reset "link" */
+
+      /*
+       * Descend into or "recurse" into the directory to read
        *   all the files in it.
        */
       errno = 0;
@@ -438,7 +505,7 @@ int term_find_one(FF_PKT *ff)
 {
    struct f_link *lp, *lc;
    int count = 0;
-  
+
    /* Free up list of hard linked files */
    for (lp = ff->linklist; lp;) {
       lc = lp;
