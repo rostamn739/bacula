@@ -129,6 +129,7 @@ void *connection_request(void *arg)
 
    if (bnet_recv(bs) <= 0) {
       Emsg0(M_ERROR, 0, _("Connection request failed.\n"));
+      bnet_close(bs);
       return NULL;
    }
 
@@ -137,6 +138,8 @@ void *connection_request(void *arg)
     */
    if (bs->msglen < 25 || bs->msglen > (int)sizeof(name)-25) {
       Emsg1(M_ERROR, 0, _("Invalid Dir connection. Len=%d\n"), bs->msglen);
+      bnet_close(bs);
+      return NULL;
    }
    /* 
     * See if this is a File daemon connection. If so
@@ -152,6 +155,13 @@ void *connection_request(void *arg)
    jcr = new_jcr(sizeof(JCR), stored_free_jcr);     /* create Job Control Record */
    jcr->dir_bsock = bs; 	      /* save Director bsock */
    jcr->dir_bsock->jcr = jcr;
+   /* Initialize FD start condition variable */
+   int errstat = pthread_cond_init(&jcr->job_start_wait, NULL);
+   if (errstat != 0) {
+      Jmsg1(jcr, M_FATAL, 0, _("Unable to init job cond variable: ERR=%s\n"), strerror(errstat));
+      free_jcr(jcr);
+      return NULL;
+   }
 
    Dmsg0(1000, "stored in start_job\n");
 

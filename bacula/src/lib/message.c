@@ -372,18 +372,30 @@ static void make_unique_mail_filename(JCR *jcr, POOLMEM **name, DEST *d)
 static BPIPE *open_mail_pipe(JCR *jcr, POOLMEM **cmd, DEST *d)
 {
    BPIPE *bpipe;
-
-   if (d->mail_cmd && jcr) {
+   int use_bsmtp = (d->mail_cmd && jcr);
+       
+   if (use_bsmtp) {
       *cmd = edit_job_codes(jcr, *cmd, d->mail_cmd, d->where);
    } else {
+#if 1
+      Mmsg(cmd, "/usr/lib/sendmail -F Bacula %s", d->where);
+#else
       Mmsg(cmd, "mail -s \"Bacula Message\" %s", d->where);
+#endif
    }
    fflush(stdout);
 
    if (!(bpipe = open_bpipe(*cmd, 120, "rw"))) {
       Jmsg(jcr, M_ERROR, 0, "open mail pipe %s failed: ERR=%s\n", 
 	 *cmd, strerror(errno));
-   } 
+   }
+
+#if 1
+   if (!use_bsmtp) {
+       fprintf(bpipe->wfd, "Subject: Bacula Message\r\n\r\n");
+   }
+#endif
+   
    return bpipe;
 }
 
