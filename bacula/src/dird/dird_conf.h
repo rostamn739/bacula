@@ -185,6 +185,7 @@ struct JOB {
    char *RestoreBootstrap;            /* Bootstrap file */
    char *RunBeforeJob;                /* Run program before Job */
    char *RunAfterJob;                 /* Run program after Job */
+   char *RunAfterFailedJob;           /* Run program after Job that errs */
    char *ClientRunBeforeJob;          /* Run client program before Job */
    char *ClientRunAfterJob;           /* Run client program after Job */
    char *WriteBootstrap;              /* Where to write bootstrap Job updates */
@@ -200,6 +201,7 @@ struct JOB {
    int RescheduleOnError;             /* Set to reschedule on error */
    int RescheduleTimes;               /* Number of times to reschedule job */
    utime_t RescheduleInterval;        /* Reschedule interval */
+   utime_t JobRetention;              /* job retention period in seconds */
   
    MSGS      *messages;               /* How and where to send messages */
    SCHED     *schedule;               /* When -- Automatic schedule */
@@ -207,6 +209,7 @@ struct JOB {
    FILESET   *fileset;                /* What to backup -- Fileset */
    STORE     *storage;                /* Where is device -- Storage daemon */
    POOL      *pool;                   /* Where is media -- Media Pool */
+   JOB       *verify_job;             /* Job name to verify */
    uint32_t NumConcurrentJobs;        /* number of concurrent jobs running */
 };
 
@@ -345,5 +348,6 @@ struct RUN {
    char mday[nbytes_for_bits(31)];    /* bit set for each day of month */
    char month[nbytes_for_bits(12)];   /* bit set for each month */
    char wday[nbytes_for_bits(7)];     /* bit set for each day of the week */
-   char wpos[nbytes_for_bits(5)];     /* week position */
+   char wom[nbytes_for_bits(5)];      /* week of month */
+   char woy[nbytes_for_bits(54)];     /* week of year */
 };

@@ -325,7 +325,7 @@ open_dev(DEVICE *dev, char *VolName, int mode)
 #undef rewind_dev
 int _rewind_dev(char *file, int line, DEVICE *dev)
 {
-   Dmsg2(000, "rewind_dev called from %s:%d\n", file, line);
+   Dmsg2(100, "rewind_dev called from %s:%d\n", file, line);
    return rewind_dev(dev);
 }
 #endif
@@ -412,12 +412,15 @@ eod_dev(DEVICE *dev)
    }
    if (!(dev->state & ST_TAPE)) {
       pos = lseek(dev->fd, (off_t)0, SEEK_END);
-//    Dmsg1(000, "====== Seek to %lld\n", pos);
+//    Dmsg1(100, "====== Seek to %lld\n", pos);
       if (pos >= 0) {
 	 update_pos_dev(dev);
 	 dev->state |= ST_EOT;
 	 return 1;
       }
+      dev->dev_errno = errno;
+      Mmsg2(&dev->errmsg, _("lseek error on %s. ERR=%s.\n"),
+	     dev->dev_name, strerror(dev->dev_errno));
       return 0;
    }
 #ifdef MTEOM
@@ -465,7 +468,7 @@ eod_dev(DEVICE *dev)
     * the second EOF.
     */
    if (dev_cap(dev, CAP_BSFATEOM)) {
-      stat =  (bsf_dev(dev, 1) == 0);
+      stat =  bsf_dev(dev, 1);
       dev->file++;		      /* keep same file */
    } else {
       update_pos_dev(dev);		     /* update position */
@@ -700,6 +703,7 @@ int offline_or_rewind_dev(DEVICE *dev)
 int
 fsf_dev(DEVICE *dev, int num)
 { 
+   struct mtget mt_stat;
    struct mtop mt_com;
    int stat = 0;
 
@@ -721,13 +725,51 @@ fsf_dev(DEVICE *dev, int num)
    if (dev->state & ST_EOF) {
       Dmsg0(200, "ST_EOF set on entry to FSF\n");
    }
-   if (dev->state & ST_EOT) {
-      Dmsg0(200, "ST_EOT set on entry to FSF\n");
-   }
       
    Dmsg0(29, "fsf_dev\n");
    dev->block_num = 0;
-   if (dev_cap(dev, CAP_FSF)) {
+   /*
+    * If Fast forward space file is set, then we
+    *  use MTFSF to forward space and MTIOCGET
+    *  to get the file position. We assume that 
+    *  the SCSI driver will ensure that we do not
+    *  forward space over the end of data mark.
+    */
+   if (dev_cap(dev, CAP_FSF) && dev_cap(dev, CAP_FASTFSF)) {
+      mt_com.mt_op = MTFSF;
+      mt_com.mt_count = num;
+      stat = ioctl(dev->fd, MTIOCTOP, (char *)&mt_com);
+      if (stat < 0) {		      /* error => EOT */
+	 dev->state |= ST_EOT;
+         Dmsg0(200, "Set ST_EOT\n");
+	 clrerror_dev(dev, MTFSF);
+         Mmsg2(&dev->errmsg, _("ioctl MTFSF error on %s. ERR=%s.\n"),
+	    dev->dev_name, strerror(dev->dev_errno));
+         Dmsg1(200, "%s", dev->errmsg);
+	 return 0;
+      } else if (ioctl(dev->fd, MTIOCGET, (char *)&mt_stat) < 0) {
+	    dev->state |= ST_EOT;
+	    clrerror_dev(dev, MTFSF);
+	    dev->dev_errno = errno;
+            Mmsg2(&dev->errmsg, _("ioctl MTIOCGET error on %s. ERR=%s.\n"),
+	       dev->dev_name, strerror(dev->dev_errno));
+            Dmsg1(200, "%s", dev->errmsg);
+	    return 0;
+      }
+      Dmsg2(200, "fsf file=%d block=%d\n", mt_stat.mt_fileno, mt_stat.mt_blkno);
+      dev->file = mt_stat.mt_fileno;
+      dev->state |= ST_EOF;	/* just read EOF */
+      dev->file_addr = 0;
+      return 1;
+
+   /* 
+    * Here if CAP_FSF is set, and virtually all drives
+    *  these days support it, we read a record, then forward
+    *  space one file. Using this procedure, which is slow,
+    *  is the only way we can be sure that we don't read
+    *  two consecutive EOF marks, which means End of Data.
+    */
+   } else if (dev_cap(dev, CAP_FSF)) {
       POOLMEM *rbuf;
       int rbuf_len;
       Dmsg0(200, "FSF has cap_fsf\n");
@@ -830,12 +872,14 @@ bsf_dev(DEVICE *dev, int num)
 
    if (dev->fd < 0) {
       dev->dev_errno = EBADF;
-      Mmsg0(&dev->errmsg, _("Bad call to bsf_dev. Archive not open\n"));
+      Mmsg0(&dev->errmsg, _("Bad call to bsf_dev. Archive device not open\n"));
       Emsg0(M_FATAL, 0, dev->errmsg);
       return 0;
    }
 
    if (!(dev_state(dev, ST_TAPE))) {
+      Mmsg1(&dev->errmsg, _("Device %s cannot BSF because it is not a tape.\n"),
+	 dev->dev_name);
       return 0;
    }
    Dmsg0(29, "bsf_dev\n");
@@ -1002,12 +1046,12 @@ weof_dev(DEVICE *dev, int num)
 
    if (dev->fd < 0) {
       dev->dev_errno = EBADF;
-      Mmsg0(&dev->errmsg, _("Bad call to weof_dev. Archive not open\n"));
+      Mmsg0(&dev->errmsg, _("Bad call to weof_dev. Archive drive not open\n"));
       Emsg0(M_FATAL, 0, dev->errmsg);
       return -1;
    }
 
-   if (!(dev->state & ST_TAPE)) {
+   if (!(dev_state(dev, ST_TAPE))) {
       return 0;
    }
    dev->state &= ~(ST_EOT | ST_EOF);  /* remove EOF/EOT flags */
@@ -1021,8 +1065,10 @@ weof_dev(DEVICE *dev, int num)
       dev->file_addr = 0;
    } else {
       clrerror_dev(dev, MTWEOF);
-      Mmsg2(&dev->errmsg, _("ioctl MTWEOF error on %s. ERR=%s.\n"),
-	 dev->dev_name, strerror(dev->dev_errno));
+      if (stat == -1) {
+         Mmsg2(&dev->errmsg, _("ioctl MTWEOF error on %s. ERR=%s.\n"),
+	    dev->dev_name, strerror(dev->dev_errno));
+       }
    }
    return stat;
 }
@@ -1115,7 +1161,7 @@ clrerror_dev(DEVICE *dev, int func)
 {
    /* Read and clear SCSI error status */
    union mterrstat mt_errstat;
-   Pmsg2(000, "Doing MTIOCERRSTAT errno=%d ERR=%s\n", dev->dev_errno,
+   Dmsg2(200, "Doing MTIOCERRSTAT errno=%d ERR=%s\n", dev->dev_errno,
       strerror(dev->dev_errno));
    ioctl(dev->fd, MTIOCERRSTAT, (char *)&mt_errstat);
 }

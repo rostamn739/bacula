@@ -141,10 +141,13 @@ StartTime=%100s", &JobId, Name, cType, cLevel, StartTime) == 5) {
  *
  * Find a Volume for a given PoolId, MediaType, and VolStatus
  *
+ *   Note! this does not correctly implement InChanger. 	  
+ *
  * Returns: 0 on failure
  *	    numrows on success
- */
-int db_find_next_volume(JCR *jcr, B_DB *mdb, int item, MEDIA_DBR *mr)
+ */	
+int
+db_find_next_volume(JCR *jcr, B_DB *mdb, int item, MEDIA_DBR *mr) 
 {
    MEDIA_DBR omr;
    int stat = 0;
@@ -176,7 +179,9 @@ int db_find_next_volume(JCR *jcr, B_DB *mdb, int item, MEDIA_DBR *mr)
    return stat; 		
 }
 
-int db_find_last_jobid(JCR *jcr, B_DB *mdb, JOB_DBR *jr) { return 0; }
+int
+db_find_last_jobid(JCR *jcr, B_DB *mdb, char *Name, JOB_DBR *jr)
+{ return 0; }
 
 
 #endif /* HAVE_BACULA_DB */

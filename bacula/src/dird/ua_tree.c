@@ -1,7 +1,8 @@
 /*
  *
  *   Bacula Director -- User Agent Database File tree for Restore
- *	command.
+ *	command. This file interacts with the user implementing the
+ *	UA tree commands.
  *
  *     Kern Sibbald, July MMII
  *
@@ -40,7 +41,9 @@ static int markcmd(UAContext *ua, TREE_CTX *tree);
 static int countcmd(UAContext *ua, TREE_CTX *tree);
 static int findcmd(UAContext *ua, TREE_CTX *tree);
 static int lscmd(UAContext *ua, TREE_CTX *tree);
+static int lsmark(UAContext *ua, TREE_CTX *tree);
 static int dircmd(UAContext *ua, TREE_CTX *tree);
+static int estimatecmd(UAContext *ua, TREE_CTX *tree);
 static int helpcmd(UAContext *ua, TREE_CTX *tree);
 static int cdcmd(UAContext *ua, TREE_CTX *tree);
 static int pwdcmd(UAContext *ua, TREE_CTX *tree);
@@ -50,17 +53,19 @@ static int quitcmd(UAContext *ua, TREE_CTX *tree);
 
 struct cmdstruct { char *key; int (*func)(UAContext *ua, TREE_CTX *tree); char *help; }; 
 static struct cmdstruct commands[] = {
- { N_("mark"),       markcmd,      _("mark file for restoration")},
- { N_("unmark"),     unmarkcmd,    _("unmark file for restoration")},
  { N_("cd"),         cdcmd,        _("change current directory")},
- { N_("pwd"),        pwdcmd,       _("print current working directory")},
- { N_("ls"),         lscmd,        _("list current directory")},    
- { N_("dir"),        dircmd,       _("list current directory")},    
  { N_("count"),      countcmd,     _("count marked files")},
- { N_("find"),       findcmd,      _("find files")},
+ { N_("dir"),        dircmd,       _("list current directory")},    
  { N_("done"),       quitcmd,      _("leave file selection mode")},
+ { N_("estimate"),   estimatecmd,  _("estimate restore size")},
  { N_("exit"),       quitcmd,      _("exit = done")},
+ { N_("find"),       findcmd,      _("find files")},
  { N_("help"),       helpcmd,      _("print help")},
+ { N_("lsmark"),     lsmark,       _("list the marked files")},    
+ { N_("ls"),         lscmd,        _("list current directory")},    
+ { N_("mark"),       markcmd,      _("mark file to be restored")},
+ { N_("pwd"),        pwdcmd,       _("print current working directory")},
+ { N_("unmark"),     unmarkcmd,    _("unmark file to be restored")},
  { N_("?"),          helpcmd,      _("print help")},    
 	     };
 #define comsize (sizeof(commands)/sizeof(struct cmdstruct))
@@ -163,7 +168,7 @@ int insert_tree_handler(void *ctx, int num_fields, char **row)
    new_node->FileIndex = atoi(row[2]);
    new_node->JobId = atoi(row[3]);
    new_node->type = type;
-   new_node->extract = 1;	      /* extract all by default */
+   new_node->extract = true;	      /* extract all by default */
    tree->cnt++;
    return 0;
 }
@@ -174,19 +179,23 @@ int insert_tree_handler(void *ctx, int num_fields, char **row)
  *  down the tree setting all children if the 
  *  node is a directory.
  */
-static void set_extract(UAContext *ua, TREE_NODE *node, TREE_CTX *tree, int value)
+static int set_extract(UAContext *ua, TREE_NODE *node, TREE_CTX *tree, bool extract)
 {
    TREE_NODE *n;
    FILE_DBR fdbr;
    struct stat statp;
+   int count = 0;
 
-   node->extract = value;
+   node->extract = extract;
+   if (node->type != TN_NEWDIR) {
+      count++;
+   }
    /* For a non-file (i.e. directory), we see all the children */
    if (node->type != TN_FILE) {
       for (n=node->child; n; n=n->sibling) {
-	 set_extract(ua, n, tree, value);
+	 count += set_extract(ua, n, tree, extract);
       }
-   } else if (value) {
+   } else if (extract) {
       char cwd[2000];
       /* Ordinary file, we get the full path, look up the
        * attributes, decode them, and if we are hard linked to
@@ -195,57 +204,65 @@ static void set_extract(UAContext *ua, TREE_NODE *node, TREE_CTX *tree, int valu
       tree_getpath(node, cwd, sizeof(cwd));
       fdbr.FileId = 0;
       fdbr.JobId = node->JobId;
-      if (db_get_file_attributes_record(ua->jcr, ua->db, cwd, &fdbr)) {
+      if (db_get_file_attributes_record(ua->jcr, ua->db, cwd, NULL, &fdbr)) {
 	 int32_t LinkFI;
 	 decode_stat(fdbr.LStat, &statp, &LinkFI); /* decode stat pkt */
 	 /*
 	  * If we point to a hard linked file, traverse the tree to
-	  * find that file, and mark it for restoration as well. It
+	  * find that file, and mark it to be restored as well. It
 	  * must have the Link we just obtained and the same JobId.
 	  */
 	 if (LinkFI) {
 	    for (n=first_tree_node(tree->root); n; n=next_tree_node(n)) {
 	       if (n->FileIndex == LinkFI && n->JobId == node->JobId) {
-		  n->extract = 1;
+		  n->extract = true;
 		  break;
 	       }
 	    }
 	 }
       }
    }
+   return count;
 }
 
 static int markcmd(UAContext *ua, TREE_CTX *tree)
 {
    TREE_NODE *node;
+   int count = 0;
 
-   if (ua->argc < 2)
-      return 1;
-   if (!tree->node->child) {	 
+   if (ua->argc < 2 || !tree->node->child) {
+      bsendmsg(ua, _("No files marked.\n"));
       return 1;
    }
-   for (node = tree->node->child; node; node=node->sibling) {
-      if (fnmatch(ua->argk[1], node->fname, 0) == 0) {
-	 set_extract(ua, node, tree, 1);
+   for (int i=1; i < ua->argc; i++) {
+      for (node = tree->node->child; node; node=node->sibling) {
+	 if (fnmatch(ua->argk[i], node->fname, 0) == 0) {
+	    count += set_extract(ua, node, tree, true);
+	 }
       }
+   }
+   if (count == 0) {
+      bsendmsg(ua, _("No files marked.\n"));
+   } else {
+      bsendmsg(ua, _("%d file%s marked.\n"), count, count==0?"":"s");
    }
    return 1;
 }
 
 static int countcmd(UAContext *ua, TREE_CTX *tree)
 {
-   int total, extract;
+   int total, num_extract;
 
-   total = extract = 0;
+   total = num_extract = 0;
    for (TREE_NODE *node=first_tree_node(tree->root); node; node=next_tree_node(node)) {
       if (node->type != TN_NEWDIR) {
 	 total++;
 	 if (node->extract) {
-	    extract++;
+	    num_extract++;
 	 }
       }
    }
-   bsendmsg(ua, "%d total files. %d marked for restoration.\n", total, extract);
+   bsendmsg(ua, "%d total files. %d marked to be restored.\n", total, num_extract);
    return 1;
 }
 
@@ -287,13 +304,34 @@ static int lscmd(UAContext *ua, TREE_CTX *tree)
    return 1;
 }
 
+/*
+ * Ls command that lists only the marked files
+ */
+static int lsmark(UAContext *ua, TREE_CTX *tree)
+{
+   TREE_NODE *node;
+
+   if (!tree->node->child) {	 
+      return 1;
+   }
+   for (node = tree->node->child; node; node=node->sibling) {
+      if (ua->argc == 1 || fnmatch(ua->argk[1], node->fname, 0) == 0 &&
+	  node->extract) {
+         bsendmsg(ua, "%s%s%s\n", node->extract?"*":"", node->fname,
+            (node->type==TN_DIR||node->type==TN_NEWDIR)?"/":"");
+      }
+   }
+   return 1;
+}
+
+
 extern char *getuser(uid_t uid);
 extern char *getgroup(gid_t gid);
 
 /*
  * This is actually the long form used for "dir"
  */
-static void ls_output(char *buf, char *fname, int extract, struct stat *statp)
+static void ls_output(char *buf, char *fname, bool extract, struct stat *statp)
 {
    char *p, *f;
    char ec1[30];
@@ -338,7 +376,7 @@ static int dircmd(UAContext *ua, TREE_CTX *tree)
 	 tree_getpath(node, cwd, sizeof(cwd));
 	 fdbr.FileId = 0;
 	 fdbr.JobId = node->JobId;
-	 if (db_get_file_attributes_record(ua->jcr, ua->db, cwd, &fdbr)) {
+	 if (db_get_file_attributes_record(ua->jcr, ua->db, cwd, NULL, &fdbr)) {
 	    int32_t LinkFI;
 	    decode_stat(fdbr.LStat, &statp, &LinkFI); /* decode stat pkt */
 	    ls_output(buf, cwd, node->extract, &statp);
@@ -352,6 +390,45 @@ static int dircmd(UAContext *ua, TREE_CTX *tree)
    }
    return 1;
 }
+
+
+static int estimatecmd(UAContext *ua, TREE_CTX *tree)
+{
+   int total, num_extract;
+   uint64_t total_bytes = 0;
+   FILE_DBR fdbr;
+   struct stat statp;
+   char cwd[1100];
+   char ec1[50];
+
+   total = num_extract = 0;
+   for (TREE_NODE *node=first_tree_node(tree->root); node; node=next_tree_node(node)) {
+      if (node->type != TN_NEWDIR) {
+	 total++;
+	 /* If regular file, get size */
+	 if (node->extract && node->type == TN_FILE) {
+	    num_extract++;
+	    tree_getpath(node, cwd, sizeof(cwd));
+	    fdbr.FileId = 0;
+	    fdbr.JobId = node->JobId;
+	    if (db_get_file_attributes_record(ua->jcr, ua->db, cwd, NULL, &fdbr)) {
+	       int32_t LinkFI;
+	       decode_stat(fdbr.LStat, &statp, &LinkFI); /* decode stat pkt */
+	       if (S_ISREG(statp.st_mode) && statp.st_size > 0) {
+		  total_bytes += statp.st_size;
+	       }
+	    }
+	 /* Directory, count only */
+	 } else if (node->extract) {
+	    num_extract++;
+	 }
+      }
+   }
+   bsendmsg(ua, "%d total files; %d marked to be restored; %s bytes.\n", 
+	    total, num_extract, edit_uint64_with_commas(total_bytes, ec1));
+   return 1;
+}
+
 
 
 static int helpcmd(UAContext *ua, TREE_CTX *tree) 
@@ -413,16 +490,23 @@ static int pwdcmd(UAContext *ua, TREE_CTX *tree)
 static int unmarkcmd(UAContext *ua, TREE_CTX *tree)
 {
    TREE_NODE *node;
+   int count = 0;
 
-   if (ua->argc < 2)
-      return 1;
-   if (!tree->node->child) {	 
+   if (ua->argc < 2 || !tree->node->child) {	 
+      bsendmsg(ua, _("No files unmarked.\n"));
       return 1;
    }
-   for (node = tree->node->child; node; node=node->sibling) {
-      if (fnmatch(ua->argk[1], node->fname, 0) == 0) {
-	 set_extract(ua, node, tree, 0);
+   for (int i=1; i < ua->argc; i++) {
+      for (node = tree->node->child; node; node=node->sibling) {
+	 if (fnmatch(ua->argk[i], node->fname, 0) == 0) {
+	    count += set_extract(ua, node, tree, false);
+	 }
       }
+   }
+   if (count == 0) {
+      bsendmsg(ua, _("No files unmarked.\n"));
+   } else {
+      bsendmsg(ua, _("%d file%s unmarked.\n"), count, count==0?"":"s");
    }
    return 1;
 }

@@ -102,7 +102,7 @@ extern void wait_for_storage_daemon_termination(JCR *jcr);
 /* next_vol.c */
 int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int create);
 bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr);
-bool is_volume_valid_or_recyclable(JCR *jcr, MEDIA_DBR *mr, char **reason);
+void check_if_volume_valid_or_recyclable(JCR *jcr, MEDIA_DBR *mr, char **reason);
 
 /* newvol.c */
 int newVolume(JCR *jcr, MEDIA_DBR *mr);
@@ -132,6 +132,7 @@ int is_volume_name_legal(UAContext *ua, char *name);
 /* ua_output.c */
 void prtit(void *ctx, char *msg);
 int complete_jcr_for_job(JCR *jcr, JOB *job, POOL *pool);
+RUN *find_next_run(RUN *run, JOB *job, time_t &runtime);
 
 /* ua_server.c */
 void bsendmsg(void *sock, char *fmt, ...);

@@ -477,14 +477,21 @@ int bopen(BFILE *bfd, const char *fname, int flags, mode_t mode)
 {
    bfd->fid = open(fname, flags, mode);
    bfd->berrno = errno;
+   Dmsg1(50, "Open file %d\n", bfd->fid);
    return bfd->fid;
 }
 
 int bclose(BFILE *bfd)
 { 
-   int stat = close(bfd->fid);
+   int stat;  
+   Dmsg1(50, "Close file %d\n", bfd->fid);
+   if (bfd->fid == -1) {
+      return 0;
+   }
+   stat = close(bfd->fid);
    bfd->berrno = errno;
    bfd->fid = -1;
+
    return stat;
 }
 

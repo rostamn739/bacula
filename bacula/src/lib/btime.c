@@ -31,7 +31,7 @@
  *  it is being phased out. 
  *     
  *  Epoch is the base of Unix time in seconds (time_t, ...) 
- *     and is 1 Jan 1970 at 0:0
+ *     and is 1 Jan 1970 at 0:0 UTC
  *
  *  The major two times that should be left are:
  *     btime_t	(64 bit integer in microseconds base Epoch)
@@ -52,6 +52,21 @@ char *bstrftime(char *dt, int maxlen, utime_t tim)
    strftime(dt, maxlen, "%d-%b-%Y %H:%M", &tm);
    return dt;
 }
+
+/* Formatted time for user display: dd-Mon-yy hh:mm  (no century) */
+char *bstrftime_nc(char *dt, int maxlen, utime_t tim)
+{
+   time_t ttime = tim;
+   struct tm tm;
+   
+   /* ***FIXME**** the format and localtime_r() should be user configurable */
+   localtime_r(&ttime, &tm);
+   /* NOTE! since the compiler complains about %y, I use %y and cut the century */
+   strftime(dt, maxlen, "%d-%b-%Y %H:%M", &tm);
+   strcpy(dt+7, dt+9);
+   return dt;
+}
+
 
 /* Unix time to standard time string yyyy-mm-dd hh:mm:ss */
 char *bstrutime(char *dt, int maxlen, utime_t tim)
@@ -92,28 +107,10 @@ utime_t str_to_utime(char *str)
    return (utime_t)ttime;
 }
 
-/* Deprecated. Do not use. */
-void get_current_time(struct date_time *dt)
-{
-   struct tm tm;
-   time_t now;
-
-   now = time(NULL);
-   gmtime_r(&now, &tm);
-   Dmsg6(200, "m=%d d=%d y=%d h=%d m=%d s=%d\n", tm.tm_mon+1, tm.tm_mday, tm.tm_year+1900,
-      tm.tm_hour, tm.tm_min, tm.tm_sec);
-   tm_encode(dt, &tm);
-#ifdef DEBUG
-   Dmsg2(200, "jday=%f jmin=%f\n", dt->julian_day_number, dt->julian_day_fraction);
-   tm_decode(dt, &tm);
-   Dmsg6(200, "m=%d d=%d y=%d h=%d m=%d s=%d\n", tm.tm_mon+1, tm.tm_mday, tm.tm_year+1900,
-      tm.tm_hour, tm.tm_min, tm.tm_sec);
-#endif
-}
 
 /*
  * Bacula's time (btime_t) is an unsigned 64 bit integer that contains
- *   the number of microseconds since Epoch Time (1 Jan 1970).
+ *   the number of microseconds since Epoch Time (1 Jan 1970) UTC.
  */
 
 btime_t get_current_btime()
@@ -135,9 +132,80 @@ time_t btime_to_unix(btime_t bt)
 /* Convert btime to utime */
 utime_t btime_to_utime(btime_t bt)
 {
-   return (utime_t)bt;
+   return (utime_t)(bt/1000000);
 }
 
+/*
+ * Return the week of the month, base 0 (wpos)
+ *   given tm_mday and tm_wday. Value returned
+ *   can be from 0 to 4 => week1, ... week5
+ */
+int tm_wom(int mday, int wday)
+{
+   int fs;			 /* first sunday */
+   fs = (mday%7) - wday;
+   if (fs <= 0) {
+      fs += 7;
+   }
+   if (mday <= fs) {
+//    Dmsg2(100, "wom=0 wday=%d <= fs=%d\n", wday, fs);
+      return 0;
+   }
+   int wom = 1 + (mday - fs - 1) / 7;
+// Dmsg3(100, "wom=%d wday=%d fs=%d\n", wom, wday, fs);
+   return wom;
+}  
+
+/*
+ * Given a Unix date return the week of the year.
+ * The returned value can be 0-53.  Officially
+ * the weeks are numbered from 1 to 53 where week1
+ * is the week in which the first Thursday of the
+ * year occurs (alternatively, the week which contains
+ * the 4th of January).  We return 0, if the week of the
+ * year does not fall in the current year.
+ */
+int tm_woy(time_t stime)
+{
+   int woy, fty, tm_yday;
+   time_t time4;
+   struct tm tm;
+   memset(&tm, 0, sizeof(struct tm));
+   localtime_r(&stime, &tm);
+   tm_yday = tm.tm_yday;
+   tm.tm_mon = 0;
+   tm.tm_mday = 4;
+   time4 = mktime(&tm);
+   localtime_r(&time4, &tm);
+   fty = 1 - tm.tm_wday;
+   if (fty <= 0) {
+      fty += 7;
+   }
+   woy = tm_yday - fty + 4;
+   if (woy < 0) {
+      return 0;
+   }
+   return 1 + woy / 7;
+}
+
+/* Deprecated. Do not use. */
+void get_current_time(struct date_time *dt)
+{
+   struct tm tm;
+   time_t now;
+
+   now = time(NULL);
+   gmtime_r(&now, &tm);
+   Dmsg6(200, "m=%d d=%d y=%d h=%d m=%d s=%d\n", tm.tm_mon+1, tm.tm_mday, tm.tm_year+1900,
+      tm.tm_hour, tm.tm_min, tm.tm_sec);
+   tm_encode(dt, &tm);
+#ifdef DEBUG
+   Dmsg2(200, "jday=%f jmin=%f\n", dt->julian_day_number, dt->julian_day_fraction);
+   tm_decode(dt, &tm);
+   Dmsg6(200, "m=%d d=%d y=%d h=%d m=%d s=%d\n", tm.tm_mon+1, tm.tm_mday, tm.tm_year+1900,
+      tm.tm_hour, tm.tm_min, tm.tm_sec);
+#endif
+}
 
 
 /*  date_encode  --  Encode civil date as a Julian day number.	*/
