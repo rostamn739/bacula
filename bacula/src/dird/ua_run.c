@@ -44,15 +44,17 @@ extern struct s_kw ReplaceOptions[];
  *     run <job-name> jobid=nn
  *
  */
-int runcmd(UAContext *ua, char *cmd)
+int run_cmd(UAContext *ua, char *cmd)
 {
    JCR *jcr;
    char *job_name, *level_name, *jid, *store_name, *pool_name;
    char *where, *fileset_name, *client_name, *bootstrap, *replace;
-   char *when;
+   char *when, *verify_job_name;
    int Priority = 0;
-   int i, j, found, opt;
+   int i, j, opt;
+   bool found;
    JOB *job = NULL;
+   JOB *verify_job = NULL;
    STORE *store = NULL;
    CLIENT *client = NULL;
    FILESET *fileset = NULL;
@@ -71,9 +73,12 @@ int runcmd(UAContext *ua, char *cmd)
       N_("when"),
       N_("priority"),
       N_("yes"),          /* 12 -- if you change this change YES_POS too */
+      N_("run"),          /* 13 -- if you change this change RUN_POS too */
+      N_("verifyjob"),
       NULL};
 
 #define YES_POS 12
+#define RUN_POS 13
 
    if (!open_db(ua)) {
       return 1;
@@ -90,14 +95,15 @@ int runcmd(UAContext *ua, char *cmd)
    fileset_name = NULL;
    bootstrap = NULL;
    replace = NULL;
+   verify_job_name = NULL;
 
    for (i=1; i<ua->argc; i++) {
-      found = False;
+      found = false;
       Dmsg2(200, "Doing arg %d = %s\n", i, ua->argk[i]);
       for (j=0; !found && kw[j]; j++) {
 	 if (strcasecmp(ua->argk[i], _(kw[j])) == 0) {
-	    /* Note, yes has no value, so do not err */
-	    if (!ua->argv[i] && j != YES_POS /*yes*/) {
+	    /* Note, yes and run have no value, so do not err */
+	    if (!ua->argv[i] && (j != YES_POS /*yes*/ && j != RUN_POS)) {  
                bsendmsg(ua, _("Value missing for keyword %s\n"), ua->argk[i]);
 	       return 1;
 	    }
@@ -109,7 +115,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       job_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 1: /* JobId */
 	       if (jid) {
@@ -117,7 +123,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       jid = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 2: /* client */
 	       if (client_name) {
@@ -125,7 +131,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       client_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 3: /* fileset */
 	       if (fileset_name) {
@@ -133,7 +139,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       fileset_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 4: /* level */
 	       if (level_name) {
@@ -141,7 +147,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       level_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 5: /* storage */
 	       if (store_name) {
@@ -149,7 +155,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       store_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 6: /* pool */
 	       if (pool_name) {
@@ -157,7 +163,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       pool_name = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 7: /* where */
 	       if (where) {
@@ -165,7 +171,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       where = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 8: /* bootstrap */
 	       if (bootstrap) {
@@ -173,7 +179,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       bootstrap = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 9: /* replace */
 	       if (replace) {
@@ -181,7 +187,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       replace = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 10: /* When */
 	       if (when) {
@@ -189,7 +195,7 @@ int runcmd(UAContext *ua, char *cmd)
 		  return 1;
 	       }
 	       when = ua->argv[i];
-	       found = True;
+	       found = true;
 	       break;
 	    case 11:  /* Priority */
 	       if (Priority) {
@@ -203,8 +209,18 @@ int runcmd(UAContext *ua, char *cmd)
 	       }
 	       break;
 	    case 12: /* yes */
-	       found = True;
+	    case 13: /* run */
+	       found = true;
 	       break;
+	    case 14: /* Verify Job */
+	       if (verify_job_name) {
+                  bsendmsg(ua, _("Verify Job specified twice.\n"));
+		  return 1;
+	       }
+	       verify_job_name = ua->argv[i];
+	       found = true;
+	       break;
+
 	    default:
 	       break;
 	    }
@@ -270,6 +286,9 @@ int runcmd(UAContext *ua, char *cmd)
    } else {
       pool = job->pool; 	    /* use default */
    }
+   if (!pool) {
+      return 1;
+   }
 
    if (client_name) {
       client = (CLIENT *)GetResWithName(R_CLIENT, client_name);
@@ -297,6 +316,15 @@ int runcmd(UAContext *ua, char *cmd)
       return 1;
    }
 
+   if (verify_job_name) {
+      verify_job = (JOB *)GetResWithName(R_JOB, verify_job_name);
+      if (!verify_job) {
+         bsendmsg(ua, _("Verify Job \"%s\" not found.\n"), verify_job_name);
+	 verify_job = select_job_resource(ua);
+      }
+   } else {
+      verify_job = job->verify_job;
+   }
 
    /* Create JCR to run job */
    jcr = new_jcr(sizeof(JCR), dird_free_jcr);
@@ -396,7 +424,8 @@ Priority: %d\n"),
 	    }
 	 }
 	 level_name = NULL;
-         bsendmsg(ua, _("Run %s job\n\
+	 if (jcr->JobType == JT_BACKUP) {
+            bsendmsg(ua, _("Run %s job\n\
 JobName:  %s\n\
 FileSet:  %s\n\
 Level:    %s\n\
@@ -405,7 +434,7 @@ Storage:  %s\n\
 Pool:     %s\n\
 When:     %s\n\
 Priority: %d\n"),
-                 jcr->JobType==JT_BACKUP?_("Backup"):_("Verify"),
+                 _("Backup"),
 		 job->hdr.name,
 		 jcr->fileset->hdr.name,
 		 level_to_str(jcr->JobLevel),
@@ -414,6 +443,34 @@ Priority: %d\n"),
 		 NPRT(jcr->pool->hdr.name), 
 		 bstrutime(dt, sizeof(dt), jcr->sched_time),
 		 jcr->JobPriority);
+	 } else {  /* JT_VERIFY */
+	    char *Name;
+	    if (jcr->job->verify_job) {
+	       Name = jcr->job->verify_job->hdr.name;
+	    } else {
+               Name = "";
+	    }
+         bsendmsg(ua, _("Run %s job\n\
+JobName:  %s\n\
+FileSet:  %s\n\
+Level:    %s\n\
+Client:   %s\n\
+Storage:  %s\n\
+Pool:     %s\n\
+Verify Job:  %s\n\
+When:     %s\n\
+Priority: %d\n"),
+                 _("Verify"),
+		 job->hdr.name,
+		 jcr->fileset->hdr.name,
+		 level_to_str(jcr->JobLevel),
+		 jcr->client->hdr.name,
+		 jcr->store->hdr.name,
+		 NPRT(jcr->pool->hdr.name), 
+		 Name,		  
+		 bstrutime(dt, sizeof(dt), jcr->sched_time),
+		 jcr->JobPriority);
+	 }
 	 break;
       case JT_RESTORE:
 	 if (jcr->RestoreJobId == 0 && !jcr->RestoreBootstrap) {
@@ -513,6 +570,9 @@ Priority:   %d\n"),
       if (jcr->JobType == JT_BACKUP ||
 	  jcr->JobType == JT_VERIFY) {
          add_prompt(ua, _("Pool"));          /* 7 */
+	 if (jcr->JobType == JT_VERIFY) {
+            add_prompt(ua, _("Verify Job"));  /* 8 */
+	 }
       } else if (jcr->JobType == JT_RESTORE) {
          add_prompt(ua, _("Bootstrap"));     /* 7 */
          add_prompt(ua, _("Where"));         /* 8 */
@@ -554,6 +614,7 @@ Priority:   %d\n"),
             add_prompt(ua, _("Initialize Catalog"));
             add_prompt(ua, _("Verify Catalog"));
             add_prompt(ua, _("Verify Volume to Catalog"));
+            add_prompt(ua, _("Verify Disk to Catalog"));
             add_prompt(ua, _("Verify Volume Data (not yet implemented)"));
             switch (do_prompt(ua, "",  _("Select level"), NULL, 0)) {
 	    case 0:
@@ -566,6 +627,9 @@ Priority:   %d\n"),
 	       jcr->JobLevel = L_VERIFY_VOLUME_TO_CATALOG;
 	       break;
 	    case 3:
+	       jcr->JobLevel = L_VERIFY_DISK_TO_CATALOG;
+	       break;
+	    case 4:
 	       jcr->JobLevel = L_VERIFY_DATA;
 	       break;
 	    default:
@@ -636,6 +700,7 @@ Priority:   %d\n"),
 	 }
 	 goto try_again;
       case 7:
+	 /* Pool or Bootstrap depending on JobType */
 	 if (jcr->JobType == JT_BACKUP ||
 	     jcr->JobType == JT_VERIFY) {      /* Pool */
 	    pool = select_pool_resource(ua);
@@ -668,6 +733,16 @@ Priority:   %d\n"),
 	 }
 	 goto try_again;
       case 8:
+	 /* Verify Job */
+	 if (jcr->JobType == JT_VERIFY) {
+	    JOB *job = select_job_resource(ua);
+	    if (job) {
+	       jcr->job->verify_job = job;
+	    } else {
+	       jcr->job->verify_job = NULL;
+	    }
+	    goto try_again;
+	 }
 	 /* Where */
          if (!get_cmd(ua, _("Please enter path prefix for restore (/ for none): "))) {
 	    break;

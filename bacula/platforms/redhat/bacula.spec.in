@@ -1,36 +1,29 @@
+# Platform Build Configuration
 
+# basic defines for every build
 %define depkgs ../depkgs
+%define depkgs_version 24Jul03
+%define tomsrtbt tomsrtbt-2.0.103
 
-# 
-# You must build the package with at least one define
-#  e.g.  rpmbuild -ba --define "build_rh7 1" bacula.spec
-#
-# If you want the MySQL version, use:
-#        rpmbuild -ba --define "build_mysql 1" --define "build_rh7 1" bacula.spec
-#
-
+# platform defines - set one below or define the build_xxx on the command line
+# RedHat builds
 %define rh7 0
 %{?build_rh7:%define rh7 1}
-
 %define rh8 0
 %{?build_rh8:%define rh8 1}
-
 %define rh9 0
 %{?build_rh9:%define rh9 1}
+# Fedora Core 1 build
+%define fc1 0
+%{?build_fc1:%define fc1 1}
+# Whitebox Enterprise build
+%define wb3 0
+%{?build_wb3:%define wb3 1}
 
+# database defines
+# set mysql for MySQL support, leave unset for sqlite support
 %define mysql 0
 %{?build_mysql:%define mysql 1}
-
-
-%if %{rh7}
-%define rh_version rh7
-%endif
-%if %{rh8}
-%define rh_version rh8
-%endif
-%if %{rh9}
-%define rh_version rh9
-%endif
 
 Summary: Bacula - The Network Backup Solution
 Name: bacula
@@ -38,22 +31,39 @@ Version: @VERSION@
 Release: 1
 Group: System Environment/Daemons
 Copyright: GPL v2
-Source: http://www.prdownloads.sourceforge.net/bacula/%{name}-%{version}.tar.gz
+Source0:http://www.prdownloads.sourceforge.net/bacula/%{name}-%{version}.tar.gz
+Source1:http://www.prdownloads.sourceforge.net/bacula/depkgs-%{depkgs_version}.tar.gz
+Source2:http://www.tux.org/pub/distributions/tinylinux/tomsrtbt/%{tomsrtbt}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 URL: http://www.bacula.org/
 Vendor: The Bacula Team
 Distribution: The Bacula Team
 Packager: D. Scott Barninger <barninger@fairfieldcomputers.com>
-Requires: gnome-libs >= 1.4
-Requires: readline
+BuildRequires: readline-devel, atk-devel, ncurses-devel, pango-devel
+BuildRequires: libstdc++-devel, libtermcap-devel, libxml2-devel, zlib-devel
+%if %{rh7}
+BuildRequires: gtk+-devel >= 1.2
 BuildRequires: gnome-libs-devel >= 1.4
-BuildRequires: readline-devel
-%if %{mysql}
-Requires: mysql >= 3.23
-Requires: mysql-server >= 3.23
-BuildRequires: mysql-devel >= 3.23
+BuildRequires: glibc-devel >= 2.2
+BuildRequires: ORBit-devel
+BuildRequires: bonobo-devel
+BuildRequires: GConf-devel
+%else
+BuildRequires: gtk2-devel >= 2.0
+BuildRequires: libgnomeui-devel >= 2.0
+BuildRequires: glibc-devel >= 2.3
+BuildRequires: ORBit2-devel
+BuildRequires: libart_lgpl-devel >= 2.0
+BuildRequires: libbonobo-devel >= 2.0
+BuildRequires: libbonoboui-devel >= 2.0
+BuildRequires: bonobo-activation-devel
+BuildRequires: GConf2-devel
+BuildRequires: linc-devel
 %endif
 
+%if %{mysql}
+BuildRequires: mysql-devel >= 3.23
+%endif
 
 %description
 Bacula - It comes by night and sucks the vital essence from your computers.
@@ -67,18 +77,44 @@ features that make it easy to find and recover lost or damaged files.
 Bacula source code has been released under the GPL version 2 license.
 
 %if %{mysql}
-%package mysql-%{rh_version}
+%package mysql
 %else
-%package sqlite-%{rh_version}
+%package sqlite
 %endif
 
 Summary: Bacula - The Network Backup Solution
 Group: System Environment/Daemons
+Provides: bacula-dir, bacula-sd, bacula-fd
+Requires: readline, perl, atk, ncurses, pango, libstdc++
+Requires: libtermcap, libxml2, zlib
+%if %{rh7}
+Requires: gtk+ >= 1.2
+Requires: gnome-libs >= 1.4
+Requires: glibc >= 2.2
+Requires: ORBit
+Requires: bonobo
+Requires: GConf
+%else
+Requires: gtk2 >= 2.0
+Requires: libgnomeui >= 2.0
+Requires: glibc >= 2.3
+Requires: ORBit2
+Requires: libart_lgpl >= 2.0
+Requires: libbonobo >= 2.0
+Requires: libbonoboui >= 2.0
+Requires: bonobo-activation
+Requires: GConf2
+Requires: linc
+%endif
+%if %{mysql}
+Requires: mysql >= 3.23
+Requires: mysql-server >= 3.23
+%endif
 
 %if %{mysql}
-%description mysql-%{rh_version}
+%description mysql
 %else
-%description sqlite-%{rh_version}
+%description sqlite
 %endif
 
 Bacula - It comes by night and sucks the vital essence from your computers.
@@ -97,10 +133,22 @@ This build requires MySQL to be installed separately as the catalog database.
 This build incorporates sqlite as the catalog database, statically compiled.
 %endif
 
-%package client-%{rh_version}
+%package client
 Summary: Bacula - The Network Backup Solution
 Group: System Environment/Daemons
-%description client-%{rh_version}
+Provides: bacula-fd
+Requires: readline, perl, libstdc++, zlib
+%if %{rh7}
+Requires: gtk+ >= 1.2
+Requires: gnome-libs >= 1.4
+Requires: glibc >= 2.2
+%else
+Requires: gtk2 >= 2.0
+Requires: libgnomeui >= 2.0
+Requires: glibc >= 2.3
+%endif
+
+%description client
 Bacula - It comes by night and sucks the vital essence from your computers.
 
 Bacula is a set of computer programs that permit you (or the system 
@@ -113,10 +161,35 @@ Bacula source code has been released under the GPL version 2 license.
 
 This is the File daemon (Client) only package.
 
+%package rescue
+
+Summary: Bacula - The Network Backup Solution
+Group: System Environment/Daemons
+Requires: coreutils, util-linux, libc5, bacula-fd
+
+%description rescue
+Bacula - It comes by night and sucks the vital essence from your computers.
+
+Bacula is a set of computer programs that permit you (or the system 
+administrator) to manage backup, recovery, and verification of computer 
+data across a network of computers of different kinds. In technical terms, 
+it is a network client/server based backup program. Bacula is relatively 
+easy to use and efficient, while offering many advanced storage management 
+features that make it easy to find and recover lost or damaged files. 
+Bacula source code has been released under the GPL version 2 license.
+
+This package installs scripts for disaster recovery and builds rescue 
+floppy disks for bare metal recovery. This package includes tomsrtbt
+(http://www.toms.net/rb/, by Tom Oehser, Tom@Toms.NET) to provide a tool
+to build a boot floppy disk.
+
+You need to have the bacula-sqlite, bacula-mysql or bacula-client package for 
+your platform installed and configured before installing this package.
 
 %prep
 
-%setup
+%setup -b 1
+%setup -b 2
 
 %build
 
@@ -131,6 +204,12 @@ cd ${cwd}
 # patch the make_sqlite_tables script for installation bindir
 patch src/cats/make_sqlite_tables.in src/cats/make_sqlite_tables.in.patch
 
+# patch the create_sqlite_database script for installation bindir
+patch src/cats/create_sqlite_database.in src/cats/create_sqlite_database.in.patch
+
+# patch the make_catalog_backup script for installation bindir
+patch src/cats/make_catalog_backup.in src/cats/make_catalog_backup.in.patch
+
 %configure \
         --prefix=/usr \
         --sbindir=/usr/sbin \
@@ -138,6 +217,7 @@ patch src/cats/make_sqlite_tables.in src/cats/make_sqlite_tables.in.patch
         --with-scriptdir=/etc/bacula \
         --enable-smartalloc \
         --enable-gnome \
+	   --enable-static-fd \
 %if %{mysql}
         --with-mysql \
 %else
@@ -148,6 +228,10 @@ patch src/cats/make_sqlite_tables.in src/cats/make_sqlite_tables.in.patch
         --with-subsys-dir=/var/lock/subsys
 make
 
+cd src/filed
+strip static-bacula-fd
+cd ../../
+
 %install
  
 cwd=${PWD}
@@ -156,6 +240,8 @@ mkdir -p $RPM_BUILD_ROOT/etc/logrotate.d
 mkdir -p $RPM_BUILD_ROOT/usr/share/pixmaps
 mkdir -p $RPM_BUILD_ROOT/usr/share/gnome/apps/System
 mkdir -p $RPM_BUILD_ROOT/usr/share/applications
+mkdir -p $RPM_BUILD_ROOT/etc/bacula/rescue
+mkdir -p $RPM_BUILD_ROOT/etc/bacula/rescue/tomsrtbt
 
 %if ! %{mysql}
 mkdir -p $RPM_BUILD_ROOT/usr/lib/sqlite
@@ -206,12 +292,30 @@ cp ../depkgs/sqlite/libsqlite.a $RPM_BUILD_ROOT/usr/lib/sqlite/libsqlite.a
 # install the logrotate file
 cp scripts/logrotate $RPM_BUILD_ROOT/etc/logrotate.d/bacula
 
+# install the rescue stuff
+# these are the rescue scripts
+cp rescue/linux/backup.etc.list $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/format_floppy $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/getdiskinfo $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/make_rescue_disk $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/restore_bacula $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/restore_etc $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/run_grub $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/run_lilo $RPM_BUILD_ROOT/etc/bacula/rescue/
+cp rescue/linux/sfdisk.bz2 $RPM_BUILD_ROOT/etc/bacula/rescue/
+
+# this is the static file daemon
+cp src/filed/static-bacula-fd $RPM_BUILD_ROOT/etc/bacula/rescue/bacula-fd
+
+# this is the tom's root boot disk
+cp ../%{tomsrtbt}/* $RPM_BUILD_ROOT/etc/bacula/rescue/tomsrtbt/
+
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 %if %{mysql}
 
-%files mysql-%{rh_version}
+%files mysql
 %defattr(-,root,root)
 
 %attr(0754,root,root) /etc/bacula/bacula
@@ -250,7 +354,7 @@ cp scripts/logrotate $RPM_BUILD_ROOT/etc/logrotate.d/bacula
 
 %attr(0750,root,root) /usr/sbin/*
 
-%post mysql-%{rh_version}
+%post mysql
 # delete then add our links
 /sbin/chkconfig --del bacula-dir
 /sbin/chkconfig --del bacula-fd
@@ -271,7 +375,7 @@ echo "Creating MySQL bacula database..."
 echo "Creating bacula tables..."
 /etc/bacula/make_mysql_tables
 
-%preun mysql-%{rh_version}
+%preun mysql
 # delete our links
 /sbin/chkconfig --del bacula-dir
 /sbin/chkconfig --del bacula-fd
@@ -279,7 +383,7 @@ echo "Creating bacula tables..."
 
 %else
 
-%files sqlite-%{rh_version}
+%files sqlite
 %defattr(-,root,root)
 
 %attr(0754,root,root) /etc/bacula/bacula
@@ -318,7 +422,7 @@ echo "Creating bacula tables..."
 %attr(0750,root,root) /usr/sbin/*
 %attr(0750,root,root) /usr/lib/sqlite/sqlite
 
-%post sqlite-%{rh_version}
+%post sqlite
 # delete then add our links
 /sbin/chkconfig --del bacula-dir
 /sbin/chkconfig --del bacula-fd
@@ -330,10 +434,13 @@ echo "Creating bacula tables..."
 # add execute permission for console
 chmod 0755 /usr/sbin/gnome-console
 
-# create the tables
+# create the database and tables
+echo "Creating SQLite database..."
+/etc/bacula/create_sqlite_database
+echo "Creating the SQLite tables..."
 /etc/bacula/make_sqlite_tables
 
-%preun sqlite-%{rh_version}
+%preun sqlite
 # delete our links
 /sbin/chkconfig --del bacula-dir
 /sbin/chkconfig --del bacula-fd
@@ -341,7 +448,7 @@ chmod 0755 /usr/sbin/gnome-console
 
 %endif
 
-%files client-%{rh_version}
+%files client
 %defattr(-,root,root)
 
 %attr(0754,root,root) /etc/bacula/fd
@@ -359,16 +466,86 @@ chmod 0755 /usr/sbin/gnome-console
 %attr(0750,root,root) /usr/sbin/smtp
 
 
-%post client-%{rh_version}
+%post client
 # delete then add our links
 /sbin/chkconfig --del bacula-fd
 /sbin/chkconfig --add bacula-fd
 
-%preun client-%{rh_version}
+%preun client
 # delete our links
 /sbin/chkconfig --del bacula-fd
 
+%files rescue
+%defattr(-,root,root)
+%attr(0644,root,root) /etc/bacula/rescue/backup.etc.list
+%attr(0754,root,root) /etc/bacula/rescue/format_floppy
+%attr(0754,root,root) /etc/bacula/rescue/getdiskinfo
+%attr(0754,root,root) /etc/bacula/rescue/make_rescue_disk
+%attr(0754,root,root) /etc/bacula/rescue/restore_bacula
+%attr(0754,root,root) /etc/bacula/rescue/restore_etc
+%attr(0754,root,root) /etc/bacula/rescue/run_grub
+%attr(0754,root,root) /etc/bacula/rescue/run_lilo
+%attr(0644,root,root) /etc/bacula/rescue/sfdisk.bz2
+%attr(0754,root,root) /etc/bacula/rescue/bacula-fd
+/etc/bacula/rescue/tomsrtbt/*
+
+%post rescue
+# link our current installed conf file to the rescue directory
+ln -s /etc/bacula-fd.conf /etc/bacula/rescue/bacula-fd.conf
+
+echo
+echo "Ready to create the rescue files for this system."
+echo "Press <enter> to continue..."
+read A
+echo
+
+# run getdiskinfo
+echo "Running getdiskinfo..."
+cd /etc/bacula/rescue
+./getdiskinfo
+
+echo
+echo "Finished."
+echo "To create a boot disk run \"./install.s\" from the /etc/bacula/rescue/tomsrtbt/"
+echo "directory. To make the bacula rescue disk run"
+echo "\"./make_rescue_disk --copy-static-bacula --copy-etc-files\" "
+echo "from the /etc/bacula/rescue directory. To recreate the rescue"
+echo "information for this system run ./getdiskinfo again."
+echo
+
+%preun rescue
+# remove the files created after the initial rpm installation
+rm -f /etc/bacula/rescue/bacula-fd.conf
+rm -f /etc/bacula/rescue/partition.*
+rm -f /etc/bacula/rescue/format.*
+rm -f /etc/bacula/rescue/mount_drives
+rm -f /etc/bacula/rescue/start_network
+rm -f /etc/bacula/rescue/sfdisk
+rm -rf /etc/bacula/rescue/diskinfo/*
+
 %changelog
+* Sat Jan 24 2004 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- added patch for create_sqlite_database to fix the installed bindir
+- added execute of create_sqlite_database to post of sqlite package
+* Sat Jan 10 2004 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- added virtual package Provides bacula-dir, bacula-sd, bacula-fd
+- added bacula-fd as Requires for rescue package
+- added build tag for Fedora Core 1
+- cleaned up dependancies for all builds
+* Thu Jan 1 2004 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- removed rh_version from package names
+- added platform build configuration section to beginning of file
+* Tue Nov 25 2003 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- removed make_static_bacula script from rescue package install
+* Sun Nov 23 2003 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- Added define at top of file for depkgs version
+- Added rescue sub-package
+- Moved requires statements into proper sub-package locations
+* Mon Oct 27 2003 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- Corrected Requires for Gnome 1.4/2.0 builds
+* Fri Oct 24 2003 D. Scott Barninger <barninger at fairfieldcomputers.com>
+- Added separate Source declaration for depkgs
+- added patch for make_catalog_backup script
 * Mon May 11 2003 D. Scott Barninger <barninger at fairfieldcomputers.com>
 - Misc changes to mysql/sqlite build and rh7/8 menu differences
 - Added rh_version to sub-package names

@@ -228,7 +228,7 @@ int wait_for_job_termination(JCR *jcr)
 {
    int32_t n = 0;
    BSOCK *fd = jcr->file_bsock;
-   int fd_ok = FALSE;
+   bool fd_ok = false;
    uint32_t JobFiles, Errors;
    uint64_t ReadBytes, JobBytes;
 
@@ -237,7 +237,7 @@ int wait_for_job_termination(JCR *jcr)
    while ((n = bget_dirmsg(fd)) >= 0) {
       if (!fd_ok && sscanf(fd->msg, EndJob, &jcr->FDJobStatus, &JobFiles,
 	  &ReadBytes, &JobBytes, &Errors) == 5) {
-	 fd_ok = TRUE;
+	 fd_ok = true;
 	 set_jcr_job_status(jcr, jcr->FDJobStatus);
          Dmsg1(100, "FDStatus=%c\n", (char)jcr->JobStatus);
       } else {
@@ -257,15 +257,18 @@ int wait_for_job_termination(JCR *jcr)
    /* Note, the SD stores in jcr->JobFiles/ReadBytes/JobBytes/Errors */
    wait_for_storage_daemon_termination(jcr);
 
+
    /* Return values from FD */
    if (fd_ok) {
       jcr->JobFiles = JobFiles;
       jcr->Errors = Errors;
       jcr->ReadBytes = ReadBytes;
       jcr->JobBytes = JobBytes;
+   } else {
+      Jmsg(jcr, M_FATAL, 0, _("No Job status returned from FD.\n"));
    }
 
-// Dmsg4(000, "fd_ok=%d FDJS=%d JS=%d SDJS=%d\n", fd_ok, jcr->FDJobStatus,
+// Dmsg4(100, "fd_ok=%d FDJS=%d JS=%d SDJS=%d\n", fd_ok, jcr->FDJobStatus,
 //   jcr->JobStatus, jcr->SDJobStatus);
 
    /* Return the first error status we find Dir, FD, or SD */
@@ -295,7 +298,7 @@ static void backup_cleanup(JCR *jcr, int TermCode, char *since, FILESET_DBR *fsr
    double kbps, compression;
    utime_t RunTime;
 
-   Dmsg0(100, "Enter backup_cleanup()\n");
+   Dmsg2(100, "Enter backup_cleanup %d %c\n", TermCode, TermCode);
    memset(&mr, 0, sizeof(mr));
    set_jcr_job_status(jcr, TermCode);
 
@@ -337,8 +340,12 @@ static void backup_cleanup(JCR *jcr, int TermCode, char *since, FILESET_DBR *fsr
 	 VolCount = db_get_job_volume_parameters(jcr, jcr->db, jcr->JobId,
 		    &VolParams);
 	 if (VolCount == 0) {
-            Jmsg(jcr, M_ERROR, 0, _("Could not get Job Volume Parameters. ERR=%s\n"),
-		 db_strerror(jcr->db));
+            Jmsg(jcr, M_ERROR, 0, _("Could not get Job Volume Parameters to "      
+                 "update Bootstrap file. ERR=%s\n"), db_strerror(jcr->db));
+	     if (jcr->SDJobFiles != 0) {
+		set_jcr_job_status(jcr, JS_ErrorTerminated);
+	     }
+
 	 }
 	 for (int i=0; i < VolCount; i++) {
 	    /* Write the record */

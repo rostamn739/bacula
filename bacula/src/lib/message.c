@@ -158,12 +158,33 @@ void
 init_msg(JCR *jcr, MSGS *msg)
 {
    DEST *d, *dnew, *temp_chain = NULL;
+   int i, fd;
+
+   if (jcr == NULL && msg == NULL) {
+      init_last_jobs_list();
+   }
+
+   /*
+    * Make sure we have fd's 0, 1, 2 open
+    *  If we don't do this one of our sockets may open
+    *  there and if we then use stdout, it could
+    *  send total garbage to our socket.
+    *
+    */
+   fd = open("/dev/null", O_RDONLY, 0644);
+   if (fd > 2) {
+      close(fd);
+   } else {
+      for(i=1; fd + i <= 2; i++) {
+	 dup2(fd, fd+i);
+      }
+   }
+
 
    /*
     * If msg is NULL, initialize global chain for STDOUT and syslog
     */
    if (msg == NULL) {
-      int i;
       daemon_msgs = (MSGS *)malloc(sizeof(MSGS));
       memset(daemon_msgs, 0, sizeof(MSGS));
       for (i=1; i<=M_MAX; i++) {
@@ -534,6 +555,7 @@ void term_msg()
       fclose(trace_fd);
       trace_fd = NULL;
    }
+   term_last_jobs_list();
 }
 
 
@@ -667,11 +689,8 @@ void dispatch_message(JCR *jcr, int type, int level, char *msg)
 	     case MD_DIRECTOR:
                 Dmsg1(800, "DIRECTOR for following msg: %s", msg);
 		if (jcr && jcr->dir_bsock && !jcr->dir_bsock->errors) {
-
-		   jcr->dir_bsock->msglen = Mmsg(&(jcr->dir_bsock->msg),
-                        "Jmsg Job=%s type=%d level=%d %s", jcr->Job,
-			 type, level, msg) + 1;
-		   bnet_send(jcr->dir_bsock);
+                   bnet_fsend(jcr->dir_bsock, "Jmsg Job=%s type=%d level=%d %s", 
+		      jcr->Job, type, level, msg);
 		}
 		break;
 	     case MD_STDOUT:
@@ -1006,7 +1025,7 @@ again:
    len = bvsnprintf(*pool_buf+i, maxlen, fmt, arg_ptr);
    va_end(arg_ptr);
    if (len < 0 || len >= maxlen) {
-      *pool_buf = realloc_pool_memory(*pool_buf, maxlen + i + 200);
+      *pool_buf = realloc_pool_memory(*pool_buf, maxlen + i + maxlen/2);
       goto again;
    }
    return len;
@@ -1027,7 +1046,7 @@ again:
    len = bvsnprintf(*pool_buf, maxlen, fmt, arg_ptr);
    va_end(arg_ptr);
    if (len < 0 || len >= maxlen) {
-      *pool_buf = realloc_pool_memory(*pool_buf, maxlen + 200);
+      *pool_buf = realloc_pool_memory(*pool_buf, maxlen + maxlen/2);
       goto again;
    }
    return len;
@@ -1053,7 +1072,7 @@ again:
    len = bvsnprintf(pool_buf+i, maxlen, fmt, arg_ptr);
    va_end(arg_ptr);
    if (len < 0 || len >= maxlen) {
-      pool_buf = realloc_pool_memory(pool_buf, maxlen + i + 200);
+      pool_buf = realloc_pool_memory(pool_buf, maxlen + i + maxlen/2);
       goto again;
    }
 

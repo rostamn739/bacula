@@ -57,17 +57,30 @@ char *drop_deltabs[] = {
    "DROP INDEX DelInx1",
    NULL};
 
+
 /* List of SQL commands to create temp table and indicies  */
 char *create_deltabs[] = {
    "CREATE TABLE DelCandidates ("
+#ifdef HAVE_MYSQL
       "JobId INTEGER UNSIGNED NOT NULL, "
       "PurgedFiles TINYINT, "
       "FileSetId INTEGER UNSIGNED, "
       "JobFiles INTEGER UNSIGNED, "
-#ifdef HAVE_MYSQL
       "JobStatus BINARY(1))",
 #else
+#ifdef HAVE_POSTGRESQL
+      "JobId INTEGER NOT NULL, "
+      "PurgedFiles SMALLINT, "
+      "FileSetId INTEGER, "
+      "JobFiles INTEGER, "
+      "JobStatus char(1))",
+#else
+      "JobId INTEGER UNSIGNED NOT NULL, "
+      "PurgedFiles TINYINT, "
+      "FileSetId INTEGER UNSIGNED, "
+      "JobFiles INTEGER UNSIGNED, "
       "JobStatus CHAR)",
+#endif
 #endif
    "CREATE INDEX DelInx1 ON DelCandidates (JobId)",
    NULL};
@@ -85,12 +98,14 @@ char *insert_delcand =
 /* Select Jobs from the DelCandidates table that have a
  * more recent backup -- i.e. are not the only backup.
  * This is the list of Jobs to delete for a Backup Job.
+ * At the same time, we select "orphanned" jobs
+ * (i.e. no files, ...) for deletion.
  */
 char *select_backup_del =
    "SELECT DelCandidates.JobId "
    "FROM Job,DelCandidates "
-   "WHERE (DelCandidates.JobFiles=0) OR "
-   "(DelCandidates.JobStatus!='T') OR "
+   "WHERE (JobTDate<%s AND ((DelCandidates.JobFiles=0) OR "
+   "(DelCandidates.JobStatus!='T'))) OR "
    "(Job.JobTDate>%s "
    "AND Job.ClientId=%u "
    "AND Job.Type='B' "
@@ -171,7 +186,20 @@ char *uar_del_temp  = "DROP TABLE temp";
 char *uar_del_temp1 = "DROP TABLE temp1";
 
 char *uar_create_temp = 
-   "CREATE TABLE temp (JobId INTEGER UNSIGNED NOT NULL,"
+   "CREATE TABLE temp ("
+#ifdef HAVE_POSTGRESQL
+   "JobId INTEGER NOT NULL,"
+   "JobTDate BIGINT,"
+   "ClientId INTEGER,"
+   "Level CHAR,"
+   "JobFiles INTEGER,"
+   "StartTime TEXT,"
+   "VolumeName TEXT,"
+   "StartFile INTEGER,"
+   "VolSessionId INTEGER,"
+   "VolSessionTime INTEGER)";
+#else
+   "JobId INTEGER UNSIGNED NOT NULL,"
    "JobTDate BIGINT UNSIGNED,"
    "ClientId INTEGER UNSIGNED,"
    "Level CHAR,"
@@ -181,20 +209,28 @@ char *uar_create_temp =
    "StartFile INTEGER UNSIGNED,"
    "VolSessionId INTEGER UNSIGNED,"
    "VolSessionTime INTEGER UNSIGNED)";
+#endif
 
 char *uar_create_temp1 = 
-   "CREATE TABLE temp1 (JobId INTEGER UNSIGNED NOT NULL,"
+   "CREATE TABLE temp1 ("
+#ifdef HAVE_POSTGRESQL
+   "JobId INTEGER NOT NULL,"
+   "JobTDate BIGINT)";
+#else
+   "JobId INTEGER UNSIGNED NOT NULL,"
    "JobTDate BIGINT UNSIGNED)";
+#endif
 
 char *uar_last_full =
    "INSERT INTO temp1 SELECT Job.JobId,JobTdate "
-   "FROM Client,Job,JobMedia,Media WHERE Client.ClientId=%u "
+   "FROM Client,Job,JobMedia,Media,FileSet WHERE Client.ClientId=%u "
    "AND Job.ClientId=%u "
    "AND Job.StartTime<'%s' "
    "AND Level='F' AND JobStatus='T' "
    "AND JobMedia.JobId=Job.JobId "
    "AND JobMedia.MediaId=Media.MediaId "
-   "AND Job.FileSetId=%u "
+   "AND Job.FileSetId=FileSet.FileSetId "
+   "AND FileSet.FileSet='%s' "
    "ORDER BY Job.JobTDate DESC LIMIT 1";
 
 char *uar_full = 
@@ -210,39 +246,42 @@ char *uar_inc_dec =
    "INSERT INTO temp SELECT Job.JobId,Job.JobTDate,Job.ClientId,"
    "Job.Level,Job.JobFiles,Job.StartTime,Media.VolumeName,JobMedia.StartFile,"
    "Job.VolSessionId,Job.VolSessionTime "
-   "FROM Job,JobMedia,Media "
-   "WHERE Job.JobTDate>%s AND Job.StartTime < '%s' "
+   "FROM Job,JobMedia,Media,FileSet "
+   "WHERE Job.JobTDate>%s AND Job.StartTime<'%s' "
    "AND Job.ClientId=%u "
    "AND JobMedia.JobId=Job.JobId "
    "AND JobMedia.MediaId=Media.MediaId "
    "AND Job.Level IN ('I', 'D') AND JobStatus='T' "
-   "AND Job.FileSetId=%u "
-   "GROUP BY Job.JobId";
+   "AND Job.FileSetId=FileSet.FileSetId "
+   "AND FileSet.FileSet='%s' ";
 
 char *uar_list_temp = 
    "SELECT JobId,Level,JobFiles,StartTime,VolumeName,StartFile,"
-   "VolSessionId,VolSessionTime FROM temp";
+   "VolSessionId,VolSessionTime FROM temp "
+   "ORDER BY StartTime ASC";
+
 
 char *uar_sel_jobid_temp = "SELECT JobId FROM temp";
 
 char *uar_sel_all_temp1 = "SELECT * FROM temp1";
 
-/* Select filesets for this Client */
+/* Select FileSet names for this Client */
 char *uar_sel_fileset = 
-   "SELECT FileSet.FileSetId,FileSet.FileSet,FileSet.CreateTime FROM Job,"
+   "SELECT DISTINCT FileSet.FileSet FROM Job,"
    "Client,FileSet WHERE Job.FileSetId=FileSet.FileSetId "
    "AND Job.ClientId=%u AND Client.ClientId=%u "
-   "GROUP BY FileSet.FileSetId ORDER BY FileSet.FileSetId";
+   "ORDER BY FileSet.FileSet";
 
 /* Find MediaType used by this Job */
 char *uar_mediatype =
    "SELECT MediaType FROM JobMedia,Media WHERE JobMedia.JobId=%u "
    "AND JobMedia.MediaId=Media.MediaId";
 
-/* Find JobId, FileIndex for a given path/file */
+/* Find JobId, FileIndex for a given path/file and date */
 char *uar_jobid_fileindex = 
    "SELECT Job.JobId, File.FileIndex FROM Job,File,Path,Filename,Client "
    "WHERE Job.JobId=File.JobId "
+   "AND Job.StartTime<'%s' "
    "AND Path.Path='%s' "
    "AND Filename.Name='%s' "
    "AND Client.Name='%s' "

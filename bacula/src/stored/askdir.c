@@ -148,14 +148,23 @@ int dir_find_next_appendable_volume(JCR *jcr)
  * After writing a Volume, send the updated statistics
  * back to the director.
  */
-int dir_update_volume_info(JCR *jcr, VOLUME_CAT_INFO *vol, int label)
+int dir_update_volume_info(JCR *jcr, DEVICE *dev, int label)
 {
    BSOCK *dir = jcr->dir_bsock;
    time_t EndTime = time(NULL);
    char ed1[50], ed2[50];
+   VOLUME_CAT_INFO *vol = &dev->VolCatInfo;
 
    if (vol->VolCatName[0] == 0) {
       Jmsg0(jcr, M_ERROR, 0, _("NULL Volume name. This shouldn't happen!!!\n"));
+      return 0;
+   }
+   if (dev_state(dev, ST_READ)) {
+      Jmsg0(jcr, M_ERROR, 0, _("Attempt to update_volume_info in read mode!!!\n"));
+      return 0;
+   }
+   if (!dev_state(dev, ST_LABEL)) {
+      Jmsg0(jcr, M_ERROR, 0, _("Attempt to update_volume_info on non-labeled Volume!!!\n"));
       return 0;
    }
    /* Just labeled or relabeled the tape */
@@ -286,10 +295,12 @@ int dir_ask_sysop_to_mount_next_volume(JCR *jcr, DEVICE *dev)
 	 jstat = JS_WaitMount;
 	 /*
 	  * If we have a valid volume name and we are not
-	  * removable media, return now, otherwise wait
+	  * removable media, return now, or if we have a
+	  * Slot for an autochanger, otherwise wait
 	  * for the operator to mount the media.
 	  */
-	 if (jcr->VolumeName[0] && !dev_cap(dev, CAP_REM) && dev_cap(dev, CAP_LABEL)) {
+	 if ((jcr->VolumeName[0] && !dev_cap(dev, CAP_REM) && dev_cap(dev, CAP_LABEL)) ||
+	     (jcr->VolumeName[0] && jcr->VolCatInfo.Slot)) {
             Dmsg0(190, "Return 1 from mount without wait.\n");
 	    return 1;
 	 }

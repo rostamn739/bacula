@@ -284,7 +284,7 @@ int bnet_despool(BSOCK *bsock)
       bsock->msglen = ntohl(pktsiz);
       if (bsock->msglen > 0) {
 	 if (bsock->msglen > (int32_t)sizeof_pool_memory(bsock->msg)) {
-	    bsock->msg = realloc_pool_memory(bsock->msg, bsock->msglen);
+	    bsock->msg = realloc_pool_memory(bsock->msg, bsock->msglen + 1);
 	 }
 	 nbytes = fread(bsock->msg, 1, bsock->msglen, bsock->spool_fd);
 	 if (nbytes != (size_t)bsock->msglen) {
@@ -354,7 +354,6 @@ bnet_send(BSOCK *bsock)
 
    bsock->out_msg_no++; 	      /* increment message number */
    if (bsock->msglen <= 0) {	      /* length only? */
-      ASSERT(msglen == bsock->msglen);
       return 1; 		      /* yes, no data */
    }
 
@@ -381,7 +380,6 @@ bnet_send(BSOCK *bsock)
       }
       return 0;
    }
-   ASSERT(msglen == bsock->msglen);
    return 1;
 }
 
@@ -474,6 +472,50 @@ bnet_wait_data_intr(BSOCK *bsock, int sec)
    }
 }
 
+#ifndef NETDB_INTERNAL
+#define NETDB_INTERNAL	-1	/* See errno. */
+#endif
+#ifndef NETDB_SUCCESS
+#define NETDB_SUCCESS	0	/* No problem. */
+#endif
+#ifndef HOST_NOT_FOUND
+#define HOST_NOT_FOUND	1	/* Authoritative Answer Host not found. */
+#endif
+#ifndef TRY_AGAIN
+#define TRY_AGAIN	2	/* Non-Authoritative Host not found, or SERVERFAIL. */
+#endif
+#ifndef NO_RECOVERY
+#define NO_RECOVERY	3	/* Non recoverable errors, FORMERR, REFUSED, NOTIMP. */
+#endif
+#ifndef NO_DATA
+#define NO_DATA 	4	/* Valid name, no data record of requested type. */
+#endif
+
+extern int h_errno;		/* On error has one of the above */
+
+/*
+ * Get human readable error for gethostbyname()
+ */
+static char *gethost_strerror() 
+{
+   switch (h_errno) {
+   case NETDB_INTERNAL:
+      return strerror(errno);
+   case NETDB_SUCCESS:
+      return "No problem.";
+   case HOST_NOT_FOUND:
+      return "Authoritative answer Host not found.";
+   case TRY_AGAIN:
+      return "Non-authoritative Host not found, or ServerFail.";
+   case NO_RECOVERY:
+      return "Non-recoverable errors, FORMERR, REFUSED, or NOTIMP.";
+   case NO_DATA:
+      return "Valid name, no data record of resquested type.";
+   default:
+      return "Unknown error.";
+   }
+}
+
 
 static pthread_mutex_t ip_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -497,7 +539,7 @@ static uint32_t *bget_host_ip(JCR *jcr, char *host)
       P(ip_mutex);
       if ((hp = gethostbyname(host)) == NULL) {
          Jmsg2(jcr, M_ERROR, 0, "gethostbyname() for %s failed: ERR=%s\n", 
-	       host, strerror(errno));
+	       host, gethost_strerror());
 	 V(ip_mutex);
 	 return NULL;
       }
@@ -512,7 +554,7 @@ Wanted %d got %d bytes for s_addr.\n"), sizeof(inaddr.s_addr), hp->h_length);
 	 i++;
       }
       i++;
-      addr_list = (uint32_t *) malloc(sizeof(uint32_t) * i);
+      addr_list = (uint32_t *)malloc(sizeof(uint32_t) * i);
       i = 0;
       for (p = hp->h_addr_list; *p != 0; p++) {
 	 addr_list[i++] = (*(struct in_addr **)p)->s_addr;
@@ -639,6 +681,9 @@ bnet_fsend(BSOCK *bs, char *fmt, ...)
    va_list arg_ptr;
    int maxlen;
 
+   if (bs->errors || bs->terminated) {
+      return 0;
+   }
    /* This probably won't work, but we vsnprintf, then if we
     * get a negative length or a length greater than our buffer
     * (depending on which library is used), the printf was truncated, so
@@ -650,10 +695,10 @@ again:
    bs->msglen = bvsnprintf(mp_chr(bs->msg), maxlen, fmt, arg_ptr);
    va_end(arg_ptr);
    if (bs->msglen < 0 || bs->msglen >= maxlen) {
-      bs->msg = realloc_pool_memory(bs->msg, maxlen + 200);
+      bs->msg = realloc_pool_memory(bs->msg, maxlen + maxlen / 2);
       goto again;
    }
-   return bnet_send(bs) < 0 ? 0 : 1;
+   return bnet_send(bs);
 }
 
 /* 

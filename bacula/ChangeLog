@@ -1,4 +1,305 @@
 
+Patched 1.32f-4
+
+2004-01-27 Version 1.32f-4 26Jan04 Release
+- Fix crash in restore if bad pool specified on command line and    
+  the pool prompt is canceled.
+- Remove some potentially bad ASSERTS in bnet.c
+- Add Scott's cats/create_sqlite_database.in.patch file
+- Add Scott's new spec file.
+
+2004-01-12 Version 1.32f-3 12Jan04 Release
+- Modify findlib/makepath.c to create all parent directories with full 
+  permissions. This should solve the access problems on restoring files 
+  on Win32 systems.
+- Modify restore to report **** Restore Error **** if any error
+  are found.  I.e.  a file could not be created.
+- Change a few errors into warnings -- e.g.  if permissions could
+  not be set, but the file is actually restored.
+
+2004-01-12 Version 1.32f-2 06Jan04 Release
+- This release has two patches applied:
+   1.32f-1-weekofmonth.patch
+   1.32f-2-eom-nextvol.patch
+- Fix an incorrect calcualtion of the week of the month reported
+  by Volker Sauer -- patch 1.
+- Fix bug reported by Phil (could not duplicate here) where at the end
+  of a Volume, Bacula wanted a new Volume and got into a loop requesting
+  it, then gave up -- Patch 2.
+- Modify selection of next Volume to select most currently appended Volume,
+  or if none oldest recycled Volume (problem reported by Lars) -- Patch 2.
+- Added new spec file from Scott.
+
+2003-12-31 Version 1.32f 31Dec03 Release
+- Note, this change affects only the Win32 FD.
+- Fixed Win32 FD crash due to missing argument in status command. It
+  always crashed if there was a job that had previously run.  Thanks to
+  Christopher Hull for finding and diagnosing this problem.
+
+2003-12-24 Version 1.32e 26Dec03 Release
+26Dec03
+- Fixed static configuration of gnome console reported by Alan Brown.
+24Dec03
+- Made restore use the base FileSet name instead of modifications of the FileSet.
+- Fix "restore" to always look at storage keyword and to use get_storage_resource()
+- Fix seg fault in restore if no client found/specified.
+- Made JobBytes print in 14 columns instead of 12 in status reports.
+- Install static-gnome-console if built.
+- Set max changer wait from 2 mins to 5 to avoid timout while tapes load.
+23Dec03
+- Added additional error messages to smtp. 
+21Dec03
+- Back ported the following items from 1.33:
+- Added suse platform directory and configure code. Must be tweaked for
+  SuSe.
+- Added debian platform directory.
+- Fixed fd.in (thanks Dan) to configure subsystem directory.
+- Back ported fix to Week of Month from 1.33
+- Back ported new Week of Year code from 1.33
+- Add JobId to Running jobs and Terminated Jobs status list.
+- Fixed "Phil's" bug where after doing a restore from a tape, if the next
+  operation was an append to the same tape, the number of files on the
+  tape and in the catalog got out of sync.
+- Fixed bug in Terminated Jobs status list that repeated the same job.
+
+2003-12-09 Version 1.32e 08Dec03 Release
+24Nov03
+- Sort FileSet selection list by CreateTime.
+- Add "lsmark", and "estimate" to tree routines.
+- Doing a mark or unmark now prints how many entries were changed.
+- Add command argument parsing to btape.c
+- Enhance EOT to print file:block on message.
+- Add repeat counts on btape bsf, fsf, bsr, fsr, and weof commands.
+- Enhance btape's fill command to be much clearer and more reliable.
+- Add state file to btape so that unfill command can be done any time
+  after a fill command.
+- Use reposition_dev() to position for read back of last block.
+22Nov03
+- Cleaned up the btape "fill" command to compare the last block written
+  and read rather than just printing them.
+21Nov03
+- Implement btape test for autochanger.
+- Implement btape test for Fast Forward Space File.
+- Moved up to cygwin 1.5.5-1
+20Nov03
+- Ensure that Volumes are selected from oldest LastWritten data/time.
+- A couple of bug fixes ensuring the proper ordering of volumes.
+19Nov03
+- Return oldest LastWritten for find_next_volume.
+- Enhance SD status if debug_level > 1 to show details of dev status.
+18Nov03
+- Create update_bacula_tables, ... scripts and modify configure and Makefiles
+  Not used in 1.32e
+- Eliminate is_num() and use is_an_integer().
+- Start daemons at level 90 rather than 20 so that MySQL will already
+  be started.
+15Nov03
+- In the bacula start/stop script, ordered the stop: FD SD Dir to
+  give the SD the best chances of updating the catalog before dying.
+- Fixed the signal handler to pass the signal to the exit_handler() 
+  previously it passed 1.
+- Modified SD so that on normal shutdown, it walks through all jcrs and
+  cancels them so that the Volume status will be updated in the catalog.
+- Found and fixed a bug where ST_LABEL was not set in append mode
+  (when a different tape was accepted other than the original one
+  proposed by the DIR.
+12Nov03
+- Change getdomainname() prototype for Darwin.
+- Add gethost_strerror() to create correct error message for
+  gethostbyname().
+- After doing a kill() of a stalled connection in watchdog, turn off
+  the timer to prevent an infinite loop.
+- Allow Bacula to rewrite the label on a disk volume.
+11Nov03
+- Add L_NONE for Admin and Restore jobs and update level_to_str()
+- Fix segfault from double free of RestoreBootstrap in job.c
+10Nov03
+- Check if volume has expired when doing an update media for the SD
+07Nov03
+- Fix bug reported by Lars where an incorrect Volume name was printed
+  by the "status dir" command.
+06Nov03
+- Pretty up a few error messages printed by smtp.
+- Make btime_t int64_t so that one can do arithmetic.
+- Implement since as utime (64 bit UTC). 
+- Compute clock diff between Dir and FD, and adjust since time.
+- Apply SQL fix from Nic Bellamy (thanks).
+- Apply John's zlib #ifdefing fix.
+05Nov03
+- Add Dan's with-sd-user, ... to configure.in.
+- Add Dan's userid and group modifications to bacula.in
+- Lots of documentation updates.
+- Make console print "Enter a period to cancel a command" when starting.
+- Fix the "list nextvol" command so that it doesn't try to close the
+  database twice, giving a segfault.
+- Make dir_ask_sysop_to_mount_next_volume() return immediately if a slot is
+  specified.
+- Correct some of the messages in testfind.c (pointed out by Dan -- thanks).
+- Alias fd to client, sd to storage.
+- Changed order of Console commands so that short commands such as q (quit) 
+  are more logical.
+
+2003-11-03 Version 1.32d 02Nov03 Release
+02Nov03
+- Mainly a bug fix release.
+- Do a clean of both Gnome directories.
+- Require that FileSet id match when finding an Incremental
+  previous job. This was already the case for a Full.
+- Print message if no status returned from FD.
+- Correct "Do not forget to mount the drive" message. Test was
+  backward.
+- "status dir" stopped scanning the run records on the first
+  one that matched giving an incomplete listing.
+- Edit commas in Bytes on "estimate" command output.
+
+2003-10-30 Version 1.32c 30Oct03 Release
+29Oct03
+- Add %v to job edit codes. It edits in the VolumeName(s).
+- Add code to ensure that fds 0,1, and 2 are defined by dup'ing them
+  to /dev/null if necessary.  Mostly for Windows that does not have them.
+- Error check dir_create_jobmedia_record() 2 places in acquire.c
+26Oct03
+- More doc fixes.
+- Make message buffer longer for a status message that was    
+  truncated.        
+- Put termination on varargs calls in gnome2-console.
+- Scroll only if text sent and not for status update.
+- Add all possible Status codes the jobstatus_to_ascii()
+25Oct03
+- Add new spec file and cats patch from Scott.
+- Optimize tree.c a bit -- turn off debug code, keep node fname
+  length for fast rejection, add some statistics, allocate
+  in 100K and 1Meg chunks, use bool, uint16_t and uint8_t to
+  reduce node packet size.
+24Oct03
+- Eliminate ua_retention.c that was not used.
+- Improve error message when closing brace missing in conf file.
+- More doc updates.
+- Eliminate Don't forget to mount if it is a disk file.
+- Fix Gnome2 scrolling and blank screen problems.
+- Eliminate multiple JobIds in restore selection list.
+- Fix non-portable varargs code in var.c
+- Make doc fixes/changes suggested by Dan Languille
+23Oct03
+- Document new features.
+- Implement mod of Verify Job at the run prompt.
+- Correct SQL table definitions so that MySQL and SQLite
+  have all the values in the same position.
+- Correct a typo in configure.in when configuring GNOME.
+- In doing a "status dir" make it loop over all the run
+  commands in the Schedule rather than doing on the first one.
+- Close all unused file descriptors in bpipe.c otherwise if
+  a daemon is started, it will keep our TCP/IP port open.
+22Oct03
+- Print block read error (checksum, I/O, BB01, ...) once then
+  the number found at the end of the reading.
+- Implement RunAfterFailedJob
+- Change db_find_job_start_time() to require a Full save before
+  running an Incremental or Differential job.
+- Remove has_volume_expired from code that updates vol info
+21Oct03
+- Implement "delete job"
+20Oct03
+- More documentation, add Marc Brueckner's tips to manual.
+- Tweak gnome2-console scroll window.
+- Turn off some debug info.
+18Oct03
+- Modify Verify to accept VerifyJob = xx, where the last backup job
+  of job xxx will be verified.
+- Add changing the Pool name for a Volume to "update volume"
+- Write most of the code for Verify Disk to Catalog.
+- Recreate the src/gnome2-console directory.
+- Change all the text handling code to the Gnome 2.0 way.
+- Correct the way verify filenames are returned to the Director so
+  that directories are in canonical form (i.e. trailing /).
+- Handle casting bug in glade-2 by sed'ing support.c in gnome2-console.
+
+2003-10-15 Version 1.32b 14Oct03 Release
+14Oct03
+- Modify configure so that if threaded MySQL client library
+  is not present, Bacula will link with the non-threaded 
+  version.
+- Updates to the Web pages and to the manual.
+- Remove trademark symbol from title. Phil pointed out that it
+  does not display correctly in a title.
+11Oct03
+- Implement restore by file before date. 
+- Change restore arguments a bit so that you can feed it
+  multiple jobid= specifications or multiple file= specifications.
+- Pass restore with run option on to run_cmd.
+- Make run-cmd not prompt if it has a "run" on the command line.
+10Oct03
+- When pruning, select only old orphanned jobs to delete so that
+  the current job is not pruned too.
+09Oct03
+- Corrected return status for bsf_dev and bsr_dev in block.c and btape.c
+- dev.c used incorrect ruturn status for bsf_dev in the BSF at EOM
+  code. This caused all appends on FreeBSD to fail.
+- Turn on fast block rejection code.
+08Oct03
+- Optimize file index searches by adding a count to the bootstrap.
+- Write single files/blocks to bootstrap without the second part.
+- Add current Volume status to the cannot use this Volume message.
+- Zero the rx->bsr in ua_restore when freeing so it doesn't get
+  freed twice.
+- Lots of testing on the restore
+- I noticed that SD and FD bootstrap files were not always
+  deleted, so delete them as soon as possible.
+- Restore by file (or by selecting files) created some
+  horrible looking bsr files that defeated the forward
+  spacing code, so fix write_findex to work right.
+- Add zlib_strerror() routine in filed/restore in case
+  of zlib errors.
+- In filed/restore.c make sure all error returns cleanup
+  and close the open file descriptor.
+- Make sure to set *non* over filename in attr packet
+  after file is found, so error messages that print the
+  filename don't print an old, incorrect name.
+- Allow bclose() to be called after closing the file.
+- Fix a number of unclear help messages, ... reported by
+  Phil in btape.
+- Retweak stored/read_record.c so that it does forward
+  spacing at the beginning of every tape, not just the
+  first one.
+- Print repositioning message if verbose is set.
+
+2003-10-01 Version 1.32a 03Oct03 Release
+04Oct03
+- Combine the code in ua_output and ua_status that searches
+  the run records.
+03Oct03
+- Fixed "list nextvol" to search for the correct pool in the
+  Schedule Run records.
+- Correct an error in is_block_zero. It found a false
+  match if the first 1016 bytes of a 32K buffer and     
+  the last 248 bytes are zero.  Broke the sparse option.
+01Oct03
+- More documentation.
+- Test if multiple mail addresses works. Yes.
+- Add debug Jmsg() to trigger if the file I/O packet is
+  not closed in the FD, i.e file descriptor leaks.
+- When error occurs reading label in mount.c, start from
+  the very top so that the retry count is in effect.
+- Zap the mode in soft links in testls.c for regression
+  testing.
+
+2003-10-01 Version 1.32 30Sep03 Release
+28Sep03
+- Enhance manual faq, regression ...
+- Make FreeBSD read sizes always be a multiple of 512. Needed
+  to read raw disks.
+- Make FreeBSD accept block AND character devices for raw
+  disk reads.  On FreeBSD there are no block devices.
+27Sep03
+- Fix printing of EndTime on job report after rescheduling.
+- Fix jobq.c error returns to clean up before returning.
+- Make Cleaning tape aware of "unlabeled" volumes.
+- If a job is rescheduled, ensure that old job is
+  removed from SD's jcr queue -- i.e. it is still waiting
+  for FD connection.
+- Test rescheduling code.
+- Change ./configure to detect Cygwin enviornments.
+
 2003-09-26 Version 1.32 26Sep03 Beta
 - Add regression and GUI-interface chapters to the manual.
 - Fix "label" of a volume that is already in the catalog,

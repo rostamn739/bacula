@@ -44,6 +44,9 @@ extern struct s_last_job last_job;
 
 /* Forward referenced functions */
 static void send_blocked_status(JCR *jcr, DEVICE *dev);
+static void list_terminated_jobs(void *arg);
+static void sendit(char *msg, int len, void *arg);
+static char *level_to_str(int level);
 
 
 /*
@@ -61,21 +64,18 @@ int status_cmd(JCR *jcr)
    bnet_fsend(user, "\n%s Version: " VERSION " (" BDATE ") %s %s %s\n", my_name,
 	      HOST_OS, DISTNAME, DISTVER);
    bstrftime(dt, sizeof(dt), daemon_start_time);
+   strcpy(dt+7, dt+9);		      /* cut century */
    bnet_fsend(user, _("Daemon started %s, %d Job%s run.\n"), dt, last_job.NumJobs,
         last_job.NumJobs == 1 ? "" : "s");
-   if (last_job.NumJobs > 0) {
-      char termstat[30];
 
-      bstrftime(dt, sizeof(dt), last_job.end_time);
-      bnet_fsend(user, _("Last Job %s finished at %s\n"), last_job.Job, dt);
+   /*
+    * List terminated jobs
+    */
+   list_terminated_jobs(user);
 
-      jobstatus_to_ascii(last_job.JobStatus, termstat, sizeof(termstat));
-      bnet_fsend(user, _("  Files=%s Bytes=%s Termination Status=%s\n"), 
-	   edit_uint64_with_commas(last_job.JobFiles, b1),
-	   edit_uint64_with_commas(last_job.JobBytes, b2),
-	   termstat);
-   }
-
+   /*
+    * List devices
+    */
    LockRes();
    for (device=NULL;  (device=(DEVRES *)GetNextRes(R_DEVICE, (RES *)device)); ) {
       for (dev=device->dev; dev; dev=dev->next) {
@@ -167,7 +167,7 @@ int status_cmd(JCR *jcr)
       bnet_fsend(user, _("No jobs running.\n"));
    }
 
-#ifdef full_status
+#ifdef xfull_status
    bnet_fsend(user, "\n\n");
    dump_resource(R_DEVICE, resources[R_DEVICE-r_first].res_head, sendit, user);
 #endif
@@ -204,4 +204,177 @@ static void send_blocked_status(JCR *jcr, DEVICE *dev)
    default:
       break;
    }
+   if (debug_level > 1) {
+      bnet_fsend(user, _("Configured device capabilities:\n"));
+      bnet_fsend(user, "%sEOF ", dev->capabilities & CAP_EOF ? "" : "!");
+      bnet_fsend(user, "%sBSR ", dev->capabilities & CAP_BSR ? "" : "!");
+      bnet_fsend(user, "%sBSF ", dev->capabilities & CAP_BSF ? "" : "!");
+      bnet_fsend(user, "%sFSR ", dev->capabilities & CAP_FSR ? "" : "!");
+      bnet_fsend(user, "%sFSF ", dev->capabilities & CAP_FSF ? "" : "!");
+      bnet_fsend(user, "%sEOM ", dev->capabilities & CAP_EOM ? "" : "!");
+      bnet_fsend(user, "%sREM ", dev->capabilities & CAP_REM ? "" : "!");
+      bnet_fsend(user, "%sRACCESS ", dev->capabilities & CAP_RACCESS ? "" : "!");
+      bnet_fsend(user, "%sAUTOMOUNT ", dev->capabilities & CAP_AUTOMOUNT ? "" : "!");
+      bnet_fsend(user, "%sLABEL ", dev->capabilities & CAP_LABEL ? "" : "!");
+      bnet_fsend(user, "%sANONVOLS ", dev->capabilities & CAP_ANONVOLS ? "" : "!");
+      bnet_fsend(user, "%sALWAYSOPEN ", dev->capabilities & CAP_ALWAYSOPEN ? "" : "!");
+      bnet_fsend(user, "\n");
+
+      bnet_fsend(user, _("Device status:\n"));
+      bnet_fsend(user, "%sOPENED ", dev->state & ST_OPENED ? "" : "!");
+      bnet_fsend(user, "%sTAPE ", dev->state & ST_TAPE ? "" : "!");
+      bnet_fsend(user, "%sLABEL ", dev->state & ST_LABEL ? "" : "!");
+      bnet_fsend(user, "%sMALLOC ", dev->state & ST_MALLOC ? "" : "!");
+      bnet_fsend(user, "%sAPPEND ", dev->state & ST_APPEND ? "" : "!");
+      bnet_fsend(user, "%sREAD ", dev->state & ST_READ ? "" : "!");
+      bnet_fsend(user, "%sEOT ", dev->state & ST_EOT ? "" : "!");
+      bnet_fsend(user, "%sWEOT ", dev->state & ST_WEOT ? "" : "!");
+      bnet_fsend(user, "%sEOF ", dev->state & ST_EOF ? "" : "!");
+      bnet_fsend(user, "%sNEXTVOL ", dev->state & ST_NEXTVOL ? "" : "!");
+      bnet_fsend(user, "%sSHORT ", dev->state & ST_SHORT ? "" : "!");
+      bnet_fsend(user, "\n");
+
+      bnet_fsend(user, _("Device parameters:\n"));
+      bnet_fsend(user, "Device name: %s\n", dev->dev_name);
+      bnet_fsend(user, "File=%u block=%u\n", dev->file, dev->block_num);
+      bnet_fsend(user, "Min block=%u Max block=%u\n", dev->min_block_size, dev->max_block_size);
+   }
+
+}
+
+static void list_terminated_jobs(void *arg)
+{
+   char dt[MAX_TIME_LENGTH], b1[30], b2[30];
+   char level[10];
+   struct s_last_job *je;
+   char *msg;
+
+   if (last_job.NumJobs == 0) {
+      msg = _("No Terminated Jobs.\n"); 
+      sendit(msg, strlen(msg), arg);
+      return;
+   }
+   lock_last_jobs_list();
+   msg =  _("\nTerminated Jobs:\n"); 
+   sendit(msg, strlen(msg), arg);
+   msg =  _(" JobId  Level   Files          Bytes Status   Finished        Name \n");
+   sendit(msg, strlen(msg), arg);
+   msg = _("======================================================================\n"); 
+   sendit(msg, strlen(msg), arg);
+   for (je=NULL; (je=(s_last_job *)last_jobs->next(je)); ) {
+      char JobName[MAX_NAME_LENGTH];
+      char *termstat;
+      char buf[1000];
+
+      bstrftime(dt, sizeof(dt), je->end_time);
+      strcpy(dt+7, dt+9);     /* cut century */
+      switch (je->JobType) {
+      case JT_ADMIN:
+      case JT_RESTORE:
+         bstrncpy(level, "    ", sizeof(level));
+	 break;
+      default:
+	 bstrncpy(level, level_to_str(je->JobLevel), sizeof(level));
+	 level[4] = 0;
+	 break;
+      }
+      switch (je->JobStatus) {
+      case JS_Created:
+         termstat = "Created";
+	 break;
+      case JS_FatalError:
+      case JS_ErrorTerminated:
+         termstat = "Error";
+	 break;
+      case JS_Differences:
+         termstat = "Diffs";
+	 break;
+      case JS_Canceled:
+         termstat = "Cancel";
+	 break;
+      case JS_Terminated:
+         termstat = "OK";
+	 break;
+      default:
+         termstat = "Other";
+	 break;
+      }
+      bstrncpy(JobName, je->Job, sizeof(JobName));
+      /* There are three periods after the Job name */
+      char *p;
+      for (int i=0; i<3; i++) {
+         if ((p=strrchr(JobName, '.')) != NULL) {
+	    *p = 0;
+	 }
+      }
+      bsnprintf(buf, sizeof(buf), _("%6d  %-4s %8s %14s %-7s  %-8s %s\n"), 
+	 je->JobId,
+	 level, 
+	 edit_uint64_with_commas(je->JobFiles, b1),
+	 edit_uint64_with_commas(je->JobBytes, b2), 
+	 termstat,
+	 dt, JobName);
+      sendit(buf, strlen(buf), arg);
+   }
+   sendit("\n", 1, arg);
+   unlock_last_jobs_list();
+}
+
+/*
+ * Convert Job Level into a string
+ */
+static char *level_to_str(int level) 
+{
+   char *str;
+
+   switch (level) {
+   case L_BASE:
+      str = _("Base");
+   case L_FULL:
+      str = _("Full");
+      break;
+   case L_INCREMENTAL:
+      str = _("Incremental");
+      break;
+   case L_DIFFERENTIAL:
+      str = _("Differential");
+      break;
+   case L_SINCE:
+      str = _("Since");
+      break;
+   case L_VERIFY_CATALOG:
+      str = _("Verify Catalog");
+      break;
+   case L_VERIFY_INIT:
+      str = _("Init Catalog");
+      break;
+   case L_VERIFY_VOLUME_TO_CATALOG:
+      str = _("Volume to Catalog");
+      break;
+   case L_VERIFY_DISK_TO_CATALOG:
+      str = _("Disk to Catalog");
+      break;
+   case L_VERIFY_DATA:
+      str = _("Data");
+      break;
+   case L_NONE:
+      str = " ";
+      break;
+   default:
+      str = _("Unknown Job Level");
+      break;
+   }
+   return str;
+}
+
+/*
+ * Send to Director 
+ */
+static void sendit(char *msg, int len, void *arg)
+{
+   BSOCK *user = (BSOCK *)arg;
+
+   memcpy(user->msg, msg, len+1);
+   user->msglen = len+1;
+   bnet_send(user);
 }
