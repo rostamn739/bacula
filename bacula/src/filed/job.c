@@ -307,7 +307,7 @@ static int estimate_cmd(JCR *jcr)
    }
    make_estimate(jcr);
    bnet_fsend(dir, OKest, jcr->num_files_examined, 
-      edit_uint64(jcr->JobBytes, ed2));
+      edit_uint64_with_commas(jcr->JobBytes, ed2));
    bnet_sig(dir, BNET_EOD);
    return 1;
 }
@@ -436,6 +436,7 @@ static void add_fname_to_list(JCR *jcr, char *fname, int list)
 
    switch (*p) {
    case '|':
+      p++;			      /* skip over | */
       fn = get_pool_memory(PM_FNAME);
       fn = edit_job_codes(jcr, fn, p, "");
       bpipe = open_bpipe(fn, 0, "r");
@@ -590,7 +591,7 @@ static int bootstrap_cmd(JCR *jcr)
 static int level_cmd(JCR *jcr)
 {
    BSOCK *dir = jcr->dir_bsock;
-   POOLMEM *level;
+   POOLMEM *level, *buf = NULL;
    struct tm tm;
    time_t mtime;
    int mtime_only;
@@ -598,10 +599,7 @@ static int level_cmd(JCR *jcr)
    level = get_memory(dir->msglen+1);
    Dmsg1(110, "level_cmd: %s", dir->msg);
    if (sscanf(dir->msg, "level = %s ", level) != 1) {
-      pm_strcpy(&jcr->errmsg, dir->msg);
-      Jmsg1(jcr, M_FATAL, 0, _("Bad level command: %s\n"), jcr->errmsg);
-      free_memory(level);
-      return 0;
+      goto bail_out;
    }
    /* Base backup requested? */
    if (strcmp(level, "base") == 0) {
@@ -612,16 +610,14 @@ static int level_cmd(JCR *jcr)
    /* 
     * Backup requested since <date> <time>
     *  This form is also used for incremental and differential
+    *  This code is deprecated.  See since_utime for new code.
     */
    } else if (strcmp(level, "since") == 0) {
       jcr->JobLevel = L_SINCE;
       if (sscanf(dir->msg, "level = since %d-%d-%d %d:%d:%d mtime_only=%d", 
 		 &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
 		 &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &mtime_only) != 7) {
-	 pm_strcpy(&jcr->errmsg, dir->msg);
-         Jmsg1(jcr, M_FATAL, 0, _("Bad scan of date/time: %s\n"), jcr->errmsg);
-	 free_memory(level);
-	 return 0;
+	 goto bail_out;
       }
       tm.tm_year -= 1900;
       tm.tm_mon  -= 1;
@@ -632,13 +628,75 @@ static int level_cmd(JCR *jcr)
       jcr->incremental = 1;	      /* set incremental or decremental backup */
       jcr->mtime = mtime;	      /* set since time */
       jcr->mtime_only = mtime_only;   /* and what to compare */
+   /*
+    * We get his UTC since time, then sync the clocks and correct it
+    *	to agree with our clock.
+    */
+   } else if (strcmp(level, "since_utime") == 0) {
+      buf = get_memory(dir->msglen+1);
+      utime_t since_time, adj;
+      btime_t his_time, bt_start, rt=0, bt_adj=0;
+      jcr->JobLevel = L_SINCE;
+      if (sscanf(dir->msg, "level = since_utime %s mtime_only=%d", 
+		 buf, &mtime_only) != 2) { 
+	 goto bail_out;
+      }
+      since_time = str_to_uint64(buf);	/* this is the since time */
+      char ed1[50], ed2[50];
+      /* 
+       * Sync clocks by polling him for the time. We take	 
+       *   10 samples of his time throwing out the first two.
+       */
+      for (int i=0; i<10; i++) {
+	 bt_start = get_current_btime();
+	 bnet_sig(dir, BNET_BTIME);   /* poll for time */
+	 if (bnet_recv(dir) <= 0) {   /* get response */
+	    goto bail_out;
+	 }
+         if (sscanf(dir->msg, "btime %s", buf) != 1) {
+	    goto bail_out;
+	 }
+	 if (i < 2) {		      /* toss first two results */
+	    continue;
+	 }
+	 his_time = str_to_uint64(buf);
+	 rt = get_current_btime() - bt_start; /* compute round trip time */
+	 bt_adj -= his_time - bt_start - rt/2;
+         Dmsg2(100, "rt=%s adj=%s\n", edit_uint64(rt, ed1), edit_uint64(bt_adj, ed2));
+      }
+
+      bt_adj = bt_adj / 8;	      /* compute average time */
+      Dmsg2(100, "rt=%s adj=%s\n", edit_uint64(rt, ed1), edit_uint64(bt_adj, ed2));
+      adj = btime_to_utime(bt_adj);
+      since_time += adj;	      /* adjust for clock difference */
+      if (adj != 0) {
+         Jmsg(jcr, M_INFO, 0, _("Since time adjusted by %d seconds.\n"), adj);
+      }
+      bnet_sig(dir, BNET_EOD);
+
+      Dmsg2(100, "adj = %d since_time=%d\n", (int)adj, (int)since_time);
+      jcr->incremental = 1;	      /* set incremental or decremental backup */
+      jcr->mtime = since_time;	      /* set since time */
+      jcr->mtime_only = mtime_only;   /* and what to compare */
    } else {
       Jmsg1(jcr, M_FATAL, 0, "Unknown backup level: %s\n", level);
       free_memory(level);
       return 0;
    }
    free_memory(level);
+   if (buf) {
+      free_memory(buf);
+   }
    return bnet_fsend(dir, OKlevel);
+
+bail_out:
+   pm_strcpy(&jcr->errmsg, dir->msg);
+   Jmsg1(jcr, M_FATAL, 0, _("Bad level command: %s\n"), jcr->errmsg);
+   free_memory(level);
+   if (buf) {
+      free_memory(buf);
+   }
+   return 0;
 }
 
 /*
@@ -843,6 +901,8 @@ static int verify_cmd(JCR *jcr)
       jcr->JobLevel = L_VERIFY_VOLUME_TO_CATALOG;
    } else if (strcasecmp(level, "data") == 0){
       jcr->JobLevel = L_VERIFY_DATA;
+   } else if (strcasecmp(level, "disk_to_catalog") == 0) {
+      jcr->JobLevel = L_VERIFY_DISK_TO_CATALOG;
    } else {   
       bnet_fsend(dir, "2994 Bad verify level: %s\n", dir->msg);
       return 0;   
@@ -875,6 +935,9 @@ static int verify_cmd(JCR *jcr)
       /* Inform Storage daemon that we are done */
       bnet_sig(sd, BNET_TERMINATE);
 
+      break;
+   case L_VERIFY_DISK_TO_CATALOG:
+      do_verify(jcr);
       break;
    default:
       bnet_fsend(dir, "2994 Bad verify level: %s\n", dir->msg);
@@ -1049,6 +1112,7 @@ static void filed_free_jcr(JCR *jcr)
    if (jcr->RestoreBootstrap) {
       unlink(jcr->RestoreBootstrap);
       free_pool_memory(jcr->RestoreBootstrap);
+      jcr->RestoreBootstrap = NULL;
    }
    if (jcr->last_fname) {
       free_pool_memory(jcr->last_fname);
@@ -1096,6 +1160,7 @@ static int send_bootstrap_file(JCR *jcr)
    char buf[2000];
    BSOCK *sd = jcr->store_bsock;
    char *bootstrap = "bootstrap\n";
+   int stat = 0;
 
    Dmsg1(400, "send_bootstrap_file: %s\n", jcr->RestoreBootstrap);
    if (!jcr->RestoreBootstrap) {
@@ -1106,7 +1171,7 @@ static int send_bootstrap_file(JCR *jcr)
       Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"), 
 	 jcr->RestoreBootstrap, strerror(errno));
       set_jcr_job_status(jcr, JS_ErrorTerminated);
-      return 0;
+      goto bail_out;
    }
    pm_strcpy(&sd->msg, bootstrap);  
    sd->msglen = strlen(sd->msg);
@@ -1119,7 +1184,16 @@ static int send_bootstrap_file(JCR *jcr)
    fclose(bs);
    if (!response(jcr, sd, OKSDbootstrap, "Bootstrap")) {
       set_jcr_job_status(jcr, JS_ErrorTerminated);
-      return 0;
+      goto bail_out;
    }
-   return 1;
+   stat = 1;
+
+bail_out:
+   if (jcr->RestoreBootstrap) {
+      unlink(jcr->RestoreBootstrap);
+      free_pool_memory(jcr->RestoreBootstrap);
+      jcr->RestoreBootstrap = NULL;
+   }
+
+   return stat;
 }

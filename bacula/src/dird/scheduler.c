@@ -189,7 +189,7 @@ static void find_runs()
    JOB *job;
    SCHED *sched;
    struct tm tm;
-   int hour, next_hour, minute, mday, wday, month, wpos;
+   int hour, next_hour, minute, mday, wday, month, wom, woy;
 
    Dmsg0(200, "enter find_runs()\n");
    num_runjobs = 0;
@@ -205,7 +205,8 @@ static void find_runs()
    mday = tm.tm_mday - 1;
    wday = tm.tm_wday;
    month = tm.tm_mon;
-   wpos = (tm.tm_mday - 1) / 7; 
+   wom = tm_wom(tm.tm_mday, tm.tm_wday);  /* get week of month */
+   woy = tm_woy(now);			  /* get week of year */
 
    /* Loop through all jobs */
    LockRes();
@@ -221,7 +222,9 @@ static void find_runs()
 	  */
 	 if ((bit_is_set(hour, run->hour) || bit_is_set(next_hour, run->hour)) &&
 	     (bit_is_set(mday, run->mday) || bit_is_set(wday, run->wday)) && 
-	     bit_is_set(month, run->month) && bit_is_set(wpos, run->wpos)) {
+	     bit_is_set(month, run->month) && 
+	     bit_is_set(wom, run->wom) &&  
+	     bit_is_set(woy, run->woy)) {
 
 	    /* find time (time_t) job is to be run */
 	    localtime_r(&now, &tm);

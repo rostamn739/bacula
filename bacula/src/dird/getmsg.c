@@ -95,7 +95,8 @@ int bget_dirmsg(BSOCK *bs)
 	    bnet_fsend(bs, OK_msg); /* send response */
 	    break;
 	 case BNET_HEARTBEAT:
-       /*   Dmsg0(000, "Got heartbeat.\n"); */
+//	    encode_time(time(NULL), Job);
+//          Dmsg1(100, "%s got heartbeat.\n", Job);
 	    break;
 	 case BNET_HB_RESPONSE:
 	    break;
@@ -103,6 +104,10 @@ int bget_dirmsg(BSOCK *bs)
 	    /* *****FIXME***** Implement more completely */
             bnet_fsend(bs, "Status OK\n");
 	    bnet_sig(bs, BNET_EOD);
+	    break;
+	case BNET_BTIME:	     /* send Bacula time */
+	   char ed1[50];
+            bnet_fsend(bs, "btime %s\n", edit_uint64(get_current_btime(),ed1));
 	    break;
 	 default:
             Emsg1(M_WARNING, 0, _("bget_dirmsg: unknown bnet signal %d\n"), bs->msglen);

@@ -71,13 +71,13 @@ static void usage()
 {
    fprintf(stderr,
 "\nVersion: " VERSION " (" BDATE ")\n\n"
-"Usage: bextract [-d debug_level] <bacula-archive> <directory-to-store-files>\n"
+"Usage: bextract <options> <bacula-archive-device-name> <directory-to-store-files>\n"
 "       -b <file>       specify a bootstrap file\n"
 "       -c <file>       specify a configuration file\n"
-"       -dnn            set debug level to nn\n"
+"       -d <nn>         set debug level to nn\n"
 "       -e <file>       exclude list\n"
 "       -i <file>       include list\n"
-"       -V              specify Volume names (separated by |)\n"
+"       -V <volumes>    specify Volume names (separated by |)\n"
 "       -?              print this message\n\n");
    exit(1);
 }
@@ -435,7 +435,7 @@ static int record_cb(JCR *jcr, DEVICE *dev, DEV_BLOCK *block, DEV_RECORD *rec)
 /* Dummies to replace askdir.c */
 int	dir_get_volume_info(JCR *jcr, enum get_vol_info_rw  writing) { return 1;}
 int	dir_find_next_appendable_volume(JCR *jcr) { return 1;}
-int	dir_update_volume_info(JCR *jcr, VOLUME_CAT_INFO *vol, int relabel) { return 1; }
+int	dir_update_volume_info(JCR *jcr, DEVICE *dev, int relabel) { return 1; }
 int	dir_create_jobmedia_record(JCR *jcr) { return 1; }
 int	dir_ask_sysop_to_mount_next_volume(JCR *jcr, DEVICE *dev) { return 1; }
 int	dir_update_file_attributes(JCR *jcr, DEV_RECORD *rec) { return 1;}

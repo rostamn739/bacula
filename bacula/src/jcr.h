@@ -40,8 +40,10 @@
 #define L_VERIFY_CATALOG         'C'  /* verify from catalog */
 #define L_VERIFY_INIT            'V'  /* verify save (init DB) */
 #define L_VERIFY_VOLUME_TO_CATALOG 'O'  /* verify Volume to catalog entries */
+#define L_VERIFY_DISK_TO_CATALOG 'd'  /* verify Disk attributes to catalog */
 #define L_VERIFY_DATA            'A'  /* verify data on volume */
 #define L_BASE                   'B'  /* Base level job */
+#define L_NONE                   ' '  /* None, for Restore and Admin */
 
 
 /* Job Types. These are stored in the DB */
@@ -154,7 +156,8 @@ struct JCR {
    POOLMEM *fname;                    /* name to put into catalog */
    int fn_printed;                    /* printed filename */
    POOLMEM *stime;                    /* start time for incremental/differential */
-   JOB_DBR jr;                        /* Job record in Database */
+   JOB_DBR jr;                        /* Job DB record for current job */
+   JOB_DBR *verify_jr;                /* Pointer to target job */
    uint32_t RestoreJobId;             /* Id specified by UA */
    POOLMEM *client_uname;             /* client uname */ 
    int replace;                       /* Replace option */
@@ -250,9 +253,11 @@ struct JCR {
  *  info on the last job run.
  */
 struct s_last_job {
+   dlink link;
    int NumJobs;
    int JobType;
    int JobStatus;
+   int JobLevel;
    uint32_t JobId;
    uint32_t VolSessionId;
    uint32_t VolSessionTime;
@@ -263,7 +268,8 @@ struct s_last_job {
    char Job[MAX_NAME_LENGTH];
 };
 
-extern struct s_last_job last_job;
+extern struct s_last_job last_job;               
+extern dlist *last_jobs;
 
 
 /* The following routines are found in lib/jcr.c */

@@ -84,6 +84,12 @@ int find_arg_keyword(UAContext *ua, char **list)
    return -1;
 }
 
+/* 
+ * Given one keyword, find the first one that
+ *   is in the argument list.
+ * Returns: argk index (always gt 0)
+ *	    -1 if not found
+ */
 int find_arg(UAContext *ua, char *keyword)
 {
    for (int i=1; i<ua->argc; i++) {
@@ -272,7 +278,8 @@ CLIENT *get_client_resource(UAContext *ua)
    int i;
    
    for (i=1; i<ua->argc; i++) {
-      if (strcasecmp(ua->argk[i], _("client")) == 0 && ua->argv[i]) {
+      if ((strcasecmp(ua->argk[i], _("client")) == 0 ||
+           strcasecmp(ua->argk[i], _("fd")) == 0) && ua->argv[i]) {
 	 client = (CLIENT *)GetResWithName(R_CLIENT, ua->argv[i]);
 	 if (client) {
 	    return client;
@@ -305,7 +312,8 @@ int get_client_dbr(UAContext *ua, CLIENT_DBR *cr)
       bsendmsg(ua, _("Could not find Client %s: ERR=%s"), cr->Name, db_strerror(ua->db));
    }
    for (i=1; i<ua->argc; i++) {
-      if (strcasecmp(ua->argk[i], _("client")) == 0 && ua->argv[i]) {
+      if ((strcasecmp(ua->argk[i], _("client")) == 0 ||               
+           strcasecmp(ua->argk[i], _("fd")) == 0) && ua->argv[i]) {
 	 bstrncpy(cr->Name, ua->argv[i], sizeof(cr->Name));
 	 if (!db_get_client_record(ua->jcr, ua->db, cr)) {
             bsendmsg(ua, _("Could not find Client %s: ERR=%s"), ua->argv[i],
@@ -341,7 +349,7 @@ int select_client_dbr(UAContext *ua, CLIENT_DBR *cr)
       return 0;
    }
    if (num_clients <= 0) {
-      bsendmsg(ua, _("No clients defined. Run a job to create one.\n"));
+      bsendmsg(ua, _("No clients defined. You must run a job before using this command.\n"));
       return 0;
    }
      
@@ -730,14 +738,15 @@ STORE *get_storage_resource(UAContext *ua, int use_default)
 
    for (i=1; i<ua->argc; i++) {
       if (use_default && !ua->argv[i]) {
+	 /* Ignore scan and barcode(s) keywords */
+         if (strncasecmp("scan", ua->argk[i], 4) == 0 ||
+             strncasecmp("barcode", ua->argk[i], 7) == 0) {
+	    continue;
+	 }
 	 /* Default argument is storage */
 	 if (store_name) {
             bsendmsg(ua, _("Storage name given twice.\n"));
 	    return NULL;
-	 }
-	 /* Ignore barcode(s) keywords */
-         if (strncasecmp("barcode", ua->argk[i], 7) == 0) {
-	    continue;
 	 }
 	 store_name = ua->argk[i];
          if (*store_name == '?') {
@@ -745,7 +754,8 @@ STORE *get_storage_resource(UAContext *ua, int use_default)
 	    break;
 	 }
       } else {
-         if (strcasecmp(ua->argk[i], _("storage")) == 0) {
+         if (strcasecmp(ua->argk[i], _("storage")) == 0 ||
+             strcasecmp(ua->argk[i], _("sd")) == 0) {
 	    store_name = ua->argv[i];
 	    break;
 

@@ -90,8 +90,10 @@ static struct res_items dev_items[] = {
    {"backwardspacerecord",   store_yesno,  ITEM(res_dev.cap_bits), CAP_BSR,  ITEM_DEFAULT, 1},
    {"backwardspacefile",     store_yesno,  ITEM(res_dev.cap_bits), CAP_BSF,  ITEM_DEFAULT, 1},
    {"bsfateom",              store_yesno,  ITEM(res_dev.cap_bits), CAP_BSFATEOM, ITEM_DEFAULT, 0},
+   {"twoeof",                store_yesno,  ITEM(res_dev.cap_bits), CAP_TWOEOF, ITEM_DEFAULT, 1},
    {"forwardspacerecord",    store_yesno,  ITEM(res_dev.cap_bits), CAP_FSR,  ITEM_DEFAULT, 1},
    {"forwardspacefile",      store_yesno,  ITEM(res_dev.cap_bits), CAP_FSF,  ITEM_DEFAULT, 1},
+   {"fastforwardspacefile",  store_yesno,  ITEM(res_dev.cap_bits), CAP_FASTFSF, ITEM_DEFAULT, 1},
    {"removablemedia",        store_yesno,  ITEM(res_dev.cap_bits), CAP_REM,  ITEM_DEFAULT, 1},
    {"randomaccess",          store_yesno,  ITEM(res_dev.cap_bits), CAP_RACCESS, 0, 0},
    {"automaticmount",        store_yesno,  ITEM(res_dev.cap_bits), CAP_AUTOMOUNT,  ITEM_DEFAULT, 0},
@@ -100,7 +102,7 @@ static struct res_items dev_items[] = {
    {"autochanger",           store_yesno,  ITEM(res_dev.cap_bits), CAP_AUTOCHANGER, ITEM_DEFAULT, 0},
    {"changerdevice",         store_strname,ITEM(res_dev.changer_name), 0, 0, 0},
    {"changercommand",        store_strname,ITEM(res_dev.changer_command), 0, 0, 0},
-   {"maximumchangerwait",    store_pint,   ITEM(res_dev.max_changer_wait), 0, ITEM_DEFAULT, 2 * 60},
+   {"maximumchangerwait",    store_pint,   ITEM(res_dev.max_changer_wait), 0, ITEM_DEFAULT, 5 * 60},
    {"maximumopenwait",       store_pint,   ITEM(res_dev.max_open_wait), 0, ITEM_DEFAULT, 5 * 60},
    {"maximumopenvolumes",    store_pint,   ITEM(res_dev.max_open_vols), 0, ITEM_DEFAULT, 1},
    {"offlineonunmount",      store_yesno,  ITEM(res_dev.cap_bits), CAP_OFFLINEUNMOUNT, ITEM_DEFAULT, 0},
@@ -147,77 +149,77 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
       recurse = 0;
    }
    switch (type) {
-      case R_DIRECTOR:
-         sendit(sock, "Director: name=%s\n", res->res_dir.hdr.name);
-	 break;
-      case R_STORAGE:
-         sendit(sock, "Storage: name=%s SDaddr=%s SDport=%d SDDport=%d HB=%s\n",
-	    res->res_store.hdr.name, NPRT(res->res_store.SDaddr),
-	    res->res_store.SDport, res->res_store.SDDport,
-	    edit_utime(res->res_store.heartbeat_interval, buf));
-	 break;
-      case R_DEVICE:
-         sendit(sock, "Device: name=%s MediaType=%s Device=%s\n",
-	    res->res_dev.hdr.name,
-	    res->res_dev.media_type, res->res_dev.device_name);
-         sendit(sock, "        rew_wait=%d min_bs=%d max_bs=%d\n",
-	    res->res_dev.max_rewind_wait, res->res_dev.min_block_size, 
-	    res->res_dev.max_block_size);
-         sendit(sock, "        max_jobs=%d max_files=%" lld " max_size=%" lld "\n",
-	    res->res_dev.max_volume_jobs, res->res_dev.max_volume_files,
-	    res->res_dev.max_volume_size);
-         sendit(sock, "        max_file_size=%" lld " capacity=%" lld "\n",
-	    res->res_dev.max_file_size, res->res_dev.volume_capacity);
-         strcpy(buf, "        ");
-	 if (res->res_dev.cap_bits & CAP_EOF) {
-            strcat(buf, "CAP_EOF ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_BSR) {
-            strcat(buf, "CAP_BSR ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_BSF) {
-            strcat(buf, "CAP_BSF ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_FSR) {
-            strcat(buf, "CAP_FSR ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_FSF) {
-            strcat(buf, "CAP_FSF ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_EOM) {
-            strcat(buf, "CAP_EOM ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_REM) {
-            strcat(buf, "CAP_REM ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_RACCESS) {
-            strcat(buf, "CAP_RACCESS ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_AUTOMOUNT) {
-            strcat(buf, "CAP_AUTOMOUNT ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_LABEL) {
-            strcat(buf, "CAP_LABEL ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_ANONVOLS) {
-            strcat(buf, "CAP_ANONVOLS ");
-	 }
-	 if (res->res_dev.cap_bits & CAP_ALWAYSOPEN) {
-            strcat(buf, "CAP_ALWAYSOPEN ");
-	 }
-         strcat(buf, "\n");
-	 sendit(sock, buf);
-	 break;
-      case R_MSGS:
-         sendit(sock, "Messages: name=%s\n", res->res_msgs.hdr.name);
-	 if (res->res_msgs.mail_cmd) 
-            sendit(sock, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
-	 if (res->res_msgs.operator_cmd) 
-            sendit(sock, "      opcmd=%s\n", res->res_msgs.operator_cmd);
-	 break;
-      default:
-         sendit(sock, _("Warning: unknown resource type %d\n"), type);
-	 break;
+   case R_DIRECTOR:
+      sendit(sock, "Director: name=%s\n", res->res_dir.hdr.name);
+      break;
+   case R_STORAGE:
+      sendit(sock, "Storage: name=%s SDaddr=%s SDport=%d SDDport=%d HB=%s\n",
+	 res->res_store.hdr.name, NPRT(res->res_store.SDaddr),
+	 res->res_store.SDport, res->res_store.SDDport,
+	 edit_utime(res->res_store.heartbeat_interval, buf));
+      break;
+   case R_DEVICE:
+      sendit(sock, "Device: name=%s MediaType=%s Device=%s\n",
+	 res->res_dev.hdr.name,
+	 res->res_dev.media_type, res->res_dev.device_name);
+      sendit(sock, "        rew_wait=%d min_bs=%d max_bs=%d\n",
+	 res->res_dev.max_rewind_wait, res->res_dev.min_block_size, 
+	 res->res_dev.max_block_size);
+      sendit(sock, "        max_jobs=%d max_files=%" lld " max_size=%" lld "\n",
+	 res->res_dev.max_volume_jobs, res->res_dev.max_volume_files,
+	 res->res_dev.max_volume_size);
+      sendit(sock, "        max_file_size=%" lld " capacity=%" lld "\n",
+	 res->res_dev.max_file_size, res->res_dev.volume_capacity);
+      strcpy(buf, "        ");
+      if (res->res_dev.cap_bits & CAP_EOF) {
+         bstrncat(buf, "CAP_EOF ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_BSR) {
+         bstrncat(buf, "CAP_BSR ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_BSF) {
+         bstrncat(buf, "CAP_BSF ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_FSR) {
+         bstrncat(buf, "CAP_FSR ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_FSF) {
+         bstrncat(buf, "CAP_FSF ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_EOM) {
+         bstrncat(buf, "CAP_EOM ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_REM) {
+         bstrncat(buf, "CAP_REM ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_RACCESS) {
+         bstrncat(buf, "CAP_RACCESS ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_AUTOMOUNT) {
+         bstrncat(buf, "CAP_AUTOMOUNT ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_LABEL) {
+         bstrncat(buf, "CAP_LABEL ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_ANONVOLS) {
+         bstrncat(buf, "CAP_ANONVOLS ", sizeof(buf));
+      }
+      if (res->res_dev.cap_bits & CAP_ALWAYSOPEN) {
+         bstrncat(buf, "CAP_ALWAYSOPEN ", sizeof(buf));
+      }
+      bstrncat(buf, "\n", sizeof(buf));
+      sendit(sock, buf);
+      break;
+   case R_MSGS:
+      sendit(sock, "Messages: name=%s\n", res->res_msgs.hdr.name);
+      if (res->res_msgs.mail_cmd) 
+         sendit(sock, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
+      if (res->res_msgs.operator_cmd) 
+         sendit(sock, "      opcmd=%s\n", res->res_msgs.operator_cmd);
+      break;
+   default:
+      sendit(sock, _("Warning: unknown resource type %d\n"), type);
+      break;
    }
    if (recurse && res->res_dir.hdr.next)
       dump_resource(type, (RES *)res->res_dir.hdr.next, sendit, sock);
