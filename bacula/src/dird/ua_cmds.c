@@ -50,11 +50,11 @@ extern int messagescmd(UAContext *ua, char *cmd);
 extern int autodisplaycmd(UAContext *ua, char *cmd);
 extern int sqlquerycmd(UAContext *ua, char *cmd);
 extern int querycmd(UAContext *ua, char *cmd);
-extern int runcmd(UAContext *ua, char *cmd);
+extern int run_cmd(UAContext *ua, char *cmd);
 extern int retentioncmd(UAContext *ua, char *cmd);
 extern int prunecmd(UAContext *ua, char *cmd);
 extern int purgecmd(UAContext *ua, char *cmd);
-extern int restorecmd(UAContext *ua, char *cmd);
+extern int restore_cmd(UAContext *ua, char *cmd);
 extern int label_cmd(UAContext *ua, char *cmd);
 extern int relabel_cmd(UAContext *ua, char *cmd);
 extern int update_slots(UAContext *ua);  /* ua_label.c */
@@ -105,8 +105,8 @@ static struct cmdstruct commands[] = {
  { N_("quit"),       quit_cmd,      _("quit")},
  { N_("relabel"),    relabel_cmd,   _("relabel a tape")},
  { N_("release"),    release_cmd,   _("release <storage-name>")},
- { N_("restore"),    restorecmd,    _("restore files")},
- { N_("run"),        runcmd,        _("run <job-name>")},
+ { N_("restore"),    restore_cmd,   _("restore files")},
+ { N_("run"),        run_cmd,       _("run <job-name>")},
  { N_("setdebug"),   setdebug_cmd,  _("sets debug level")},
  { N_("show"),       show_cmd,      _("show (resource records) [jobs | pools | ... | all]")},
  { N_("sqlquery"),   sqlquerycmd,   _("use SQL to query catalog")}, 

@@ -21,18 +21,100 @@ Testing to do: (painful)
 - Test cancel at EOM.       
 - Test not zeroing Autochanger slot when it is wrong.
 - Figure out how to use ssh or stunnel to protect Bacula communications.
-- Test connect timeouts.
 
-For 1.32 Testing/Documentation:
+For 1.33 Testing/Documentation:
+- bextract is sending everything to the log file ****FIXME****
+- Document to start higher priorty jobs before lower ones.
+- suppress "Do not forget to mount the drive!!!" if error
 - Document new records in Director. SDAddress SDDeviceName, SDPassword.
   FDPassword, FDAddress, DBAddress, DBPort, DBPassword.
 - Document new Include/Exclude ...
 - Add test of exclusion, test multiple Include {} statements.
 - Add counter variable test.
+- Document ln -sf /usr/lib/libncurses.so /usr/lib/libtermcap.so
+  and install the esound-dev  package for compiling Console on 
+  SuSE.
                 
-For 1.32:
-
 For 1.33
+- Try doing a raw partition backup and restore by mounting a
+  Windows partition.
+- Implement Verify=DiskToCatalog
+- Implement a RunAfterFailedJob
+- Report CVS problems to SourceForge.
+- Implement .consolerc for Console
+- Is it really important to make Job name the same to find the
+  Full backup to avoid promoting an Incremental job?
+- Start label, then run job when tape labeled, it should broadcast.
+- Zap illegal characters in job name for mail files (e.g. /).
+- From Lars Köllers:
+    Yes, it would allow to highly automatic the request for new tapes. If a 
+    tape is empty, bacula reads the barcodes (native or simulated), and if 
+    an unused tape is found, it runs the label command with all the 
+    necessary parameters.
+
+    By the way can bacula automatically "move" an empry/purged volume say 
+    in the "short" pool to the "long" pool if this pool runs out of volume 
+    space?
+- Implement a move Volume from one pool to another.
+- Either restrict the characters in a name, or fix the problem 
+  emailing with names containing / (smtp command line breaks).
+- Eliminate ua_retention.c (retentioncmd) if possible.
+- Eliminate orphaned jobs: dbcheck, normal pruning, delete job command.
+  Hm.  Well, there are the remaining orphaned job records:
+
+     |   105 | Llioness Save  | 0000-00-00 00:00:00 | B    | D     |        0 |             0 | f         |
+     |   110 | Llioness Save  | 0000-00-00 00:00:00 | B    | I     |        0 |             0 | f         |
+     |   115 | Llioness Save  | 2003-09-10 02:22:03 | B    | I     |        0 |             0 | A         |
+     |   128 | Catalog Save   | 2003-09-11 03:53:32 | B    | I     |        0 |             0 | C         |
+     |   131 | Catalog Save   | 0000-00-00 00:00:00 | B    | I     |        0 |             0 | f         |
+
+     As you can see, three of the five are failures.  I already deleted the
+     one restore and one other failure using the by-client option.  Deciding
+     what is an orphaned job is a tricky problem though, I agree.  All these
+     records have or had 0 files/ 0 bytes, except for the restore.  With no
+     files, of course, I don't know of the job ever actually becomes
+     associated with a Volume.
+
+     (I'm not sure if this is documented anywhere -- what are the meanings of
+     all the possible JobStatus codes?)
+
+     Looking at my database, it appears to me as though all the "orphaned"
+     jobs fit into one of two categories:
+
+     1)  The Job record has a StartTime but no EndTime, and the job is not
+         currently running;
+     or
+     2)  The Job record has an EndTime, indicating that it completed, but
+         it has no associated JobMedia record.
+
+
+     This does suggest an approach.  If failed jobs (or jobs that, for some
+     other reason, write no files) are associated with a volume via a
+     JobMedia record, then they should be purged when the associated volume
+     is purged.  I see two ways to handle jobs that are NOT associated with a
+     specific volume:
+
+     1)  purge them automatically whenever any volume is manually purged;
+     or
+     2)  add an option to the purge command to manually purge all jobs with
+         no associated volume.
+
+     I think Restore jobs also fall into category 2 above ....  so one might
+     want to make that "The Job record has an EndTime,, but no associated
+     JobMedia record, and is not a Restore job."  
+- Implement RestoreJobRetention? Maybe better "JobRetention" in a Job,
+  which would take precidence over the Catalog "JobRetention".
+- Implement Label Format in Add and Label console commands.
+- make "btape /tmp" work.
+- Make sure a rescheduled job is properly reported by status.
+- Walk through the Pool records rather than the Job records
+  in dird.c to create/update pools.
+- Figure out a way to move Volumes from one pool to another.
+- What to do about "list files job=xxx".
+- Implement delete Job.
+- Document need to put LabelFormat in quotes.
+- Implement scan: for every slot it finds, zero the slot of
+  Volume other volume having that slot.
 - When job rescheduled, status gives is waiting for Client Rufus 
   to connect to Storage File. Dir needs to inform SD that job
   is rescheduled.
@@ -61,7 +143,7 @@ For 1.33
 - Use system dependent calls to get more precise info on tape errors.
 - Add heartbeat from FD to SD if hb interval expires.
 - Suppress read error on blank tape when doing a label.
-- Can we dynamically change FileSets.
+- Can we dynamically change FileSets?
 - If pool specified to label command and Label Format is specified,
   automatically generate the Volume name.
 - Take a careful look a the Basic recycling algorithm.  When Bacula
@@ -121,7 +203,8 @@ For 1.33
   > > prod4-sd: End of medium on Volume "REU007" Bytes=16,303,521,933 
 
 - Use autochanger to handle multiple devices.
-- Fix packet too big problem.
+- Fix packet too big problem. This is most likely a Windows TCP stack 
+  problem.
 - Add SuSE install doc to list.
 - Check and rechedk "Invalid block number"
 - Make bextract release the drive properly between tapes 
@@ -958,4 +1041,9 @@ Done: (see kernsdone for more)
 - Document that it is safe to use the drive when the lights stop flashing.
 - Document all the status codes JobLevel, JobType, JobStatus.
 - Add GUI interface to manual
-
+- Combine the 3 places that search run records for the next
+  job. Use find_job_pool() modified in ua_output.c
+- Test connect timeouts.
+- Fix FreeBSD build with tcp_wrapper -- should not have -lnsl
+- Implement fast block rejection.
+- I want to restore by file to some date.

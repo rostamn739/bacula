@@ -40,6 +40,7 @@
 #define L_VERIFY_CATALOG         'C'  /* verify from catalog */
 #define L_VERIFY_INIT            'V'  /* verify save (init DB) */
 #define L_VERIFY_VOLUME_TO_CATALOG 'O'  /* verify Volume to catalog entries */
+#define L_VERIFY_DISK_TO_CATALOG 'd'  /* verify Disk attributes to catalog */
 #define L_VERIFY_DATA            'A'  /* verify data on volume */
 #define L_BASE                   'B'  /* Base level job */
 

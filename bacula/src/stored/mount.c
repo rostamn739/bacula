@@ -44,7 +44,6 @@
  * This routine returns a 0 only if it is REALLY
  *  impossible to get the requested Volume.
  *
- *    *****FIXME****** handle "Recycle" volume ******
  */
 int mount_next_write_volume(JCR *jcr, DEVICE *dev, DEV_BLOCK *block, int release)
 {
@@ -116,7 +115,7 @@ mount_next_vol:
 
       release = 1;                    /* release next time if we "recurse" */
 
-ask_again:
+// ask_again:
       if (ask && !dir_ask_sysop_to_mount_next_volume(jcr, dev)) {
          Dmsg0(100, "Error return ask_sysop ...\n");
 	 return 0;		/* error return */
@@ -227,7 +226,8 @@ mount_error:
          Jmsg1(jcr, M_WARNING, 0, "%s", jcr->errmsg);                         
          Dmsg0(100, "Default\n");
 	 ask = true;
-	 goto ask_again;
+	 /* was - goto ask_again; */	     
+	 goto mount_next_vol;
       }
       break;
    }

@@ -44,7 +44,7 @@ extern struct s_kw ReplaceOptions[];
  *     run <job-name> jobid=nn
  *
  */
-int runcmd(UAContext *ua, char *cmd)
+int run_cmd(UAContext *ua, char *cmd)
 {
    JCR *jcr;
    char *job_name, *level_name, *jid, *store_name, *pool_name;
@@ -71,9 +71,11 @@ int runcmd(UAContext *ua, char *cmd)
       N_("when"),
       N_("priority"),
       N_("yes"),          /* 12 -- if you change this change YES_POS too */
+      N_("run"),          /* 13 -- if you change this change RUN_POS too */
       NULL};
 
 #define YES_POS 12
+#define RUN_POS 13
 
    if (!open_db(ua)) {
       return 1;
@@ -96,8 +98,8 @@ int runcmd(UAContext *ua, char *cmd)
       Dmsg2(200, "Doing arg %d = %s\n", i, ua->argk[i]);
       for (j=0; !found && kw[j]; j++) {
 	 if (strcasecmp(ua->argk[i], _(kw[j])) == 0) {
-	    /* Note, yes has no value, so do not err */
-	    if (!ua->argv[i] && j != YES_POS /*yes*/) {
+	    /* Note, yes and run have no value, so do not err */
+	    if (!ua->argv[i] && (j != YES_POS /*yes*/ && j != RUN_POS)) {  
                bsendmsg(ua, _("Value missing for keyword %s\n"), ua->argk[i]);
 	       return 1;
 	    }
@@ -203,6 +205,7 @@ int runcmd(UAContext *ua, char *cmd)
 	       }
 	       break;
 	    case 12: /* yes */
+	    case 13: /* run */
 	       found = True;
 	       break;
 	    default:
@@ -554,6 +557,7 @@ Priority:   %d\n"),
             add_prompt(ua, _("Initialize Catalog"));
             add_prompt(ua, _("Verify Catalog"));
             add_prompt(ua, _("Verify Volume to Catalog"));
+            add_prompt(ua, _("Verify Disk to Catalog"));
             add_prompt(ua, _("Verify Volume Data (not yet implemented)"));
             switch (do_prompt(ua, "",  _("Select level"), NULL, 0)) {
 	    case 0:
@@ -566,6 +570,9 @@ Priority:   %d\n"),
 	       jcr->JobLevel = L_VERIFY_VOLUME_TO_CATALOG;
 	       break;
 	    case 3:
+	       jcr->JobLevel = L_VERIFY_DISK_TO_CATALOG;
+	       break;
+	    case 4:
 	       jcr->JobLevel = L_VERIFY_DATA;
 	       break;
 	    default:

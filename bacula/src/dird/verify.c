@@ -262,6 +262,9 @@ int do_verify(JCR *jcr)
    case L_VERIFY_DATA:
       level = "data";
       break;
+   case L_VERIFY_DISK_TO_CATALOG:
+      level="disk_to_catalog";
+      break;
    default:
       Jmsg1(jcr, M_FATAL, 0, _("Unimplemented save level %d\n"), jcr->JobLevel);
       goto bail_out;
@@ -295,6 +298,11 @@ int do_verify(JCR *jcr)
 
    case L_VERIFY_VOLUME_TO_CATALOG:
       Dmsg0(10, "Verify level=volume\n");
+      get_attributes_and_compare_to_catalog(jcr, JobId);
+      break;
+
+   case L_VERIFY_DISK_TO_CATALOG:
+      Dmsg0(10, "Verify level=disk_to_catalog\n");
       get_attributes_and_compare_to_catalog(jcr, JobId);
       break;
 

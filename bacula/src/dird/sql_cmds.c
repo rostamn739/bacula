@@ -85,12 +85,14 @@ char *insert_delcand =
 /* Select Jobs from the DelCandidates table that have a
  * more recent backup -- i.e. are not the only backup.
  * This is the list of Jobs to delete for a Backup Job.
+ * At the same time, we select "orphanned" jobs
+ * (i.e. no files, ...) for deletion.
  */
 char *select_backup_del =
    "SELECT DelCandidates.JobId "
    "FROM Job,DelCandidates "
-   "WHERE (DelCandidates.JobFiles=0) OR "
-   "(DelCandidates.JobStatus!='T') OR "
+   "WHERE (JobTDate<%s AND ((DelCandidates.JobFiles=0) OR "
+   "(DelCandidates.JobStatus!='T'))) OR "
    "(Job.JobTDate>%s "
    "AND Job.ClientId=%u "
    "AND Job.Type='B' "
@@ -211,7 +213,7 @@ char *uar_inc_dec =
    "Job.Level,Job.JobFiles,Job.StartTime,Media.VolumeName,JobMedia.StartFile,"
    "Job.VolSessionId,Job.VolSessionTime "
    "FROM Job,JobMedia,Media "
-   "WHERE Job.JobTDate>%s AND Job.StartTime < '%s' "
+   "WHERE Job.JobTDate>%s AND Job.StartTime<'%s' "
    "AND Job.ClientId=%u "
    "AND JobMedia.JobId=Job.JobId "
    "AND JobMedia.MediaId=Media.MediaId "
@@ -239,10 +241,11 @@ char *uar_mediatype =
    "SELECT MediaType FROM JobMedia,Media WHERE JobMedia.JobId=%u "
    "AND JobMedia.MediaId=Media.MediaId";
 
-/* Find JobId, FileIndex for a given path/file */
+/* Find JobId, FileIndex for a given path/file and date */
 char *uar_jobid_fileindex = 
    "SELECT Job.JobId, File.FileIndex FROM Job,File,Path,Filename,Client "
    "WHERE Job.JobId=File.JobId "
+   "AND Job.StartTime<'%s' "
    "AND Path.Path='%s' "
    "AND Filename.Name='%s' "
    "AND Client.Name='%s' "
