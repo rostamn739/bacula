@@ -310,12 +310,8 @@ static int do_label(JCR *jcr, int relabel)
 
 	 P(dev->mutex); 	      /* Use P to avoid indefinite block */
 	 if (!(dev->state & ST_OPENED)) {
-	    if (open_dev(dev, newname, READ_WRITE) < 0) {
-               bnet_fsend(dir, _("3994 Connot open device: %s\n"), strerror_dev(dev));
-	    } else {
-	       label_volume_if_ok(jcr, dev, oldname, newname, poolname, slot, relabel);
-	       force_close_dev(dev);
-	    }
+	     label_volume_if_ok(jcr, dev, oldname, newname, poolname, slot, relabel);
+	     force_close_dev(dev);
          /* Under certain "safe" conditions, we can steal the lock */
 	 } else if (dev->dev_blocked && 
 		    (dev->dev_blocked == BST_UNMOUNTED ||
@@ -324,10 +320,10 @@ static int do_label(JCR *jcr, int relabel)
 	    label_volume_if_ok(jcr, dev, oldname, newname, poolname, slot, relabel);
 	 } else if (dev->state & ST_READ || dev->num_writers) {
 	    if (dev->state & ST_READ) {
-                bnet_fsend(dir, _("3901 Device %s is busy with 1 reader.\n"),
+                bnet_fsend(dir, _("3911 Device %s is busy with 1 reader.\n"),
 		   dev_name(dev));
 	    } else {
-                bnet_fsend(dir, _("3902 Device %s is busy with %d writer(s).\n"),
+                bnet_fsend(dir, _("3912 Device %s is busy with %d writer(s).\n"),
 		   dev_name(dev), dev->num_writers);
 	    }
 	 } else {		      /* device not being used */
@@ -581,7 +577,7 @@ static int mount_cmd(JCR *jcr)
       }
    } else {
       pm_strcpy(&jcr->errmsg, dir->msg);
-      bnet_fsend(dir, _("3906 Error scanning mount command: %s\n"), jcr->errmsg);
+      bnet_fsend(dir, _("3909 Error scanning mount command: %s\n"), jcr->errmsg);
    }
    free_memory(dev_name);
    bnet_sig(dir, BNET_EOD);
@@ -794,12 +790,8 @@ static int autochanger_cmd(JCR *jcr)
             bnet_fsend(dir, _("3995 Device %s is not an autochanger.\n"), 
 	       dev_name(dev));
 	 } else if (!(dev->state & ST_OPENED)) {
-	    if (open_dev(dev, NULL, READ_WRITE) < 0) {
-               bnet_fsend(dir, _("3994 Connot open device: %s\n"), strerror_dev(dev));
-	    } else {
-	       autochanger_list(jcr, dev, dir);
-	       force_close_dev(dev);
-	    }
+	    autochanger_list(jcr, dev, dir);
+	    force_close_dev(dev);
          /* Under certain "safe" conditions, we can steal the lock */
 	 } else if (dev->dev_blocked && 
 		    (dev->dev_blocked == BST_UNMOUNTED ||
@@ -823,7 +815,7 @@ static int autochanger_cmd(JCR *jcr)
       }
    } else {  /* error on scanf */
       pm_strcpy(&jcr->errmsg, dir->msg);
-      bnet_fsend(dir, _("3907 Error scanning autocharger list command: %s\n"),
+      bnet_fsend(dir, _("3908 Error scanning autocharger list command: %s\n"),
 	 jcr->errmsg);
    }
    free_memory(devname);

@@ -304,7 +304,7 @@ static int do_list_cmd(UAContext *ua, char *cmd, e_list_type llist)
       /* List MEDIA or VOLUMES */
       } else if (strcasecmp(ua->argk[i], _("media")) == 0 ||
                  strcasecmp(ua->argk[i], _("volumes")) == 0) {
-	 int done = FALSE;
+	 bool done = false;
 	 for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], _("job")) == 0 && ua->argv[j]) {
 	       bstrncpy(jr.Job, ua->argv[j], MAX_NAME_LENGTH);
@@ -320,7 +320,7 @@ static int do_list_cmd(UAContext *ua, char *cmd, e_list_type llist)
 	    n = db_get_job_volume_names(ua->jcr, ua->db, jobid, &VolumeName);
             bsendmsg(ua, _("Jobid %d used %d Volume(s): %s\n"), jobid, n, VolumeName);
 	    free_pool_memory(VolumeName);
-	    done = TRUE;
+	    done = true;
 	 }
 	 /* if no job or jobid keyword found, then we list all media */
 	 if (!done) {
@@ -372,6 +372,11 @@ static int do_list_cmd(UAContext *ua, char *cmd, e_list_type llist)
                  strcasecmp(ua->argk[i], _("nextvolume")) == 0) {
 	 JOB *job;
 	 JCR *jcr = ua->jcr;
+	 POOL *pool;
+	 RUN *run;
+	 time_t runtime;
+	 bool found = false;
+
          i = find_arg_with_value(ua, "job");
 	 if (i <= 0) {
 	    if ((job = select_job_resource(ua)) == NULL) {
@@ -386,21 +391,37 @@ static int do_list_cmd(UAContext *ua, char *cmd, e_list_type llist)
 	       }
 	    }
 	 }
-	 if (!complete_jcr_for_job(jcr, job, NULL)) {
-	    return 1;
-	 }
+	 for (run=NULL; (run = find_next_run(run, job, runtime)); ) {
+	    pool = run ? run->pool : NULL;
+	    if (!complete_jcr_for_job(jcr, job, pool)) {
+	       return 1;
+	    }
 	   
-	 if (!find_next_volume_for_append(jcr, &mr, 0)) {
-            bsendmsg(ua, "Could not find next Volume\n");
+	    if (!find_next_volume_for_append(jcr, &mr, 0)) {
+               bsendmsg(ua, _("Could not find next Volume.\n"));
+	       if (jcr->db) {
+		  db_close_database(jcr, jcr->db);
+		  jcr->db = NULL;
+	       }
+	       return 1;
+	    } else {
+               bsendmsg(ua, _("The next Volume to be used by Job \"%s\" will be %s\n"), 
+		  job->hdr.name, mr.VolumeName);
+	       found = true;
+	    }
+	    if (jcr->db) {
+	       db_close_database(jcr, jcr->db);
+	       jcr->db = NULL;
+	    }
+	 }
+	 if (jcr->db) {
 	    db_close_database(jcr, jcr->db);
 	    jcr->db = NULL;
-	    return 1;
-	 } else {
-            bsendmsg(ua, "The next Volume to be used by Job \"%s\" will be %s\n", 
-	       job->hdr.name, mr.VolumeName);
 	 }
-	 db_close_database(jcr, jcr->db);
-	 jcr->db = NULL;
+	 if (!found) {
+            bsendmsg(ua, _("Could not find next Volume.\n"));
+	 }
+	 return 1;
       } else {
          bsendmsg(ua, _("Unknown list keyword: %s\n"), NPRT(ua->argk[i]));
       }
@@ -408,6 +429,101 @@ static int do_list_cmd(UAContext *ua, char *cmd, e_list_type llist)
    return 1;
 }
 
+/* 
+ * For a given job, we examine all his run records
+ *  to see if it is scheduled today or tomorrow.
+ */
+RUN *find_next_run(RUN *run, JOB *job, time_t &runtime)
+{
+   time_t now, tomorrow;
+   SCHED *sched;
+   struct tm tm;
+   int mday, wday, month, wom, tmday, twday, tmonth, twom, i, hour;
+   int woy, twoy;
+   int tod, tom;
+
+   Dmsg0(200, "enter find_runs()\n");
+
+   sched = job->schedule;
+   if (sched == NULL) { 	   /* scheduled? */
+      return NULL;		   /* no nothing to report */
+   }
+   /* Break down current time into components */ 
+   now = time(NULL);
+   localtime_r(&now, &tm);
+   mday = tm.tm_mday - 1;
+   wday = tm.tm_wday;
+   month = tm.tm_mon;
+   wom = mday / 7;
+   woy = tm_woy(now);
+
+   /* Break down tomorrow into components */
+   tomorrow = now + 60 * 60 * 24;
+   localtime_r(&tomorrow, &tm);
+   tmday = tm.tm_mday - 1;
+   twday = tm.tm_wday;
+   tmonth = tm.tm_mon;
+   twom  = tmday / 7;
+   twoy  = tm_woy(tomorrow);
+
+   if (run == NULL) {
+      run = sched->run;
+   } else {
+      run = run->next;
+   }
+   for ( ; run; run=run->next) {
+      /* 
+       * Find runs in next 24 hours
+       */
+      tod = (bit_is_set(mday, run->mday) || bit_is_set(wday, run->wday)) && 
+	     bit_is_set(month, run->month) && bit_is_set(wom, run->wom) &&
+	     bit_is_set(woy, run->woy);
+
+      tom = (bit_is_set(tmday, run->mday) || bit_is_set(twday, run->wday)) &&
+	     bit_is_set(tmonth, run->month) && bit_is_set(twom, run->wom) &&
+	     bit_is_set(twoy, run->woy);
+
+      Dmsg2(200, "tod=%d tom=%d\n", tod, tom);
+      if (tod) {		   /* Jobs scheduled today (next 24 hours) */
+	 /* find time (time_t) job is to be run */
+	 localtime_r(&now, &tm);
+	 hour = 0;
+	 for (i=tm.tm_hour; i < 24; i++) {
+	    if (bit_is_set(i, run->hour)) {
+	       tm.tm_hour = i;
+	       tm.tm_min = run->minute;
+	       tm.tm_sec = 0;
+	       runtime = mktime(&tm);
+	       if (runtime > now) {
+		  return run;	      /* found it, return run resource */
+	       }
+	    }
+	 }
+      }
+
+//    Dmsg2(200, "runtime=%d now=%d\n", runtime, now);
+      if (tom) {		/* look at jobs scheduled tomorrow */
+	 localtime_r(&tomorrow, &tm);
+	 hour = 0;
+	 for (i=0; i < 24; i++) {
+	    if (bit_is_set(i, run->hour)) {
+	       hour = i;
+	       break;
+	    }
+	 }
+	 tm.tm_hour = hour;
+	 tm.tm_min = run->minute;
+	 tm.tm_sec = 0;
+	 runtime = mktime(&tm);
+         Dmsg2(200, "truntime=%d now=%d\n", runtime, now);
+	 if (runtime < tomorrow) {
+	    return run; 	      /* found it, return run resource */
+	 }
+      }
+   } /* end for loop over runs */ 
+   /* Nothing found */
+   return NULL;
+}
 /* 
  * Fill in the remaining fields of the jcr as if it
  *  is going to run the job.
@@ -438,8 +554,10 @@ int complete_jcr_for_job(JCR *jcr, JOB *job, POOL *pool)
       if (create_pool(jcr, jcr->db, jcr->pool, POOL_OP_CREATE) < 0) {
          Jmsg(jcr, M_FATAL, 0, _("Pool %s not in database. %s"), pr.Name, 
 	    db_strerror(jcr->db));
-	 db_close_database(jcr, jcr->db);
-	 jcr->db = NULL;
+	 if (jcr->db) {
+	    db_close_database(jcr, jcr->db);
+	    jcr->db = NULL;
+	 }
 	 return 0;
       } else {
          Jmsg(jcr, M_INFO, 0, _("Pool %s created in database.\n"), pr.Name);
@@ -538,11 +656,12 @@ again:
    len = bvsnprintf(msg, maxlen, fmt, arg_ptr);
    va_end(arg_ptr);
    if (len < 0 || len >= maxlen) {
-      msg = realloc_pool_memory(msg, maxlen + 200);
+      msg = realloc_pool_memory(msg, maxlen + maxlen/2);
       goto again;
    }
 
    if (bs) {
+      bs->msg = msg;
       bs->msglen = len;
       bnet_send(bs);
    } else {			      /* No UA, send to Job */

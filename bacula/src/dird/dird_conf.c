@@ -203,6 +203,7 @@ static struct res_items job_items[] = {
    {"pool",     store_res,     ITEM(res_job.pool),     R_POOL, 0, 0},
    {"client",   store_res,     ITEM(res_job.client),   R_CLIENT, 0, 0},
    {"fileset",  store_res,     ITEM(res_job.fileset),  R_FILESET, 0, 0},
+   {"verifyjob",  store_res,   ITEM(res_job.verify_job), R_JOB, 0, 0},
    {"where",    store_dir,     ITEM(res_job.RestoreWhere), 0, 0, 0},
    {"replace",  store_replace, ITEM(res_job.replace), 0, ITEM_DEFAULT, REPLACE_ALWAYS},
    {"bootstrap",store_dir,     ITEM(res_job.RestoreBootstrap), 0, 0, 0},
@@ -214,6 +215,7 @@ static struct res_items job_items[] = {
    {"prunevolumes", store_yesno, ITEM(res_job.PruneVolumes), 1, ITEM_DEFAULT, 0},
    {"runbeforejob", store_str,  ITEM(res_job.RunBeforeJob), 0, 0, 0},
    {"runafterjob",  store_str,  ITEM(res_job.RunAfterJob),  0, 0, 0},
+   {"runafterfailedjob",  store_str,  ITEM(res_job.RunAfterFailedJob),  0, 0, 0},
    {"clientrunbeforejob", store_str,  ITEM(res_job.ClientRunBeforeJob), 0, 0, 0},
    {"clientrunafterjob",  store_str,  ITEM(res_job.ClientRunAfterJob),  0, 0, 0},
    {"spoolattributes", store_yesno, ITEM(res_job.SpoolAttributes), 1, ITEM_DEFAULT, 0},
@@ -223,6 +225,7 @@ static struct res_items job_items[] = {
    {"rescheduleinterval", store_time, ITEM(res_job.RescheduleInterval), 0, ITEM_DEFAULT, 60 * 30},
    {"rescheduletimes", store_pint, ITEM(res_job.RescheduleTimes), 0, 0, 0},
    {"priority",   store_pint, ITEM(res_job.Priority), 0, ITEM_DEFAULT, 10},
+   {"jobretention",  store_time,  ITEM(res_job.JobRetention),  0, 0, 0},
    {NULL, NULL, NULL, 0, 0, 0} 
 };
 
@@ -345,7 +348,10 @@ struct s_jl joblevels[] = {
    {"Catalog",       L_VERIFY_CATALOG,  JT_VERIFY},
    {"InitCatalog",   L_VERIFY_INIT,     JT_VERIFY},
    {"VolumeToCatalog", L_VERIFY_VOLUME_TO_CATALOG,   JT_VERIFY},
+   {"DiskToCatalog", L_VERIFY_DISK_TO_CATALOG,   JT_VERIFY},
    {"Data",          L_VERIFY_DATA,     JT_VERIFY},
+   {" ",             L_NONE,            JT_ADMIN},
+   {" ",             L_NONE,            JT_RESTORE},
    {NULL,	     0}
 };
 
@@ -410,7 +416,7 @@ char *level_to_str(int level)
 void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...), void *sock)
 {
    URES *res = (URES *)reshdr;
-   int recurse = 1;
+   bool recurse = true;
    char ed1[100], ed2[100];
 
    if (res == NULL) {
@@ -419,7 +425,7 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
    }
    if (type < 0) {		      /* no recursion */
       type = - type;
-      recurse = 0;
+      recurse = false;
    }
    switch (type) {
    case R_DIRECTOR:
@@ -483,7 +489,8 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
 	 res->res_cat.db_port, res->res_cat.db_name, NPRT(res->res_cat.db_user));
       break;
    case R_JOB:
-      sendit(sock, "Job: name=%s JobType=%d level=%s Priority=%d MaxJobs=%u\n", 
+      sendit(sock, "%s: name=%s JobType=%d level=%s Priority=%d MaxJobs=%u\n", 
+         type == R_JOB ? "Job" : "JobDefs",
 	 res->res_job.hdr.name, res->res_job.JobType, 
 	 level_to_str(res->res_job.level), res->res_job.Priority,
 	 res->res_job.MaxConcurrentJobs);
@@ -514,6 +521,9 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
       if (res->res_job.RunAfterJob) {
          sendit(sock, "  --> RunAfter=%s\n", NPRT(res->res_job.RunAfterJob));
       }
+      if (res->res_job.RunAfterFailedJob) {
+         sendit(sock, "  --> RunAfterFailed=%s\n", NPRT(res->res_job.RunAfterFailedJob));
+      }
       if (res->res_job.WriteBootstrap) {
          sendit(sock, "  --> WriteBootstrap=%s\n", NPRT(res->res_job.WriteBootstrap));
       }
@@ -527,6 +537,11 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
       } else {
          sendit(sock, "!!! No Pool resource\n");
       }
+      if (res->res_job.verify_job) {
+         sendit(sock, "  --> ");
+	 dump_resource(-type, (RES *)res->res_job.verify_job, sendit, sock);
+      }
+      break;
       if (res->res_job.messages) {
          sendit(sock, "  --> ");
 	 dump_resource(-R_MSGS, (RES *)res->res_job.messages, sendit, sock);
@@ -565,43 +580,52 @@ next_run:
 	       bstrncat(buf, num, sizeof(buf));
 	    }
 	 }
-         strcat(buf, "\n");
+         bstrncat(buf, "\n", sizeof(buf));
 	 sendit(sock, buf);
-         strcpy(buf, "      mday=");
+         bstrncpy(buf, "      mday=", sizeof(buf));
 	 for (i=0; i<31; i++) {
 	    if (bit_is_set(i, run->mday)) {
                sprintf(num, "%d ", i+1);
-	       strcat(buf, num);
+	       bstrncat(buf, num, sizeof(buf));
 	    }
 	 }
-         strcat(buf, "\n");
+         bstrncat(buf, "\n", sizeof(buf));
 	 sendit(sock, buf);
-         strcpy(buf, "      month=");
+         bstrncpy(buf, "      month=", sizeof(buf));
 	 for (i=0; i<12; i++) {
 	    if (bit_is_set(i, run->month)) {
                sprintf(num, "%d ", i+1);
-	       strcat(buf, num);
+	       bstrncat(buf, num, sizeof(buf));
 	    }
 	 }
-         strcat(buf, "\n");
+         bstrncat(buf, "\n", sizeof(buf));
 	 sendit(sock, buf);
-         strcpy(buf, "      wday=");
+         bstrncpy(buf, "      wday=", sizeof(buf));
 	 for (i=0; i<7; i++) {
 	    if (bit_is_set(i, run->wday)) {
                sprintf(num, "%d ", i+1);
-	       strcat(buf, num);
+	       bstrncat(buf, num, sizeof(buf));
 	    }
 	 }
-         strcat(buf, "\n");
+         bstrncat(buf, "\n", sizeof(buf));
 	 sendit(sock, buf);
-         strcpy(buf, "      wpos=");
+         bstrncpy(buf, "      wom=", sizeof(buf));
 	 for (i=0; i<5; i++) {
-	    if (bit_is_set(i, run->wpos)) {
+	    if (bit_is_set(i, run->wom)) {
                sprintf(num, "%d ", i+1);
-	       strcat(buf, num);
+	       bstrncat(buf, num, sizeof(buf));
 	    }
 	 }
-         strcat(buf, "\n");
+         bstrncat(buf, "\n", sizeof(buf));
+	 sendit(sock, buf);
+         bstrncpy(buf, "      woy=", sizeof(buf));
+	 for (i=0; i<54; i++) {
+	    if (bit_is_set(i, run->woy)) {
+               sprintf(num, "%d ", i);
+	       bstrncat(buf, num, sizeof(buf));
+	    }
+	 }
+         bstrncat(buf, "\n", sizeof(buf));
 	 sendit(sock, buf);
          sendit(sock, "      mins=%d\n", run->minute);
 	 if (run->pool) {
@@ -830,6 +854,9 @@ void free_resource(int type)
       if (res->res_job.RunAfterJob) {
 	 free(res->res_job.RunAfterJob);
       }
+      if (res->res_job.RunAfterFailedJob) {
+	 free(res->res_job.RunAfterFailedJob);
+      }
       if (res->res_job.ClientRunBeforeJob) {
 	 free(res->res_job.ClientRunBeforeJob);
       }
@@ -916,15 +943,17 @@ void save_resource(int type, struct res_items *items, int pass)
 	 res->res_dir.messages = res_all.res_dir.messages;
 	 break;
       case R_JOB:
-	 if ((res = (URES *)GetResWithName(R_JOB, res_all.res_dir.hdr.name)) == NULL) {
-            Emsg1(M_ERROR_TERM, 0, "Cannot find Job resource %s\n", res_all.res_dir.hdr.name);
+	 if ((res = (URES *)GetResWithName(type, res_all.res_dir.hdr.name)) == NULL) {
+            Emsg1(M_ERROR_TERM, 0, "Cannot find Job resource %s\n", 
+		  res_all.res_dir.hdr.name);
 	 }
-	 res->res_job.messages = res_all.res_job.messages;
-	 res->res_job.schedule = res_all.res_job.schedule;
-	 res->res_job.client   = res_all.res_job.client;
-	 res->res_job.fileset  = res_all.res_job.fileset;
-	 res->res_job.storage  = res_all.res_job.storage;
-	 res->res_job.pool     = res_all.res_job.pool;
+	 res->res_job.messages	 = res_all.res_job.messages;
+	 res->res_job.schedule	 = res_all.res_job.schedule;
+	 res->res_job.client	 = res_all.res_job.client;
+	 res->res_job.fileset	 = res_all.res_job.fileset;
+	 res->res_job.storage	 = res_all.res_job.storage;
+	 res->res_job.pool	 = res_all.res_job.pool;
+	 res->res_job.verify_job = res_all.res_job.verify_job;
 	 if (res->res_job.JobType == 0) {
             Emsg1(M_ERROR_TERM, 0, "Job Type not defined for Job resource %s\n", res_all.res_dir.hdr.name);
 	 }

@@ -28,17 +28,34 @@
  *
  */
 
-#define OFFSET(item,link) ((char *)link - (char *)item)
+/* In case you want to specifically specify the offset to the link */
+#define OFFSET(item, link) ((char *)(link) - (char *)(item))
+/* 
+ * There is a lot of extra casting here to work around the fact
+ * that some compilers (Sun and Visual C++) do not accept
+ * (void *) as an lvalue on the left side of an equal.
+ *
+ * Loop var through each member of list
+ */
+#define foreach_dlist(var, list) \
+    for((var)=NULL; (*((void **)&(var))=(void*)((list)->next(var))); )
+
+#ifdef the_old_way
+#define foreach_dlist(var, list) \
+        for((var)=NULL; (((void *)(var))=(list)->next(var)); )
+#endif
 
 struct dlink {
    void *next;
    void *prev;
 };
 
+
 class dlist {
    void *head;
    void *tail;
    int loffset;
+   int num_items;
 public:
    dlist(void *item, void *link);
    void init(void *item, void *link);
@@ -48,6 +65,7 @@ public:
    void insert_after(void *item, void *where);
    void remove(void *item);
    bool empty();
+   int  size();
    void *next(void *item);
    void *prev(void *item);
    void destroy();
@@ -66,6 +84,7 @@ inline void dlist::init(void *item, void *link)
 {
    head = tail = NULL;
    loffset = (char *)link - (char *)item;
+   num_items = 0;
 }
 
 /* Constructor */
@@ -78,6 +97,12 @@ inline bool dlist::empty()
 {
    return head == NULL;
 }
+
+inline int dlist::size()
+{
+   return num_items;
+}
+
    
 inline void * dlist::operator new(size_t)
 {

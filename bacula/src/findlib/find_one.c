@@ -133,6 +133,12 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt, int handle_file(FF_PKT *ff, void *hpkt),
       /* Search link list of hard linked files */
       for (lp = ff_pkt->linklist; lp; lp = lp->next)
 	 if (lp->ino == ff_pkt->statp.st_ino && lp->dev == ff_pkt->statp.st_dev) {
+             /* If we have already backed up the hard linked file don't do it again */
+	     if (strcmp(lp->name, fname) == 0) {
+                Jmsg1(jcr, M_WARNING, 0, _("Attempt to backup hard linked file %s twice ignored.\n"),
+		   fname);
+		return 1;	      /* ignore */
+	     }
 	     ff_pkt->link = lp->name;
 	     ff_pkt->type = FT_LNKSAVED;       /* Handle link, file already saved */
 	     ff_pkt->LinkFI = lp->FileIndex;

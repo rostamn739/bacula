@@ -73,7 +73,7 @@ int do_restore(JCR *jcr)
    }
 
    memset(&rjr, 0, sizeof(rjr));
-   jcr->jr.Level = 'F';            /* Full restore */
+   jcr->jr.Level = L_FULL;	   /* Full restore */
    jcr->jr.StartTime = jcr->start_time;
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
       Jmsg(jcr, M_ERROR, 0, "%s", db_strerror(jcr->db));
@@ -88,6 +88,7 @@ int do_restore(JCR *jcr)
    /* 
     * The following code is kept temporarily for compatibility.
     * It is the predecessor to the Bootstrap file.
+    *	DEPRECATED
     */
    if (!jcr->RestoreBootstrap) {
       /*
@@ -286,14 +287,18 @@ static void restore_cleanup(JCR *jcr, int TermCode)
       msg_type = M_ERROR;	   /* Generate error message */
       if (jcr->store_bsock) {
 	 bnet_sig(jcr->store_bsock, BNET_TERMINATE);
-	 pthread_cancel(jcr->SD_msg_chan);
+	 if (jcr->SD_msg_chan) {
+	    pthread_cancel(jcr->SD_msg_chan);
+	 }
       }
       break;
    case JS_Canceled:
       term_msg = _("Restore Canceled");
       if (jcr->store_bsock) {
 	 bnet_sig(jcr->store_bsock, BNET_TERMINATE);
-	 pthread_cancel(jcr->SD_msg_chan);
+	 if (jcr->SD_msg_chan) {
+	    pthread_cancel(jcr->SD_msg_chan);
+	 }
       }
       break;
    default:
@@ -324,7 +329,7 @@ End time:               %s\n\
 Files Restored:         %s\n\
 Bytes Restored:         %s\n\
 Rate:                   %.1f KB/s\n\
-Non-fatal FD Errors:    %d\n\
+FD Errors:              %d\n\
 FD termination status:  %s\n\
 SD termination status:  %s\n\
 Termination:            %s\n\n"),

@@ -47,8 +47,8 @@ void     *bmalloc                (size_t size);
 #endif
 void     *brealloc               (void *buf, size_t size);
 void     *bcalloc                (size_t size1, size_t size2);
-int       bsnprintf              (char *str, size_t size, const  char  *format, ...);
-int       bvsnprintf             (char *str, size_t size, const char  *format, va_list ap);
+int       bsnprintf              (char *str, int32_t size, const  char  *format, ...);
+int       bvsnprintf             (char *str, int32_t size, const char  *format, va_list ap);
 int       pool_sprintf           (char *pool_buf, char *fmt, ...);
 void      create_pid_file        (char *dir, char *progname, int port);
 int       delete_pid_file        (char *dir, char *progname, int port);
@@ -117,6 +117,13 @@ char             *edit_utime             (utime_t val, char *buf);
 int              is_a_number             (const char *num);
 int              is_an_integer           (const char *n);
 
+/* jcr.c (most definitions are in src/jcr.h) */
+void init_last_jobs_list();
+void term_last_jobs_list();
+void lock_last_jobs_list();
+void unlock_last_jobs_list();
+
+
 /* lex.c */
 LEX *     lex_close_file         (LEX *lf);
 LEX *     lex_open_file          (LEX *lf, char *fname, LEX_ERROR_HANDLER *scan_error);
@@ -138,6 +145,7 @@ void       init_console_msg      (char *wd);
 void       free_msgs_res         (MSGS *msgs);
 int        open_spool_file       (JCR *jcr, BSOCK *bs);
 int        close_spool_file      (JCR *jcr, BSOCK *bs);
+void       set_trace             (int trace_flag);
 
 
 /* bnet_server.c */
@@ -162,8 +170,8 @@ void             init_stack_dump          (void);
 /* scan.c */
 void             strip_trailing_junk     (char *str);
 void             strip_trailing_slashes  (char *dir);
-int              skip_spaces             (char **msg);
-int              skip_nonspaces          (char **msg);
+bool             skip_spaces             (char **msg);
+bool             skip_nonspaces          (char **msg);
 int              fstrsch                 (char *a, char *b);
 int              parse_args(POOLMEM *cmd, POOLMEM **args, int *argc, 
                         char **argk, char **argv, int max_args);

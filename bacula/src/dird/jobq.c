@@ -278,6 +278,7 @@ int jobq_remove(jobq_t *jq, JCR *jcr)
       }
    }
    if (!found) {
+      pthread_mutex_unlock(&jq->mutex);
       return EINVAL;
    }
 

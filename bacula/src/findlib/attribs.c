@@ -9,7 +9,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2003 Kern Sibbald and John Walker
+   Copyright (C) 2000-2004 Kern Sibbald and John Walker
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -220,6 +220,48 @@ int decode_stat(char *buf, struct stat *statp, int32_t *LinkFI)
    return (int)val;
 }
 
+/* Decode a LinkFI field of encoded stat packet */
+int32_t decode_LinkFI(char *buf, struct stat *statp)
+{
+   char *p = buf;
+   int64_t val;
+
+   skip_nonspaces(&p);		      /* st_dev */
+   p++; 			      /* skip space */
+   skip_nonspaces(&p);		      /* st_ino */
+   p++;
+   p += from_base64(&val, p);
+   statp->st_mode = val;	      /* st_mode */
+   p++;
+   skip_nonspaces(&p);		      /* st_nlink */
+   p++;
+   skip_nonspaces(&p);		      /* st_uid */
+   p++;
+   skip_nonspaces(&p);		      /* st_gid */
+   p++;
+   skip_nonspaces(&p);		      /* st_rdev */
+   p++;
+   skip_nonspaces(&p);		      /* st_size */
+   p++;
+   skip_nonspaces(&p);		      /* st_blksize */
+   p++;
+   skip_nonspaces(&p);		      /* st_blocks */
+   p++;
+   skip_nonspaces(&p);		      /* st_atime */
+   p++;
+   skip_nonspaces(&p);		      /* st_mtime */
+   p++;
+   skip_nonspaces(&p);		      /* st_ctime */
+
+   /* Optional FileIndex of hard linked file data */
+   if (*p == ' ' || (*p != 0 && *(p+1) == ' ')) {
+      p++;
+      p += from_base64(&val, p);
+      return (int32_t)val;
+   }
+   return 0;
+}
+
 /*
  * Set file modes, permissions and times
  *
@@ -241,6 +283,7 @@ int set_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
       if (is_bopen(ofd)) {
 	 bclose(ofd); 
       }
+      pm_strcpy(&attr->ofname, "*none*");
       return 1;
    }
 
@@ -249,6 +292,7 @@ int set_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
       if (is_bopen(ofd)) {
 	 bclose(ofd); 
       }
+      pm_strcpy(&attr->ofname, "*none*");
       return 1;
    }
    /*
@@ -307,6 +351,7 @@ int set_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
 	 stat = 0;
       }
    }
+   pm_strcpy(&attr->ofname, "*none*");
    umask(old_mask);
    return stat;
 }

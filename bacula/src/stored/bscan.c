@@ -102,17 +102,17 @@ static void usage()
 "Usage: bscan [-d debug_level] <bacula-archive>\n"
 "       -b bootstrap      specify a bootstrap file\n"
 "       -c <file>         specify configuration file\n"
-"       -dnn              set debug level to nn\n"
+"       -d <nn>           set debug level to nn\n"
 "       -m                update media info in database\n"
-"       -n name           specify the database name (default bacula)\n"
-"       -u user           specify database user name (default bacula)\n"
-"       -p password       specify database password (default none)\n"
-"       -h host           specify database host (default NULL)\n"
+"       -n <name>         specify the database name (default bacula)\n"
+"       -u <user>         specify database user name (default bacula)\n"
+"       -p <password      specify database password (default none)\n"
+"       -h <host>         specify database host (default NULL)\n"
 "       -r                list records\n"
 "       -s                synchronize or store in database\n"
 "       -v                verbose\n"
-"       -V                specify Volume names (separated by |)\n"
-"       -w dir            specify working directory (default from conf file)\n"
+"       -V <Volumes>      specify Volume names (separated by |)\n"
+"       -w <dir>          specify working directory (default from conf file)\n"
 "       -?                print this message\n\n"));
    exit(1);
 }
@@ -575,7 +575,7 @@ static int record_cb(JCR *bjcr, DEVICE *dev, DEV_BLOCK *block, DEV_RECORD *rec)
       }
       fr.JobId = mjcr->JobId;
       fr.FileId = 0;
-      if (db_get_file_attributes_record(bjcr, db, attr->fname, &fr)) {
+      if (db_get_file_attributes_record(bjcr, db, attr->fname, NULL, &fr)) {
 	 if (verbose > 1) {
             Pmsg1(000, _("File record already exists for: %s\n"), attr->fname);
 	 }
@@ -720,7 +720,8 @@ static int create_media_record(B_DB *db, MEDIA_DBR *mr, VOLUME_LABEL *vl)
    struct date_time dt;
    struct tm tm;
 
-   bstrncpy(mr->VolStatus, "Full", sizeof(mr->VolStatus));
+   /* We mark Vols as Archive to keep them from being re-written */
+   bstrncpy(mr->VolStatus, "Archive", sizeof(mr->VolStatus));
    mr->VolRetention = 365 * 3600 * 24; /* 1 year */
    if (vl->VerNum >= 11) {
       mr->FirstWritten = btime_to_utime(vl->write_btime);
@@ -1111,7 +1112,7 @@ static JCR *create_jcr(JOB_DBR *jr, DEV_RECORD *rec, uint32_t JobId)
 /* Dummies to replace askdir.c */
 int	dir_get_volume_info(JCR *jcr, enum get_vol_info_rw  writing) { return 1;}
 int	dir_find_next_appendable_volume(JCR *jcr) { return 1;}
-int	dir_update_volume_info(JCR *jcr, VOLUME_CAT_INFO *vol, int relabel) { return 1; }
+int	dir_update_volume_info(JCR *jcr, DEVICE *dev, int relabel) { return 1; }
 int	dir_create_jobmedia_record(JCR *jcr) { return 1; }
 int	dir_ask_sysop_to_mount_next_volume(JCR *jcr, DEVICE *dev) { return 1; }
 int	dir_update_file_attributes(JCR *jcr, DEV_RECORD *rec) { return 1;}

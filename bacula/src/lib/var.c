@@ -18,7 +18,7 @@
  *  Adapted by Kern Sibbald to Bacula June 2003
  */
 /*
-   Copyright (C) 2000-2003 Kern Sibbald and John Walker
+   Copyright (C) 2000-2004 Kern Sibbald and John Walker
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -37,7 +37,7 @@
 
  */
 
-
+#ifndef HAVE_WIN32
 #include "bacula.h"
 #if defined(HAVE_PCREPOSIX)
 #  include <pcreposix.h>
@@ -120,7 +120,7 @@ var_mvxprintf(
     int n;
     int bytes;
 
-    if (format == NULL || ap == NULL)
+    if (format == NULL)
 	return -1;
     bytes = 0;
     while (*format != '\0') {
@@ -204,7 +204,7 @@ var_mvsnprintf(
     int n;
     var_mvsnprintf_cb_t ctx;
 
-    if (format == NULL || ap == NULL)
+    if (format == NULL)
 	return -1;
     if (buffer != NULL && bufsize == 0)
 	return -1;
@@ -2605,20 +2605,12 @@ var_formatv(
     const char *fmt, va_list ap)
 {
     var_rc_t rc;
-    va_list apbak;
     char *cpBuf;
-    int nBuf;
+    int nBuf = 5000;
 
     /* argument sanity checks */
     if (var == NULL || dst_ptr == NULL || fmt == NULL)
 	return VAR_RC(VAR_ERR_INVALID_ARGUMENT);
-
-    /* determine formatting buffer length */
-    apbak = ap;
-    nBuf = var_mvsnprintf(NULL, 0, fmt, ap);
-    ap = apbak;
-    if (nBuf == -1)
-	return VAR_RC(VAR_ERR_FORMATTING_FAILURE);
 
     /* perform formatting */
     if ((cpBuf = (char *)malloc(nBuf+1)) == NULL)
@@ -2724,3 +2716,4 @@ char *var_strerror(var_t *var, var_rc_t rc)
     }
     return str;
 }
+#endif

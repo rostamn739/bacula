@@ -50,11 +50,11 @@ extern int messagescmd(UAContext *ua, char *cmd);
 extern int autodisplaycmd(UAContext *ua, char *cmd);
 extern int sqlquerycmd(UAContext *ua, char *cmd);
 extern int querycmd(UAContext *ua, char *cmd);
-extern int runcmd(UAContext *ua, char *cmd);
+extern int run_cmd(UAContext *ua, char *cmd);
 extern int retentioncmd(UAContext *ua, char *cmd);
 extern int prunecmd(UAContext *ua, char *cmd);
 extern int purgecmd(UAContext *ua, char *cmd);
-extern int restorecmd(UAContext *ua, char *cmd);
+extern int restore_cmd(UAContext *ua, char *cmd);
 extern int label_cmd(UAContext *ua, char *cmd);
 extern int relabel_cmd(UAContext *ua, char *cmd);
 extern int update_slots(UAContext *ua);  /* ua_label.c */
@@ -64,6 +64,7 @@ static int add_cmd(UAContext *ua, char *cmd);
 static int create_cmd(UAContext *ua, char *cmd); 
 static int cancel_cmd(UAContext *ua, char *cmd); 
 static int setdebug_cmd(UAContext *ua, char *cmd);
+static int trace_cmd(UAContext *ua, char *cmd);
 static int var_cmd(UAContext *ua, char *cmd);
 static int estimate_cmd(UAContext *ua, char *cmd);
 static int help_cmd(UAContext *ua, char *cmd);
@@ -75,6 +76,7 @@ static int update_volume(UAContext *ua);
 static int update_pool(UAContext *ua);
 static int delete_volume(UAContext *ua);
 static int delete_pool(UAContext *ua);
+static int delete_job(UAContext *ua);
 static int mount_cmd(UAContext *ua, char *cmd);
 static int release_cmd(UAContext *ua, char *cmd);
 static int update_cmd(UAContext *ua, char *cmd);
@@ -94,24 +96,25 @@ static struct cmdstruct commands[] = {
  { N_("estimate"),   estimate_cmd,  _("performs FileSet estimate, listing gives full listing")},
  { N_("exit"),       quit_cmd,      _("exit = quit")},
  { N_("help"),       help_cmd,      _("print this command")},
+ { N_("list"),       list_cmd,      _("list [pools | jobs | jobtotals | media <pool> | files jobid=<nn>]; from catalog")},
  { N_("label"),      label_cmd,     _("label a tape")},
- { N_("list"),       list_cmd,      _("list [pools | jobs | jobtotals | media <pool> | files job=<nn>]; from catalog")},
  { N_("llist"),      llist_cmd,     _("full or long list like list command")},
  { N_("messages"),   messagescmd,   _("messages")},
  { N_("mount"),      mount_cmd,     _("mount <storage-name>")},
  { N_("prune"),      prunecmd,      _("prune expired records from catalog")},
  { N_("purge"),      purgecmd,      _("purge records from catalog")},
- { N_("query"),      querycmd,      _("query catalog")},
  { N_("quit"),       quit_cmd,      _("quit")},
+ { N_("query"),      querycmd,      _("query catalog")},
+ { N_("restore"),    restore_cmd,   _("restore files")},
  { N_("relabel"),    relabel_cmd,   _("relabel a tape")},
  { N_("release"),    release_cmd,   _("release <storage-name>")},
- { N_("restore"),    restorecmd,    _("restore files")},
- { N_("run"),        runcmd,        _("run <job-name>")},
+ { N_("run"),        run_cmd,       _("run <job-name>")},
+ { N_("status"),     status_cmd,    _("status [storage | client]=<name>")},
  { N_("setdebug"),   setdebug_cmd,  _("sets debug level")},
  { N_("show"),       show_cmd,      _("show (resource records) [jobs | pools | ... | all]")},
  { N_("sqlquery"),   sqlquerycmd,   _("use SQL to query catalog")}, 
- { N_("status"),     status_cmd,    _("status [storage | client]=<name>")},
  { N_("time"),       time_cmd,      _("print current time")},
+ { N_("trace"),      trace_cmd,     _("turn on/off trace to file")},
  { N_("unmount"),    unmount_cmd,   _("unmount <storage-name>")},
  { N_("update"),     update_cmd,    _("update Volume or Pool")},
  { N_("use"),        use_cmd,       _("use catalog xxx")},
@@ -431,7 +434,8 @@ static int cancel_cmd(UAContext *ua, char *cmd)
       set_jcr_job_status(jcr, JS_Canceled);
       bsendmsg(ua, _("JobId %d, Job %s marked to be canceled.\n"),
 	      jcr->JobId, jcr->Job);
-      jobq_remove(&job_queue, jcr); /* attempt to remove it from queue */
+      jobq_remove(&job_queue, jcr);   /* attempt to remove it from queue */
+      bmicrosleep(1, 0);	      /* allow remove thread to run */
       free_jcr(jcr);		      /* this decrements the use count only */
       return 1;
 	 
@@ -799,6 +803,26 @@ static void update_volrecycle(UAContext *ua, char *val, MEDIA_DBR *mr)
    free_pool_memory(query);
 }
 
+/* Modify the Pool in which this Volume is located */
+static void update_volpool(UAContext *ua, char *val, MEDIA_DBR *mr)
+{
+   POOL_DBR pr;
+   POOLMEM *query;
+   memset(&pr, 0, sizeof(pr));
+   bstrncpy(pr.Name, val, sizeof(pr.Name));
+   if (!get_pool_dbr(ua, &pr)) {
+      return;
+   }
+   query = get_pool_memory(PM_MESSAGE);
+   Mmsg(&query, "UPDATE Media SET PoolId=%u WHERE MediaId=%u", pr.PoolId, mr->MediaId);
+   if (!db_sql_query(ua->db, query, NULL, NULL)) {  
+      bsendmsg(ua, "%s", db_strerror(ua->db));
+   } else {	  
+      bsendmsg(ua, _("New Pool is: %s\n"), pr.Name);
+   }
+   free_pool_memory(query);
+}
+
 /*
  * Update a media record -- allows you to change the
  *  Volume status. E.g. if you want Bacula to stop
@@ -808,6 +832,7 @@ static void update_volrecycle(UAContext *ua, char *val, MEDIA_DBR *mr)
 static int update_volume(UAContext *ua)
 {
    MEDIA_DBR mr;
+   POOL_DBR pr;
    POOLMEM *query;
    char ed1[30];
    bool done = false;
@@ -819,6 +844,7 @@ static int update_volume(UAContext *ua)
       N_("MaxVolFiles"),              /* 4 */
       N_("MaxVolBytes"),              /* 5 */
       N_("Recycle"),                  /* 6 */
+      N_("Pool"),                     /* 7 */
       NULL };
 
    for (int i=0; kw[i]; i++) {
@@ -849,6 +875,8 @@ static int update_volume(UAContext *ua)
 	 case 6:
 	    update_volrecycle(ua, ua->argv[j], &mr);
 	    break;
+	 case 7:
+	    update_volpool(ua, ua->argv[j], &mr);
 	 }
 	 done = true;
       }
@@ -869,6 +897,7 @@ static int update_volume(UAContext *ua)
       add_prompt(ua, _("Recycle Flag"));
       add_prompt(ua, _("Slot"));
       add_prompt(ua, _("Volume Files"));
+      add_prompt(ua, _("Pool"));
       add_prompt(ua, _("Done"));
       switch (do_prompt(ua, "", _("Select parameter to modify"), NULL, 0)) {
       case 0:			      /* Volume Status */
@@ -944,7 +973,6 @@ static int update_volume(UAContext *ua)
 
       case 7:			      /* Slot */
 	 int slot;
-	 POOL_DBR pr;
 
 	 memset(&pr, 0, sizeof(POOL_DBR));
 	 pr.PoolId = mr.PoolId;
@@ -999,6 +1027,19 @@ static int update_volume(UAContext *ua)
 	 free_pool_memory(query);
 	 break;
 
+      case 9:                         /* Volume's Pool */
+	 memset(&pr, 0, sizeof(POOL_DBR));
+	 pr.PoolId = mr.PoolId;
+	 if (!db_get_pool_record(ua->jcr, ua->db, &pr)) {
+            bsendmsg(ua, "%s", db_strerror(ua->db));
+	    return 0;
+	 }
+         bsendmsg(ua, _("Current Pool is: %s\n"), pr.Name);
+         if (!get_cmd(ua, _("Enter new Pool name: "))) {
+	    return 0;
+	 }
+	 update_volpool(ua, ua->cmd, &mr);
+	 return 1;
       default:			      /* Done or error */
          bsendmsg(ua, "Selection done.\n");
 	 return 1;
@@ -1274,6 +1315,27 @@ static int setdebug_cmd(UAContext *ua, char *cmd)
    return 1;
 }
 
+/*
+ * Turn debug tracing to file on/off
+ */
+static int trace_cmd(UAContext *ua, char *cmd)
+{
+   char *onoff;
+
+   if (ua->argc != 2) {
+      if (!get_cmd(ua, _("Turn on or off? "))) {
+	   return 1;
+      }
+      onoff = ua->cmd;
+   } else {
+      onoff = ua->argk[1];
+   }
+
+   set_trace((strcasecmp(onoff, _("off")) == 0) ? false : true);
+   return 1; 
+
+}
+
 static int var_cmd(UAContext *ua, char *cmd)
 {
    POOLMEM *val = get_pool_memory(PM_FNAME);
@@ -1414,15 +1476,13 @@ static int delete_cmd(UAContext *ua, char *cmd)
    static char *keywords[] = {
       N_("volume"),
       N_("pool"),
+      N_("job"),
       NULL};
 
    if (!open_db(ua)) {
       return 1;
    }
 
-   bsendmsg(ua, _(
-"In general it is not a good idea to delete either a\n"
-"Pool or a Volume since they may contain data.\n\n"));
      
    switch (find_arg_keyword(ua, keywords)) {
    case 0:
@@ -1431,9 +1491,17 @@ static int delete_cmd(UAContext *ua, char *cmd)
    case 1:
       delete_pool(ua);
       return 1;
+   case 2:
+      delete_job(ua);
+      return 1;
    default:
       break;
    }
+
+   bsendmsg(ua, _(
+"In general it is not a good idea to delete either a\n"
+"Pool or a Volume since they may contain data.\n\n"));
+
    switch (do_keyword_prompt(ua, _("Choose catalog item to delete"), keywords)) {
    case 0:
       delete_volume(ua);
@@ -1441,10 +1509,37 @@ static int delete_cmd(UAContext *ua, char *cmd)
    case 1:
       delete_pool(ua);
       break;
+   case 2:
+      delete_job(ua);
+      return 1;
    default:
       bsendmsg(ua, _("Nothing done.\n"));
       break;
    }
+   return 1;
+}
+
+static int delete_job(UAContext *ua)
+{
+   POOLMEM *query = get_pool_memory(PM_MESSAGE);
+   JobId_t JobId;
+
+   int i = find_arg_with_value(ua, "jobid");
+   if (i >= 0) {
+      JobId = str_to_int64(ua->argv[i]);
+   } else if (!get_pint(ua, _("Enter JobId to delete: "))) {
+      return 0;
+   } else {
+      JobId = ua->pint32_val; 
+   }
+   Mmsg(&query, "DELETE FROM Job WHERE JobId=%u", JobId);
+   db_sql_query(ua->db, query, NULL, (void *)NULL);
+   Mmsg(&query, "DELETE FROM File WHERE JobId=%u", JobId);
+   db_sql_query(ua->db, query, NULL, (void *)NULL);
+   Mmsg(&query, "DELETE FROM JobMedia WHERE JobId=%u", JobId);
+   db_sql_query(ua->db, query, NULL, (void *)NULL);
+   free_pool_memory(query);
+   bsendmsg(ua, _("Job %u and associated records deleted from the catalog.\n"), JobId);
    return 1;
 }
 
