@@ -46,16 +46,7 @@ FILE *con_fd = NULL;
 
 /* Imported functions */
 
-/* This chain contains all the possible destinations */
-DEST *dest_chain = NULL;
-/* 
- * send_msg has a bit set for each type that has a 
- * message destination. The info in send_msg[] is 
- * contained in the dest structures,
- * but we keep it here for speed so that we don't have to
- * search all the structures in all the cases.	
- */
-char send_msg[nbytes_for_bits(M_MAX+1)];
+static MSGS daemon_msg; 	      /* global messages */
 
 /* 
  * Set daemon name. Also, find canonical execution
@@ -131,28 +122,32 @@ void my_name_is(int argc, char *argv[], char *name)
 
 /* Initialize message handler */
 void
-init_msg(void *vjcr)
+init_msg(void *vjcr, MSGS *msg)
 {
    DEST *d, *dnew, *temp_chain = NULL;
    JCR *jcr = (JCR *)vjcr;
 
+   if (!msg) {			      /* If nothing specified, use */
+      msg = &daemon_msg;	      /*  daemon global message resource */
+   }
    if (!jcr) {	
-      memset(send_msg, 0, sizeof(send_msg));  /* init daemon stuff */
+      memset(msg, 0, sizeof(msg));	      /* init daemon global message */
    } else {				      /* init for job */
       /* Walk down the global chain duplicating it
        * for the current Job.  No need to duplicate
        * the attached strings.
        */
-      for (d=dest_chain; d; d=d->next) {
+      for (d=daemon_msg.dest_chain; d; d=d->next) {
 	 dnew = (DEST *) malloc(sizeof(DEST));
 	 memcpy(dnew, d, sizeof(DEST));
 	 dnew->next = temp_chain;
 	 dnew->fd = NULL;
+	 dnew->mail_filename = NULL;
 	 temp_chain = dnew;
       }
 
       jcr->dest_chain = temp_chain;
-      memcpy(jcr->send_msg, send_msg, sizeof(send_msg));
+      memcpy(jcr->send_msg, daemon_msg.send_msg, sizeof(daemon_msg.send_msg));
    }
 }
 
@@ -189,30 +184,30 @@ void init_console_msg(char *wd)
  *  but in the case of MAIL is a space separated list of
  *  email addresses, ...
  */
-void add_msg_dest(int dest_code, int msg_type, char *where, char *mail_cmd)
+void add_msg_dest(MSGS *msg, int dest_code, int msg_type, char *where, char *mail_cmd)
 {
    DEST *d; 
 
    /* First search the existing chain and see if we
     * can simply add this msg_type to an existing entry.
     */
-   for (d=dest_chain; d; d=d->next) {
+   for (d=daemon_msg.dest_chain; d; d=d->next) {
       if (dest_code == d->dest_code && ((where == NULL && d->where == NULL) ||
 		     (strcmp(where, d->where) == 0))) {  
          Dmsg4(200, "Add to existing d=%x msgtype=%d destcode=%d where=%s\n", 
 	     d, msg_type, dest_code, where);
 	 set_bit(msg_type, d->msg_types);
-	 set_bit(msg_type, send_msg);  /* set msg_type bit in our local */
+	 set_bit(msg_type, daemon_msg.send_msg);  /* set msg_type bit in our local */
 	 return;
       }
    }
    /* Not found, create a new entry */
    d = (DEST *) malloc(sizeof(DEST));
    memset(d, 0, sizeof(DEST));
-   d->next = dest_chain;
+   d->next = daemon_msg.dest_chain;
    d->dest_code = dest_code;
    set_bit(msg_type, d->msg_types);	 /* set type bit in structure */
-   set_bit(msg_type, send_msg); 	 /* set type bit in our local */
+   set_bit(msg_type, daemon_msg.send_msg); /* set type bit in our local */
    if (where) {
       d->where = bstrdup(where);
    }
@@ -222,7 +217,7 @@ void add_msg_dest(int dest_code, int msg_type, char *where, char *mail_cmd)
    Dmsg5(200, "add new d=%x msgtype=%d destcode=%d where=%s mailcmd=%s\n", 
           d, msg_type, dest_code, where?where:"(null)", 
           d->mail_cmd?d->mail_cmd:"(null)");
-   dest_chain = d;
+   daemon_msg.dest_chain = d;
 }
 
 /* 
@@ -230,11 +225,11 @@ void add_msg_dest(int dest_code, int msg_type, char *where, char *mail_cmd)
  *
  * Remove a message destination   
  */
-void rem_msg_dest(int dest_code, int msg_type, char *where)
+void rem_msg_dest(MSGS *msg, int dest_code, int msg_type, char *where)
 {
    DEST *d;
 
-   for (d=dest_chain; d; d=d->next) {
+   for (d=daemon_msg.dest_chain; d; d=d->next) {
       Dmsg2(200, "Remove_msg_dest d=%x where=%s\n", d, d->where);
       if (bit_is_set(msg_type, d->msg_types) && (dest_code == d->dest_code) &&
 	  ((where == NULL && d->where == NULL) ||
@@ -525,14 +520,14 @@ void close_msg(void *vjcr)
 rem_temp_file:
 	    /* Remove temp file */
 	    fclose(d->fd);
-	    make_unique_mail_filename(jcr, &cmd, d);
-            Dmsg1(200, "unlink: %s\n", cmd);
-	    unlink(cmd);
+	    unlink(d->mail_filename);
+	    free_pool_memory(d->mail_filename);
+	    d->mail_filename = NULL;
 	    break;
 	 default:
 	    break;
 	 }
-	 d->fd = 0;
+	 d->fd = NULL;
       }
       old = d;			      /* save pointer to release */
       d = d->next;		      /* point to next buffer */
@@ -551,12 +546,17 @@ void term_msg()
 {
    DEST *d, *n;
    
-   for (d=dest_chain; d; d=n) {
+   for (d=daemon_msg.dest_chain; d; d=n) {
       if (d->fd) {
 	 if (d->dest_code == MD_FILE || d->dest_code == MD_APPEND) {
 	    fclose(d->fd);	      /* close open file descriptor */
+	    d->fd = NULL;
 	 } else if (d->dest_code == MD_MAIL || d->dest_code == MD_MAIL_ON_ERROR) {
-	    pclose(d->fd);	      /* close open pipe */
+	    fclose(d->fd);
+	    d->fd = NULL;
+	    unlink(d->mail_filename);
+	    free_pool_memory(d->mail_filename);
+	    d->mail_filename = NULL;
 	 }
       }
       n = d->next;
@@ -603,7 +603,7 @@ void dispatch_message(void *vjcr, int type, int level, char *buf)
     if (jcr) {
        d = jcr->dest_chain;	      /* use job message chain */
     } else {
-       d = dest_chain;		      /* use global chain */
+       d = daemon_msg.dest_chain;     /* use global chain */
     }
     for ( ; d; d=d->next) {
        if (bit_is_set(type, d->msg_types)) {
@@ -646,22 +646,22 @@ void dispatch_message(void *vjcr, int type, int level, char *buf)
 		   fputs(buf, d->fd);
 		   /* Messages to the operator go one at a time */
 		   pclose(d->fd);
+		   d->fd = NULL;
 		}
 		break;
 	     case MD_MAIL:
 	     case MD_MAIL_ON_ERROR:
                 Dmsg1(200, "MAIL for following err: %s\n", buf);
 		if (!d->fd) {
-		   char *name  = (char *) get_pool_memory(PM_MESSAGE);
+		   char *name  = (char *)get_pool_memory(PM_MESSAGE);
 		   make_unique_mail_filename(jcr, &name, d);
                    d->fd = fopen(name, "w+");
-                   Dmsg2(100, "Open mail file %d: %s\n", d->fd, name);
 		   if (!d->fd) {
                       Emsg2(M_ERROR, 0, "fopen %s failed: ERR=%s\n", name, strerror(errno));
 		      free_pool_memory(name);
 		      break;
 		   }
-		   free_pool_memory(name);
+		   d->mail_filename = name;
 		}
 		len = strlen(buf);
 		if (len > d->max_len) {
@@ -779,7 +779,7 @@ e_msg(char *file, int line, int type, int level, char *fmt,...)
      * Check if we have a message destination defined.	
      * We always report M_ABORT 
      */
-    if (type != M_ABORT && !bit_is_set(type, send_msg))
+    if (type != M_ABORT && !bit_is_set(type, daemon_msg.send_msg))
        return;			      /* no destination */
     switch (type) {
        case M_ABORT:

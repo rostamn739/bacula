@@ -135,7 +135,7 @@ static void job_thread(void *arg)
    Dmsg0(100, "=====Start Job=========\n");
    jcr->start_time = now;	      /* set the real start time */
    if (jcr->job->MaxStartDelay != 0 && jcr->job->MaxStartDelay <
-       (jcr->start_time - jcr->sched_time)) {
+       (btime_t)(jcr->start_time - jcr->sched_time)) {
       Jmsg(jcr, M_FATAL, 0, _("Job cancelled because max delay time exceeded.\n"));
       free_jcr(jcr);
    }
@@ -259,6 +259,7 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    jcr->pool = job->pool;
    jcr->catalog = job->client->catalog;
    jcr->fileset = job->fs;
+   init_msg(jcr, job->messages);
    /* If no default level given, set one */
    if (jcr->level == 0) {
       switch (jcr->JobType) {

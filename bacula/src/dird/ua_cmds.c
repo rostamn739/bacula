@@ -33,7 +33,6 @@
 extern void run_job(JCR *jcr);
 
 /* Imported variables */
-extern struct s_jl joblevels[];
 extern int r_first;
 extern int r_last;
 extern struct s_res resources[];
@@ -51,6 +50,8 @@ extern int sqlquerycmd(UAContext *ua, char *cmd);
 extern int querycmd(UAContext *ua, char *cmd);
 extern int runcmd(UAContext *ua, char *cmd);
 extern int retentioncmd(UAContext *ua, char *cmd);
+extern int prunecmd(UAContext *ua, char *cmd);
+extern int purgecmd(UAContext *ua, char *cmd);
 
 /* Forward referenced functions */
 static int addcmd(UAContext *ua, char *cmd),  createcmd(UAContext *ua, char *cmd), cancelcmd(UAContext *ua, char *cmd);
@@ -60,9 +61,9 @@ static int deletecmd(UAContext *ua, char *cmd);
 static int usecmd(UAContext *ua, char *cmd),  unmountcmd(UAContext *ua, char *cmd);
 static int labelcmd(UAContext *ua, char *cmd), mountcmd(UAContext *ua, char *cmd), updatecmd(UAContext *ua, char *cmd);
 static int versioncmd(UAContext *ua, char *cmd), automountcmd(UAContext *ua, char *cmd);
-static int update_media(UAContext *ua);
+static int update_volume(UAContext *ua);
 static int update_pool(UAContext *ua);
-static int delete_media(UAContext *ua);
+static int delete_volume(UAContext *ua);
 static int delete_pool(UAContext *ua);
 
 int quitcmd(UAContext *ua, char *cmd);
@@ -81,7 +82,8 @@ static struct cmdstruct commands[] = {
  { N_("list"),       listcmd,      _("list [pools | jobs | jobtotals | media <pool> | files job=<nn>]; from catalog")},
  { N_("messages"),   messagescmd,  _("messages")},
  { N_("mount"),      mountcmd,     _("mount <storage-name>")},
- { N_("retention"),  retentioncmd, _("retention")},
+ { N_("prune"),      prunecmd,     _("prune expired records from catalog")},
+ { N_("purge"),      purgecmd,     _("purge records from catalog")},
  { N_("run"),        runcmd,       _("run <job-name>")},
  { N_("setdebug"),   setdebugcmd,  _("sets debug level")},
  { N_("show"),       showcmd,      _("show (resource records) [jobs | pools | ... | all]")},
@@ -239,7 +241,8 @@ getVolName:
 	   
    mr.PoolId = pr.PoolId;
    strcpy(mr.VolStatus, "Append");
-   strcpy(mr.Recycle, "No");
+   mr.Recycle = pr.Recycle;
+   mr.VolRetention = pr.VolRetention;
    for (i=startnum; i < num+startnum; i++) { 
       sprintf(mr.VolumeName, name, i);
       Dmsg1(200, "Create Volume %s\n", mr.VolumeName);
@@ -455,6 +458,10 @@ int create_pool(B_DB *db, POOL *pool)
    pr.UseOnce = pool->use_volume_once;
    pr.UseCatalog = pool->use_catalog;
    pr.AcceptAnyVolume = pool->accept_any_volume;
+   pr.Recycle = pool->Recycle;
+   pr.VolRetention = pool->VolRetention;
+Dmsg1(000, "Retention=%d\n", (uint32_t)pr.VolRetention);
+   pr.AutoPrune = pool->AutoPrune;
    if (pool->label_format) {
       strcpy(pr.LabelFormat, pool->label_format);
    } else {
@@ -529,7 +536,7 @@ static int updatecmd(UAContext *ua, char *cmd)
    switch (find_arg_keyword(ua, kw)) {
       case 0:
       case 1:
-	 update_media(ua);
+	 update_volume(ua);
 	 return 1;
       case 2:
 	 update_pool(ua);
@@ -540,13 +547,13 @@ static int updatecmd(UAContext *ua, char *cmd)
     
    start_prompt(ua, _("Update choice:\n"));
    add_prompt(ua, _("pool"));
-   add_prompt(ua, _("media"));
+   add_prompt(ua, _("volume"));
    switch (do_prompt(ua, _("Choose catalog item to update"), NULL)) {
       case 0:
 	 update_pool(ua);
 	 break;
       case 1:
-	 update_media(ua);
+	 update_volume(ua);
 	 break;
       default:
 	 break;
@@ -560,7 +567,7 @@ static int updatecmd(UAContext *ua, char *cmd)
  *  writing on the volume, set it to anything other
  *  than Append.
  */		 
-static int update_media(UAContext *ua)
+static int update_volume(UAContext *ua)
 {
    POOL_DBR pr;
    MEDIA_DBR mr;
@@ -568,11 +575,13 @@ static int update_media(UAContext *ua)
    static char *kw[] = {
       "volume",
       NULL};
+   char *query;
+   char ed1[30];
 
    memset(&pr, 0, sizeof(pr));
    memset(&mr, 0, sizeof(mr));
    if (!get_pool_dbr(ua, &pr)) {
-      return 1;
+      return 0;
    }
    mr.PoolId = pr.PoolId;
    mr.VolumeName[0] = 0;
@@ -584,27 +593,68 @@ static int update_media(UAContext *ua)
    if (mr.VolumeName[0] == 0) {
       db_list_media_records(ua->db, &mr, prtit, ua);
       if (!get_cmd(ua, _("Enter Volume name to update: "))) {
-	 return 1;
+	 return 0;
       }
       strcpy(mr.VolumeName, ua->cmd);
    }
    mr.MediaId = 0;
    if (!db_get_media_record(ua->db, &mr)) {
-      bsendmsg(ua, _("Media record for %s not found.\n"), mr.VolumeName);
-      return 1;
+      bsendmsg(ua, _("Volume record for %s not found.\n"), mr.VolumeName);
+      return 0;
    }
-   start_prompt(ua, _("Volume Status Values:\n"));
-   add_prompt(ua, "Append");
-   add_prompt(ua, "Archive");
-   add_prompt(ua, "Disabled");
-   add_prompt(ua, "Full");
-   add_prompt(ua, "Recycle");
-   add_prompt(ua, "Read-Only");
-   if (do_prompt(ua, _("Choose new Volume Status"), ua->cmd) < 0) {
-      return 1;
+
+   for (int done=0; !done; ) {
+      start_prompt(ua, _("Parameters to modify:\n"));
+      add_prompt(ua, _("Volume Status"));
+      add_prompt(ua, _("Volume Retention"));
+      add_prompt(ua, _("Done"));
+      switch (do_prompt(ua, _("Select paramter to modify"), NULL)) {
+      case 0:			      /* Volume Status */
+	 /* Modify Volume */
+         bsendmsg(ua, _("Current value is: %s\n"), mr.VolStatus);
+         start_prompt(ua, _("Possible Values are:\n"));
+         add_prompt(ua, "Append");
+         add_prompt(ua, "Archive");
+         add_prompt(ua, "Disabled");
+         add_prompt(ua, "Full");
+         if (strcmp(mr.VolStatus, "Purged") == 0) {
+            add_prompt(ua, "Recycle");
+	 }
+         add_prompt(ua, "Read-Only");
+         if (do_prompt(ua, _("Choose new Volume Status"), ua->cmd) < 0) {
+	    return 1;
+	 }
+	 strcpy(mr.VolStatus, ua->cmd);
+	 query = (char *)get_pool_memory(PM_MESSAGE);
+         Mmsg(&query, "UPDATE Media SET VolStatus=\"%s\" WHERE MediaId=%d",
+	    mr.VolStatus, mr.MediaId);
+	 if (!db_sql_query(ua->db, query, NULL, NULL)) {  
+            bsendmsg(ua, "%s", db_strerror(ua->db));
+	 }	 
+	 free_pool_memory(query);
+	 break;
+      case 1:			      /* Retention */
+         bsendmsg(ua, _("Current value is: %s\n"),
+	    edit_btime(mr.VolRetention, ed1));
+         if (!get_cmd(ua, _("Enter Volume Retention period: "))) {
+	    return 0;
+	 }
+	 if (!string_to_btime(ua->cmd, &mr.VolRetention)) {
+            bsendmsg(ua, _("Invalid retention period specified.\n"));
+	    break;
+	 }
+	 query = (char *)get_pool_memory(PM_MESSAGE);
+         Mmsg(&query, "UPDATE Media SET VolRetention=%s WHERE MediaId=%d",
+	    edit_uint64(mr.VolRetention, ed1), mr.MediaId);
+	 if (!db_sql_query(ua->db, query, NULL, NULL)) {  
+            bsendmsg(ua, "%s", db_strerror(ua->db));
+	 }	 
+	 free_pool_memory(query);
+	 break;
+      default:			      /* Done or error */
+	 return 0;
+      }
    }
-   strcpy(mr.VolStatus, ua->cmd);
-   db_update_media_record(ua->db, &mr);
    return 1;
 }
 
@@ -897,7 +947,7 @@ static int deletecmd(UAContext *ua, char *cmd)
      
    switch (find_arg_keyword(ua, keywords)) {
       case 0:
-	 delete_media(ua);     
+	 delete_volume(ua);	
 	 return 1;
       case 1:
 	 delete_pool(ua);
@@ -907,7 +957,7 @@ static int deletecmd(UAContext *ua, char *cmd)
    }
    switch (do_keyword_prompt(ua, _("Choose catalog item to delete"), keywords)) {
       case 0:
-	 delete_media(ua);
+	 delete_volume(ua);
 	 break;
       case 1:
 	 delete_pool(ua);
@@ -922,39 +972,18 @@ static int deletecmd(UAContext *ua, char *cmd)
 /*
  * Delete media records from database -- dangerous 
  */
-static int delete_media(UAContext *ua)
+static int delete_volume(UAContext *ua)
 {
    POOL_DBR pr;
    MEDIA_DBR mr;
-   int found = FALSE;
-   int i;
 
-   memset(&pr, 0, sizeof(pr));
-   memset(&mr, 0, sizeof(mr));
-
-   /* Get the pool, possibly from pool=<pool-name> */
-   if (!get_pool_dbr(ua, &pr)) {
+   if (!select_pool_and_media_dbr(ua, &pr, &mr)) {
       return 1;
    }
-   mr.PoolId = pr.PoolId;
+   bsendmsg(ua, _("\nThis command will delete volume %s\n"
+      "and all Jobs saved on that volume from the Catalog\n"),
+      mr.VolumeName);
 
-   /* See if a volume name is specified as an argument */
-   for (i=1; i<ua->argc; i++) {
-      if (strcasecmp(ua->argk[i], _("volume")) == 0 && ua->argv[i]) {
-	 found = TRUE;
-	 break;
-      }
-   }
-   if (found) {
-      strcpy(mr.VolumeName, ua->argv[i]);
-   } else {
-      db_list_media_records(ua->db, &mr, prtit, ua);
-      if (!get_cmd(ua, _("Enter the Volume name to delete: "))) {
-	 return 1;
-      }
-   }
-   mr.MediaId = 0;
-   strcpy(mr.VolumeName, ua->cmd);
    if (!get_cmd(ua, _("If you want to continue enter pretty please: "))) {
       return 1;
    }
@@ -1047,8 +1076,9 @@ gotVol:
       return 1;
    }
    mr.PoolId = pr.PoolId;
-   strcpy(mr.Recycle, "Yes");
    strcpy(mr.VolStatus, "Append");
+   mr.Recycle = pr.Recycle;
+   mr.VolRetention = pr.VolRetention;
 
    ua->jcr->store = store;
    bsendmsg(ua, _("Connecting to Storage daemon %s at %s:%d ...\n"), 
@@ -1066,7 +1096,7 @@ gotVol:
    bnet_fsend(sd, _("label %s VolumeName=%s PoolName=%s MediaType=%s"), 
       dev_name, mr.VolumeName, pr.Name, mr.MediaType);
    bsendmsg(ua, "Sending label command ...\n");
-   while (bnet_recv(sd) > 0) {
+   while (bget_msg(sd, 0) > 0) {
       bsendmsg(ua, "%s", sd->msg);
       if (strncmp(sd->msg, "3000 OK label.", 14) == 0) {
 	 ok = TRUE;
@@ -1083,7 +1113,9 @@ gotVol:
 	    mr.VolumeName);
 	 if (ua->automount) {
             bsendmsg(ua, _("Requesting mount %s ...\n"), dev_name);
+	    bash_spaces(dev_name);
             bnet_fsend(sd, "mount %s", dev_name);
+	    unbash_spaces(dev_name);
 	    while (bnet_recv(sd) > 0) {
                bsendmsg(ua, "%s", sd->msg);
 	       /* Here we can get
@@ -1200,7 +1232,8 @@ static int usecmd(UAContext *ua, char *cmd)
 
 int quitcmd(UAContext *ua, char *cmd) 
 {
-   return 0;
+   ua->quit = TRUE;
+   return 1;
 }
 
 static int helpcmd(UAContext *ua, char *cmd)
@@ -1254,6 +1287,7 @@ int open_db(UAContext *ua)
       close_db(ua);
       return 0;
    }
+   ua->jcr->db = ua->db;
    Dmsg1(50, "DB %s opened\n", ua->catalog->db_name);
    return 1;
 }
@@ -1264,4 +1298,5 @@ void close_db(UAContext *ua)
       db_close_database(ua->db);
    }
    ua->db = NULL;
+   ua->jcr->db = NULL;
 }

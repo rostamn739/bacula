@@ -60,7 +60,7 @@ static int cancel_cmd(JCR *cjcr);
 static int mount_cmd(JCR *jcr);
 static int unmount_cmd(JCR *jcr);
 static int status_cmd(JCR *sjcr);
-static void label_device_if_ok(JCR *jcr, DEVICE *dev, char *vname, char *poolname);
+static void label_volume_if_ok(JCR *jcr, DEVICE *dev, char *vname, char *poolname);
 
 struct s_cmds {
    char *cmd;
@@ -260,12 +260,12 @@ static int label_cmd(JCR *jcr)
 	    if (open_dev(dev, volname, READ_WRITE) < 0) {
                bnet_fsend(dir, _("3994 Connot open device: %s\n"), strerror_dev(dev));
 	    } else {
-	       label_device_if_ok(jcr, dev, volname, poolname);
+	       label_volume_if_ok(jcr, dev, volname, poolname);
 	       force_close_dev(dev);
 	    }
 	 } else if (dev->dev_blocked && 
 		    dev->dev_blocked != BST_DOING_ACQUIRE) {  /* device blocked? */
-	    label_device_if_ok(jcr, dev, volname, poolname);
+	    label_volume_if_ok(jcr, dev, volname, poolname);
 	 } else if (dev->state & ST_READ || dev->num_writers) {
 	    if (dev->state & ST_READ) {
                 bnet_fsend(dir, _("3901 Device %s is busy with 1 reader.\n"),
@@ -275,7 +275,7 @@ static int label_cmd(JCR *jcr)
 		   dev_name(dev), dev->num_writers);
 	    }
 	 } else {		      /* device not being used */
-	    label_device_if_ok(jcr, dev, volname, poolname);
+	    label_volume_if_ok(jcr, dev, volname, poolname);
 	 }
 	 V(dev->mutex);
       } else {
@@ -300,7 +300,7 @@ static int label_cmd(JCR *jcr)
  *
  *  Enter with the mutex set
  */
-static void label_device_if_ok(JCR *jcr, DEVICE *dev, char *vname, char *poolname)
+static void label_volume_if_ok(JCR *jcr, DEVICE *dev, char *vname, char *poolname)
 {
    BSOCK *dir = jcr->dir_bsock;
    DEV_BLOCK *block;
@@ -620,8 +620,8 @@ static int status_cmd(JCR *jcr)
       }
 	   
       bnet_fsend(user, _("  Files=%s Bytes=%s Termination Status=%s\n"), 
-	   edit_uint_with_commas(last_job.JobFiles, b1),
-	   edit_uint_with_commas(last_job.JobBytes, b2),
+	   edit_uint64_with_commas(last_job.JobFiles, b1),
+	   edit_uint64_with_commas(last_job.JobBytes, b2),
 	   termstat);
    }
 
@@ -665,12 +665,12 @@ static int status_cmd(JCR *jcr)
 	    }
 	    bpb = dev->VolCatInfo.VolCatBytes / bpb;
             bnet_fsend(user, _("    Total Bytes=%s Blocks=%s Bytes/block=%s\n"),
-	       edit_uint_with_commas(dev->VolCatInfo.VolCatBytes, b1),
-	       edit_uint_with_commas(dev->VolCatInfo.VolCatBlocks, b2), 
-	       edit_uint_with_commas(bpb, b3));
+	       edit_uint64_with_commas(dev->VolCatInfo.VolCatBytes, b1),
+	       edit_uint64_with_commas(dev->VolCatInfo.VolCatBlocks, b2), 
+	       edit_uint64_with_commas(bpb, b3));
             bnet_fsend(user, _("    Positioned at File=%s Block=%s\n"), 
-	       edit_uint_with_commas(dev->file, b1),
-	       edit_uint_with_commas(dev->block_num, b2));
+	       edit_uint64_with_commas(dev->file, b1),
+	       edit_uint64_with_commas(dev->block_num, b2));
 
 	 } else {
             bnet_fsend(user, _("Device %s is not open.\n"), dev_name(dev));
@@ -696,9 +696,9 @@ static int status_cmd(JCR *jcr)
 	 }
 	 bps = jcr->JobBytes / sec;
          bnet_fsend(user, _("    Files=%s Bytes=%s Bytes/sec=%s\n"), 
-	    edit_uint_with_commas(jcr->JobFiles, b1),
-	    edit_uint_with_commas(jcr->JobBytes, b2),
-	    edit_uint_with_commas(bps, b3));
+	    edit_uint64_with_commas(jcr->JobFiles, b1),
+	    edit_uint64_with_commas(jcr->JobBytes, b2),
+	    edit_uint64_with_commas(bps, b3));
 	 found = 1;
 #ifdef DEBUG
 	 if (jcr->file_bsock) {

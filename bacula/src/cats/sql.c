@@ -41,10 +41,42 @@
 void print_dashes(B_DB *mdb);
 void print_result(B_DB *mdb);
 
+/*
+ * Called here to retrieve an integer from the database
+ */
+static int int_handler(void *ctx, int num_fields, char **row)
+{
+   uint32_t *val = (uint32_t *)ctx;
+
+   if (row[0]) {
+      *val = atoi(row[0]);
+   } else {
+      *val = 0;
+   }
+   return 0;
+}
+       
+
 
 /* NOTE!!! The following routines expect that the
  *  calling subroutine sets and clears the mutex
  */
+
+/* Check that the tables conrrespond to the version we want */
+int check_tables_version(B_DB *mdb)
+{
+   uint32_t version;
+   char *query = "SELECT VersionId FROM Version";
+  
+   version = 0;
+   db_sql_query(mdb, query, int_handler, (void *)&version);
+   if (version != BDB_VERSION) {
+      Mmsg(&mdb->errmsg, "Database version mismatch. Wanted %d, got %d\n",
+	 BDB_VERSION, version);
+      return 0;
+   }
+   return 1;
+}
 
 /* Utility routine for queries */
 int
@@ -79,7 +111,9 @@ InsertDB(char *file, int line, B_DB *mdb, char *cmd)
       mdb->num_rows = 1;
    }
    if (mdb->num_rows != 1) {
-      m_msg(file, line, &mdb->errmsg, _("Insertion problem: affect_rows=%" lld "\n"), mdb->num_rows);
+      char ed1[30];
+      m_msg(file, line, &mdb->errmsg, _("Insertion problem: affect_rows=%s\n"), 
+	 edit_uint64(mdb->num_rows, ed1));
       e_msg(file, line, M_FATAL, 0, mdb->errmsg);  /* ***FIXME*** remove me */
       return 0;
    }
@@ -102,7 +136,9 @@ UpdateDB(char *file, int line, B_DB *mdb, char *cmd)
    }
    mdb->num_rows = sql_affected_rows(mdb);
    if (mdb->num_rows != 1) {
-      m_msg(file, line, &mdb->errmsg, _("Update problem: affect_rows=%" lld "\n"), mdb->num_rows);
+      char ed1[30];
+      m_msg(file, line, &mdb->errmsg, _("Update problem: affect_rows=%s\n"), 
+	 edit_uint64(mdb->num_rows, ed1));
       e_msg(file, line, M_ERROR, 0, mdb->errmsg);
       e_msg(file, line, M_ERROR, 0, "%s\n", cmd);
       return 0;
