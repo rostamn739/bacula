@@ -82,6 +82,8 @@
 #define CAP_OFFLINEUNMOUNT (1<<13)    /* Offline before unmount */
 #define CAP_STREAM         (1<<14)    /* Stream device */
 #define CAP_BSFATEOM       (1<<15)    /* Backspace file at EOM */
+#define CAP_FASTFSF        (1<<16)    /* Fast forward space file */
+#define CAP_TWOEOF         (1<<17)    /* Write two eofs for EOM */
 
 /* Test state */
 #define dev_state(dev, st_state) ((dev)->state & (st_state))
@@ -125,6 +127,8 @@ struct VOLUME_CAT_INFO {
    uint64_t VolCatRBytes;             /* Number of bytes read */
    uint32_t VolCatRecycles;           /* Number of recycles this volume */
    int32_t  Slot;                     /* Slot in changer */
+   int32_t  Drive;                    /* Changer drive */
+   bool     InChanger;                /* Set if vol in current magazine */
    uint32_t VolCatMaxJobs;            /* Maximum Jobs to write to volume */
    uint32_t VolCatMaxFiles;           /* Maximum files to write to volume */
    uint64_t VolCatMaxBytes;           /* Max bytes to write to volume */

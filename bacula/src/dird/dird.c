@@ -97,7 +97,6 @@ int main (int argc, char *argv[])
    textdomain("bacula-dir");
    init_msg(NULL, NULL);	      /* initialize message handler */
    daemon_start_time = time(NULL);
-   memset(&last_job, 0, sizeof(last_job));
 
    while ((ch = getopt(argc, argv, "c:d:fg:r:stu:v?")) != -1) {
       switch (ch) {
@@ -241,7 +240,7 @@ static void terminate_dird(int sig)
    delete_pid_file(director->pid_directory, "bacula-dir",  
 		   director->DIRport);
    stop_watchdog();
-   signal(SIGCHLD, SIG_IGN);          /* don't worry about children now */
+// signal(SIGCHLD, SIG_IGN);          /* don't worry about children now */
    term_scheduler();
    if (runjob) {
       free(runjob);
