@@ -1,5 +1,5 @@
-CPP  = g++.exe -D__DEBUG__ -DHAVE_MINGW -DHAVE_WIN32
-CC   = gcc.exe -D__DEBUG__ -DHAVE_MINGW -DHAVE_WIN32
+CPP  = g++.exe -D__DEBUG__ -DHAVE_MINGW
+CC   = gcc.exe -D__DEBUG__ -DHAVE_MINGW
 WINDRES = windres.exe
 RES  = wx-console_private.res
 OBJ  = main.o console_thread.o authenticate.o console_conf.o wxbrestorepanel.o wxbmainframe.o wxbtableparser.o wxbtreectrl.o wxblistctrl.o wxbutils.o $(RES)
@@ -19,12 +19,8 @@ all: all-before wx-console.exe all-after
 clean: clean-custom
 	rm -f $(OBJ) $(BIN)
 
-$(BIN): $(OBJ) ../lib/libbac.a
+$(BIN): $(OBJ)
 	$(CPP) $(LINKOBJ) -o "wx-console.exe" $(LIBS)
-
-../lib/libbac.a: ../lib/*.c*
-	(cd ../lib/; $(MAKE) -f Makefile.mingw DESTDIR=$(DESTDIR))
-	@rm -f bacula-fd.exe
 
 main.o: main.cpp
 	$(CPP) -c main.cpp -o main.o $(CXXFLAGS)

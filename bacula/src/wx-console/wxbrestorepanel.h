@@ -31,14 +31,11 @@
 #include <wx/listctrl.h>
 #include <wx/treectrl.h>
 #include <wx/gauge.h>
-#include <wx/stattext.h>
 
 #include "wxbutils.h"
 
 #include "wxbtreectrl.h"
 #include "wxblistctrl.h"
-
-class wxbTreeListPanel;
 
 /*
  * wxbPanel for restoring files
@@ -58,12 +55,6 @@ class wxbRestorePanel : public wxbPanel
 
       /* The main button has been clicked */
       void CmdStart();
-
-      /* Apply configuration changes */
-      void CmdConfigApply();
-
-      /* Cancel restore */
-      void CmdConfigCancel();
 
        /* List jobs for a specified client */
       void CmdListJobs();
@@ -105,21 +96,17 @@ class wxbRestorePanel : public wxbPanel
 
       /* Refresh a tree item, and all its children. */
       void RefreshTree(wxTreeItemId item);
-      
-      /* Update config */
-      bool UpdateConfig(wxbDataTokenizer* dt);
 
 /* Status related */
       enum status_enum
       {
-         disabled,    // The panel is not activatable
-         activable,   // The panel is activable, but not activated
-         entered,     // The panel is activated
-         choosing,    // The user is choosing files to restore
-         listing,     // Dir listing is in progress
-         configuring, // The user is configuring restore process
-         restoring,   // Bacula is restoring files
-         finished     // Retore done (state will change in activable)
+         disabled,  // The panel is not activatable
+         activable, // The panel is activable, but not activated
+         entered,   // The panel is activated
+         choosing,  // The user is choosing files to restore
+         listing,   // Dir listing is in progress
+         restoring, // Bacula is restoring files
+         finished   // Retore done (state will change in activable)
       };
 
       status_enum status;
@@ -140,16 +127,8 @@ class wxbRestorePanel : public wxbPanel
       void OnListMarked(wxbListMarkedEvent& event);
       void OnListActivated(wxListEvent& event);
       void OnClientChoiceChanged(wxCommandEvent& event);
-      void OnConfigUpdated(wxCommandEvent& event);
-      void OnConfigOk(wxEvent& WXUNUSED(event));
-      void OnConfigApply(wxEvent& WXUNUSED(event));
-      void OnConfigCancel(wxEvent& WXUNUSED(event));
 
 /* Components */
-      wxBoxSizer *centerSizer; /* Center sizer */
-      wxbTreeListPanel *treelistPanel; /* Panel which contains tree and list */
-      wxPanel *restorePanel; /* Panel which contains restore options */
-
       wxImageList* imagelist; //image list for tree and list
 
       wxButton* start;
@@ -159,35 +138,7 @@ class wxbRestorePanel : public wxbPanel
       wxbListCtrl* list;
       wxGauge* gauge;
 
-      wxButton*     cfgOk;
-      wxButton*     cfgApply;
-      wxButton*     cfgCancel;
-      
-      long cfgUpdated; //keeps which config fields are updated
-      
-      wxStaticText* cfgJobname;
-      wxStaticText* cfgBootstrap;
-      wxTextCtrl*   cfgWhere;
-      wxChoice*     cfgReplace;
-      wxStaticText* cfgFileset;
-      wxStaticText* cfgClient;
-      wxStaticText* cfgStorage;
-      wxTextCtrl*   cfgWhen;
-      wxTextCtrl*   cfgPriority;
-
-      friend class wxbTreeListPanel;
-
-      DECLARE_EVENT_TABLE();    
-};
-
-class wxbTreeListPanel: public wxPanel {
-public:
-     wxbTreeListPanel(wxbRestorePanel* parent);
-private:
-     void OnTreeMarked(wxbTreeMarkedEvent& event);
-     void OnListMarked(wxbListMarkedEvent& event);
-     DECLARE_EVENT_TABLE(); 
-     wxbRestorePanel* parent;
+      DECLARE_EVENT_TABLE();
 };
 
 #endif // WXBRESTOREPANEL_H
