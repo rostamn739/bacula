@@ -102,17 +102,17 @@ static void usage()
 "Usage: bscan [-d debug_level] <bacula-archive>\n"
 "       -b bootstrap      specify a bootstrap file\n"
 "       -c <file>         specify configuration file\n"
-"       -dnn              set debug level to nn\n"
+"       -d <nn>           set debug level to nn\n"
 "       -m                update media info in database\n"
-"       -n name           specify the database name (default bacula)\n"
-"       -u user           specify database user name (default bacula)\n"
-"       -p password       specify database password (default none)\n"
-"       -h host           specify database host (default NULL)\n"
+"       -n <name>         specify the database name (default bacula)\n"
+"       -u <user>         specify database user name (default bacula)\n"
+"       -p <password      specify database password (default none)\n"
+"       -h <host>         specify database host (default NULL)\n"
 "       -r                list records\n"
 "       -s                synchronize or store in database\n"
 "       -v                verbose\n"
-"       -V                specify Volume names (separated by |)\n"
-"       -w dir            specify working directory (default from conf file)\n"
+"       -V <Volumes>      specify Volume names (separated by |)\n"
+"       -w <dir>          specify working directory (default from conf file)\n"
 "       -?                print this message\n\n"));
    exit(1);
 }
@@ -575,7 +575,7 @@ static int record_cb(JCR *bjcr, DEVICE *dev, DEV_BLOCK *block, DEV_RECORD *rec)
       }
       fr.JobId = mjcr->JobId;
       fr.FileId = 0;
-      if (db_get_file_attributes_record(bjcr, db, attr->fname, &fr)) {
+      if (db_get_file_attributes_record(bjcr, db, attr->fname, NULL, &fr)) {
 	 if (verbose > 1) {
             Pmsg1(000, _("File record already exists for: %s\n"), attr->fname);
 	 }

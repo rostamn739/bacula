@@ -185,6 +185,7 @@ struct JOB {
    char *RestoreBootstrap;            /* Bootstrap file */
    char *RunBeforeJob;                /* Run program before Job */
    char *RunAfterJob;                 /* Run program after Job */
+   char *RunAfterFailedJob;	      /* Run program after Job that errs */
    char *ClientRunBeforeJob;          /* Run client program before Job */
    char *ClientRunAfterJob;           /* Run client program after Job */
    char *WriteBootstrap;              /* Where to write bootstrap Job updates */
@@ -207,6 +208,7 @@ struct JOB {
    FILESET   *fileset;                /* What to backup -- Fileset */
    STORE     *storage;                /* Where is device -- Storage daemon */
    POOL      *pool;                   /* Where is media -- Media Pool */
+   JOB	     *verify_job;	      /* Job name to verify */
    uint32_t NumConcurrentJobs;        /* number of concurrent jobs running */
 };
 

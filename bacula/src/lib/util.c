@@ -38,18 +38,22 @@
 /* Return true of buffer has all zero bytes */
 int is_buf_zero(char *buf, int len)
 {
-   uint64_t *ip = (uint64_t *)buf;
+   uint64_t *ip;
    char *p;
    int i, len64, done, rem;
 
+   if (buf[0] != 0) {
+      return 0;
+   }
+   ip = (uint64_t *)buf;
    /* Optimize by checking uint64_t for zero */
-   len64 = len >> sizeof(uint64_t);
+   len64 = len / sizeof(uint64_t);
    for (i=0; i < len64; i++) {
       if (ip[i] != 0) {
 	 return 0;
       }
    }
-   done = len64 << sizeof(uint64_t);  /* bytes already checked */
+   done = len64 * sizeof(uint64_t);  /* bytes already checked */
    p = buf + done;
    rem = len - done;
    for (i = 0; i < rem; i++) {
@@ -141,32 +145,76 @@ int pm_strcpy(POOLMEM **pm, char *str)
  */
 void jobstatus_to_ascii(int JobStatus, char *msg, int maxlen)
 {
-   char *termstat, jstat[2];
+   char *jobstat;
+   char buf[100];
 
    switch (JobStatus) {
+   case JS_Created:
+      jobstat = _("Created");
+      break;
+   case JS_Running:
+      jobstat = _("Running");
+      break;
+   case JS_Blocked:
+      jobstat = _("Blocked");
+      break;
       case JS_Terminated:
-         termstat = _("OK");
+      jobstat = _("OK");
 	 break;
      case JS_FatalError:
      case JS_ErrorTerminated:
-         termstat = _("Error");
+      jobstat = _("Error");
 	 break;
      case JS_Error:
-         termstat = _("Non-fatal error");
+      jobstat = _("Non-fatal error");
 	 break;
      case JS_Canceled:
-         termstat = _("Canceled");
+      jobstat = _("Canceled");
 	 break;
      case JS_Differences:
-         termstat = _("Verify differences");
+      jobstat = _("Verify differences");
+      break;
+   case JS_WaitFD:
+      jobstat = _("Waiting on FD");
+      break;
+   case JS_WaitSD:
+      jobstat = _("Wait on SD");
+      break;
+   case JS_WaitMedia:
+      jobstat = _("Wait for new Volume");
+      break;
+   case JS_WaitMount:
+      jobstat = _("Waiting for mount");
 	 break;
+   case JS_WaitStoreRes:
+      jobstat = _("Waiting for Storage resource");
+      break;
+   case JS_WaitJobRes:
+      jobstat = _("Waiting for Job resource");
+      break;
+   case JS_WaitClientRes:
+      jobstat = _("Waiting for Client resource");
+      break;
+   case JS_WaitMaxJobs:
+      jobstat = _("Waiting on Max Jobs");
+      break;
+   case JS_WaitStartTime:
+      jobstat = _("Waiting for Start Time");
+      break;
+   case JS_WaitPriority:
+      jobstat = _("Waiting on Priority");
+      break;
+
      default:
-	 jstat[0] = last_job.JobStatus;
-	 jstat[1] = 0;
-	 termstat = jstat;
+	 if (JobStatus == 0) {
+	    buf[0] = 0;
+	 } else {
+            bsnprintf(buf, sizeof(buf), _("Unknown Job termination status=%d"), JobStatus);
+	 }
+      jobstat = buf;
 	 break;
    }
-   bstrncpy(msg, termstat, maxlen);
+   bstrncpy(msg, jobstat, maxlen);
 }
 
 /*
@@ -258,6 +306,9 @@ char *job_level_to_str(int level)
       break;
    case L_VERIFY_VOLUME_TO_CATALOG:
       str = _("Verify Volume to Catalog");
+      break;
+   case L_VERIFY_DISK_TO_CATALOG:
+      str = _("Verify Disk to Catalog");
       break;
    case L_VERIFY_DATA:
       str = _("Verify Data");
@@ -430,6 +481,7 @@ void make_session_key(char *key, char *seed, int mode)
  *  %n = Unadorned Job name
  *  %t = Job type (Backup, ...)
  *  %r = Recipients
+ *  %v = Volume name
  *
  *  omsg = edited output message
  *  imsg = input string containing edit codes (%x)
@@ -487,6 +539,13 @@ POOLMEM *edit_job_codes(JCR *jcr, char *omsg, char *imsg, char *to)
 	    break;
          case 't':
 	    str = job_type_to_str(jcr->JobType);
+	    break;
+         case 'v':
+	    if (jcr->VolumeName && jcr->VolumeName[0]) {
+	       str = jcr->VolumeName;
+	    } else {
+               str = "";
+	    }
 	    break;
 	 default:
             add[0] = '%';

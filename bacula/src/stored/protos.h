@@ -58,7 +58,7 @@ void	empty_block(DEV_BLOCK *block);
 void	free_block(DEV_BLOCK *block);
 int	write_block_to_device(JCR *jcr, DEVICE *dev, DEV_BLOCK *block);
 int	write_block_to_dev(JCR *jcr, DEVICE *dev, DEV_BLOCK *block);
-void	print_block_errors(JCR *jcr, DEV_BLOCK *block);
+void	print_block_read_errors(JCR *jcr, DEV_BLOCK *block);
 
 #define CHECK_BLOCK_NUMBERS    true
 #define NO_BLOCK_NUMBER_CHECK  false
@@ -155,6 +155,7 @@ int match_bsr(BSR *bsr, DEV_RECORD *rec, VOLUME_LABEL *volrec,
 int match_bsr_block(BSR *bsr, DEV_BLOCK *block);
 void position_bsr_block(BSR *bsr, DEV_BLOCK *block);
 BSR *find_next_bsr(BSR *root_bsr, DEVICE *dev);
+bool match_set_eof(BSR *bsr, DEV_RECORD *rec);
 
 /* From mount.c */
 int	 mount_next_write_volume(JCR *jcr, DEVICE *dev, DEV_BLOCK *block, int release);

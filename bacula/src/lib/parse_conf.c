@@ -284,7 +284,7 @@ static void scan_types(LEX *lc, MSGS *msg, int dest_code, char *where, char *cmd
 	 str = &lc->str[0];
       }
       for (i=0; msg_types[i].name; i++) {
-	 if (strcmp(str, msg_types[i].name) == 0) {
+	 if (strcasecmp(str, msg_types[i].name) == 0) {
 	    msg_type = msg_types[i].token;
 	    found = TRUE;
 	    break;
@@ -678,7 +678,8 @@ parse_config(char *cf)
 		     if (i >= 0) {
                         Dmsg2(150, "level=%d id=%s\n", level, lc->str);
                         Dmsg1(150, "Keyword = %s\n", lc->str);
-                        scan_err1(lc, "Keyword \"%s\" not permitted in this resource", lc->str);
+                        scan_err1(lc, "Keyword \"%s\" not permitted in this resource.\n"
+                           "Perhaps you left the trailing brace off of the previous resource.", lc->str);
 			/* NOT REACHED */
 		     }
 		     break;
