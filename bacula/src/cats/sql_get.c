@@ -232,11 +232,12 @@ static int db_get_path_record(B_DB *mdb, char *path)
    Mmsg(&mdb->cmd, "SELECT PathId FROM Path WHERE Path=\"%s\"", path);
 
    if (QUERY_DB(mdb, mdb->cmd)) {
-
+      char ed1[30];
       mdb->num_rows = sql_num_rows(mdb);
 
       if (mdb->num_rows > 1) {
-         Mmsg1(&mdb->errmsg, _("More than one Path!: %" lld "\n"), mdb->num_rows);
+         Mmsg1(&mdb->errmsg, _("More than one Path!: %s\n"), 
+	    edit_uint64(mdb->num_rows, ed1));
 	 Emsg0(M_FATAL, 0, mdb->errmsg);
       } else if (mdb->num_rows == 1) {
 	 if ((row = sql_fetch_row(mdb)) == NULL) {
@@ -272,11 +273,11 @@ int db_get_job_record(B_DB *mdb, JOB_DBR *jr)
    P(mdb->mutex);
    if (jr->JobId == 0) {
       Mmsg(&mdb->cmd, "SELECT VolSessionId, VolSessionTime, \
-PoolId, StartTime, EndTime, JobFiles, JobBytes, Job \
+PoolId, StartTime, EndTime, JobFiles, JobBytes, JobTDate, Job \
 FROM Job WHERE Job=\"%s\"", jr->Job);
     } else {
       Mmsg(&mdb->cmd, "SELECT VolSessionId, VolSessionTime, \
-PoolId, StartTime, EndTime, JobFiles, JobBytes, Job \
+PoolId, StartTime, EndTime, JobFiles, JobBytes, JobTDate, Job \
 FROM Job WHERE JobId=%d", jr->JobId);
     }
 
@@ -298,7 +299,8 @@ FROM Job WHERE JobId=%d", jr->JobId);
    strcpy(jr->cEndTime, row[4]);
    jr->JobFiles = atol(row[5]);
    jr->JobBytes = (uint64_t)strtod(row[6], NULL);
-   strcpy(jr->Job, row[7]);
+   jr->JobTDate = (btime_t)strtod(row[7], NULL);
+   strcpy(jr->Job, row[8]);
    sql_free_result(mdb);
 
    V(mdb->mutex);
@@ -423,17 +425,21 @@ int db_get_pool_record(B_DB *mdb, POOL_DBR *pdbr)
    if (pdbr->PoolId != 0) {		  /* find by id */
       Mmsg(&mdb->cmd, 
 "SELECT PoolId, Name, NumVols, MaxVols, UseOnce, UseCatalog, AcceptAnyVolume, \
+AutoPrune, Recycle, VolRetention, \
 PoolType, LabelFormat FROM Pool WHERE Pool.PoolId=%d", pdbr->PoolId);
    } else {			      /* find by name */
       Mmsg(&mdb->cmd, 
 "SELECT PoolId, Name, NumVols, MaxVols, UseOnce, UseCatalog, AcceptAnyVolume, \
+AutoPrune, Recycle, VolRetention, \
 PoolType, LabelFormat FROM Pool WHERE Pool.Name=\"%s\"", pdbr->Name);
    }  
 
    if (QUERY_DB(mdb, mdb->cmd)) {
       mdb->num_rows = sql_num_rows(mdb);
       if (mdb->num_rows > 1) {
-         Mmsg1(&mdb->errmsg, _("More than one Pool!: %" lld "\n"), mdb->num_rows);
+	 char ed1[30];
+         Mmsg1(&mdb->errmsg, _("More than one Pool!: %s\n"), 
+	    edit_uint64(mdb->num_rows, ed1));
 	 Emsg0(M_ERROR, 0, mdb->errmsg);
       } else if (mdb->num_rows == 1) {
 	 if ((row = sql_fetch_row(mdb)) == NULL) {
@@ -447,9 +453,12 @@ PoolType, LabelFormat FROM Pool WHERE Pool.Name=\"%s\"", pdbr->Name);
 	    pdbr->UseOnce = atoi(row[4]);
 	    pdbr->UseCatalog = atoi(row[5]);
 	    pdbr->AcceptAnyVolume = atoi(row[6]);
-	    strcpy(pdbr->PoolType, row[7]);
-	    if (row[8]) {
-	       strcpy(pdbr->LabelFormat, row[8]);
+	    pdbr->AutoPrune = atoi(row[7]);
+	    pdbr->Recycle = atoi(row[8]);
+	    pdbr->VolRetention = (btime_t)strtod(row[9], NULL);
+	    strcpy(pdbr->PoolType, row[10]);
+	    if (row[11]) {
+	       strcpy(pdbr->LabelFormat, row[11]);
 	    } else {
 	       pdbr->LabelFormat[0] = 0;
 	    }
@@ -538,19 +547,21 @@ int db_get_media_record(B_DB *mdb, MEDIA_DBR *mr)
    if (mr->MediaId != 0) {		 /* find by id */
       Mmsg(&mdb->cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,VolBlocks,\
 VolBytes,VolMounts,VolErrors,VolWrites,VolMaxBytes,VolCapacityBytes,\
-MediaType,VolStatus,PoolId \
+MediaType,VolStatus,PoolId,VoRetention,Recycle \
 FROM Media WHERE MediaId=%d", mr->MediaId);
    } else {			      /* find by name */
       Mmsg(&mdb->cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,VolBlocks,\
 VolBytes,VolMounts,VolErrors,VolWrites,VolMaxBytes,VolCapacityBytes,\
-MediaType,VolStatus,PoolId \
+MediaType,VolStatus,PoolId,VolRetention,Recycle \
 FROM Media WHERE VolumeName=\"%s\"", mr->VolumeName);
    }  
 
    if (QUERY_DB(mdb, mdb->cmd)) {
       mdb->num_rows = sql_num_rows(mdb);
       if (mdb->num_rows > 1) {
-         Mmsg1(&mdb->errmsg, _("More than one Volume!: %" lld "\n"), mdb->num_rows);
+	 char ed1[30];
+         Mmsg1(&mdb->errmsg, _("More than one Volume!: %s\n"), 
+	    edit_uint64(mdb->num_rows, ed1));
 	 Emsg0(M_ERROR, 0, mdb->errmsg);
       } else if (mdb->num_rows == 1) {
 	 if ((row = sql_fetch_row(mdb)) == NULL) {
@@ -572,8 +583,12 @@ FROM Media WHERE VolumeName=\"%s\"", mr->VolumeName);
 	    strcpy(mr->MediaType, row[11]);
 	    strcpy(mr->VolStatus, row[12]);
 	    mr->PoolId = atoi(row[13]);
+	    mr->VolRetention = (btime_t)strtod(row[14], NULL);
+	    mr->Recycle = atoi(row[15]);
 	    stat = mr->MediaId;
 	 }
+      } else {
+         Mmsg0(&mdb->errmsg, _("Media record not found.\n"));
       }
       sql_free_result(mdb);
    }

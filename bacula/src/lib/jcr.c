@@ -63,7 +63,6 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
    jcr->VolumeName[0] = 0;
    jcr->errmsg = (char *) get_pool_memory(PM_MESSAGE);
    jcr->errmsg[0] = 0;
-   init_msg(jcr);		      /* init job message chain */
    jobs = jcr;
    V(mutex);
    return jcr;
@@ -118,7 +117,9 @@ static void free_common_jcr(JCR *jcr)
 	 break;
    }
    pthread_mutex_destroy(&jcr->mutex);
+
    close_msg(jcr);		      /* close messages for this job */
+
    /* do this after closing messages */
    if (jcr->client_name) {
       free(jcr->client_name);
@@ -134,7 +135,6 @@ static void free_common_jcr(JCR *jcr)
       free_pool_memory(jcr->VolumeName);
       jcr->VolumeName = NULL;
    }
-   close_msg(jcr);		      /* close messages for this job */
 
    if (jcr->dir_bsock) {
       bnet_close(jcr->dir_bsock);

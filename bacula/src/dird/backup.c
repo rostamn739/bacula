@@ -38,6 +38,7 @@
 
 #include "bacula.h"
 #include "dird.h"
+#include "ua.h"
 
 /* Commands sent to File daemon */
 static char backupcmd[] = "backup\n";
@@ -79,6 +80,9 @@ int do_backup(JCR *jcr)
     */
    memset(&cr, 0, sizeof(cr));
    strcpy(cr.Name, jcr->client->hdr.name);
+   cr.AutoPrune = jcr->client->AutoPrune;
+   cr.FileRetention = jcr->client->FileRetention;
+   cr.JobRetention = jcr->client->JobRetention;
    if (jcr->client_name) {
       free(jcr->client_name);
    }
@@ -432,12 +436,12 @@ Termination:            %s\n"),
 	jcr->client->hdr.name,
 	sdt,
 	edt,
-	edit_uint_with_commas(jcr->jr.JobBytes, ec1),
-	edit_uint_with_commas(jcr->jr.JobFiles, ec2),
+	edit_uint64_with_commas(jcr->jr.JobBytes, ec1),
+	edit_uint64_with_commas(jcr->jr.JobFiles, ec2),
 	jcr->VolumeName,
 	jcr->VolSessionId,
 	jcr->VolSessionTime,
-	edit_uint_with_commas(mr.VolBytes, ec3),
+	edit_uint64_with_commas(mr.VolBytes, ec3),
 	term_msg);
 
    Dmsg0(100, "Leave backup_cleanup()\n");

@@ -18,6 +18,8 @@
  *	for the resource records.
  *
  *     Kern Sibbald, January MM
+ *
+ *     $Id:
  */
 /*
    Copyright (C) 2000, 2001, 2002 Kern Sibbald and John Walker
@@ -92,7 +94,6 @@ static struct res_items dir_items[] = {
    {"password",    store_password, ITEM(res_dir.password), 0, ITEM_REQUIRED, 0},
    {"fdconnecttimeout", store_time,ITEM(res_dir.FDConnectTimeout), 0, ITEM_DEFAULT, 60 * 30},
    {"sdconnecttimeout", store_time,ITEM(res_dir.SDConnectTimeout), 0, ITEM_DEFAULT, 60 * 30},
-
    {NULL, NULL, NULL, 0, 0, 0}
 };
 
@@ -109,10 +110,9 @@ static struct res_items cli_items[] = {
    {"fdport",   store_pint,       ITEM(res_client.FDport),   0, ITEM_REQUIRED, 0},
    {"password", store_password,   ITEM(res_client.password), 0, ITEM_REQUIRED, 0},
    {"catalog",  store_res,        ITEM(res_client.catalog),  R_CATALOG, 0, 0},
-   {"catalogretentionperiod", store_time,      
-			 ITEM(res_client.cat_ret_period), 0, ITEM_DEFAULT, 60},
-   {"mediaretentionperiod", store_time,      
-			 ITEM(res_client.media_ret_period), 0, ITEM_DEFAULT, 60},
+   {"fileretention", store_time,  ITEM(res_client.FileRetention), 0, ITEM_DEFAULT, 60*60*24*60},
+   {"jobretention",  store_time,  ITEM(res_client.JobRetention),  0, ITEM_DEFAULT, 60*60*24*180},
+   {"autoprune", store_yesno,     ITEM(res_client.AutoPrune), 1, ITEM_DEFAULT, 1},
    {NULL, NULL, NULL, 0, 0, 0} 
 };
 
@@ -209,14 +209,17 @@ static struct res_items group_items[] = {
  */
 static struct res_items pool_items[] = {
    {"name",            store_name,    ITEM(res_pool.hdr.name),        0, ITEM_REQUIRED, 0},
-   {"description",     store_str,     ITEM(res_pool.hdr.desc),        0, 0,             0},
+   {"description",     store_str,     ITEM(res_pool.hdr.desc),        0, 0,     0},
    {"pooltype",        store_strname, ITEM(res_pool.pool_type),       0, ITEM_REQUIRED, 0},
-   {"labelformat",     store_strname, ITEM(res_pool.label_format),    0, 0,             0},
+   {"labelformat",     store_strname, ITEM(res_pool.label_format),    0, 0,     0},
    {"usecatalog",      store_yesno, ITEM(res_pool.use_catalog),     1, ITEM_DEFAULT,  1},
-   {"usevolumeonce",   store_yesno, ITEM(res_pool.use_volume_once), 1, 0,             0},
+   {"usevolumeonce",   store_yesno, ITEM(res_pool.use_volume_once), 1, 0,       0},
    {"maximumvolumes",  store_pint,  ITEM(res_pool.max_volumes),     0, 0,             0},
-   {"acceptanyvolume", store_yesno, ITEM(res_pool.accept_any_volume), 1, 0,           0},
+   {"acceptanyvolume", store_yesno, ITEM(res_pool.accept_any_volume), 1, 0,     0},
    {"catalogfiles",    store_yesno, ITEM(res_pool.catalog_files),   1, ITEM_DEFAULT,  1},
+   {"volumeretention", store_time,  ITEM(res_pool.VolRetention), 0, ITEM_DEFAULT, 60*60*24*365},
+   {"autoprune",       store_yesno, ITEM(res_pool.AutoPrune), 1, ITEM_DEFAULT, 1},
+   {"recycle",         store_yesno, ITEM(res_pool.Recycle),     1, ITEM_DEFAULT, 1},
    {NULL, NULL, NULL, 0, 0, 0} 
 };
 
@@ -249,15 +252,15 @@ struct s_res resources[] = {
  *   level_name      level		level_class
  */
 struct s_jl joblevels[] = {
-   {"full",          L_FULL,            JT_BACKUP},
-   {"incremental",   L_INCREMENTAL,     JT_BACKUP},
-   {"differential",  L_DIFFERENTIAL,    JT_BACKUP},
-   {"level",         L_LEVEL,           JT_BACKUP},
-   {"since",         L_SINCE,           JT_BACKUP},
-   {"catalog",       L_VERIFY_CATALOG,  JT_VERIFY},
-   {"initcatalog",   L_VERIFY_INIT,     JT_VERIFY},
-   {"volume",        L_VERIFY_VOLUME,   JT_VERIFY},
-   {"data",          L_VERIFY_DATA,     JT_VERIFY},
+   {"Full",          L_FULL,            JT_BACKUP},
+   {"Incremental",   L_INCREMENTAL,     JT_BACKUP},
+   {"Differential",  L_DIFFERENTIAL,    JT_BACKUP},
+   {"Level",         L_LEVEL,           JT_BACKUP},
+   {"Since",         L_SINCE,           JT_BACKUP},
+   {"Catalog",       L_VERIFY_CATALOG,  JT_VERIFY},
+   {"Initcatalog",   L_VERIFY_INIT,     JT_VERIFY},
+   {"Volume",        L_VERIFY_VOLUME,   JT_VERIFY},
+   {"Data",          L_VERIFY_DATA,     JT_VERIFY},
    {NULL,	     0}
 };
 
@@ -358,10 +361,11 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
    }
    switch (type) {
       case R_DIRECTOR:
-         sendit(sock, "Director: name=%s maxjobs=%d FDtimeout=%d SDtimeout=%d\n", 
+	 char ed1[30], ed2[30];
+         sendit(sock, "Director: name=%s maxjobs=%d FDtimeout=%s SDtimeout=%s\n", 
 	    reshdr->name, res->res_dir.MaxConcurrentJobs, 
-	    res->res_dir.FDConnectTimeout,
-	    res->res_dir.SDConnectTimeout);
+	    edit_uint64(res->res_dir.FDConnectTimeout, ed1),
+	    edit_uint64(res->res_dir.SDConnectTimeout, ed2));
 	 if (res->res_dir.query_file) {
             sendit(sock, "   query_file=%s\n", res->res_dir.query_file);
 	 }
@@ -373,8 +377,9 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
       case R_CLIENT:
          sendit(sock, "Client: name=%s address=%s FDport=%d\n",
 	    res->res_client.hdr.name, res->res_client.address, res->res_client.FDport);
-         sendit(sock, "CatRetPeriod=%d MediaRetPeriod=%d\n",
-	    res->res_client.cat_ret_period, res->res_client.media_ret_period);
+         sendit(sock, "JobRetention=%" lld " FileRetention=%" lld " AutoPrune=%d\n",
+	    res->res_client.JobRetention, res->res_client.FileRetention,
+	    res->res_client.AutoPrune);
 	 if (res->res_client.catalog) {
             sendit(sock, "  --> ");
 	    dump_resource(-R_CATALOG, (RES *)res->res_client.catalog, sendit, sock);
@@ -445,11 +450,15 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, char *fmt, ...
       case R_POOL:
          sendit(sock, "Pool: name=%s PoolType=%s\n", res->res_pool.hdr.name,
 		 res->res_pool.pool_type);
-         sendit(sock, "      use_cat=%d use_once=%d acpt_any=%d\n",
+         sendit(sock, "      use_cat=%d use_once=%d acpt_any=%d cat_files=%d\n",
 		 res->res_pool.use_catalog, res->res_pool.use_volume_once,
-		 res->res_pool.accept_any_volume);
-         sendit(sock, "      cat_files=%d max_vols=%d\n",
-		 res->res_pool.catalog_files, res->res_pool.max_volumes);
+		 res->res_pool.accept_any_volume, res->res_pool.catalog_files);
+         sendit(sock, "      max_vols=%d auto_prune=%d VolRetention=%" lld "\n",
+		 res->res_pool.max_volumes, res->res_pool.AutoPrune,
+		 res->res_pool.VolRetention);
+         sendit(sock, "      recycle=%d\n",  res->res_pool.Recycle);
+	 
+
          sendit(sock, "      LabelFormat=%s\n", res->res_pool.label_format?
                  res->res_pool.label_format:"NONE");
 	 break;
@@ -577,7 +586,6 @@ void free_resource(int type)
 	    free(res->res_msgs.mail_cmd);
 	 if (res->res_msgs.operator_cmd)
 	    free(res->res_msgs.operator_cmd);
-
 	 break;
       case R_GROUP:
 	 break;
@@ -749,7 +757,7 @@ static void store_backup(LEX *lc, struct res_items *item, int index, int pass)
          Dmsg1(190, "Got keyword: %s\n", lc->str);
 	 found = FALSE;
 	 for (i=0; BakVerFields[i].name; i++) {
-	    if (strcmp(lc->str, BakVerFields[i].name) == 0) {
+	    if (strcasecmp(lc->str, BakVerFields[i].name) == 0) {
 	       found = TRUE;
 	       if (lex_get_token(lc) != T_EQUALS) {
                   scan_err1(lc, "Expected an equals, got: %s", lc->str);
@@ -787,7 +795,7 @@ static void store_backup(LEX *lc, struct res_items *item, int index, int pass)
 		     lcase(lc->str);
 		     for (i=0; joblevels[i].level_name; i++) {
 			if (joblevels[i].job_class == item->code && 
-			     strcmp(lc->str, joblevels[i].level_name) == 0) {
+			     strcasecmp(lc->str, joblevels[i].level_name) == 0) {
 			   ((JOB *)(item->value))->level = joblevels[i].level;
 			   i = 0;
 			   break;

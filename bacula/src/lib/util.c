@@ -33,15 +33,127 @@
  */
 
 /*
- * Edit a number with commas, the supplied buffer
- * must be at least 27 bytes long.
+ * Convert a string to btime_t (64 bit seconds)
+ * Returns 0: if error
+	   1: if OK, and value stored in value
  */
-char *edit_uint_with_commas(uint64_t val, char *buf)
+int string_to_btime(char *str, btime_t *value)
+{
+   int i, ch, len;
+   btime_t val;
+   static int  mod[] = {'*', 's', 'm', 'h', 'd', 'w', 'o', 'q', 'y', 0};
+   static int mult[] = {1,    1,  60, 60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 
+		  60*60*24*91, 60*60*24*365};
+
+   /* Look for modifier */
+   len = strlen(str);
+   ch = str[len - 1];
+   i = 0;
+   if (ISALPHA(ch)) {
+      if (ISUPPER(ch)) {
+	 ch = tolower(ch);
+      }
+      while (mod[++i] != 0) {
+	 if (ch == mod[i]) {
+	    len--;
+	    str[len] = 0; /* strip modifier */
+	    break;
+	 }
+      }
+   }
+   if (mod[i] == 0 || !is_a_number(str)) {
+      return 0;
+   }
+   val = (btime_t)strtod(str, NULL);
+   if (errno != 0 || val < 0) {
+      return 0;
+   }
+   *value = val * mult[i];
+   return 1;
+
+}
+
+char *edit_btime(btime_t val, char *buf)
+{
+   char mybuf[30];
+   static int mult[] = {60*60*24*365, 60*60*24*30, 60*60*24, 60*60, 60};
+   static char *mod[]  = {"year",  "month",  "day", "hour", "min"};
+   int i;
+   uint32_t times;
+
+   *buf = 0;
+   for (i=0; i<5; i++) {
+      times = val / mult[i];
+      if (times > 0) {
+	 val = val - (btime_t)times * mult[i];
+         sprintf(mybuf, "%d %s%s ", times, mod[i], times>1?"s":"");
+	 strcat(buf, mybuf);
+      }
+   }
+   if (val == 0 && strlen(buf) == 0) {	   
+      strcat(buf, "0 secs");
+   } else if (val != 0) {
+      sprintf(mybuf, "%d sec%s", (uint32_t)val, val>1?"s":"");
+      strcat(buf, mybuf);
+   }
+   return buf;
+}
+
+/*
+ * Check if specified string is a number or not.
+ *  Taken from SQLite, cool, thanks.
+ */
+int is_a_number(const char *n)
+{
+   int digit_seen = 0;
+
+   if( *n == '-' || *n == '+' ) {
+      n++;
+   }
+   while (ISDIGIT(*n)) {
+      digit_seen = 1;
+      n++;
+   }
+   if (digit_seen && *n == '.') {
+      n++;
+      while (ISDIGIT(*n)) { n++; }
+   }
+   if (digit_seen && (*n == 'e' || *n == 'E')
+       && (ISDIGIT(n[1]) || ((n[1]=='-' || n[1] == '+') && ISDIGIT(n[2])))) {
+      n += 2;			      /* skip e- or e+ or e digit */
+      while (ISDIGIT(*n)) { n++; }
+   }
+   return digit_seen && *n==0;
+}
+
+
+/*
+ * Edit an integer number with commas, the supplied buffer
+ * must be at least 27 bytes long.  The incoming number
+ * is always widened to 64 bits.
+ */
+char *edit_uint64_with_commas(uint64_t val, char *buf)
 {
    sprintf(buf, "%" lld, val);
    return add_commas(buf, buf);
 }
 
+/*
+ * Edit an integer number, the supplied buffer
+ * must be at least 27 bytes long.  The incoming number
+ * is always widened to 64 bits.
+ */
+char *edit_uint64(uint64_t val, char *buf)
+{
+   sprintf(buf, "%" lld, val);
+   return buf;
+}
+
+
+/*
+ * Add commas to a string, which is presumably
+ * a number.  
+ */
 char *add_commas(char *val, char *buf)
 {
    int len, nc;
@@ -70,8 +182,7 @@ char *add_commas(char *val, char *buf)
 
 
 /* Convert a string in place to lower case */
-void 
-lcase(char *str)
+void lcase(char *str)
 {
    while (*str) {
       if (ISUPPER(*str))

@@ -43,12 +43,14 @@ extern int rl_catch_signals;
 
 /* Forward referenced functions */
 static void terminate_console(int sig);
-int get_cmd(char *prompt, BSOCK *sock, int sec);
+int get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec);
 
 /* Static variables */
 static char *configfile = NULL;
 static BSOCK *UA_sock = NULL;
 static DIRRES *dir; 
+static FILE *output = stdout;
+
 
 #define CONFIG_FILE "./console.conf"   /* default configuration file */
 
@@ -67,6 +69,64 @@ static void usage()
    exit(1);
 }
 
+static void read_and_process_input(FILE *input, BSOCK *UA_sock) 
+{
+   char *prompt = "*";
+   int at_prompt = FALSE;
+   int tty_input = isatty(fileno(input));
+   int stat;
+
+   for ( ;; ) { 
+      if (at_prompt) {                /* don't prompt multiple times */
+         prompt = "";
+      } else {
+         prompt = "*";
+	 at_prompt = TRUE;
+      }
+      if (tty_input) {
+	 stat = get_cmd(input, prompt, UA_sock, 30);
+      } else {
+	 int len = sizeof_pool_memory(UA_sock->msg) - 1;
+	 if (fgets(UA_sock->msg, len, input) == NULL) {
+	    stat = -1;
+	 } else {
+	    strip_trailing_junk(UA_sock->msg);
+	    UA_sock->msglen = strlen(UA_sock->msg);
+	    stat = 1;
+	 }
+      }
+      if (stat < 0) { 
+	 break; 		      /* error */
+      } else if (stat == 0) {	      /* timeout */
+         bnet_fsend(UA_sock, ".messages");
+      } else {
+	 at_prompt = FALSE;
+	 if (!bnet_send(UA_sock)) {   /* send command */
+	    break;		      /* error */
+	 }
+      }
+      if (strcmp(UA_sock->msg, "quit") == 0 || strcmp(UA_sock->msg, "exit") == 0) {
+	 break;
+      }
+      while ((stat = bnet_recv(UA_sock)) > 0) {
+	 if (at_prompt) {
+            fprintf(output, "\n");
+	    at_prompt = FALSE;
+	 }
+         printf("%s", UA_sock->msg);
+      }
+      fflush(output);
+      if (stat < 0) {
+	 break; 		      /* error */
+      } else if (stat == 0) {
+	 if (UA_sock->msglen == BNET_PROMPT) {
+	    at_prompt = TRUE;
+	 }
+         Dmsg1(100, "Got poll %s\n", bnet_sig_to_ascii(UA_sock));
+      }
+   }
+}
+
 
 /*********************************************************************
  *
@@ -75,12 +135,10 @@ static void usage()
  */
 int main(int argc, char *argv[])
 {
-   int ch, stat, i, ndir, item;
+   int ch, i, ndir, item;
    int no_signals = FALSE;
    int test_config = FALSE;
    JCR jcr;
-   char *prompt = "*";
-   int at_prompt = FALSE;
 
    init_stack_dump();
    my_name_is(argc, argv, "console");
@@ -90,7 +148,7 @@ int main(int argc, char *argv[])
     * Ensure that every message is always printed
     */
    for (i=1; i<=M_MAX; i++) {
-      add_msg_dest(MD_STDOUT, i, NULL, NULL);
+      add_msg_dest(NULL, MD_STDOUT, i, NULL, NULL);
    }
 
 
@@ -147,7 +205,7 @@ int main(int argc, char *argv[])
    }
    UnlockRes();
    if (ndir == 0) {
-      Emsg1(M_ABORT, 0, "No director resource defined in %s\n\
+      Emsg1(M_ABORT, 0, "No Director resource defined in %s\n\
 Without that I don't how to speak to the Director :-(\n", configfile);
    }
 
@@ -161,20 +219,20 @@ Without that I don't how to speak to the Director :-(\n", configfile);
    if (ndir > 1) {
       UA_sock = init_bsock(0, "", "", 0);
 try_again:
-      printf("Available Directors:\n");
+      fprintf(output, "Available Directors:\n");
       LockRes();
       ndir = 0;
       for (dir = NULL; (dir = (DIRRES *)GetNextRes(R_DIRECTOR, (RES *)dir)); ) {
-         printf("%d  %s at %s:%d\n", 1+ndir++, dir->hdr.name, dir->address,
+         fprintf(output, "%d  %s at %s:%d\n", 1+ndir++, dir->hdr.name, dir->address,
 	    dir->DIRport);
       }
       UnlockRes();
-      if (get_cmd("Select Director: ", UA_sock, 600) < 0) {
+      if (get_cmd(stdin, "Select Director: ", UA_sock, 600) < 0) {
 	 return 1;
       }
       item = atoi(UA_sock->msg);
       if (item < 0 || item > ndir) {
-         printf("You must enter a number between 1 and %d\n", ndir);
+         fprintf(output, "You must enter a number between 1 and %d\n", ndir);
 	 goto try_again;
       }
       LockRes();
@@ -200,51 +258,15 @@ try_again:
    }
    jcr.dir_bsock = UA_sock;
    if (!authenticate_director(&jcr, dir)) {
-      printf("ERR: %s", UA_sock->msg);
+      fprintf(stderr, "ERR: %s", UA_sock->msg);
       terminate_console(0);
       return 1;
    }
 
    Dmsg0(40, "Opened connection with Director daemon\n");
 
-   for ( ;; ) { 
-      if (at_prompt) {                /* don't prompt multiple times */
-         prompt = "";
-      } else {
-         prompt = "*";
-	 at_prompt = TRUE;
-      }
-      stat = get_cmd(prompt, UA_sock, 30);
-      if (stat < 0) { 
-	 break; 		      /* error */
-      } else if (stat == 0) {	      /* timeout */
-         bnet_fsend(UA_sock, ".messages");
-      } else {
-	 at_prompt = FALSE;
-	 if (!bnet_send(UA_sock)) {   /* send command */
-	    break;		      /* error */
-	 }
-      }
-      if (strcmp(UA_sock->msg, "quit") == 0 || strcmp(UA_sock->msg, "exit") == 0) {
-	 break;
-      }
-      while ((stat = bnet_recv(UA_sock)) > 0) {
-	 if (at_prompt) {
-            printf("\n");
-	    at_prompt = FALSE;
-	 }
-         printf("%s", UA_sock->msg);
-      }
-      fflush(stdout);
-      if (stat < 0) {
-	 break; 		      /* error */
-      } else if (stat == 0) {
-	 if (UA_sock->msglen == BNET_PROMPT) {
-	    at_prompt = TRUE;
-	 }
-         Dmsg1(100, "Got poll %s\n", bnet_sig_to_ascii(UA_sock));
-      }
-   }
+   read_and_process_input(stdin, UA_sock);
+
    if (UA_sock) {
       bnet_sig(UA_sock, BNET_TERMINATE); /* send EOF */
       bnet_close(UA_sock);
@@ -271,8 +293,9 @@ static void terminate_console(int sig)
 #include "readline/readline.h"
 #include "readline/history.h"
 
+
 int 
-get_cmd(char *prompt, BSOCK *sock, int sec)
+get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec)
 {
    char *line;
 
@@ -332,17 +355,19 @@ wait_for_data(int fd, int sec)
  *	     -1 if EOF or error
  */
 int 
-get_cmd(char *prompt, BSOCK *sock, int sec)
+get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec)
 {
-   fprintf(stdout, prompt);
-   fflush(stdout);
-   switch (wait_for_data(fileno(stdin), sec)) {
+   int len;  
+   fprintf(output, prompt);
+   fflush(output);
+   switch (wait_for_data(fileno(input), sec)) {
       case 0:
 	 return 0;		      /* timeout */
       case -1: 
 	 return -1;		      /* error */
       default:
-	 if (fgets(sock->msg, 200, stdin) == NULL) {
+	 len = sizeof_pool_memory(sock->msg) - 1;
+	 if (fgets(sock->msg, len, input) == NULL) {
 	    return -1;
 	 }
 	 break;

@@ -33,7 +33,6 @@
 extern void run_job(JCR *jcr);
 
 /* Imported variables */
-extern struct s_jl joblevels[];
 extern int r_first;
 extern int r_last;
 extern struct s_res resources[];
@@ -91,7 +90,7 @@ static void *connect_thread(void *arg)
  */
 static void handle_UA_client_request(void *arg)
 {
-   int quit, stat;
+   int stat;
    static char cmd[1000];
    UAContext ua;
    BSOCK *UA_sock = (BSOCK *) arg;
@@ -100,8 +99,8 @@ static void handle_UA_client_request(void *arg)
 
    memset(&ua, 0, sizeof(ua));
    ua.automount = TRUE;
+   ua.verbose = TRUE;
    ua.jcr = new_jcr(sizeof(JCR), dird_free_jcr);
-   close_msg(ua.jcr);                 /* we don't handle messages */
    ua.jcr->sd_auth_key = bstrdup("dummy"); /* dummy Storage daemon key */
    ua.UA_sock = UA_sock;
    ua.cmd = (char *) get_pool_memory(PM_FNAME);
@@ -116,19 +115,18 @@ static void handle_UA_client_request(void *arg)
       goto getout;
    }
 
-   quit = FALSE;
-   while (!quit) {
+   while (!ua.quit) {
       stat = bnet_recv(ua.UA_sock);
       if (stat > 0) {
 	 strncpy(cmd, ua.UA_sock->msg, sizeof(cmd));
 	 cmd[sizeof(cmd)-1] = 0;       /* ensure it is terminated/trucated */
 	 parse_command_args(&ua);
          if (ua.argc > 0 && ua.argk[0][0] == '.') {
-	    quit = !do_a_dot_command(&ua, cmd);
+	    do_a_dot_command(&ua, cmd);
 	 } else {
-	    quit = !do_a_command(&ua, cmd);
+	    do_a_command(&ua, cmd);
 	 }
-	 if (!quit) {
+	 if (!ua.quit) {
 	    if (ua.auto_display_messages) {
                strcpy(cmd, "messages");
 	       qmessagescmd(&ua, cmd);
@@ -141,6 +139,7 @@ static void handle_UA_client_request(void *arg)
 	 }
       } else if (stat == 0) {
 	 if (ua.UA_sock->msglen == BNET_TERMINATE) {
+	    ua.quit = TRUE;
 	    break;
 	 }
 	 bnet_sig(ua.UA_sock, BNET_POLL);
@@ -155,11 +154,12 @@ getout:
       ua.UA_sock = NULL;
    }
 
+   close_db(&ua);		      /* do this before freeing JCR */
+
    if (ua.jcr) {
       free_jcr(ua.jcr);
       ua.jcr = NULL;
    }
-   close_db(&ua);
    if (ua.prompt) {
       free(ua.prompt);
    }
