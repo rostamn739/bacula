@@ -1986,6 +1986,7 @@ static void do_unfill()
       }
    
       free_vol_list(jcr);
+      jcr->dcr = new_dcr(jcr, dev);
       set_volume_name("TestVolume1", 1);
       jcr->bsr = NULL;
       create_vol_list(jcr);

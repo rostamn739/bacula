@@ -62,8 +62,12 @@ GList *type_list, *level_list;
 
 /* Forward referenced functions */
 void terminate_console(int sig);
-static gint message_handler(gpointer data);
-static int initial_connect_to_director(gpointer data);
+
+extern "C" {
+    static gint message_handler(gpointer data);
+    static int initial_connect_to_director(gpointer data);
+}
+
 static void set_scroll_bar_to_end(void);
 
 /* Static variables */
@@ -105,7 +109,7 @@ int main(int argc, char *argv[])
    int no_signals = TRUE;
    int test_config = FALSE;
    int gargc = 1;
-   char *gargv[2] = {"gnome-console", NULL};
+   const char *gargv[2] = {"gnome-console", NULL};
    CONFONTRES *con_font;
 
    init_stack_dump();
@@ -308,7 +312,7 @@ static GList *get_list(char *cmd)
    
 }
 
-static GList *get_and_fill_combo(GtkWidget *dialog, char *combo_name, char *cmd)
+static GList *get_and_fill_combo(GtkWidget *dialog, const char *combo_name, const char *cm)
 {
    GtkWidget *combo;
    GList *options;
@@ -321,12 +325,12 @@ static GList *get_and_fill_combo(GtkWidget *dialog, char *combo_name, char *cmd)
    return options;
 }
 
-static void fill_combo(GtkWidget *dialog, char *combo_name, GList *options)
+static void fill_combo(GtkWidget *dialog, const char *combo_name, GList *options)
 {
    GtkWidget *combo;
 
    combo = lookup_widget(dialog, combo_name);
-   if (combo) {
+   if (combo && options) {
       gtk_combo_set_popdown_strings(GTK_COMBO(combo), options);
    }
    return;
@@ -357,7 +361,9 @@ int connect_to_director(gpointer data)
       dir_dialog = create_SelectDirectorDialog();
       combo = lookup_widget(dir_dialog, "combo1");
       dir_select = lookup_widget(dir_dialog, "dirselect");
-      gtk_combo_set_popdown_strings(GTK_COMBO(combo), dirs);   
+      if (dirs) {
+	 gtk_combo_set_popdown_strings(GTK_COMBO(combo), dirs);   
+      }
       gtk_widget_show(dir_dialog);
       gtk_main();
 
@@ -448,7 +454,7 @@ int connect_to_director(gpointer data)
    return 1;
 }
 
-void write_director(gchar *msg)
+void write_director(const gchar *msg)
 {
    if (UA_sock) {
       at_prompt = false;
@@ -463,6 +469,7 @@ void write_director(gchar *msg)
    }
 }
 
+extern "C"
 void read_director(gpointer data, gint fd, GdkInputCondition condition)
 {
    int stat;
@@ -562,7 +569,7 @@ static void truncate_text_chars()
    gtk_text_iter_set_offset(&iter, len);
 }
 
-void set_textf(char *fmt, ...)
+void set_textf(const char *fmt, ...)
 {
    va_list arg_ptr;
    char buf[1000];
@@ -573,7 +580,7 @@ void set_textf(char *fmt, ...)
    set_text(buf, len);
 }
 
-void set_text(char *buf, int len)
+void set_text(const char *buf, int len)
 {
    GtkTextBuffer *textbuf;
    GtkTextIter iter;
@@ -590,7 +597,7 @@ void set_text(char *buf, int len)
    set_scroll_bar_to_end();
 }
 
-void set_statusf(char *fmt, ...)
+void set_statusf(const char *fmt, ...)
 {
    va_list arg_ptr;
    char buf[1000];
@@ -610,7 +617,7 @@ void set_status_ready()
 // set_scroll_bar_to_end();
 }
 
-void set_status(char *buf)
+void set_status(const char *buf)
 {
    gtk_label_set_text(GTK_LABEL(status1), buf);
 // set_scroll_bar_to_end();

@@ -21,11 +21,14 @@
 
 void terminate_console(int sig);
 
+extern "C" gint compare_func(const void *data1, const void *data2);
+
 gboolean
 on_console_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
    gtk_main_quit();
    terminate_console(0);     
+   return TRUE;
 }
 
 void
@@ -150,21 +153,33 @@ on_entry1_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_d
       gtk_entry_set_text((GtkEntry *)entry1, "");
    } else if (event->keyval == KEY_Up) {
       if (!hc) {
+	 if (!hist) {
+	    return FALSE;
+	 }
 	 hc = g_list_last(hist);
       } else {
 	 hc = g_list_previous(hc);
       }
       if (!hc) {
+	 if (!hist) {
+	    return FALSE;
+	 }
 	 hc = g_list_first(hist);
       }
       gtk_entry_set_text((GtkEntry *)entry1, (gchar *)hc->data);
    } else if (event->keyval == KEY_Down) {
       if (!hc) {
+	 if (!hist) {
+	    return FALSE;
+	 }
 	 hc = g_list_first(hist);
       } else {
 	 hc = g_list_next(hc);
       }
       if (!hc) {
+	 if (!hist) {
+	    return FALSE;
+	 }
 	 hc = g_list_last(hist);
       }
       gtk_entry_set_text((GtkEntry *)entry1, (gchar *)hc->data);
@@ -224,7 +239,8 @@ on_select_director_cancel_clicked(GtkButton *button, gpointer user_data)
 /*
  * Compare list string items
  */
-static gint compare_func(const void *data1, const void *data2)
+extern "C"
+gint compare_func(const void *data1, const void *data2)
 {
    return strcmp((const char *)data1, (const char *)data2);
 }
@@ -331,7 +347,7 @@ on_run_button_clicked(GtkButton *button, gpointer user_data)
 }
 
 
-static char *get_combo_text(GtkWidget *dialog, char *combo_name)
+static char *get_combo_text(GtkWidget *dialog, const char *combo_name)
 {
    GtkWidget *combo;
    combo = lookup_widget(dialog, combo_name);
@@ -341,7 +357,7 @@ static char *get_combo_text(GtkWidget *dialog, char *combo_name)
    return (char *)gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry));
 }
 
-static char *get_entry_text(GtkWidget *dialog, char *entry_name)
+static char *get_entry_text(GtkWidget *dialog, const char *entry_name)
 {
    GtkWidget *entry;
    entry = lookup_widget(dialog, entry_name);
@@ -351,7 +367,7 @@ static char *get_entry_text(GtkWidget *dialog, char *entry_name)
    return (char *)gtk_entry_get_text(GTK_ENTRY(entry));
 }
 
-static char *get_spin_text(GtkWidget *dialog, char *spin_name)
+static char *get_spin_text(GtkWidget *dialog, const char *spin_name)
 {
    GtkSpinButton *spin;
    spin = (GtkSpinButton *)lookup_widget(dialog, spin_name);

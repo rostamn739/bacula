@@ -41,6 +41,9 @@
 #define WAIT_INTERVAL 60
 #endif
 
+extern bool no_signals;
+
+
 /* 
  * Listen on the SD socket for heartbeat signals.
  * Send heartbeats to the Director every HB_TIME
@@ -90,6 +93,9 @@ static void *sd_heartbeat_thread(void *arg)
 /* Startup the heartbeat thread -- see above */
 void start_heartbeat_monitor(JCR *jcr)
 {
+   if (no_signals) {
+      return;
+   }
    jcr->hb_bsock = NULL;
    pthread_create(&jcr->heartbeat_id, NULL, sd_heartbeat_thread, (void *)jcr);
 }
@@ -98,6 +104,9 @@ void start_heartbeat_monitor(JCR *jcr)
 void stop_heartbeat_monitor(JCR *jcr) 
 {
    int cnt = 0;
+   if (no_signals) {
+      return;
+   }
    /* Wait max 10 secs for heartbeat thread to start */
    while (jcr->hb_bsock == NULL && cnt++ < 200) {
       bmicrosleep(0, 50);	      /* avoid race */

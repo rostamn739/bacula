@@ -124,7 +124,7 @@ db_open_database(JCR *jcr, B_DB *mdb)
       V(mutex);
       return 1;
    }
-   mdb->connected = FALSE;
+   mdb->connected = false;
 
    if ((errstat=rwl_init(&mdb->lock)) != 0) {
       Mmsg1(&mdb->errmsg, _("Unable to initialize DB lock. ERR=%s\n"), 
@@ -139,6 +139,9 @@ db_open_database(JCR *jcr, B_DB *mdb)
    } else {
       port = NULL;
    }
+
+   /* If connection fails, try at 5 sec intervals for 30 seconds. */
+   for (int retry=0; retry < 6; retry++) {
    /* connect to the database */
    mdb->db = PQsetdbLogin(
 	mdb->db_address,	      /* default = localhost */
@@ -150,15 +153,10 @@ db_open_database(JCR *jcr, B_DB *mdb)
 	mdb->db_password);	      /* password */
 
    /* If no connect, try once more in case it is a timing problem */
-   if (PQstatus(mdb->db) != CONNECTION_OK) {
-   mdb->db = PQsetdbLogin(
-	mdb->db_address,	      /* default = localhost */
-	port,			      /* default port */
-	NULL,			      /* pg options */
-	NULL,			      /* tty, ignored */
-	mdb->db_name,		      /* database name */
-	mdb->db_user,		      /* login name */
-	mdb->db_password);	      /* password */
+      if (PQstatus(mdb->db) == CONNECTION_OK) {
+	 break;   
+      }
+      bmicrosleep(5, 0);
    }
     
    Dmsg0(50, "pg_real_connect done\n");
@@ -179,7 +177,7 @@ db_open_database(JCR *jcr, B_DB *mdb)
       return 0;
    }
 
-   mdb->connected = TRUE;
+   mdb->connected = true;
    V(mutex);
    return 1;
 }
@@ -219,6 +217,7 @@ db_close_database(JCR *jcr, B_DB *mdb)
       if (mdb->db_socket) {
 	 free(mdb->db_socket);
       }
+      my_postgresql_free_result(mdb);	    
       free(mdb);
    }
    V(mutex);
@@ -402,6 +401,10 @@ void my_postgresql_field_seek(B_DB *mdb, int field)
    mdb->field_number = field;
 }
 
+/*
+ * Note, if this routine returns 1 (failure), Bacula expects
+ *  that no result has been stored.
+ */
 int my_postgresql_query(B_DB *mdb, char *query) {
    Dmsg0(500, "my_postgresql_query started\n");
    // We are starting a new query.  reset everything.
@@ -409,6 +412,9 @@ int my_postgresql_query(B_DB *mdb, char *query) {
    mdb->row_number   = -1;
    mdb->field_number = -1;
 
+   if (mdb->result != NULL) {
+      PQclear(mdb->result);  /* hmm, someone forgot to free?? */
+   }
 
    Dmsg1(500, "my_postgresql_query starts with '%s'\n", query);
    mdb->result = PQexec(mdb->db, query);
@@ -438,6 +444,7 @@ void my_postgresql_free_result (B_DB *mdb)
 {
    if (mdb->result) {
       PQclear(mdb->result);
+      mdb->result = NULL;
    }
 
    if (mdb->row) {

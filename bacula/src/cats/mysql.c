@@ -136,6 +136,8 @@ db_open_database(JCR *jcr, B_DB *mdb)
 #endif
    mysql_init(&(mdb->mysql));
    Dmsg0(50, "mysql_init done\n");
+   /* If connection fails, try at 5 sec intervals for 30 seconds. */
+   for (int retry=0; retry < 6; retry++) {
    mdb->db = mysql_real_connect(
 	&(mdb->mysql),		      /* db */
 	mdb->db_address,	      /* default = localhost */
@@ -147,16 +149,10 @@ db_open_database(JCR *jcr, B_DB *mdb)
 	CLIENT_FOUND_ROWS);	      /* flags */
 
    /* If no connect, try once more in case it is a timing problem */
-   if (mdb->db == NULL) {
-      mdb->db = mysql_real_connect(
-	   &(mdb->mysql),		 /* db */
-	   mdb->db_address,		 /* default = localhost */
-	   mdb->db_user,		 /*  login name */
-	   mdb->db_password,		 /*  password */
-	   mdb->db_name,		 /* database name */
-	   mdb->db_port,		 /* default port */
-	   mdb->db_socket,		 /* default = socket */
-	   CLIENT_FOUND_ROWS);		 /* flags */
+      if (mdb->db != NULL) {
+	 break;
+      }
+      bmicrosleep(5,0);
    }
     
    Dmsg0(50, "mysql_real_connect done\n");

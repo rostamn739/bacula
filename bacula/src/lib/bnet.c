@@ -44,11 +44,13 @@ extern time_t watchdog_time;
 #endif
 
 #ifdef HAVE_WIN32
-#define socketRead(fd, buf, len) recv(fd, buf, len, 0)
+#define socketRead(fd, buf, len)  recv(fd, buf, len, 0)
 #define socketWrite(fd, buf, len) send(fd, buf, len, 0)
+#define socketClose(fd) 	  closesocket(fd)
 #else
-#define socketRead(fd, buf, len) read(fd, buf, len)
+#define socketRead(fd, buf, len)  read(fd, buf, len)
 #define socketWrite(fd, buf, len) write(fd, buf, len)
+#define socketClose(fd) 	  close(fd)
 #endif
 
 
@@ -117,7 +119,7 @@ static int32_t write_nbytes(BSOCK *bsock, char *ptr, int32_t nbytes)
 	 struct timeval tv;
 
 	 FD_ZERO(&fdset);
-	 FD_SET(bsock->fd, &fdset);
+	 FD_SET((unsigned)bsock->fd, &fdset);
 	 tv.tv_sec = 10;
 	 tv.tv_usec = 0;
 	 select(bsock->fd + 1, NULL, &fdset, NULL, &tv);
@@ -439,7 +441,7 @@ bnet_wait_data(BSOCK *bsock, int sec)
    struct timeval tv;
 
    FD_ZERO(&fdset);
-   FD_SET(bsock->fd, &fdset);
+   FD_SET((unsigned)bsock->fd, &fdset);
    tv.tv_sec = sec;
    tv.tv_usec = 0;
    for ( ;; ) {
@@ -470,7 +472,7 @@ bnet_wait_data_intr(BSOCK *bsock, int sec)
    struct timeval tv;
 
    FD_ZERO(&fdset);
-   FD_SET(bsock->fd, &fdset);
+   FD_SET((unsigned)bsock->fd, &fdset);
    tv.tv_sec = sec;
    tv.tv_usec = 0;
    for ( ;; ) {
@@ -510,7 +512,7 @@ bnet_wait_data_intr(BSOCK *bsock, int sec)
 /*
  * Get human readable error for gethostbyname()
  */
-static const char *gethost_strerror() 
+static char *gethost_strerror() 
 {
    switch (h_errno) {
    case NETDB_INTERNAL:
@@ -634,7 +636,7 @@ bnet_open(JCR *jcr, const char *name, char *host, char *service, int port, int *
 
    free(addr_list);
    if (!connected) {
-      close(sockfd);
+      socketClose(sockfd);
       return NULL;
    }
    return init_bsock(jcr, sockfd, name, host, port, &tcp_serv_addr);
@@ -866,7 +868,7 @@ dup_bsock(BSOCK *osock)
    if (osock->host) {
       bsock->host = bstrdup(osock->host);
    }
-   bsock->duped = TRUE;
+   bsock->duped = true;
    return bsock;
 }
 
@@ -882,7 +884,7 @@ bnet_close(BSOCK *bsock)
 	 if (bsock->timed_out) {
 	    shutdown(bsock->fd, 2);   /* discard any pending I/O */
 	 }
-	 close(bsock->fd);	   /* normal close */
+	 socketClose(bsock->fd);      /* normal close */
       }
       term_bsock(bsock);
    }

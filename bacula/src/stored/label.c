@@ -414,7 +414,7 @@ int write_volume_label_to_dev(JCR *jcr, DEVRES *device, char *VolName, char *Poo
    if (!write_block_to_dev(jcr->dcr, block)) {
       memset(&dev->VolHdr, 0, sizeof(dev->VolHdr));
       Dmsg2(30, "Bad Label write on %s. ERR=%s\n", dev_name(dev), strerror_dev(dev));
-      stat = 9;
+      stat = 0;
    }
    Dmsg0(99, " Wrote block to device\n");
      

@@ -132,13 +132,6 @@ int job_cmd(JCR *jcr)
    free_memory(client_name);
    free_memory(fileset_name);
    free_memory(fileset_md5);
-
-   /* Initialize FD start condition variable */
-   if ((errstat = pthread_cond_init(&jcr->job_start_wait, NULL)) != 0) {
-      Jmsg1(jcr, M_FATAL, 0, _("Unable to init job cond variable: ERR=%s\n"), strerror(errstat));
-      set_jcr_job_status(jcr, JS_ErrorTerminated);
-      return 0;
-   }
    jcr->authenticated = false;
 
    /*

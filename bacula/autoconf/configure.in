@@ -59,7 +59,7 @@ AC_PATH_PROG(ECHO, echo, echo)
 AC_PATH_PROG(CMP, cmp, cmp)
 AC_PATH_PROG(TBL, tbl, tbl)
 AC_PATH_PROG(AR, ar, ar)
-AC_PATH_PROG(RANLIB, ranlib, ranlib)
+dnl AC_PATH_PROG(RANLIB, ranlib, ranlib)
 AC_PATH_PROG(OPENSSL, openssl, none)
 AC_PATH_PROG(MTX, mtx, mtx)
 AC_PATH_PROG(PKGCONFIG, pkg-config, pkg-config)
@@ -327,6 +327,8 @@ AC_ARG_ENABLE(client-only,
    [  --enable-client-only    build client (File daemon) only [disabled]],
    [if test x$enableval = xyes; then
      build_client_only=yes
+    db_name=None
+    DB_NAME=none
    fi])
 if test x$build_client_only = xno; then
    ALL_DIRS="subdirs"
@@ -901,6 +903,21 @@ AC_SUBST(sd_user)
 AC_SUBST(sd_group)
 AC_SUBST(fd_user)
 AC_SUBST(fd_group)
+
+#
+# allow setting default executable permissions
+#
+SBINPERM=0754
+AC_ARG_WITH(sbin-perm,
+    [  --with-sbin-perm=MODE		 specify permissions for sbin binaries (0754)],
+    [
+	if test "x$withval" != "x" ; then	
+	    SBINPERM=$withval
+	fi
+    ]
+)
+
+AC_SUBST(SBINPERM)
 
 # ------------------------------------------------
 # Bacula check for various SQL database engines
@@ -1730,11 +1747,25 @@ if test "x${subsysdir}" = "x${sbindir}" ; then
    echo "You have set --sbindir and --with-subsys-dir"
    echo "  both equal to: ${subsysdir} "
    echo "  This is not permitted. Please reconfigure."
+   echo " "
    echo "Aborting configuration ..."
    echo " "
    echo " "
    exit 1
 fi 
+
+if test "x${db_name}" = "xInternal" ; then
+   echo " "
+   echo " "
+   echo "You have not specified either --enable-client-only or one of the"
+   echo "  supported databases: MySQL, PostgreSQL, or SQLite".
+   echo "  This is not permitted. Please reconfigure."
+   echo " "
+   echo "Aborting the configuration ..."
+   echo " "
+   echo " "
+   exit 1
+fi
 
 echo "
 Configuration on `date`:

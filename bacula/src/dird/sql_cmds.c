@@ -282,7 +282,7 @@ char *uar_list_temp =
    "ORDER BY StartTime ASC";
 
 
-char *uar_sel_jobid_temp = "SELECT JobId FROM temp";
+char *uar_sel_jobid_temp = "SELECT JobId FROM temp ORDER BY StartTime ASC";
 
 char *uar_sel_all_temp1 = "SELECT * FROM temp1";
 
@@ -313,6 +313,7 @@ char *uar_jobid_fileindex =
    "AND Path.Path='%s' "
    "AND Filename.Name='%s' "
    "AND Client.Name='%s' "
+   "AND Job.ClientId=Client.ClientId "
    "AND Path.PathId=File.PathId "
    "AND Filename.FilenameId=File.FilenameId "
    "ORDER BY Job.StartTime DESC LIMIT 1";

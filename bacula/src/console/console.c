@@ -63,10 +63,16 @@ int authenticate_director(JCR *jcr, DIRRES *director, CONRES *cons);
 
 /* Forward referenced functions */
 static void terminate_console(int sig);
-int get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec);
+int get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec);
 static int do_outputcmd(FILE *input, BSOCK *UA_sock);
-void senditf(char *fmt, ...);
-void sendit(char *buf);
+void senditf(const char *fmt, ...);
+void sendit(const char *buf);
+
+extern "C" void got_sigstop(int sig);
+extern "C" void got_sigcontinue(int sig);
+extern "C" void got_sigtout(int sig);
+extern "C" void got_sigtin(int sig);
+
 
 /* Static variables */
 static char *configfile = NULL;
@@ -97,7 +103,7 @@ static void usage()
 {
    fprintf(stderr, _(
 "\nVersion: " VERSION " (" BDATE ") %s %s %s\n\n"
-"Usage: bconsole [-s] [-c config_file] [-d debug_level] [config_file]\n"
+"Usage: bconsole [-s] [-c config_file] [-d debug_level]\n"
 "       -c <file>   set configuration file to file\n"
 "       -dnn        set debug level to nn\n"
 "       -s          no signals\n"
@@ -106,25 +112,31 @@ static void usage()
 "\n"), HOST_OS, DISTNAME, DISTVER);
 }
 
+
+extern "C" 
 void got_sigstop(int sig)
 {
    stop = true;
 }
 
+extern "C" 
 void got_sigcontinue(int sig)
 {
    stop = false;
 }
 
+extern "C" 
 void got_sigtout(int sig) 
 {
 // printf("Got tout\n");
 }
 
+extern "C" 
 void got_sigtin(int sig)
 {   
 // printf("Got tin\n");
 }
+
 
 static int zed_keyscmd(FILE *input, BSOCK *UA_sock)
 {
@@ -135,7 +147,7 @@ static int zed_keyscmd(FILE *input, BSOCK *UA_sock)
 /*
  * These are the @command
  */
-struct cmdstruct { char *key; int (*func)(FILE *input, BSOCK *UA_sock); char *help; }; 
+struct cmdstruct { const char *key; int (*func)(FILE *input, BSOCK *UA_sock); const char *help; }; 
 static struct cmdstruct commands[] = {
  { N_("input"),      inputcmd,     _("input from file")},
  { N_("output"),     outputcmd,    _("output to file")},
@@ -188,7 +200,7 @@ static int do_a_command(FILE *input, BSOCK *UA_sock)
 
 static void read_and_process_input(FILE *input, BSOCK *UA_sock) 
 {
-   char *prompt = "*";
+   const char *prompt = "*";
    bool at_prompt = false;
    int tty_input = isatty(fileno(input));
    int stat;
@@ -492,7 +504,7 @@ static void terminate_console(int sig)
 
 
 int 
-get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec)
+get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
 {
    char *line;
 
@@ -531,7 +543,7 @@ wait_for_data(int fd, int sec)
    tv.tv_usec = 0;
    for ( ;; ) {
       FD_ZERO(&fdset);
-      FD_SET(fd, &fdset);
+      FD_SET((unsigned)fd, &fdset);
       switch(select(fd + 1, &fdset, NULL, NULL, &tv)) {
       case 0:			      /* timeout */
 	 return 0;
@@ -554,7 +566,7 @@ wait_for_data(int fd, int sec)
  *	     -1 if EOF or error
  */
 int 
-get_cmd(FILE *input, char *prompt, BSOCK *sock, int sec)
+get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
 {
    int len;  
    if (!stop) {
@@ -643,7 +655,7 @@ static int outputcmd(FILE *input, BSOCK *UA_sock)
 static int do_outputcmd(FILE *input, BSOCK *UA_sock)
 {
    FILE *fd;
-   char *mode = "a+";
+   const char *mode = "a+";
 
    if (argc > 3) {
       sendit(_("Too many arguments on output/tee command.\n"));
@@ -698,7 +710,7 @@ static int timecmd(FILE *input, BSOCK *UA_sock)
 /*
  * Send a line to the output file and or the terminal
  */
-void senditf(char *fmt,...)
+void senditf(const char *fmt,...)
 {
     char buf[3000];
     va_list arg_ptr;
@@ -709,7 +721,7 @@ void senditf(char *fmt,...)
     sendit(buf);
 }
 
-void sendit(char *buf)
+void sendit(const char *buf)
 {
 #ifdef xHAVE_CONIO
     if (output == stdout || tee) {
