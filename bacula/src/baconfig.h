@@ -5,7 +5,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -55,7 +55,7 @@
 #endif
 
 /* Allow printing of NULL pointers */
-#define NPRT(x) (x)?(x):"*None*" 
+#define NPRT(x) (x)?(x):"*None*"
 
 #ifdef ENABLE_NLS
 #include <libintl.h>
@@ -76,7 +76,7 @@
 #define MAXSTRING 500
 
 /* Maximum length to edit time/date */
-#define MAX_TIME_LENGTH 50  
+#define MAX_TIME_LENGTH 50
 
 /* Maximum Name length including EOS */
 #define MAX_NAME_LENGTH 128
@@ -86,12 +86,17 @@
 
 /* All tape operations MUST be a multiple of this */
 #define TAPE_BSIZE 1024
-#if !defined(DEV_BSIZE) && defined(BSIZE)
-#define DEV_BSIZE BSIZE
+
+#ifdef DEV_BSIZE 
+#define B_DEV_BSIZE DEV_BSIZE
 #endif
 
-#ifndef DEV_BSIZE
-#define DEV_BSIZE 512
+#if !defined(B_DEV_BSIZE) & defined(BSIZE)
+#define B_DEV_BSIZE BSIZE
+#endif
+
+#ifndef B_DEV_BSIZE
+#define B_DEV_BSIZE 512
 #endif
 
 /*
@@ -135,10 +140,15 @@
 #define STREAM_WIN32_GZIP_DATA   12    /* Gzipped Win32 BackupRead data */
 #define STREAM_MACOS_FORK_DATA   13    /* Mac resource fork */
 #define STREAM_HFSPLUS_ATTRIBUTES 14   /* Mac OS extra attributes */
-#define STREAM_UNIX_ATTRIBUTES_ACL 15 /* ACL attributes on UNIX */
+/*** FIXME ***/
+#define STREAM_UNIX_ATTRIBUTES_ACCESS_ACL 15 /* Standard ACL attributes on UNIX */
+#define STREAM_UNIX_ATTRIBUTES_ACL 15 /* Standard ACL attributes on UNIX */
+#define STREAM_UNIX_ATTRIBUTES_DEFAULT_ACL 16 /* Default ACL attributes on UNIX */
+/*** FIXME ***/
 
-/* 
- *  File type (Bacula defined).           
+
+/*
+ *  File type (Bacula defined).
  *  NOTE!!! These are saved in the Attributes record on the tape, so
  *          do not change them. If need be, add to them.
  *
@@ -147,7 +157,7 @@
  *    additional optional fields in the attribute record.
  */
 #define FT_MASK       0xFFFF          /* Bits used by FT (type) */
-#define FT_LNKSAVED   1               /* hard link to file already saved */  
+#define FT_LNKSAVED   1               /* hard link to file already saved */
 #define FT_REGE       2               /* Regular file but empty */
 #define FT_REG        3               /* Regular file */
 #define FT_LNK        4               /* Soft Link */
@@ -168,6 +178,7 @@
  * that it can filter packets, but otherwise, it is not used
  * or saved */
 #define FT_DIRBEGIN  18               /* Directory at beginning (not saved) */
+#define FT_INVALIDFS 19               /* File system not allowed for */
 
 /* Definitions for upper part of type word (see above). */
 #define AR_DATA_STREAM (1<<16)        /* Data stream id present */
@@ -178,6 +189,13 @@
 #define NO_SIG   0
 #define MD5_SIG  1
 #define SHA1_SIG 2
+
+/*
+ * Tape label types -- stored in catalog
+ */
+#define B_BACULA_LABEL 0
+#define B_ANSI_LABEL   1
+#define B_IBM_LABEL    2
 
 /* Size of File Address stored in STREAM_SPARSE_DATA. Do NOT change! */
 #define SPARSE_FADDR_SIZE (sizeof(uint64_t))
@@ -373,7 +391,7 @@ void b_memset(const char *file, int line, void *mem, int val, size_t num);
 #define Pmsg13(lvl,msg,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) p_msg(__FILE__,__LINE__,lvl,msg,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13)
 #define Pmsg14(lvl,msg,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14) p_msg(__FILE__,__LINE__,lvl,msg,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14)
 
-       
+
 /* Daemon Error Messages that are delivered according to the message resource */
 #define Emsg0(typ, lvl, msg)             e_msg(__FILE__, __LINE__, typ, lvl, msg)
 #define Emsg1(typ, lvl, msg, a1)         e_msg(__FILE__, __LINE__, typ, lvl, msg, a1)
@@ -453,12 +471,24 @@ int  m_msg(const char *file, int line, POOLMEM *&pool_buf, const char *fmt, ...)
 #define bmalloc(size) b_malloc(__FILE__, __LINE__, (size))
 #endif
 
+/* =============================================================
+ *               OS Dependent defines
+  * =============================================================
+   */
+
+#ifndef HAVE_FSEEKO
+/* Bad news. This OS cannot handle 64 bit fseeks and ftells */
+#define fseeko fseek
+#define ftello ftell
+#endif
+
+
 #ifdef __alpha__
 #define OSF 1
 #endif
 
 #ifdef HAVE_SUN_OS
-   /* 
+   /*
     * On Solaris 2.5, threads are not timesliced by default, so we need to
     * explictly increase the conncurrency level.
     */
@@ -478,9 +508,6 @@ extern int thr_setconcurrency(int);
 #ifdef HAVE_DARWIN_OS
 /* Apparently someone forgot to wrap getdomainname as a C function */
 extern "C" int getdomainname(char *name, int len);
-
-/* Darwin lib fnmatch() doesn't work, so use our own */
-#undef HAVE_FNMATCH
 #endif
 
 #ifdef HAVE_CYGWIN
@@ -502,7 +529,7 @@ extern "C" int getdomainname(char *name, int len);
 extern "C" int fchdir(int filedes);
 extern "C" long gethostid(void);
 #endif
- 
+
 /* This probably should be done on a machine by machine basic, but it works */
 #define ALIGN_SIZE (sizeof(double))
 #define BALIGN(x) (((x) + ALIGN_SIZE - 1) & ~(ALIGN_SIZE -1))
@@ -515,7 +542,7 @@ extern "C" long gethostid(void);
 
 /*
  * Replace codes needed in both file routines and non-file routines
- * Job replace codes -- in "replace"   
+ * Job replace codes -- in "replace"
  */
 #define REPLACE_ALWAYS   'a'
 #define REPLACE_IFNEWER  'w'
@@ -530,7 +557,7 @@ extern "C" long gethostid(void);
 #endif
 #ifdef HAVE_NL_LANGINFO
 #include <langinfo.h>
-#else 
+#else
 #define nl_langinfo(x) ("ANSI_X3.4-1968")
 #endif
 

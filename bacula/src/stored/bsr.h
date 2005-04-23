@@ -7,7 +7,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -32,12 +32,13 @@
 
 /*
  * List of Volume names to be read by Storage daemon.
- *  Formed by Storage daemon from BSR  
+ *  Formed by Storage daemon from BSR
  */
 struct VOL_LIST {
    VOL_LIST *next;
    char VolumeName[MAX_NAME_LENGTH];
-   int Slot; 
+   char MediaType[MAX_NAME_LENGTH];
+   int Slot;
    uint32_t start_file;
 };
 
@@ -54,12 +55,13 @@ struct VOL_LIST {
 struct BSR_VOLUME {
    BSR_VOLUME *next;
    char VolumeName[MAX_NAME_LENGTH];
-};           
+   char MediaType[MAX_NAME_LENGTH];
+};
 
 struct BSR_CLIENT {
    BSR_CLIENT *next;
    char ClientName[MAX_NAME_LENGTH];
-};           
+};
 
 struct BSR_SESSID {
    BSR_SESSID *next;
@@ -71,7 +73,7 @@ struct BSR_SESSTIME {
    BSR_SESSTIME *next;
    uint32_t sesstime;
    bool done;                         /* local done */
-};             
+};
 
 struct BSR_VOLFILE {
    BSR_VOLFILE *next;
@@ -85,7 +87,7 @@ struct BSR_VOLBLOCK {
    uint32_t sblock;                   /* start block */
    uint32_t eblock;                   /* end block */
    bool done;                         /* local done */
-};             
+};
 
 
 struct BSR_FINDEX {
@@ -93,23 +95,23 @@ struct BSR_FINDEX {
    int32_t findex;                    /* start file index */
    int32_t findex2;                   /* end file index */
    bool done;                         /* local done */
-};           
+};
 
 struct BSR_JOBID {
    BSR_JOBID *next;
    uint32_t JobId;
    uint32_t JobId2;
-};          
+};
 
 struct BSR_JOBTYPE {
    BSR_JOBTYPE *next;
    uint32_t JobType;
-};            
+};
 
 struct BSR_JOBLEVEL {
    BSR_JOBLEVEL *next;
    uint32_t JobLevel;
-};             
+};
 
 struct BSR_JOB {
    BSR_JOB *next;
@@ -120,7 +122,7 @@ struct BSR_JOB {
 struct BSR_STREAM {
    BSR_STREAM *next;
    int32_t stream;                    /* stream desired */
-};           
+};
 
 struct BSR {
    BSR          *next;                /* pointer to next one */

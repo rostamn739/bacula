@@ -9,7 +9,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -43,7 +43,7 @@ int num_jobs_run;
 dlist *last_jobs = NULL;
 const int max_last_jobs = 10;
 
-static JCR *jobs = NULL;	      /* pointer to JCR chain */
+JCR *jobs = NULL;		      /* pointer to JCR chain */
 static brwlock_t lock;		      /* lock for last jobs and JCR chain */
 
 void init_last_jobs_list()
@@ -53,7 +53,7 @@ void init_last_jobs_list()
    if (!last_jobs) {
       last_jobs = New(dlist(job_entry, &job_entry->link));
       if ((errstat=rwl_init(&lock)) != 0) {
-         Emsg1(M_ABORT, 0, _("Unable to initialize jcr_chain lock. ERR=%s\n"), 
+         Emsg1(M_ABORT, 0, _("Unable to initialize jcr_chain lock. ERR=%s\n"),
 	       strerror(errstat));
       }
    }
@@ -64,9 +64,9 @@ void term_last_jobs_list()
 {
    if (last_jobs) {
       while (!last_jobs->empty()) {
-	 void *je = last_jobs->first(); 
+	 void *je = last_jobs->first();
 	 last_jobs->remove(je);
-	 free(je);     
+	 free(je);
       }
       delete last_jobs;
       last_jobs = NULL;
@@ -140,16 +140,16 @@ uint64_t write_last_jobs_list(int fd, uint64_t addr)
       stat = 0;
    }
    return stat;
-      
+
 }
 
-void lock_last_jobs_list() 
+void lock_last_jobs_list()
 {
    /* Use jcr chain mutex */
    lock_jcr_chain();
 }
 
-void unlock_last_jobs_list() 
+void unlock_last_jobs_list()
 {
    /* Use jcr chain mutex */
    unlock_jcr_chain();
@@ -188,7 +188,7 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
    MQUEUE_ITEM *item = NULL;
    struct sigaction sigtimer;
 
-   Dmsg0(400, "Enter new_jcr\n");
+   Dmsg0(3400, "Enter new_jcr\n");
    jcr = (JCR *)malloc(size);
    memset(jcr, 0, size);
    jcr->my_thread_id = pthread_self();
@@ -234,7 +234,7 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
  */
 static void remove_jcr(JCR *jcr)
 {
-   Dmsg0(400, "Enter remove_jcr\n");
+   Dmsg0(3400, "Enter remove_jcr\n");
    if (!jcr) {
       Emsg0(M_ABORT, 0, "NULL jcr.\n");
    }
@@ -246,12 +246,12 @@ static void remove_jcr(JCR *jcr)
    if (jcr->next) {
       jcr->next->prev = jcr->prev;
    }
-   Dmsg0(400, "Leave remove_jcr\n");
+   Dmsg0(3400, "Leave remove_jcr\n");
 }
 
 /*
  * Free stuff common to all JCRs.  N.B. Be careful to include only
- *  generic stuff in the common part of the jcr. 
+ *  generic stuff in the common part of the jcr.
  */
 static void free_common_jcr(JCR *jcr)
 {
@@ -336,20 +336,20 @@ static void free_common_jcr(JCR *jcr)
    free(jcr);
 }
 
-/* 
+/*
  * Global routine to free a jcr
  */
 #ifdef DEBUG
 void b_free_jcr(const char *file, int line, JCR *jcr)
 {
-   Dmsg3(400, "Enter free_jcr 0x%x from %s:%d\n", jcr, file, line);
+   Dmsg3(3400, "Enter free_jcr 0x%x from %s:%d\n", jcr, file, line);
 
 #else
 
 void free_jcr(JCR *jcr)
 {
 
-   Dmsg1(400, "Enter free_jcr 0x%x\n", jcr);
+   Dmsg1(3400, "Enter free_jcr 0x%x\n", jcr);
 
 #endif
 
@@ -360,10 +360,10 @@ void free_jcr(JCR *jcr)
       Emsg2(M_ERROR, 0, _("JCR use_count=%d JobId=%d\n"),
 	 jcr->use_count, jcr->JobId);
    }
-   Dmsg3(400, "Dec free_jcr 0x%x use_count=%d jobid=%d\n", jcr, jcr->use_count, jcr->JobId);
+   Dmsg3(3400, "Dec free_jcr 0x%x use_count=%d jobid=%d\n", jcr, jcr->use_count, jcr->JobId);
    if (jcr->use_count > 0) {	      /* if in use */
       unlock_jcr_chain();
-      Dmsg2(400, "free_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+      Dmsg2(3400, "free_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
       return;
    }
    remove_jcr(jcr);		      /* remove Jcr from chain */
@@ -371,24 +371,24 @@ void free_jcr(JCR *jcr)
 
    job_end_pop(jcr);		      /* pop and call hooked routines */
 
-   Dmsg1(400, "End job=%d\n", jcr->JobId);
+   Dmsg1(3400, "End job=%d\n", jcr->JobId);
    if (jcr->daemon_free_jcr) {
       jcr->daemon_free_jcr(jcr);      /* call daemon free routine */
    }
    free_common_jcr(jcr);
    close_msg(NULL);		      /* flush any daemon messages */
-   Dmsg0(400, "Exit free_jcr\n");
+   Dmsg0(3400, "Exit free_jcr\n");
 }
 
 
-/* 
+/*
  * Global routine to free a jcr
  *  JCR chain is already locked
  */
 void free_locked_jcr(JCR *jcr)
 {
    jcr->use_count--;		      /* decrement use count */
-   Dmsg2(400, "Dec free_locked_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+   Dmsg2(3400, "Dec free_locked_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
    if (jcr->use_count > 0) {	      /* if in use */
       return;
    }
@@ -400,13 +400,13 @@ void free_locked_jcr(JCR *jcr)
 
 
 /*
- * Given a JobId, find the JCR	    
+ * Given a JobId, find the JCR
  *   Returns: jcr on success
  *	      NULL on failure
  */
 JCR *get_jcr_by_id(uint32_t JobId)
 {
-   JCR *jcr;	   
+   JCR *jcr;
 
    lock_jcr_chain();			/* lock chain */
    for (jcr = jobs; jcr; jcr=jcr->next) {
@@ -414,41 +414,41 @@ JCR *get_jcr_by_id(uint32_t JobId)
 	 P(jcr->mutex);
 	 jcr->use_count++;
 	 V(jcr->mutex);
-         Dmsg2(400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+         Dmsg2(3400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
 	 break;
       }
    }
    unlock_jcr_chain();
-   return jcr; 
+   return jcr;
 }
 
 /*
- * Given a SessionId and SessionTime, find the JCR	
+ * Given a SessionId and SessionTime, find the JCR
  *   Returns: jcr on success
  *	      NULL on failure
  */
 JCR *get_jcr_by_session(uint32_t SessionId, uint32_t SessionTime)
 {
-   JCR *jcr;	   
+   JCR *jcr;
 
    lock_jcr_chain();
    for (jcr = jobs; jcr; jcr=jcr->next) {
-      if (jcr->VolSessionId == SessionId && 
+      if (jcr->VolSessionId == SessionId &&
 	  jcr->VolSessionTime == SessionTime) {
 	 P(jcr->mutex);
 	 jcr->use_count++;
 	 V(jcr->mutex);
-         Dmsg2(400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+         Dmsg2(3400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
 	 break;
       }
    }
    unlock_jcr_chain();
-   return jcr; 
+   return jcr;
 }
 
 
 /*
- * Given a Job, find the JCR	  
+ * Given a Job, find the JCR
  *  compares on the number of characters in Job
  *  thus allowing partial matches.
  *   Returns: jcr on success
@@ -456,7 +456,7 @@ JCR *get_jcr_by_session(uint32_t SessionId, uint32_t SessionTime)
  */
 JCR *get_jcr_by_partial_name(char *Job)
 {
-   JCR *jcr;	   
+   JCR *jcr;
    int len;
 
    if (!Job) {
@@ -469,24 +469,24 @@ JCR *get_jcr_by_partial_name(char *Job)
 	 P(jcr->mutex);
 	 jcr->use_count++;
 	 V(jcr->mutex);
-         Dmsg2(400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+         Dmsg2(3400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
 	 break;
       }
    }
    unlock_jcr_chain();
-   return jcr; 
+   return jcr;
 }
 
 
 /*
- * Given a Job, find the JCR	  
+ * Given a Job, find the JCR
  *  requires an exact match of names.
  *   Returns: jcr on success
  *	      NULL on failure
  */
 JCR *get_jcr_by_full_name(char *Job)
 {
-   JCR *jcr;	   
+   JCR *jcr;
 
    if (!Job) {
       return NULL;
@@ -497,12 +497,12 @@ JCR *get_jcr_by_full_name(char *Job)
 	 P(jcr->mutex);
 	 jcr->use_count++;
 	 V(jcr->mutex);
-         Dmsg2(400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+         Dmsg2(3400, "Inc get_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
 	 break;
       }
    }
    unlock_jcr_chain();
-   return jcr; 
+   return jcr;
 }
 
 void set_jcr_job_status(JCR *jcr, int JobStatus)
@@ -527,7 +527,7 @@ void set_jcr_job_status(JCR *jcr, int JobStatus)
 static int lock_count = 0;
 #endif
 
-/* 
+/*
  * Lock the chain
  */
 #ifdef TRACE_JCR_CHAIN
@@ -537,8 +537,8 @@ void lock_jcr_chain()
 #endif
 {
    int errstat;
-#ifdef TRACE_JCR_CHAIN 
-   Dmsg3(400, "Lock jcr chain %d from %s:%d\n", ++lock_count,
+#ifdef TRACE_JCR_CHAIN
+   Dmsg3(3400, "Lock jcr chain %d from %s:%d\n", ++lock_count,
       fname, line);
 #endif
    if ((errstat=rwl_writelock(&lock)) != 0) {
@@ -557,8 +557,8 @@ void unlock_jcr_chain()
 #endif
 {
    int errstat;
-#ifdef TRACE_JCR_CHAIN 
-   Dmsg3(400, "Unlock jcr chain %d from %s:%d\n", lock_count--,
+#ifdef TRACE_JCR_CHAIN
+   Dmsg3(3400, "Unlock jcr chain %d from %s:%d\n", lock_count--,
       fname, line);
 #endif
    if ((errstat=rwl_writeunlock(&lock)) != 0) {
@@ -581,7 +581,7 @@ JCR *get_next_jcr(JCR *prev_jcr)
       P(jcr->mutex);
       jcr->use_count++;
       V(jcr->mutex);
-      Dmsg2(400, "Inc get_next_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
+      Dmsg2(3400, "Inc get_next_jcr 0x%x use_count=%d\n", jcr, jcr->use_count);
    }
    return jcr;
 }
@@ -606,9 +606,9 @@ static void jcr_timeout_check(watchdog_t *self)
    BSOCK *fd;
    time_t timer_start;
 
-   Dmsg0(400, "Start JCR timeout checks\n");
+   Dmsg0(3400, "Start JCR timeout checks\n");
 
-   /* Walk through all JCRs checking if any one is 
+   /* Walk through all JCRs checking if any one is
     * blocked for more than specified max time.
     */
    lock_jcr_chain();
@@ -657,7 +657,7 @@ static void jcr_timeout_check(watchdog_t *self)
    }
    unlock_jcr_chain();
 
-   Dmsg0(400, "Finished JCR timeout checks\n");
+   Dmsg0(3400, "Finished JCR timeout checks\n");
 }
 
 /*

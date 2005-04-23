@@ -8,7 +8,7 @@
  */
 
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -52,7 +52,6 @@ extern int autodisplay_cmd(UAContext *ua, const char *cmd);
 extern int gui_cmd(UAContext *ua, const char *cmd);
 extern int sqlquerycmd(UAContext *ua, const char *cmd);
 extern int querycmd(UAContext *ua, const char *cmd);
-extern int run_cmd(UAContext *ua, const char *cmd);
 extern int retentioncmd(UAContext *ua, const char *cmd);
 extern int prunecmd(UAContext *ua, const char *cmd);
 extern int purgecmd(UAContext *ua, const char *cmd);
@@ -97,16 +96,16 @@ int quit_cmd(UAContext *ua, const char *cmd);
 struct cmdstruct { const char *key; int (*func)(UAContext *ua, const char *cmd); const char *help; }; 
 static struct cmdstruct commands[] = {
  { N_("add"),        add_cmd,         _("add media to a pool")},
- { N_("autodisplay"), autodisplay_cmd, _("autodisplay [on/off] -- console messages")},
- { N_("automount"),   automount_cmd,  _("automount [on/off] -- after label")},
- { N_("cancel"),     cancel_cmd,    _("cancel job=nnn -- cancel a job")},
+ { N_("autodisplay"), autodisplay_cmd, _("autodisplay [on|off] -- console messages")},
+ { N_("automount"),   automount_cmd,  _("automount [on|off] -- after label")},
+ { N_("cancel"),     cancel_cmd,    _("cancel <job=nnn> -- cancel a job")},
  { N_("create"),     create_cmd,    _("create DB Pool from resource")},  
  { N_("delete"),     delete_cmd,    _("delete [pool=<pool-name> | media volume=<volume-name>]")},    
  { N_("estimate"),   estimate_cmd,  _("performs FileSet estimate, listing gives full listing")},
  { N_("exit"),       quit_cmd,      _("exit = quit")},
- { N_("gui"),        gui_cmd,       _("gui [on/off] -- non-interactive gui mode")},
+ { N_("gui"),        gui_cmd,       _("gui [on|off] -- non-interactive gui mode")},
  { N_("help"),       help_cmd,      _("print this command")},
- { N_("list"),       list_cmd,      _("list [pools | jobs | jobtotals | media <pool> | files jobid=<nn>]; from catalog")},
+ { N_("list"),       list_cmd,      _("list [pools | jobs | jobtotals | media <pool=pool-name> | files <jobid=nn>]; from catalog")},
  { N_("label"),      label_cmd,     _("label a tape")},
  { N_("llist"),      llist_cmd,     _("full or long list like list command")},
  { N_("messages"),   messagescmd,   _("messages")},
@@ -1195,7 +1194,7 @@ static void do_storage_setdebug(UAContext *ua, STORE *store, int level, int trac
    BSOCK *sd;
    JCR *jcr = ua->jcr;
 
-   jcr->store = store;
+   set_storage(jcr, store);
    /* Try connecting for up to 15 seconds */
    bsendmsg(ua, _("Connecting to Storage daemon %s at %s:%d\n"), 
       store->hdr.name, store->address, store->SDport);
@@ -1254,8 +1253,10 @@ static void do_all_setdebug(UAContext *ua, int level, int trace_flag)
    /* Count Storage items */
    LockRes();
    store = NULL;
-   for (i=0; (store = (STORE *)GetNextRes(R_STORAGE, (RES *)store)); i++)
-      { }
+   i = 0;
+   foreach_res(store, R_STORAGE) {
+      i++;
+   }
    unique_store = (STORE **) malloc(i * sizeof(STORE));
    /* Find Unique Storage address/port */	  
    store = (STORE *)GetNextRes(R_STORAGE, NULL);
@@ -1286,8 +1287,10 @@ static void do_all_setdebug(UAContext *ua, int level, int trace_flag)
    /* Count Client items */
    LockRes();
    client = NULL;
-   for (i=0; (client = (CLIENT *)GetNextRes(R_CLIENT, (RES *)client)); i++)
-      { }
+   i = 0;
+   foreach_res(client, R_CLIENT) {
+      i++;
+   }
    unique_client = (CLIENT **) malloc(i * sizeof(CLIENT));
    /* Find Unique Client address/port */	 
    client = (CLIENT *)GetNextRes(R_CLIENT, NULL);
@@ -1841,7 +1844,7 @@ static void do_mount_cmd(UAContext *ua, const char *command)
    Dmsg2(120, "Found storage, MediaType=%s DevName=%s\n",
       store->media_type, store->dev_name);
 
-   jcr->store = store;
+   set_storage(jcr, store);
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
       bsendmsg(ua, _("Failed to connect to Storage daemon.\n"));
       return;

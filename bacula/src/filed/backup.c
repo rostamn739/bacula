@@ -37,6 +37,11 @@
 
 static int save_file(FF_PKT *ff_pkt, void *pkt);
 
+/*** FIXME ***/
+#ifdef HAVE_ACL
+static int read_send_acl(JCR *jcr, BSOCK *sd, int acltype, int stream);
+#endif
+
 /* 
  * Find all the requested files and send them
  * to the Storage daemon. 
@@ -501,76 +506,25 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr)
    }
    
 #ifdef HAVE_ACL
-   /* ACL stream */
-   if (ff_pkt->flags & FO_ACL) {
-      char *acl_text;
-      /* Read ACLs for files, dirs and links */
-      if (ff_pkt->type == FT_DIREND) {
-	 /* Directory: Try for default ACL*/
-	 acl_t myAcl = acl_get_file(ff_pkt->fname, ACL_TYPE_DEFAULT);
-	 if (!myAcl) {
-            Dmsg1(200, "No default ACL defined for directory: %s!\n", ff_pkt->fname);
-	    /* If there is no default ACL get standard ACL */
-	    myAcl = acl_get_file(ff_pkt->fname, ACL_TYPE_ACCESS);
-	    if (!myAcl) {
-               Jmsg1(jcr, M_WARNING, 0, "Error while trying to get ACL of directory: %s!\n", ff_pkt->fname);
-	    }
-	 }
-         acl_text = acl_to_any_text(myAcl, NULL, ',', TEXT_ABBREVIATE);
-	 /* Free memory */
-	 acl_free(myAcl);
+   /*** FIXME ***/
+   if (ff_pkt->flags & FO_ACL) {   
+      /* Storing of ACLs for Links is not needed, because: ACL of link == ACL of original */
+      if(ff_pkt->type != FT_LNK) {
+         /* Read access ACLs for files, dirs and links */
+         if (!read_send_acl(jcr, sd, ACL_TYPE_ACCESS, STREAM_UNIX_ATTRIBUTES_ACCESS_ACL)) {
+            return 0;
+         }
+         /* Directories can have also default ACLs*/
+         if (ff_pkt->type == FT_DIREND) {
+            if (!read_send_acl(jcr, sd, ACL_TYPE_DEFAULT, STREAM_UNIX_ATTRIBUTES_DEFAULT_ACL)) {
+               return 0;
+            }
+         }
       } else {
-	 /* Files or links */
-	 acl_t myAcl = acl_get_file(ff_pkt->fname, ACL_TYPE_ACCESS);
-	 if (!myAcl) {
-            Jmsg1(jcr, M_WARNING, 0, "Error while trying to get ACL of file: %s!\n", ff_pkt->fname);
-	    acl_free(myAcl);
-	 }
-         acl_text = acl_to_any_text(myAcl, NULL, ',', TEXT_ABBREVIATE);
-	 acl_free(myAcl);
-      }
-      
-      /* If there is an ACL, send it to the Storage daemon */
-      if (acl_text) {
-	 sd = jcr->store_bsock;
-	 pm_strcpy(&jcr->last_fname, ff_pkt->fname);
-      
-	 /*
-	 * Send ACL header
-	 *
-	 */
-         if (!bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, STREAM_UNIX_ATTRIBUTES_ACL)) {
-	    berrno be;
-            Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
-		  bnet_strerror(sd));
-	    return 0;
-	 }
-      
-	 /* Send the buffer to the storage deamon */
-	 msgsave = sd->msg;
-	 sd->msg = acl_text;
-	 sd->msglen = strlen(acl_text) + 1;
-	 if (!bnet_send(sd)) {
-	    berrno be;
-	    sd->msg = msgsave;
-	    sd->msglen = 0;
-	    bclose(&ff_pkt->bfd);
-            Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
-		  bnet_strerror(sd));
-	 } else {
-	    jcr->JobBytes += sd->msglen;
-	    sd->msg = msgsave;
-	    bclose(&ff_pkt->bfd);
-	    if (!bnet_sig(sd, BNET_EOD)) {
-	       berrno be;
-               Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
-		     bnet_strerror(sd));
-	    } else {
-               Dmsg1(200, "ACL of file: %s successfully backed up!\n", ff_pkt->fname);
-	    }
-	 }  
+         Dmsg1(200, "No need to store ACLs from Links!\n", jcr->last_fname);
       }
    }
+   
 #endif
 
    /* Terminate any MD5 signature and send it to Storage daemon and the Director */
@@ -597,3 +551,74 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr)
    }
    return 1;
 }
+
+#ifdef HAVE_ACL
+/*
+* Read and send an ACL for the last encountered file.
+*/
+int read_send_acl(JCR *jcr, BSOCK *sd, int acltype, int stream)
+{
+   POOLMEM *msgsave;
+   char *acl_text = NULL;
+   acl_t acl;
+
+   /* Read access ACLs for files, dirs and links */
+   acl = acl_get_file(jcr->last_fname, acltype);
+   if (!acl) {
+      Jmsg1(jcr, M_WARNING, 0, "Error while trying to get ACL of %s!\n", jcr->last_fname);
+      return 0;
+   }
+   
+   acl_text = acl_to_any_text(acl, NULL, ',', TEXT_ABBREVIATE);
+   
+   /* Check if ACL is valid */
+   if ((acl_valid(acl) != 0) && (acltype != ACL_TYPE_DEFAULT)) {
+      Jmsg1(jcr, M_WARNING, 0, "Failure in the ACL of %s! FD is not able to back it up!\n", jcr->last_fname);
+      Dmsg1(200, "ACL of file/dir: %s is not valid!\n", jcr->last_fname);
+      Dmsg1(200, "ACL value=%s\n", acl_text);
+   } else if (acl_valid(acl) == 0) {
+      Dmsg1(200, "ACL of file/dir: %s is valid!\n", jcr->last_fname);
+      Dmsg1(200, "ACL value=%s\n", acl_text);
+   } else {
+      Dmsg1(200, "Directory: %s has no Default ACL, there is nothing to do from here!\n", jcr->last_fname);
+      acl_free(acl);
+      return 0;
+   }
+   acl_free(acl);
+   
+   if (acl_text == NULL) {
+   /* ***FIXME*** Can this happen? */
+      Jmsg1(jcr, M_WARNING, 0, "Error decoding ACL of %s!\n", jcr->last_fname);
+      return 0;
+   }
+
+   if (!bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, stream)) {
+      berrno be;
+      Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), bnet_strerror(sd));
+      return 0;
+   }
+
+   /* Send the buffer to the storage deamon */
+   msgsave = sd->msg;
+   sd->msg = acl_text;
+   sd->msglen = strlen(acl_text) + 1;
+   if (!bnet_send(sd)) {
+      berrno be;
+      sd->msg = msgsave;
+      sd->msglen = 0;
+      Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), bnet_strerror(sd));
+      return 0;
+   }
+
+   jcr->JobBytes += sd->msglen;
+   sd->msg = msgsave;
+   if (!bnet_sig(sd, BNET_EOD)) {
+   berrno be;
+   Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), bnet_strerror(sd));
+   return 0;
+   }
+
+   Dmsg1(200, "ACL of file: %s successfully backed up!\n", jcr->last_fname);
+   return 1;
+   }
+#endif

@@ -34,7 +34,7 @@ class IPADDR : public SMARTALLOC {
    IPADDR(int af);
    IPADDR(const IPADDR & src);
  private:
-   IPADDR() {  /* block this construction */ } 
+   IPADDR() {  /* block this construction */ }
    i_type type;
    union {
       struct sockaddr dontuse;
@@ -87,4 +87,11 @@ extern int get_first_port_host_order(dlist * addrs);
 extern const char *build_addresses_str(dlist *addrs, char *buf, int blen);
 
 extern int sockaddr_get_port_net_order(const struct sockaddr *sa);
-extern int sockaddr_to_ascii(const struct sockaddr *sa, char *buf, int len);
+extern int sockaddr_get_port(const struct sockaddr *sa);
+extern char *sockaddr_to_ascii(const struct sockaddr *sa, char *buf, int len);
+#ifdef WIN32
+#undef HAVE_OLD_SOCKOPT
+#endif
+#ifdef HAVE_OLD_SOCKOPT
+extern int inet_aton(const char *cp, struct in_addr *inp);
+#endif

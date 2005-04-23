@@ -207,6 +207,8 @@ wxbMainFrame::~wxbMainFrame()
 wxbMainFrame::wxbMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style)
       : wxFrame(NULL, -1, title, pos, size, style)
 {
+   lockedbyconsole = false;
+   
    ct = NULL;
    
    promptparser = NULL;
@@ -312,8 +314,6 @@ wxbMainFrame::wxbMainFrame(const wxString& title, const wxPoint& pos, const wxSi
    sizer->SetSizeHints( this );
    this->SetSize(size);
    EnableConsole(false);
-   
-   lockedbyconsole = false;
    
    consoleBuffer = "";
    
@@ -647,8 +647,8 @@ void wxbMainFrame::Print(wxString str, int status)
             
             int res = ::wxGetSingleChoiceIndex(message,
                "wx-console: unexpected director's question.", n, choices, this);
-            if (res == -1) {
-               Send("\n");
+            if (res == -1) { //Cancel pressed
+               Send(".\n");
             }
             else {
                if (promptparser->isNumericalChoice()) {

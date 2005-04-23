@@ -174,7 +174,7 @@ struct JCR {
    POOLMEM *fname;                    /* name to put into catalog */
    POOLMEM *stime;                    /* start time for incremental/differential */
    JOB_DBR jr;                        /* Job DB record for current job */
-   JOB_DBR *verify_jr;                /* Pointer to target job */
+   JOB_DBR verify_jr;                 /* Pointer to target job */
    uint32_t RestoreJobId;             /* Id specified by UA */
    POOLMEM *client_uname;             /* client uname */ 
    int replace;                       /* Replace option */
@@ -243,6 +243,7 @@ struct JCR {
 
    /* Parmaters for Open Read Session */
    BSR *bsr;                          /* Bootstrap record -- has everything */
+   bool mount_next_volume;            /* set to cause next volume mount */
    uint32_t read_VolSessionId;
    uint32_t read_VolSessionTime;
    uint32_t read_StartFile;

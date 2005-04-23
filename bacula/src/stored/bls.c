@@ -5,7 +5,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -65,9 +65,9 @@ static BSR *bsr = NULL;
 static void usage()
 {
    fprintf(stderr,
-"Copyright (C) 2000-2004 Kern Sibbald and John Walker.\n"
+"Copyright (C) 2000-2005 Kern Sibbald.\n"
 "\nVersion: " VERSION " (" BDATE ")\n\n"
-"Usage: bls [-d debug_level] <physical-device-name>\n"
+"Usage: bls [options] <device-name>\n"
 "       -b <file>       specify a bootstrap file\n"
 "       -c <file>       specify a config file\n"
 "       -d <level>      specify debug level\n"
@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
       case 'd':                    /* debug level */
 	 debug_level = atoi(optarg);
 	 if (debug_level <= 0)
-	    debug_level = 1; 
+	    debug_level = 1;
 	 break;
 
       case 'e':                    /* exclude list */
@@ -201,7 +201,7 @@ int main (int argc, char *argv[])
       if (bsrName) {
 	 bsr = parse_bsr(NULL, bsrName);
       }
-      jcr = setup_jcr("bls", argv[i], bsr, VolumeName, 1); /* acquire for read */ 
+      jcr = setup_jcr("bls", argv[i], bsr, VolumeName, 1); /* acquire for read */
       if (!jcr) {
 	 exit(1);
       }
@@ -216,11 +216,11 @@ int main (int argc, char *argv[])
       attr = new_attr();
       /*
        * Assume that we have already read the volume label.
-       * If on second or subsequent volume, adjust buffer pointer 
+       * If on second or subsequent volume, adjust buffer pointer
        */
       if (dev->VolHdr.PrevVolName[0] != 0) { /* second volume */
-         Pmsg1(0, "\n\
-Warning, this Volume is a continuation of Volume %s\n",
+         Pmsg1(0, "\n"
+"Warning, this Volume is a continuation of Volume %s\n",
 		dev->VolHdr.PrevVolName);
       }
 
@@ -254,16 +254,12 @@ static void do_close(JCR *jcr)
 /* List just block information */
 static void do_blocks(char *infname)
 {
-   if (verbose) {
-      dump_volume_label(dev);
-      rec = new_record();
-   }
    for ( ;; ) {
       if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
-         Dmsg1(100, "!read_block(): ERR=%s\n", strerror_dev(dev));
-	 if (dev->state & ST_EOT) {
+         Dmsg1(100, "!read_block(): ERR=%s\n", dev->strerror());
+	 if (dev->at_eot()) {
 	    if (!mount_next_read_volume(dcr)) {
-               Jmsg(jcr, M_INFO, 0, _("Got EOM at file %u on device %s, Volume \"%s\"\n"), 
+               Jmsg(jcr, M_INFO, 0, _("Got EOM at file %u on device %s, Volume \"%s\"\n"),
 		  dev->file, dev_name(dev), dcr->VolumeName);
 	       break;
 	    }
@@ -275,9 +271,8 @@ static void do_blocks(char *infname)
 	    get_session_record(dev, record, &sessrec);
 	    free_record(record);
             Jmsg(jcr, M_INFO, 0, _("Mounted Volume \"%s\".\n"), dcr->VolumeName);
-	    
-	 } else if (dev->state & ST_EOF) {
-            Jmsg(jcr, M_INFO, 0, _("Got EOF at file %u on device %s, Volume \"%s\"\n"), 
+	 } else if (dev->at_eof()) {
+            Jmsg(jcr, M_INFO, 0, _("Got EOF at file %u on device %s, Volume \"%s\"\n"),
 	       dev->file, dev_name(dev), dcr->VolumeName);
             Dmsg0(20, "read_record got eof. try again\n");
 	    continue;
@@ -356,14 +351,9 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       return true;
    }
    /* File Attributes stream */
-   if (rec->Stream == STREAM_UNIX_ATTRIBUTES || 
+   if (rec->Stream == STREAM_UNIX_ATTRIBUTES ||
        rec->Stream == STREAM_UNIX_ATTRIBUTES_EX) {
 
-      if (verbose > 1) {
-         const char *rtype = "Attributes";
-         Pmsg5(-1, "%s Record: VolSessionId=%d VolSessionTime=%d JobId=%d DataLen=%d\n",
-	       rtype, rec->VolSessionId, rec->VolSessionTime, rec->Stream, rec->data_len);
-      }
       if (!unpack_attributes_record(jcr, rec->Stream, rec->data, attr)) {
 	 if (!forge_on) {
             Emsg0(M_ERROR_TERM, 0, _("Cannot continue.\n"));
@@ -381,6 +371,10 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       build_attr_output_fnames(jcr, attr);
 
       if (file_is_included(&ff, attr->fname) && !file_is_excluded(&ff, attr->fname)) {
+	 if (verbose) {
+            Pmsg5(-1, "FileIndex=%d VolSessionId=%d VolSessionTime=%d Stream=%d DataLen=%d\n",
+		  rec->FileIndex, rec->VolSessionId, rec->VolSessionTime, rec->Stream, rec->data_len);
+	 }
 	 print_ls_output(jcr, attr);
 	 num_files++;
       }
@@ -395,7 +389,7 @@ static void get_session_record(DEVICE *dev, DEV_RECORD *rec, SESSION_LABEL *sess
    memset(sessrec, 0, sizeof(sessrec));
    switch (rec->FileIndex) {
    case PRE_LABEL:
-      rtype = "Fresh Volume Label";   
+      rtype = "Fresh Volume Label";
       break;
    case VOL_LABEL:
       rtype = "Volume Label";
@@ -439,6 +433,6 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr)
    DEVICE *dev = dcr->dev;
    fprintf(stderr, "Mount Volume \"%s\" on device %s and press return when ready: ",
       dcr->VolumeName, dev_name(dev));
-   getchar();	
+   getchar();
    return true;
 }

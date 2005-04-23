@@ -11,6 +11,12 @@
 
 PSCMD="@PSCMD@"
 
+#
+# On Solaris, you may need to use nawk, or alternatively,
+#  add the GNU binaries to your path, such as /usr/xpg4/bin
+#
+AWK=@AWK@
+
 # All these are not *really* needed but it makes it
 #  easier to "steal" this code for the development 
 #  environment where they are different.
@@ -34,6 +40,8 @@ FD_USER=@fd_user@
 FD_GROUP=@fd_group@
 SD_USER=@sd_user@
 SD_GROUP=@sd_group@
+
+PIDOF=@PIDOF@	
 
 # A function to stop a program.
 killproc() {
@@ -120,8 +128,8 @@ pidofproc() {
     fi
 
     # Next try "pidof"
-   if [ -x /sbin/pidof ] ; then
-       pid=`/sbin/pidof $1`
+   if [ -x ${PIDOF} ] ; then
+       pid=`${PIDOF} $1`
    fi
    if [ "$pid" != "" ] ; then
        echo $pid
@@ -129,11 +137,12 @@ pidofproc() {
    fi
 
     # Finally try to extract it from ps
-    ${PSCMD} | grep $1 | awk '{ print $1 }' | tr '\n' ' '
+    ${PSCMD} | grep $1 | ${AWK} '{ print $1 }' | tr '\n' ' '
     return 0
 }
 
 status() {
+    pid=""
     # Test syntax.
     if [ $# = 0 ] ; then
 	echo "Usage: status {program}"
@@ -144,14 +153,14 @@ status() {
     base=`basename $1`
 
    # First try "pidof"
-   if [ -x /sbin/pidof ] ; then
-       pid=`/sbin/pidof $1`
+   if [ -x ${PIDOF} ] ; then
+       pid=`${PIDOF} $1`
    fi
    if [ "$pid" != "" ] ; then
        echo "$base (pid $pid) is running..."
        return 0
    else
-       pid=`${PSCMD} | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
+       pid=`${PSCMD} | ${AWK} 'BEGIN { prog=ARGV[1]; ARGC=1 } 
 	     { if ((prog == $2) || (("(" prog ")") == $2) ||
 		  (("[" prog "]") == $2) ||
 		  ((prog ":") == $2)) { print $1 ; exit 0 } }' $1`

@@ -70,19 +70,21 @@ int find_recycled_volume(JCR *jcr, bool InChanger, MEDIA_DBR *mr)
 int recycle_oldest_purged_volume(JCR *jcr, bool InChanger, MEDIA_DBR *mr)
 {
    struct s_oldest_ctx oldest;
+   char ed1[50];
    POOLMEM *query = get_pool_memory(PM_EMSG);
    const char *select =
           "SELECT MediaId,LastWritten FROM Media "
-          "WHERE PoolId=%u AND Recycle=1 AND VolStatus='Purged' "
+          "WHERE PoolId=%s AND Recycle=1 AND VolStatus='Purged' "
           "AND MediaType='%s' %s"
           "ORDER BY LastWritten ASC,MediaId LIMIT 1";
 
    Dmsg0(100, "Enter recycle_oldest_purged_volume\n");
    oldest.MediaId = 0;
    if (InChanger) {
-      Mmsg(query, select, mr->PoolId, mr->MediaType, "AND InChanger=1 ");
+      Mmsg(query, select, edit_int64(mr->PoolId, ed1), mr->MediaType, 
+           "AND InChanger=1 ");
    } else {
-      Mmsg(query, select, mr->PoolId, mr->MediaType, "");
+      Mmsg(query, select, edit_int64(mr->PoolId, ed1), mr->MediaType, "");
    }
 
    if (!db_sql_query(jcr->db, query, oldest_handler, (void *)&oldest)) {
@@ -105,7 +107,7 @@ int recycle_oldest_purged_volume(JCR *jcr, bool InChanger, MEDIA_DBR *mr)
       Jmsg(jcr, M_ERROR, 0, "%s", db_strerror(jcr->db));
    }
    Dmsg0(100, "return 0  recycle_oldest_purged_volume end\n");
-   return 0;	
+   return 0;
 }
 
 /*

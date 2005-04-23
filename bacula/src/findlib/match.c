@@ -3,14 +3,14 @@
  *   filename/pathname patterns.
  *
  *  Note, this file is used for the old style include and
- *   excludes, so is deprecated. The new style code is	
+ *   excludes, so is deprecated. The new style code is
  *   found in find.c
  *
  *   Kern E. Sibbald, December MMI
  *
  */
 /*
-   Copyright (C) 2001-2004 Kern Sibbald and John Walker
+   Copyright (C) 2001-2004 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -52,7 +52,7 @@ static const int fnmode = 0;
 #define bmalloc(x) sm_malloc(__FILE__, __LINE__, x)
 
 extern const int win32_client;
-       
+
 /*
  * Initialize structures for filename matching
  */
@@ -61,7 +61,7 @@ void init_include_exclude_files(FF_PKT *ff)
 }
 
 /*
- * Done doing filename matching, release all 
+ * Done doing filename matching, release all
  *  resources used.
  */
 void term_include_exclude_files(FF_PKT *ff)
@@ -74,19 +74,21 @@ void term_include_exclude_files(FF_PKT *ff)
       free(inc);
       inc = next_inc;
    }
+   ff->included_files_list = NULL;
 
    for (exc=ff->excluded_files_list; exc; ) {
       next_exc = exc->next;
       free(exc);
       exc = next_exc;
    }
+   ff->excluded_files_list = NULL;
 
    for (exc=ff->excluded_paths_list; exc; ) {
       next_exc = exc->next;
       free(exc);
       exc = next_exc;
    }
-   
+   ff->excluded_paths_list = NULL;
 }
 
 /*
@@ -103,7 +105,7 @@ void add_fname_to_include_list(FF_PKT *ff, int prefixed, const char *fname)
 
    inc =(struct s_included_file *)bmalloc(sizeof(struct s_included_file) + len + 1);
    inc->options = 0;
-   inc->VerifyOpts[0] = 'V'; 
+   inc->VerifyOpts[0] = 'V';
    inc->VerifyOpts[1] = ':';
    inc->VerifyOpts[2] = 0;
 
@@ -177,7 +179,7 @@ void add_fname_to_include_list(FF_PKT *ff, int prefixed, const char *fname)
       rp = fname;
    }
 
-   strcpy(inc->fname, rp);		  
+   strcpy(inc->fname, rp);
    p = inc->fname;
    len = strlen(p);
    /* Zap trailing slashes.  */
@@ -214,7 +216,7 @@ void add_fname_to_include_list(FF_PKT *ff, int prefixed, const char *fname)
       for (next=ff->included_files_list; next->next; next=next->next)
 	 { }
       next->next = inc;
-   }  
+   }
    Dmsg1(50, "add_fname_to_include fname=%s\n", inc->fname);
 }
 
@@ -238,13 +240,13 @@ void add_fname_to_exclude_list(FF_PKT *ff, const char *fname)
    } else {
       list = &ff->excluded_files_list;
    }
-  
+
    len = strlen(fname);
 
    exc = (struct s_excluded_file *)bmalloc(sizeof(struct s_excluded_file) + len + 1);
    exc->next = *list;
    exc->len = len;
-   strcpy(exc->fname, fname);		      
+   strcpy(exc->fname, fname);
 #if defined(HAVE_CYGWIN) || defined(HAVE_WIN32)
    /* Convert any \'s into /'s */
    for (char *p=exc->fname; *p; p++) {
@@ -264,7 +266,7 @@ struct s_included_file *get_next_included_file(FF_PKT *ff, struct s_included_fil
 {
    struct s_included_file *inc;
 
-   if (ainc == NULL) { 
+   if (ainc == NULL) {
       inc = ff->included_files_list;
    } else {
       inc = ainc->next;
@@ -295,7 +297,7 @@ int file_is_included(FF_PKT *ff, const char *file)
 	    return 1;
 	 }
 	 continue;
-      } 			    
+      }
       /*
        * No wild cards. We accept a match to the
        *  end of any component.
@@ -305,7 +307,7 @@ int file_is_included(FF_PKT *ff, const char *file)
       if (inc->len == len && strcmp(inc->fname, file) == 0) {
 	 return 1;
       }
-      if (inc->len < len && file[inc->len] == '/' && 
+      if (inc->len < len && file[inc->len] == '/' &&
 	  strncmp(inc->fname, file, inc->len) == 0) {
 	 return 1;
       }
@@ -348,7 +350,7 @@ int file_is_excluded(FF_PKT *ff, const char *file)
 {
    const char *p;
 
-   /* 
+   /*
     *  ***NB*** this removes the drive from the exclude
     *  rule.  Why?????
     */
@@ -365,7 +367,7 @@ int file_is_excluded(FF_PKT *ff, const char *file)
       /* Match from the beginning of a component only */
       if ((p == file || (*p != '/' && *(p-1) == '/'))
 	   && file_in_excluded_list(ff->excluded_files_list, p)) {
-	 return 1;   
+	 return 1;
       }
    }
    return 0;

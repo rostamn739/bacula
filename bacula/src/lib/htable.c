@@ -8,22 +8,22 @@
  *    the randomness. In this program, the hash table can grow when
  *    it gets too full, so the table size here is a binary number. The
  *    hashing is provided using an idea from Tcl where the initial
- *    hash code is then "randomized" using a simple calculation from
+ *    hash code is "randomized" using a simple calculation from
  *    a random number generator that multiplies by a big number
  *    (I multiply by a prime number, while Tcl did not)
- *    then shifts the results down and does the binary division
+ *    then shifts the result down and does the binary division
  *    by masking.  Increasing the size of the hash table is simple.
  *    Just create a new larger table, walk the old table and
  *    re-hash insert each entry into the new table.
  *
- *		  
+ *
  *   Kern Sibbald, July MMIII
  *
  *   Version $Id$
  *
  */
 /*
-   Copyright (C) 2003-2004 Kern Sibbald and John Walker
+   Copyright (C) 2003-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -90,37 +90,34 @@ void htable::init(void *item, void *link, int tsize)
    walk_index = 0;
 }
 
-#ifdef xxx
-void * htable::operator new(size_t)
-{
-   return malloc(sizeof(htable));
-}
-
-void htable::operator delete(void *tbl) 
-{
-   ((htable *)tbl)->destroy();
-   free(tbl);
-}
-#endif
-
 uint32_t htable::size()
 {
    return num_items;
 }
 
-void htable::stats() 
+/*
+ * Take each hash link and walk down the chain of items
+ *  that hash there counting them (i.e. the hits), 
+ *  then report that number.
+ *  Obiously, the more hits in a chain, the more time
+ *  it takes to reference them. Empty chains are not so
+ *  hot either -- as it means unused or wasted space.
+ */
+#define MAX_COUNT 20
+void htable::stats()
 {
-   int count[10];
+   int hits[MAX_COUNT];
    int max = 0;
    int i, j;
    hlink *p;
-   printf("\n\nNumItems=%d\nBuckets=%d\n", num_items, buckets);
-   for (i=0; i<10; i++) {
-      count[i] = 0;
+   printf("\n\nNumItems=%d\nTotal buckets=%d\n", num_items, buckets);
+   printf("Hits/bucket: buckets\n");
+   for (i=0; i < MAX_COUNT; i++) {
+      hits[i] = 0;
    }
    for (i=0; i<(int)buckets; i++) {
       p = table[i];
-      j = 0;	 
+      j = 0;
       while (p) {
 	 p = (hlink *)(p->next);
 	 j++;
@@ -128,14 +125,14 @@ void htable::stats()
       if (j > max) {
 	 max = j;
       }
-      if (j < 10) {
-	 count[j]++;
+      if (j < MAX_COUNT) {
+	 hits[j]++;
       }
    }
-   for (i=0; i<10; i++) {
-      printf("%2d: %d\n",i, count[i]);
+   for (i=0; i < MAX_COUNT; i++) {
+      printf("%2d:           %d\n",i, hits[i]);
    }
-   printf("max = %d\n", max);
+   printf("max hits in a bucket = %d\n", max);
 }
 
 void htable::grow_table()
@@ -155,7 +152,7 @@ void htable::grow_table()
    big->walk_index = 0;
    /* Insert all the items in the new hash table */
    Dmsg1(100, "Before copy num_items=%d\n", num_items);
-   /* 
+   /*
     * We walk through the old smaller tree getting items,
     * but since we are overwriting the colision links, we must
     * explicitly save the item->next pointer and walk each
@@ -169,7 +166,7 @@ void htable::grow_table()
       if (ni) {
 	 item = (void *)((char *)ni-loffset);
       } else {
-	 walkptr = NULL;       
+	 walkptr = NULL;
 	 item = next();
       }
    }
@@ -238,10 +235,10 @@ void *htable::next()
       }
    }
    if (walkptr) {
-      Dmsg2(100, "next: rtn 0x%x walk_index=%d\n", 
+      Dmsg2(100, "next: rtn 0x%x walk_index=%d\n",
 	 (unsigned)(((char *)walkptr)-loffset), walk_index);
       return ((char *)walkptr)-loffset;
-   } 
+   }
    Dmsg0(100, "next: return NULL\n");
    return NULL;
 }
@@ -261,7 +258,7 @@ void *htable::first()
    if (walkptr) {
       Dmsg1(100, "Leave first walkptr=0x%x\n", (unsigned)walkptr);
       return ((char *)walkptr)-loffset;
-   } 
+   }
    Dmsg0(100, "Leave first walkptr=NULL\n");
    return NULL;
 }
@@ -300,10 +297,10 @@ int main()
    MYJCR *save_jcr = NULL, *item;
    MYJCR *jcr = NULL;
    int count = 0;
-    
+
    jcrtbl = (htable *)malloc(sizeof(htable));
    jcrtbl->init(jcr, &jcr->link, NITEMS);
-    
+
    Dmsg1(000, "Inserting %d items\n", NITEMS);
    for (int i=0; i<NITEMS; i++) {
       sprintf(mkey, "This is htable item %d", i);

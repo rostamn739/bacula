@@ -1,5 +1,109 @@
 
-Version 1.36.1 released xxNov04:
+Changes to 1.36.3 released 23Apr05:
+22Apr05
+- Correct return type of ftello to avoid overflow --
+  thanks to Peter Eriksson.
+13Apr05
+- Fix seg fault if Name directive missing in Job resource.
+12Apr05
+- Add new LaTeX doc to 1.36.2 branch.
+- Fix SuSE autostart routines to use /etc/init.d instead
+  of /etc/rc.d/init.d.
+- Increase index size on File table Name and Path table Path
+  to improve performance.
+- Second fix for not zeroing SD pointers on restarted job.
+- Turn off old style Include/Excludes.
+01Apr05
+- Use fseeko and ftello so that attributes can exceed 4GB
+- Flush console output after every line.
+- Turn off Multiple Connections in catalog resource, which
+  causes corruped databases.  It is silently ignored.
+- Drop support for old style Include/Exclude.  There is a
+  perl script that will convert them.
+- Inhibit trying to reset attributes on a Win32 drive.
+18Mar05 1.36.2-store.patch
+- This patch fails a job if no Storage resource is specified and
+  the job attempts to call the SD.
+18Mar05 1.36.2-reschedule.patch
+- This patch should fix a Segfault bug when a job is rescheduled.
+  The storage pointers were being released when they should not
+  have been.
+17Mar05 1.36.2-restore-speed.patch
+- This patch will fix a subtle bug that was introduced in 1.36.2
+  which causes Bacula to be very slow restoring a few files. This
+  is because it reads completely to the end of the Volume rather
+  than stopping when all the files on the Volume are loaded. The
+  introduction of the bug was caused by a patch that fixed 
+  Bacula truncating tapes after a restore.
+  Note that all source files will be rebuilt during the make.
+16Mar05 1.36.2-console.patch
+- This patch causes the output directed to a file to be
+  flushed after every line. This is a bit overkill, IMO, but
+  a user complained about it.
+15Mar05 1.36.2-netbsd.patch
+- This patch corrects a compile problem because of no statfs() 
+  on NetBSD. The patch was submitted by kardel with bug 258.
+09Mar05 1.36.2-win32-drive.patch
+- This patch will prevent the Win32 FD from printing an error message
+  when it attempts to restore the permissions for a drive (which Win32
+  doesn't permit). The error is harmless in any case.
+04Mar05 1.36.2-level.patch
+- This patch should fix a problem with th %l editing in the 
+  client (FD) where it edited nothing. With this fix, it should
+  edit "since".  
+04Mar05 1.36.2-pool.patch
+- This patch corrects a problem preventing multiple 
+  simultaneous jobs from different pools.
+
+Changes to 1.36.2 released 28Feb05:
+27Feb05
+- Fix pointer to stack variable in Verify jobs.
+- Change reference to DEV_BSIZE to B_DEV_BSIZE to
+  avoid colision with some OSes.
+- Release storage[i] in job.c if allocated when            
+  starting/restarting a job. Avoids orpahanned buffers.
+24Feb05
+- Add awk check to configure.in
+- Bring over a few files from 1.37.
+18Feb05
+- Fix some lower case character problems in sql_cmds.c reported
+  by Debian.
+- Fix seg fault if debug level 900 set in SD.
+- Truncate Win32 child return code to 8 bits.
+15Feb05
+- Fix deadlock in multiple simultaneous jobs.
+- Fix tape "truncation"/"number of files" after restore bug.
+- Merge a few minor things from the 1.37 stream.
+14Feb05
+- Add a number of new features from 1.37, and apply fixes  
+  for all known bugs. See ReleaseNotes for details.
+- Apply Tim's patch for ACLs.
+
+Version 1.36.1 released 26Nov04:
+24Nov04
+- Take Dan's fix to the fix_postgresql_tables (thanks Dan)
+- Increase Maximum Concurrent Jobs to 20 in SD and FD!
+- Fix improper handling of autochanger Volumes that are not
+  marked InChanger.
+22Nov04
+- Update authentication failure message to indicate possible
+  problem with Maximum Concurrent Jobs. Add to doc too.
+- Commit PostgreSQL BIGINT fix -- apparently some people didn't
+  get it.
+- Do not use a slot unless it is InChanger in the autochanger
+  code, otherwise autochanger gets upset not finding the Volume.
+21Nov04
+- Make authentication timeout compile time configurable.
+  The value is set in src/baconfig.h
+- Fix removing items from watchdog queue, which apparently
+  screwed up if there was more than one item.
+- Rework mediaformat part of manual to separate out old
+  tape format for easier reading.
+- Add a lot of debug code to the authentication code.
+- Add seconds to the start/end times printed in the job report.
+19Nov04
+- Fix mutex deadlock in dequeue of messages.
+- Add debug code to FD authorization.
 18Nov04
 - Increase authentication timeouts to 10 minutes.  
 15Nov04

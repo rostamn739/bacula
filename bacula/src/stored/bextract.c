@@ -8,7 +8,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -70,7 +70,7 @@ bool forge_on = false;
 static void usage()
 {
    fprintf(stderr,
-"Copyright (C) 2000-2004 Kern Sibbald and John Walker.\n"
+"Copyright (C) 2000-2005 Kern Sibbald.\n"
 "\nVersion: " VERSION " (" BDATE ")\n\n"
 "Usage: bextract <options> <bacula-archive-device-name> <directory-to-store-files>\n"
 "       -b <file>       specify a bootstrap file\n"
@@ -88,10 +88,10 @@ static void usage()
 
 int main (int argc, char *argv[])
 {
-   int ch;   
+   int ch;
    FILE *fd;
    char line[1000];
-   int got_inc = FALSE;
+   bool got_inc = false;
 
    working_directory = "/tmp";
    my_name_is(argc, argv, "bextract");
@@ -118,7 +118,7 @@ int main (int argc, char *argv[])
       case 'd':                    /* debug level */
 	 debug_level = atoi(optarg);
 	 if (debug_level <= 0)
-	    debug_level = 1; 
+	    debug_level = 1;
 	 break;
 
       case 'e':                    /* exclude list */
@@ -149,7 +149,7 @@ int main (int argc, char *argv[])
 	    add_fname_to_include_list(ff, 0, line);
 	 }
 	 fclose(fd);
-	 got_inc = TRUE;
+	 got_inc = true;
 	 break;
 
       case 'p':
@@ -236,7 +236,7 @@ static void do_extract(char *devname)
 
    read_records(dcr, record_cb, mount_next_read_volume);
    /* If output file is still open, it was the last one in the
-    * archive since we just hit an end of file, so close the file. 
+    * archive since we just hit an end of file, so close the file.
     */
    if (is_bopen(&bfd)) {
       set_attributes(jcr, attr, &bfd);
@@ -266,7 +266,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 
    switch (rec->Stream) {
    case STREAM_UNIX_ATTRIBUTES:
-   case STREAM_UNIX_ATTRIBUTES_EX:  
+   case STREAM_UNIX_ATTRIBUTES_EX:
 
       /* If extracting, it was from previous stream, so
        * close the output file.
@@ -287,7 +287,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          Emsg2(M_ERROR_TERM, 0, _("Record header file index %ld not equal record index %ld\n"),
 	    rec->FileIndex, attr->file_index);
       }
-	 
+
       if (file_is_included(ff, attr->fname) && !file_is_excluded(ff, attr->fname)) {
 
 	 attr->data_stream = decode_stat(attr->attr, &attr->statp, &attr->LinkFI);
@@ -304,7 +304,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	 build_attr_output_fnames(jcr, attr);
 
 	 extract = false;
-	 stat = create_file(jcr, attr, &bfd, REPLACE_ALWAYS);	
+	 stat = create_file(jcr, attr, &bfd, REPLACE_ALWAYS);
 	 switch (stat) {
 	 case CF_ERROR:
 	 case CF_SKIP:
@@ -321,14 +321,14 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	    num_files++;
 	    fileAddr = 0;
 	    break;
-	 }  
+	 }
       }
       break;
 
    /* Data stream and extracting */
    case STREAM_FILE_DATA:
    case STREAM_SPARSE_DATA:
-   case STREAM_WIN32_DATA:  
+   case STREAM_WIN32_DATA:
 
       if (extract) {
 	 if (rec->Stream == STREAM_SPARSE_DATA) {
@@ -342,7 +342,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	       fileAddr = faddr;
 	       if (blseek(&bfd, (off_t)fileAddr, SEEK_SET) < 0) {
 		  berrno be;
-                  Emsg2(M_ERROR_TERM, 0, _("Seek error on %s: %s\n"), 
+                  Emsg2(M_ERROR_TERM, 0, _("Seek error on %s: %s\n"),
 		     attr->ofname, be.strerror());
 	       }
 	    }
@@ -354,7 +354,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          Dmsg2(8, "Write %u bytes, total=%u\n", wsize, total);
 	 if ((uint32_t)bwrite(&bfd, wbuf, wsize) != wsize) {
 	    berrno be;
-            Emsg2(M_ERROR_TERM, 0, _("Write error on %s: %s\n"), 
+            Emsg2(M_ERROR_TERM, 0, _("Write error on %s: %s\n"),
 	       attr->ofname, be.strerror());
 	 }
 	 fileAddr += wsize;
@@ -363,8 +363,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 
    /* GZIP data stream */
    case STREAM_GZIP_DATA:
-   case STREAM_SPARSE_GZIP_DATA: 
-   case STREAM_WIN32_GZIP_DATA:  
+   case STREAM_SPARSE_GZIP_DATA:
+   case STREAM_WIN32_GZIP_DATA:
 #ifdef HAVE_LIBZ
       if (extract) {
 	 uLong compress_len;
@@ -382,7 +382,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	       fileAddr = faddr;
 	       if (blseek(&bfd, (off_t)fileAddr, SEEK_SET) < 0) {
 		  berrno be;
-                  Emsg3(M_ERROR, 0, _("Seek to %s error on %s: ERR=%s\n"), 
+                  Emsg3(M_ERROR, 0, _("Seek to %s error on %s: ERR=%s\n"),
 		     edit_uint64(fileAddr, ec1), attr->ofname, be.strerror());
 		  extract = false;
 		  return true;
@@ -393,7 +393,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	    wsize = rec->data_len;
 	 }
 	 compress_len = compress_buf_size;
-	 if ((stat=uncompress((Bytef *)compress_buf, &compress_len, 
+	 if ((stat=uncompress((Bytef *)compress_buf, &compress_len,
 	       (const Bytef *)wbuf, (uLong)wsize) != Z_OK)) {
             Emsg1(M_ERROR, 0, _("Uncompression error. ERR=%d\n"), stat);
 	    extract = false;
@@ -404,7 +404,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	 if ((uLongf)bwrite(&bfd, compress_buf, (size_t)compress_len) != compress_len) {
 	    berrno be;
             Pmsg0(0, "===Write error===\n");
-            Emsg2(M_ERROR, 0, _("Write error on %s: %s\n"), 
+            Emsg2(M_ERROR, 0, _("Write error on %s: %s\n"),
 	       attr->ofname, be.strerror());
 	    extract = false;
 	    return true;
@@ -444,10 +444,10 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 	 set_attributes(jcr, attr, &bfd);
 	 extract = false;
       }
-      Jmsg(jcr, M_ERROR, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"), 
+      Jmsg(jcr, M_ERROR, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
 	 rec->Stream);
       break;
-      
+
    } /* end switch */
    return true;
 }
@@ -467,6 +467,6 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr)
    DEVICE *dev = dcr->dev;
    fprintf(stderr, "Mount Volume \"%s\" on device %s and press return when ready: ",
       dcr->VolumeName, dev_name(dev));
-   getchar();	
+   getchar();
    return true;
 }

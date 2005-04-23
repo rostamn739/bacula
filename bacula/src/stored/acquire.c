@@ -42,6 +42,9 @@ DCR *new_dcr(JCR *jcr, DEVICE *dev)
    }
    dcr->jcr = jcr;
    dcr->dev = dev;
+   if (dev) {
+      dcr->device = dev->device;
+   }
    dcr->block = new_block(dev);
    dcr->rec = new_record();
    dcr->spool_fd = -1;
@@ -386,8 +389,8 @@ bool release_device(JCR *jcr)
    DEVICE *dev = dcr->dev;   
    lock_device(dev);
    Dmsg1(100, "release_device device is %s\n", dev_is_tape(dev)?"tape":"disk");
-   if (dev_state(dev, ST_READ)) {
-      dev->state &= ~ST_READ;	      /* clear read bit */
+   if (dev->can_read()) {
+      dev->clear_read();	      /* clear read bit */
       if (!dev_is_tape(dev) || !dev_cap(dev, CAP_ALWAYSOPEN)) {
 	 offline_or_rewind_dev(dev);
 	 close_dev(dev);
@@ -397,7 +400,7 @@ bool release_device(JCR *jcr)
    } else if (dev->num_writers > 0) {
       dev->num_writers--;
       Dmsg1(100, "There are %d writers in release_device\n", dev->num_writers);
-      if (dev_state(dev, ST_LABEL)) {
+      if (dev->is_labeled()) {
          Dmsg0(100, "dir_create_jobmedia_record. Release\n");
 	 if (!dir_create_jobmedia_record(dcr)) {
             Jmsg(jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),

@@ -17,7 +17,7 @@
    MA 02111-1307, USA.
 
  */
- /* 
+ /*
   * Originally written by Kern Sibbald for inclusion in apcupsd,
   *  but heavily modified for Bacula
   *
@@ -25,7 +25,6 @@
   */
 
 #include "bacula.h"
-#undef DEV_BSIZE
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -57,8 +56,8 @@ void bnet_stop_thread_server(pthread_t tid)
    }
 }
 
-/* 
-	Become Threaded Network Server 
+/*
+	Become Threaded Network Server
     This function is able to handle multiple server ips in
     ipv4 and ipv6 style. The Addresse are give in a comma
     seperated string in bind_addr
@@ -93,7 +92,7 @@ bnet_thread_server(dlist *addrs, int max_clients, workq_t *client_wq,
       fd_ptr = (s_sockfd *)alloca(sizeof(s_sockfd));
       fd_ptr->port = p->get_port_net_order();
       /*
-       * Open a TCP socket  
+       * Open a TCP socket
        */
       for (tlog= 60; (fd_ptr->fd=socket(p->get_family(), SOCK_STREAM, 0)) < 0; tlog -= 10) {
 	 if (tlog <= 0) {
@@ -101,13 +100,13 @@ bnet_thread_server(dlist *addrs, int max_clients, workq_t *client_wq,
 	    char curbuf[256];
             Emsg3(M_ABORT, 0, _("Cannot open stream socket. ERR=%s. Current %s All %s\n"),
 		       be.strerror(),
-		       p->build_address_str(curbuf, sizeof(curbuf)), 
+		       p->build_address_str(curbuf, sizeof(curbuf)),
 		       build_addresses_str(addrs, allbuf, sizeof(allbuf)));
 	 }
 	 bmicrosleep(10, 0);
       }
       /*
-       * Reuse old sockets 
+       * Reuse old sockets
        */
       if (setsockopt(fd_ptr->fd, SOL_SOCKET, SO_REUSEADDR, (sockopt_val_t)&turnon,
 	   sizeof(turnon)) < 0) {
@@ -140,7 +139,7 @@ bnet_thread_server(dlist *addrs, int max_clients, workq_t *client_wq,
       be.set_errno(stat);
       Emsg1(M_ABORT, 0, _("Could not init client queue: ERR=%s\n"), be.strerror());
    }
-   /* 
+   /*
     * Wait for a connection from the client process.
     */
    for (; !quit;) {
@@ -182,20 +181,10 @@ bnet_thread_server(dlist *addrs, int max_clients, workq_t *client_wq,
 	    fromhost(&request);
 	    if (!hosts_access(&request)) {
 	       V(mutex);
-#ifndef HAVE_INET_NTOP
 	       Jmsg2(NULL, M_SECURITY, 0,
                      _("Connection from %s:%d refused by hosts.access\n"),
-		     inet_ntoa(((sockaddr_in *)&cli_addr)->sin_addr),
-		     ntohs(((sockaddr_in *)&cli_addr)->sin_port));
-#else
-	       Jmsg2(NULL, M_SECURITY, 0,
-                     _("Connection from %s:%d refused by hosts.access\n"),
-		     inet_ntop(clilen == sizeof(sockaddr_in) ? AF_INET : AF_INET6,
-			       &clilen, buf, clilen),
-		     ntohs(clilen == sizeof(sockaddr_in) ? 
-			   ((sockaddr_in *)&cli_addr)->sin_port :
-			    ((sockaddr_in6 *)&cli_addr)->sin6_port));
-#endif
+		     sockaddr_to_ascii(&cli_addr, buf, sizeof(buf)),
+		     sockaddr_get_port(&cli_addr));
 	       close(newsockfd);
 	       continue;
 	    }
@@ -214,14 +203,9 @@ bnet_thread_server(dlist *addrs, int max_clients, workq_t *client_wq,
 
 	    /* see who client is. i.e. who connected to us. */
 	    P(mutex);
-#ifdef HAVE_INET_NTOP
-	    inet_ntop(clilen == sizeof(sockaddr_in) ? AF_INET : AF_INET6, &clilen,
-		      buf, sizeof(buf));
-#else
-	    bstrncpy(buf, inet_ntoa(((sockaddr_in *)&cli_addr)->sin_addr), sizeof(buf));      /* NOT thread safe, use mutex */
-#endif
+	    sockaddr_to_ascii(&cli_addr, buf, sizeof(buf));
 	    V(mutex);
-	    BSOCK *bs; 
+	    BSOCK *bs;
             bs = init_bsock(NULL, newsockfd, "client", buf, fd_ptr->port, &cli_addr);
 	    if (bs == NULL) {
                Jmsg0(NULL, M_ABORT, 0, _("Could not create client BSOCK.\n"));
@@ -261,7 +245,7 @@ BSOCK *bnet_bind(int port)
    int turnon = 1;
 
    /*
-    * Open a TCP socket  
+    * Open a TCP socket
     */
    for (tlog = 0; (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0; tlog -= 10) {
       if (errno == EINTR || errno == EAGAIN) {
@@ -275,14 +259,14 @@ BSOCK *bnet_bind(int port)
    }
 
    /*
-    * Reuse old sockets 
+    * Reuse old sockets
     */
    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (sockopt_val_t)&turnon, sizeof(turnon)) < 0) {
       Emsg1(M_WARNING, 0, _("Cannot set SO_REUSEADDR on socket: %s\n"),
 	    strerror(errno));
    }
 
-   /* 
+   /*
     * Bind our local address so that the client can send to us.
     */
    bzero((char *)&serv_addr, sizeof(serv_addr));
@@ -309,7 +293,7 @@ BSOCK *bnet_bind(int port)
 }
 
 /*
- * Accept a single connection 
+ * Accept a single connection
  */
 BSOCK *bnet_accept(BSOCK * bsock, char *who)
 {
@@ -324,14 +308,14 @@ BSOCK *bnet_accept(BSOCK * bsock, char *who)
    struct request_info request;
 #endif
 
-   /* 
+   /*
     * Wait for a connection from the client process.
     */
    FD_ZERO(&sockset);
    FD_SET((unsigned)bsock->fd, &sockset);
 
    for (;;) {
-      /* 
+      /*
        * Wait for a connection from a client process.
        */
       ready = sockset;

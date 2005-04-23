@@ -5,13 +5,16 @@
  *    archive. It uses a callback to pass you each record in turn,
  *    as well as a callback for mounting the next tape.  It takes
  *    care of reading blocks, applying the bsr, ...
+ *    Note, this routine is really the heart of the restore routines,
+ *    and we are *really* bit pushing here so be careful about making
+ *    any modifications.
  *
  *    Kern E. Sibbald, August MMII
  *
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -57,6 +60,7 @@ bool read_records(DCR *dcr,
 
    recs = New(dlist(rec, &rec->link));
    position_to_first_file(jcr, dev);
+   jcr->mount_next_volume = false;
 
    for ( ; ok && !done; ) {
       if (job_canceled(jcr)) {
@@ -64,14 +68,13 @@ bool read_records(DCR *dcr,
 	 break;
       }
       if (!read_block_from_device(dcr, CHECK_BLOCK_NUMBERS)) {
-	 if (dev_state(dev, ST_EOT)) {
+	 if (dev->at_eot()) {
 	    DEV_RECORD *trec = new_record();
-
-            Jmsg(jcr, M_INFO, 0, "End of Volume at file %u on device %s, Volume \"%s\"\n", 
+            Jmsg(jcr, M_INFO, 0, "End of Volume at file %u on device %s, Volume \"%s\"\n",
 		 dev->file, dev_name(dev), dcr->VolumeName);
 	    if (!mount_cb(dcr)) {
                Jmsg(jcr, M_INFO, 0, "End of all volumes.\n");
-	       ok = false;
+	       ok = false;	      /* Stop everything */
 	       /*
 		* Create EOT Label so that Media record may
 		*  be properly updated because this is the last
@@ -81,8 +84,13 @@ bool read_records(DCR *dcr,
 	       trec->File = dev->file;
 	       ok = record_cb(dcr, trec);
 	       free_record(trec);
+	       if (jcr->mount_next_volume) {
+		  jcr->mount_next_volume = false;
+		  dev->state &= ~ST_EOT;
+	       }
 	       break;
 	    }
+	    jcr->mount_next_volume = false;
 	    /*
 	     * We just have a new tape up, now read the label (first record)
 	     *	and pass it off to the callback routine, then continue
@@ -97,12 +105,12 @@ bool read_records(DCR *dcr,
 	    /* After reading label, we must read first data block */
 	    continue;
 
-	 } else if (dev_state(dev, ST_EOF)) {
+	 } else if (dev->at_eof()) {
 	    if (verbose) {
-               Jmsg(jcr, M_INFO, 0, "Got EOF at file %u  on device %s, Volume \"%s\"\n", 
+               Jmsg(jcr, M_INFO, 0, "Got EOF at file %u  on device %s, Volume \"%s\"\n",
 		  dev->file, dev_name(dev), dcr->VolumeName);
 	    }
-            Dmsg3(200, "Got EOF at file %u  on device %s, Volume \"%s\"\n", 
+            Dmsg3(200, "Got EOF at file %u  on device %s, Volume \"%s\"\n",
 		  dev->file, dev_name(dev), dcr->VolumeName);
 	    continue;
 	 } else if (dev_state(dev, ST_SHORT)) {
@@ -113,10 +121,10 @@ bool read_records(DCR *dcr,
 	    display_tape_error_status(jcr, dev);
 	    if (forge_on || jcr->ignore_label_errors) {
 	       fsr_dev(dev, 1);       /* try skipping bad record */
-               Dmsg0(000, "Did fsr\n");
+               Pmsg0(000, "Did fsr\n");
 	       continue;	      /* try to continue */
 	    }
-	    ok = false;
+	    ok = false; 	      /* stop everything */
 	    break;
 	 }
       }
@@ -133,7 +141,7 @@ bool read_records(DCR *dcr,
 
       /*
        * Get a new record for each Job as defined by
-       *   VolSessionId and VolSessionTime 
+       *   VolSessionId and VolSessionTime
        */
       bool found = false;
       foreach_dlist(rec, recs) {
@@ -148,26 +156,19 @@ bool read_records(DCR *dcr,
 	 recs->prepend(rec);
          Dmsg2(300, "New record for SI=%d ST=%d\n",
 	     block->VolSessionId, block->VolSessionTime);
-      } else {
-#ifdef xxx
-	 if (rec->Block != 0 && (rec->Block+1) != block->BlockNumber) {
-            Jmsg(jcr, M_ERROR, 0, _("Invalid block number. Expected %u, got %u\n"),
-		 rec->Block+1, block->BlockNumber);
-	 }
-#endif 
       }
-      Dmsg3(300, "After mount next vol. stat=%s blk=%d rem=%d\n", rec_state_to_str(rec), 
+      Dmsg3(300, "After mount next vol. stat=%s blk=%d rem=%d\n", rec_state_to_str(rec),
 	    block->BlockNumber, rec->remainder);
       record = 0;
       rec->state = 0;
       Dmsg1(300, "Block empty %d\n", is_block_empty(rec));
       for (rec->state=0; !is_block_empty(rec); ) {
 	 if (!read_record_from_block(block, rec)) {
-            Dmsg3(400, "!read-break. state=%s blk=%d rem=%d\n", rec_state_to_str(rec), 
+            Dmsg3(400, "!read-break. state=%s blk=%d rem=%d\n", rec_state_to_str(rec),
 		  block->BlockNumber, rec->remainder);
 	    break;
 	 }
-         Dmsg5(300, "read-OK. state=%s blk=%d rem=%d file:block=%d:%d\n", 
+         Dmsg5(300, "read-OK. state=%s blk=%d rem=%d file:block=%d:%d\n",
 		 rec_state_to_str(rec), block->BlockNumber, rec->remainder,
 		 dev->file, dev->block_num);
 	 /*
@@ -186,7 +187,7 @@ bool read_records(DCR *dcr,
 	    break;			   /* yes, get out */
 	 }
 
-	 /* Some sort of label? */ 
+	 /* Some sort of label? */
 	 if (rec->FileIndex < 0) {
 	    handle_session_record(dev, rec, &sessrec);
 	    ok = record_cb(dcr, rec);
@@ -199,7 +200,7 @@ bool read_records(DCR *dcr,
 	    continue;
 	 } /* end if label record */
 
-	 /* 
+	 /*
 	  * Apply BSR filter
 	  */
 	 if (jcr->bsr) {
@@ -209,7 +210,7 @@ bool read_records(DCR *dcr,
                Dmsg2(300, "All done=(file:block) %d:%d\n", dev->file, dev->block_num);
 	       break;
 	    } else if (stat == 0) {  /* no match */
-               Dmsg4(300, "Clear rem=%d FI=%d before set_eof pos %d:%d\n", 
+               Dmsg4(300, "Clear rem=%d FI=%d before set_eof pos %d:%d\n",
 		  rec->remainder, rec->FileIndex, dev->file, dev->block_num);
 	       rec->remainder = 0;
 	       rec->state &= ~REC_PARTIAL_RECORD;
@@ -266,10 +267,14 @@ static int try_repositioning(JCR *jcr, DEV_RECORD *rec, DEVICE *dev)
       Dmsg2(300, "Current postion (file:block) %d:%d\n",
 	 dev->file, dev->block_num);
       jcr->bsr->mount_next_volume = false;
-      dev->state |= ST_EOT;
+      if (!dev->at_eot()) {
+	 /* Set EOT flag to force mount of next Volume */
+	 jcr->mount_next_volume = true;
+	 dev->state |= ST_EOT;
+      }
       rec->Block = 0;
       return 1;
-   }	 
+   }
    if (bsr) {
       if (verbose) {
          Jmsg(jcr, M_INFO, 0, "Reposition from (file:block) %d:%d to %d:%d\n",
@@ -292,16 +297,16 @@ static BSR *position_to_first_file(JCR *jcr, DEVICE *dev)
 {
    BSR *bsr = NULL;
    /*
-    * Now find and position to first file and block 
+    * Now find and position to first file and block
     *	on this tape.
     */
    if (jcr->bsr) {
       jcr->bsr->reposition = true;    /* force repositioning */
       bsr = find_next_bsr(jcr->bsr, dev);
       if (bsr && (bsr->volfile->sfile != 0 || bsr->volblock->sblock != 0)) {
-         Jmsg(jcr, M_INFO, 0, _("Forward spacing to file:block %u:%u.\n"), 
+         Jmsg(jcr, M_INFO, 0, _("Forward spacing to file:block %u:%u.\n"),
 	    bsr->volfile->sfile, bsr->volblock->sblock);
-         Dmsg2(300, "Forward spacing to file:block %u:%u.\n", 
+         Dmsg2(300, "Forward spacing to file:block %u:%u.\n",
 	    bsr->volfile->sfile, bsr->volblock->sblock);
 	 reposition_dev(dev, bsr->volfile->sfile, bsr->volblock->sblock);
       }
@@ -314,11 +319,11 @@ static void handle_session_record(DEVICE *dev, DEV_RECORD *rec, SESSION_LABEL *s
 {
    const char *rtype;
    char buf[100];
-   
+
    memset(sessrec, 0, sizeof(sessrec));
    switch (rec->FileIndex) {
    case PRE_LABEL:
-      rtype = "Fresh Volume Label";   
+      rtype = "Fresh Volume Label";
       break;
    case VOL_LABEL:
       rtype = "Volume Label";
@@ -346,7 +351,7 @@ static void handle_session_record(DEVICE *dev, DEV_RECORD *rec, SESSION_LABEL *s
 #ifdef DEBUG
 static char *rec_state_to_str(DEV_RECORD *rec)
 {
-   static char buf[200]; 
+   static char buf[200];
    buf[0] = 0;
    if (rec->state & REC_NO_HEADER) {
       bstrncat(buf, "Nohdr,", sizeof(buf));

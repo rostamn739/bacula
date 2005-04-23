@@ -32,7 +32,7 @@
 
 extern DIRRES *director;
 
-static POOLMEM *substitute_prompts(UAContext *ua, 
+static POOLMEM *substitute_prompts(UAContext *ua,
 		       POOLMEM *query, char **prompt, int nprompt);
 
 /*
@@ -57,7 +57,7 @@ int querycmd(UAContext *ua, const char *cmd)
    char *prompt[9];
    int nprompt = 0;;
    char *query_file = director->query_file;
-   
+
    if (!open_db(ua)) {
       goto bail_out;
    }
@@ -113,7 +113,7 @@ int querycmd(UAContext *ua, const char *cmd)
 	    prompt[nprompt++] = bstrdup(line+1);
 	    continue;
 	 }
-      }  
+      }
       if (*query != 0) {
          pm_strcat(query, " ");
       }
@@ -155,7 +155,7 @@ bail_out:
    return 1;
 }
 
-static POOLMEM *substitute_prompts(UAContext *ua, 
+static POOLMEM *substitute_prompts(UAContext *ua,
 		       POOLMEM *query, char **prompt, int nprompt)
 {
    char *p, *q, *o;
@@ -255,9 +255,9 @@ int sqlquerycmd(UAContext *ua, const char *cmd)
    }
    *query = 0;
 
-   bsendmsg(ua, _("Entering SQL query mode.\n\
-Terminate each query with a semicolon.\n\
-Terminate query mode with a blank line.\n"));
+   bsendmsg(ua, _("Entering SQL query mode.\n"
+"Terminate each query with a semicolon.\n"
+"Terminate query mode with a blank line.\n"));
    msg = "Enter SQL query: ";
    while (get_cmd(ua, msg)) {
       len = strlen(ua->cmd);
@@ -267,9 +267,9 @@ Terminate query mode with a blank line.\n"));
       }
       query = check_pool_memory_size(query, len + 1);
       if (*query != 0) {
-         strcat(query, " ");
+         pm_strcat(query, " ");
       }
-      strcat(query, ua->cmd);
+      pm_strcat(query, ua->cmd);
       if (ua->cmd[len-1] == ';') {
 	 ua->cmd[len-1] = 0;	      /* zap ; */
 	 /* Submit query */
@@ -282,5 +282,5 @@ Terminate query mode with a blank line.\n"));
    }
    free_pool_memory(query);
    bsendmsg(ua, _("End query mode.\n"));
-   return 1; 
+   return 1;
 }

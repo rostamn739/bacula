@@ -36,9 +36,9 @@ static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 /* Forward referenced functions */
 
 
-/* 
+/*
  * Verify attributes of the requested files on the Volume
- * 
+ *
  */
 void do_verify_volume(JCR *jcr)
 {
@@ -50,7 +50,7 @@ void do_verify_volume(JCR *jcr)
    uint32_t VolSessionId, VolSessionTime, file_index;
    uint32_t record_file_index;
    int type, stat;
-   
+
    sd = jcr->store_bsock;
    if (!sd) {
       Jmsg(jcr, M_FATAL, 0, _("Storage command not issued before Verify.\n"));
@@ -78,12 +78,12 @@ void do_verify_volume(JCR *jcr)
    fname = get_pool_memory(PM_FNAME);
    lname = get_pool_memory(PM_FNAME);
 
-   /* 
+   /*
     * Get a record from the Storage daemon
     */
    while (bget_msg(sd) >= 0 && !job_canceled(jcr)) {
       /*
-       * First we expect a Stream Record Header 
+       * First we expect a Stream Record Header
        */
       if (sscanf(sd->msg, rec_header, &VolSessionId, &VolSessionTime, &file_index,
 	  &stream, &size) != 5) {
@@ -92,7 +92,7 @@ void do_verify_volume(JCR *jcr)
       }
       Dmsg2(30, "Got hdr: FilInx=%d Stream=%d.\n", file_index, stream);
 
-      /* 
+      /*
        * Now we expect the Stream Data
        */
       if (bget_msg(sd) < 0) {
@@ -123,7 +123,7 @@ void do_verify_volume(JCR *jcr)
 	 *fname = 0;
 	 *lname = 0;
 
-	 /*		 
+	 /*
 	  * An Attributes record consists of:
 	  *    File_index
 	  *    Type   (FT_types)
@@ -150,7 +150,7 @@ void do_verify_volume(JCR *jcr)
          while (*ap++ != ' ')         /* skip type */
 	    ;
 	 /* Save filename and position to attributes */
-	 fp = fname;	 
+	 fp = fname;
 	 while (*ap != 0) {
 	    *fp++  = *ap++;	      /* copy filename to fname */
 	 }
@@ -163,17 +163,17 @@ void do_verify_volume(JCR *jcr)
 	    while (*lp++ != 0) {
 	       ;
 	    }
-            strcat(lname, lp);        /* "save" link name */
+            pm_strcat(lname, lp);        /* "save" link name */
 	 } else {
 	    *lname = 0;
 	 }
 	 P(jcr->mutex);
 	 jcr->JobFiles++;
 	 jcr->num_files_examined++;
-	 pm_strcpy(&jcr->last_fname, fname); /* last file examined */
+	 pm_strcpy(jcr->last_fname, fname); /* last file examined */
 	 V(jcr->mutex);
 
-	 /* 
+	 /*
 	  * Send file attributes to Director
 	  *   File_index
 	  *   Stream
@@ -188,11 +188,11 @@ void do_verify_volume(JCR *jcr)
          Dmsg2(200, "send ATTR inx=%d fname=%s\n", jcr->JobFiles, fname);
 	 if (type == FT_LNK || type == FT_LNKSAVED) {
             stat = bnet_fsend(dir, "%d %d %s %s%c%s%c%s%c", jcr->JobFiles,
-                          STREAM_UNIX_ATTRIBUTES, "pinsug5", fname, 
+                          STREAM_UNIX_ATTRIBUTES, "pinsug5", fname,
 			  0, ap, 0, lname, 0);
 	 } else {
             stat = bnet_fsend(dir,"%d %d %s %s%c%s%c%c", jcr->JobFiles,
-                          STREAM_UNIX_ATTRIBUTES, "pinsug5", fname, 
+                          STREAM_UNIX_ATTRIBUTES, "pinsug5", fname,
 			  0, ap, 0, 0);
 	 }
          Dmsg2(200, "bfiled>bdird: attribs len=%d: msg=%s\n", dir->msglen, dir->msg);
@@ -221,12 +221,12 @@ void do_verify_volume(JCR *jcr)
 	    jcr->JobFiles);
          Dmsg2(20, "bfiled>bdird: MD5 len=%d: msg=%s\n", dir->msglen, dir->msg);
 	 break;
-  
+
       case STREAM_SHA1_SIGNATURE:
 	 char SHA1buf[30];
 	 bin_to_base64(SHA1buf, (char *)sd->msg, 20); /* encode 20 bytes */
          Dmsg2(400, "send inx=%d SHA1=%s\n", jcr->JobFiles, SHA1buf);
-         bnet_fsend(dir, "%d %d %s *SHA1-%d*", jcr->JobFiles, STREAM_SHA1_SIGNATURE, 
+         bnet_fsend(dir, "%d %d %s *SHA1-%d*", jcr->JobFiles, STREAM_SHA1_SIGNATURE,
 	    SHA1buf, jcr->JobFiles);
          Dmsg2(20, "bfiled>bdird: SHA1 len=%d: msg=%s\n", dir->msglen, dir->msg);
 	 break;
@@ -251,4 +251,4 @@ ok_out:
    free_pool_memory(lname);
    Dmsg2(050, "End Verify-Vol. Files=%d Bytes=%" lld "\n", jcr->JobFiles,
       jcr->JobBytes);
-}	   
+}

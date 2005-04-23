@@ -2,13 +2,13 @@
  *
  *   Bacula Director -- User Agent Access Control List (ACL) handling
  *
- *     Kern Sibbald, January MMIV  
+ *     Kern Sibbald, January MMIV
  *
  *   Version  $Id$
  */
 
 /*
-   Copyright (C) 2004 Kern Sibbald and John Walker
+   Copyright (C) 2004-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -30,8 +30,8 @@
 #include "bacula.h"
 #include "dird.h"
 
-/*  
- * Check if access is permitted to item in acl	  
+/*
+ * Check if access is permitted to item in acl
  */
 bool acl_access_ok(UAContext *ua, int acl, char *item)
 {
@@ -39,12 +39,13 @@ bool acl_access_ok(UAContext *ua, int acl, char *item)
 }
 
 
+/* This version expects the length of the item which we must check. */
 bool acl_access_ok(UAContext *ua, int acl, char *item, int len)
 {
 
    /* If no console resource => default console and all is permitted */
    if (!ua->cons) {
-      Dmsg0(400, "Root cons access OK.\n");
+      Dmsg0(1400, "Root cons access OK.\n");
       return true;		      /* No cons resource -> root console OK for everything */
    }
 
@@ -60,8 +61,8 @@ bool acl_access_ok(UAContext *ua, int acl, char *item, int len)
 
    /* Search list for item */
    for (int i=0; i<list->size(); i++) {
-      if (strncasecmp(item, (char *)list->get(i), len) == 0) {
-         Dmsg3(400, "Found %s in %d %s\n", item, acl, (char *)list->get(i));
+      if (strcasecmp(item, (char *)list->get(i)) == 0) {
+         Dmsg3(1400, "ACL found %s in %d %s\n", item, acl, (char *)list->get(i));
 	 return true;
       }
    }

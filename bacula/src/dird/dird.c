@@ -372,6 +372,7 @@ void reload_config(int sig)
    JCR *jcr;
    int njobs = 0;		      /* number of running jobs */
    int table, rtable;
+   bool ok;	  
 
    if (already_here) {
       abort();			      /* Oops, recursion -> die */
@@ -396,16 +397,17 @@ void reload_config(int sig)
    reload_table[table].res_table = save_config_resources();
    Dmsg1(100, "Saved old config in table %d\n", table);
 
-   parse_config(configfile);
+   ok = parse_config(configfile, 0);  /* no exit on error */
 
    Dmsg0(100, "Reloaded config file\n");
-   if (!check_resources()) {
+   if (!ok || !check_resources()) {
       rtable = find_free_reload_table_entry();	  /* save new, bad table */
       if (rtable < 0) {
          Jmsg(NULL, M_ERROR, 0, _("Please correct configuration file: %s\n"), configfile);
          Jmsg(NULL, M_ERROR_TERM, 0, _("Out of reload table entries. Giving up.\n"));
       } else {
          Jmsg(NULL, M_ERROR, 0, _("Please correct configuration file: %s\n"), configfile);
+         Jmsg(NULL, M_ERROR, 0, _("Resetting previous configuration.\n"));
       }
       reload_table[rtable].res_table = save_config_resources();
       /* Now restore old resoure values */
@@ -465,8 +467,8 @@ static int check_resources()
    job = (JOB *)GetNextRes(R_JOB, NULL);
    director = (DIRRES *)GetNextRes(R_DIRECTOR, NULL);
    if (!director) {
-      Jmsg(NULL, M_FATAL, 0, _("No Director resource defined in %s\n\
-Without that I don't know who I am :-(\n"), configfile);
+      Jmsg(NULL, M_FATAL, 0, _("No Director resource defined in %s\n"
+"Without that I don't know who I am :-(\n"), configfile);
       OK = false;
    } else {
       set_working_directory(director->working_directory);

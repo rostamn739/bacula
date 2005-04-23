@@ -6,14 +6,14 @@
  *
  *    This routine is run as a separate thread.  There may be more
  *    work to be done to make it totally reentrant!!!!
- * 
+ *
  *  Utility functions for sending info to File Daemon.
  *   These functions are used by both backup and verify.
- *   
+ *
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -59,14 +59,14 @@ static char OKRunAfter[]  = "2000 OK RunAfter\n";
 
 /* External functions */
 extern int debug_level;
-extern DIRRES *director; 
+extern DIRRES *director;
 extern int FDConnectTimeout;
 
 #define INC_LIST 0
 #define EXC_LIST 1
 
 /*
- * Open connection with File daemon. 
+ * Open connection with File daemon.
  * Try connecting every retry_interval (default 10 sec), and
  *   give up after max_retry_time (default 30 mins).
  */
@@ -78,7 +78,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
 
    if (!jcr->file_bsock) {
       fd = bnet_connect(jcr, retry_interval, max_retry_time,
-           _("File daemon"), jcr->client->address, 
+           _("File daemon"), jcr->client->address,
 	   NULL, jcr->client->FDport, verbose);
       if (fd == NULL) {
 	 set_jcr_job_status(jcr, JS_ErrorTerminated);
@@ -96,11 +96,11 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       return 0;
    }
-	
+
    /*
     * Now send JobId and authorization key
     */
-   bnet_fsend(fd, jobcmd, jcr->JobId, jcr->Job, jcr->VolSessionId, 
+   bnet_fsend(fd, jobcmd, jcr->JobId, jcr->Job, jcr->VolSessionId,
       jcr->VolSessionTime, jcr->sd_auth_key);
    if (strcmp(jcr->sd_auth_key, "dummy") != 0) {
       memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
@@ -109,7 +109,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    if (bget_dirmsg(fd) > 0) {
        Dmsg1(110, "<filed: %s", fd->msg);
        if (strncmp(fd->msg, OKjob, strlen(OKjob)) != 0) {
-          Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"), 
+          Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"),
 	     jcr->client->hdr.name, fd->msg);
 	  set_jcr_job_status(jcr, JS_ErrorTerminated);
 	  return 0;
@@ -137,15 +137,15 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
 
 /*
  * This subroutine edits the last job start time into a
- *   "since=date/time" buffer that is returned in the  
+ *   "since=date/time" buffer that is returned in the
  *   variable since.  This is used for display purposes in
- *   the job report.  The time in jcr->stime is later 
+ *   the job report.  The time in jcr->stime is later
  *   passed to tell the File daemon what to do.
  */
 void get_level_since_time(JCR *jcr, char *since, int since_len)
 {
    int JobLevel;
-   /* Lookup the last FULL backup job to get the time/date for a 
+   /* Lookup the last FULL backup job to get the time/date for a
     * differential or incremental save.
     */
    if (!jcr->stime) {
@@ -162,7 +162,7 @@ void get_level_since_time(JCR *jcr, char *since, int since_len)
 	 /* No job found, so upgrade this one to Full */
          Jmsg(jcr, M_INFO, 0, "%s", db_strerror(jcr->db));
          Jmsg(jcr, M_INFO, 0, _("No prior or suitable Full backup found. Doing FULL backup.\n"));
-         bsnprintf(since, since_len, " (upgraded from %s)", 
+         bsnprintf(since, since_len, " (upgraded from %s)",
 	    level_to_str(jcr->JobLevel));
 	 jcr->JobLevel = jcr->jr.JobLevel = L_FULL;
       } else {
@@ -170,13 +170,13 @@ void get_level_since_time(JCR *jcr, char *since, int since_len)
 	    if (db_find_failed_job_since(jcr, jcr->db, &jcr->jr, jcr->stime, JobLevel)) {
                Jmsg(jcr, M_INFO, 0, _("Prior failed job found. Upgrading to %s.\n"),
 		  level_to_str(JobLevel));
-               bsnprintf(since, since_len, " (upgraded from %s)", 
+               bsnprintf(since, since_len, " (upgraded from %s)",
 		  level_to_str(jcr->JobLevel));
 	       jcr->JobLevel = jcr->jr.JobLevel = JobLevel;
 	       jcr->jr.JobId = jcr->JobId;
 	       break;
 	    }
-	 }	 
+	 }
          bstrncpy(since, ", since=", since_len);
 	 bstrncat(since, jcr->stime, since_len);
       }
@@ -188,15 +188,15 @@ void get_level_since_time(JCR *jcr, char *since, int since_len)
 
 
 /*
- * Send level command to FD. 
+ * Send level command to FD.
  * Used for backup jobs and estimate command.
  */
-int send_level_command(JCR *jcr) 
+int send_level_command(JCR *jcr)
 {
    BSOCK   *fd = jcr->file_bsock;
    utime_t stime;
    char ed1[50];
-   /* 
+   /*
     * Send Level command to File daemon
     */
    switch (jcr->JobLevel) {
@@ -218,7 +218,7 @@ int send_level_command(JCR *jcr)
       break;
    case L_SINCE:
    default:
-      Jmsg2(jcr, M_FATAL, 0, _("Unimplemented backup level %d %c\n"), 
+      Jmsg2(jcr, M_FATAL, 0, _("Unimplemented backup level %d %c\n"),
 	 jcr->JobLevel, jcr->JobLevel);
       return 0;
    }
@@ -377,7 +377,7 @@ static int send_fileset(JCR *jcr)
 	 num = fileset->num_includes;
       } else {
 	 num = fileset->num_excludes;
-      }  
+      }
       for (int i=0; i<num; i++) {
 	 BPIPE *bpipe;
 	 FILE *ffd;
@@ -393,18 +393,33 @@ static int send_fileset(JCR *jcr)
 	 } else {
 	    ie = fileset->exclude_items[i];
             bnet_fsend(fd, "E\n");
-	 }	 
+	 }
 	 for (j=0; j<ie->num_opts; j++) {
 	    FOPTS *fo = ie->opts_list[j];
             bnet_fsend(fd, "O %s\n", fo->opts);
 	    for (k=0; k<fo->regex.size(); k++) {
                bnet_fsend(fd, "R %s\n", fo->regex.get(k));
 	    }
+	    for (k=0; k<fo->regexdir.size(); k++) {
+               bnet_fsend(fd, "RD %s\n", fo->regexdir.get(k));
+	    }
+	    for (k=0; k<fo->regexfile.size(); k++) {
+               bnet_fsend(fd, "RF %s\n", fo->regexfile.get(k));
+	    }
 	    for (k=0; k<fo->wild.size(); k++) {
                bnet_fsend(fd, "W %s\n", fo->wild.get(k));
 	    }
+	    for (k=0; k<fo->wilddir.size(); k++) {
+               bnet_fsend(fd, "WD %s\n", fo->wilddir.get(k));
+	    }
+	    for (k=0; k<fo->wildfile.size(); k++) {
+               bnet_fsend(fd, "WF %s\n", fo->wildfile.get(k));
+	    }
 	    for (k=0; k<fo->base.size(); k++) {
                bnet_fsend(fd, "B %s\n", fo->base.get(k));
+	    }
+	    for (k=0; k<fo->fstype.size(); k++) {
+               bnet_fsend(fd, "X %s\n", fo->fstype.get(k));
 	    }
 	    if (fo->reader) {
                bnet_fsend(fd, "D %s\n", fo->reader);
@@ -518,7 +533,7 @@ int send_include_list(JCR *jcr)
 
 
 /*
- * Send exclude list to File daemon 
+ * Send exclude list to File daemon
  */
 int send_exclude_list(JCR *jcr)
 {
@@ -549,14 +564,14 @@ int send_bootstrap_file(JCR *jcr)
    bs = fopen(jcr->RestoreBootstrap, "r");
    if (!bs) {
       berrno be;
-      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"), 
+      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"),
 	 jcr->RestoreBootstrap, be.strerror());
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       return 0;
    }
    bnet_fsend(fd, bootstrap);
    while (fgets(buf, sizeof(buf), bs)) {
-      bnet_fsend(fd, "%s", buf);       
+      bnet_fsend(fd, "%s", buf);
    }
    bnet_sig(fd, BNET_EOD);
    fclose(bs);
@@ -599,7 +614,7 @@ int send_run_before_and_after_commands(JCR *jcr)
 }
 
 
-/* 
+/*
  * Read the attributes from the File daemon for
  * a Verify job and store them in the catalog.
  */
@@ -618,7 +633,7 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
    /* Pickup file attributes and signature */
    while (!fd->errors && (n = bget_dirmsg(fd)) > 0) {
 
-   /*****FIXME****** improve error handling to stop only on 
+   /*****FIXME****** improve error handling to stop only on
     * really fatal problems, or the number of errors is too
     * large.
     */
@@ -630,8 +645,8 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
 
       jcr->fname = check_pool_memory_size(jcr->fname, fd->msglen);
       if ((len = sscanf(fd->msg, "%ld %d %s", &file_index, &stream, Opts_SIG)) != 3) {
-         Jmsg(jcr, M_FATAL, 0, _("<filed: bad attributes, expected 3 fields got %d\n\
-msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
+         Jmsg(jcr, M_FATAL, 0, _("<filed: bad attributes, expected 3 fields got %d\n"
+"msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
 	 set_jcr_job_status(jcr, JS_ErrorTerminated);
 	 return 0;
       }
@@ -640,7 +655,7 @@ msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
       skip_spaces(&p);
       skip_nonspaces(&p);	      /* skip Stream */
       skip_spaces(&p);
-      skip_nonspaces(&p);	      /* skip Opts_SHA1 */   
+      skip_nonspaces(&p);	      /* skip Opts_SHA1 */
       p++;			      /* skip space */
       fn = jcr->fname;
       while (*p != 0) {
@@ -680,7 +695,7 @@ msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
 	 }
 	 db_escape_string(SIG, Opts_SIG, strlen(Opts_SIG));
          Dmsg2(120, "SIGlen=%d SIG=%s\n", strlen(SIG), SIG);
-	 if (!db_add_SIG_to_file_record(jcr, jcr->db, jcr->FileId, SIG, 
+	 if (!db_add_SIG_to_file_record(jcr, jcr->db, jcr->FileId, SIG,
 		   stream==STREAM_MD5_SIGNATURE?MD5_SIG:SHA1_SIG)) {
             Jmsg1(jcr, M_ERROR, 0, "%s", db_strerror(jcr->db));
 	    set_jcr_job_status(jcr, JS_Error);
@@ -688,7 +703,7 @@ msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
       }
       jcr->jr.JobFiles = jcr->JobFiles = file_index;
       jcr->jr.LastIndex = file_index;
-   } 
+   }
    if (is_bnet_error(fd)) {
       Jmsg1(jcr, M_FATAL, 0, _("<filed: Network error getting attributes. ERR=%s\n"),
 			bnet_strerror(fd));

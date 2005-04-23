@@ -7,7 +7,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2004 Kern Sibbald and John Walker
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -31,7 +31,7 @@
 
 extern char my_name[];
 extern CLIENT *me;		      /* our client resource */
-			
+
 /* Imported functions */
 extern int status_cmd(JCR *jcr);
 extern int qstatus_cmd(JCR *jcr);
@@ -58,7 +58,7 @@ static int open_sd_read_session(JCR *jcr);
 static int send_bootstrap_file(JCR *jcr);
 static int runbefore_cmd(JCR *jcr);
 static int runafter_cmd(JCR *jcr);
-static int run_cmd(JCR *jcr, char *cmd, const char *name);
+static bool run_cmd(JCR *jcr, char *cmd, const char *name);
 static void set_options(findFOPTS *fo, const char *opts);
 
 
@@ -70,8 +70,8 @@ struct s_cmds {
    int monitoraccess; /* specify if monitors have access to this function */
 };
 
-/*  
- * The following are the recognized commands from the Director. 
+/*
+ * The following are the recognized commands from the Director.
  */
 static struct s_cmds cmds[] = {
    {"backup",       backup_cmd,    0},
@@ -146,7 +146,7 @@ static char read_open[]    = "read open session = %s %ld %ld %ld %ld %ld %ld\n";
 static char read_data[]    = "read data %d\n";
 static char read_close[]   = "read close session %d\n";
 
-/* 
+/*
  * Accept requests from a Director
  *
  * NOTE! We are running as a separate thread
@@ -165,7 +165,7 @@ static char read_close[]   = "read close session %d\n";
  */
 void *handle_client_request(void *dirp)
 {
-   int i; 
+   int i;
    bool found, quit;
    JCR *jcr;
    BSOCK *dir = (BSOCK *)dirp;
@@ -208,7 +208,7 @@ void *handle_client_request(void *dirp)
 	    }
             Dmsg1(100, "Executing %s command.\n", cmds[i].cmd);
 	    if (!cmds[i].func(jcr)) {	      /* do command */
-	       quit = true;	    /* error or fully terminated,	get out */
+	       quit = true;	    /* error or fully terminated, get out */
                Dmsg0(20, "Quit command loop due to command error or Job done.\n");
 	    }
 	    break;
@@ -248,8 +248,13 @@ void *handle_client_request(void *dirp)
 	       regfree((regex_t *)fo->regex.get(k));
 	    }
 	    fo->regex.destroy();
+	    fo->regexdir.destroy();
+	    fo->regexfile.destroy();
 	    fo->wild.destroy();
+	    fo->wilddir.destroy();
+	    fo->wildfile.destroy();
 	    fo->base.destroy();
+	    fo->fstype.destroy();
 	    if (fo->reader) {
 	       free(fo->reader);
 	    }
@@ -268,8 +273,13 @@ void *handle_client_request(void *dirp)
 	 for (j=0; j<incexe->opts_list.size(); j++) {
 	    findFOPTS *fo = (findFOPTS *)incexe->opts_list.get(j);
 	    fo->regex.destroy();
+	    fo->regexdir.destroy();
+	    fo->regexfile.destroy();
 	    fo->wild.destroy();
+	    fo->wilddir.destroy();
+	    fo->wildfile.destroy();
 	    fo->base.destroy();
+	    fo->fstype.destroy();
 	 }
 	 incexe->opts_list.destroy();
 	 incexe->name_list.destroy();
@@ -286,7 +296,7 @@ void *handle_client_request(void *dirp)
 }
 
 /*
- * Hello from Director he must identify himself and provide his 
+ * Hello from Director he must identify himself and provide his
  *  password.
  */
 static int hello_cmd(JCR *jcr)
@@ -317,7 +327,7 @@ static int cancel_cmd(JCR *jcr)
 	    P(cjcr->mutex);
 	    cjcr->store_bsock->timed_out = 1;
 	    cjcr->store_bsock->terminated = 1;
-/* 
+/*
  * #if !defined(HAVE_CYGWIN) && !defined(HAVE_WIN32)
  */
 #if !defined(HAVE_CYGWIN)
@@ -350,7 +360,7 @@ static int setdebug_cmd(JCR *jcr)
    if (sscanf(dir->msg, "setdebug=%d trace=%d", &level, &trace_flag) != 2 || level < 0) {
       pm_strcpy(jcr->errmsg, dir->msg);
       bnet_fsend(dir, "2991 Bad setdebug command: %s\n", jcr->errmsg);
-      return 0;   
+      return 0;
    }
    debug_level = level;
    set_trace(trace_flag);
@@ -370,7 +380,7 @@ static int estimate_cmd(JCR *jcr)
       return 0;
    }
    make_estimate(jcr);
-   bnet_fsend(dir, OKest, jcr->num_files_examined, 
+   bnet_fsend(dir, OKest, jcr->num_files_examined,
       edit_uint64_with_commas(jcr->JobBytes, ed2));
    bnet_sig(dir, BNET_EOD);
    return 1;
@@ -385,7 +395,7 @@ static int job_cmd(JCR *jcr)
    POOLMEM *sd_auth_key;
 
    sd_auth_key = get_memory(dir->msglen);
-   if (sscanf(dir->msg, jobcmd,  &jcr->JobId, jcr->Job,  
+   if (sscanf(dir->msg, jobcmd,  &jcr->JobId, jcr->Job,
 	      &jcr->VolSessionId, &jcr->VolSessionTime,
 	      sd_auth_key) != 5) {
       pm_strcpy(jcr->errmsg, dir->msg);
@@ -402,7 +412,7 @@ static int job_cmd(JCR *jcr)
 
 static int runbefore_cmd(JCR *jcr)
 {
-   int stat;
+   bool ok;
    BSOCK *dir = jcr->dir_bsock;
    POOLMEM *cmd = get_memory(dir->msglen+1);
 
@@ -417,9 +427,9 @@ static int runbefore_cmd(JCR *jcr)
    unbash_spaces(cmd);
 
    /* Run the command now */
-   stat = run_cmd(jcr, cmd, "ClientRunBeforeJob");
+   ok = run_cmd(jcr, cmd, "ClientRunBeforeJob");
    free_memory(cmd);
-   if (stat) {
+   if (ok) {
       bnet_fsend(dir, OKRunBefore);
       return 1;
    } else {
@@ -451,32 +461,37 @@ static int runafter_cmd(JCR *jcr)
    return bnet_fsend(dir, OKRunAfter);
 }
 
-static int run_cmd(JCR *jcr, char *cmd, const char *name)
+static bool run_cmd(JCR *jcr, char *cmd, const char *name)
 {
    POOLMEM *ecmd = get_pool_memory(PM_FNAME);
    int status;
    BPIPE *bpipe;
    char line[MAXSTRING];
-   
+
    ecmd = edit_job_codes(jcr, ecmd, cmd, "");
    bpipe = open_bpipe(ecmd, 0, "r");
    free_pool_memory(ecmd);
    if (bpipe == NULL) {
-      Jmsg(jcr, M_FATAL, 0, _("%s could not execute\n"), name);
-      set_jcr_job_status(jcr, JS_FatalError);
-      return 0;
+      berrno be;
+      Jmsg(jcr, M_FATAL, 0, _("%s could not execute. ERR=%s\n"), name,
+	 be.strerror());
+      return false;
    }
    while (fgets(line, sizeof(line), bpipe->rfd)) {
-      Jmsg(jcr, M_INFO, 0, _("%s: %s"), name, line);
+      int len = strlen(line);
+      if (len > 0 && line[len-1] == '\n') {
+	 line[len-1] = 0;
+      }
+      Jmsg(jcr, M_INFO, 0, _("%s: %s\n"), name, line);
    }
    status = close_bpipe(bpipe);
    if (status != 0) {
-      Jmsg(jcr, M_FATAL, 0, _("%s returned non-zero status=%d\n"), name,
-	 status);
-      set_jcr_job_status(jcr, JS_FatalError);
-      return 0;
+      berrno be;
+      Jmsg(jcr, M_FATAL, 0, _("%s returned non-zero status=%d. ERR=%s\n"), name,
+	 status, be.strerror(status));
+      return false;
    }
-   return 1;
+   return true;
 }
 
 
@@ -518,8 +533,8 @@ static void add_fname_to_list(JCR *jcr, char *fname, int list)
       /* Copy File options */
       if (list == INC_LIST) {
 	 *q = 0;		      /* terminate options */
-	 strcpy(buf, fname);
-         strcat(buf, " ");
+	 bstrncpy(buf, fname, sizeof(buf));
+         bstrncat(buf, " ", sizeof(buf));
 	 optlen = strlen(buf);
       } else {
 	 optlen = 0;
@@ -549,8 +564,8 @@ static void add_fname_to_list(JCR *jcr, char *fname, int list)
       /* Copy File options */
       if (list == INC_LIST) {
 	 *q = 0;		      /* terminate options */
-	 strcpy(buf, fname);
-         strcat(buf, " ");
+	 bstrncpy(buf, fname, sizeof(buf));
+         bstrncat(buf, " ", sizeof(buf));
 	 optlen = strlen(buf);
       } else {
 	 optlen = 0;
@@ -575,8 +590,8 @@ static void add_fname_to_list(JCR *jcr, char *fname, int list)
    }
 }
 
-/* 
- * 
+/*
+ *
  * Get list of files/directories to include from Director
  *
  */
@@ -594,12 +609,12 @@ static int include_cmd(JCR *jcr)
    return bnet_fsend(dir, OKinc);
 }
 
-static bool init_fileset(JCR *jcr) 
+static bool init_fileset(JCR *jcr)
 {
    FF_PKT *ff;
    findFILESET *fileset;
 
-   if (!jcr->ff) {	
+   if (!jcr->ff) {
       return false;
    }
    ff = (FF_PKT *)jcr->ff;
@@ -625,8 +640,13 @@ static findFOPTS *start_options(FF_PKT *ff)
       findFOPTS *fo = (findFOPTS *)malloc(sizeof(findFOPTS));
       memset(fo, 0, sizeof(findFOPTS));
       fo->regex.init(1, true);
+      fo->regexdir.init(1, true);
+      fo->regexfile.init(1, true);
       fo->wild.init(1, true);
+      fo->wilddir.init(1, true);
+      fo->wildfile.init(1, true);
       fo->base.init(1, true);
+      fo->fstype.init(1, true);
       incexe->current_opts = fo;
       incexe->opts_list.append(fo);
    }
@@ -671,6 +691,7 @@ static void add_file_to_fileset(JCR *jcr, const char *fname, findFILESET *filese
       }
       break;
    case '<':
+      Dmsg0(100, "Doing < include on client.\n");
       p++;			/* skip over < */
       if ((ffd = fopen(p, "r")) == NULL) {
 	 berrno be;
@@ -680,6 +701,7 @@ static void add_file_to_fileset(JCR *jcr, const char *fname, findFILESET *filese
       }
       while (fgets(buf, sizeof(buf), ffd)) {
 	 strip_trailing_junk(buf);
+         Dmsg1(100, "%s\n", buf);
 	 fileset->incexe->name_list.append(bstrdup(buf));
       }
       fclose(ffd);
@@ -690,7 +712,7 @@ static void add_file_to_fileset(JCR *jcr, const char *fname, findFILESET *filese
    }
 }
 
-   
+
 static void add_fileset(JCR *jcr, const char *item)
 {
    FF_PKT *ff = (FF_PKT *)jcr->ff;
@@ -698,14 +720,34 @@ static void add_fileset(JCR *jcr, const char *item)
    int state = fileset->state;
    findFOPTS *current_opts;
 
+   /* Get code, optional subcode, and position item past the dividing space */
    Dmsg1(100, "%s\n", item);
    int code = item[0];
-   if (item[1] == ' ') {              /* If string follows */
-      item += 2;		      /* point to string */
+   if (code != '\0') {
+      ++item;
+   }
+   int subcode = ' ';               /* A space is always a valid subcode */
+   if (item[0] != '\0' && item[0] != ' ') {
+      subcode = item[0];
+      ++item;
+   }
+   if (*item == ' ') {
+      ++item;
    }
 
+   /* Skip all lines we receive after an error */
    if (state == state_error) {
       return;
+   }
+
+   /*
+    * The switch tests the code for validity.
+    * The subcode is always good if it is a space, otherwise we must confirm.
+    * We set state to state_error first assuming the subcode is invalid,
+    * requiring state to be set in cases below that handle subcodes.
+    */
+   if (subcode != ' ') {
+      state = state_error;
    }
    switch (code) {
    case 'I':
@@ -738,7 +780,11 @@ static void add_fileset(JCR *jcr, const char *item)
       int rc;
       char prbuf[500];
       preg = (regex_t *)malloc(sizeof(regex_t));
-      rc = regcomp(preg, item, REG_EXTENDED);
+      if (current_opts->flags & FO_IGNORECASE) {
+	 rc = regcomp(preg, item, REG_EXTENDED|REG_ICASE);
+      } else {
+	 rc = regcomp(preg, item, REG_EXTENDED);
+      }
       if (rc != 0) {
 	 regerror(rc, preg, prbuf, sizeof(prbuf));
 	 regfree(preg);
@@ -747,20 +793,41 @@ static void add_fileset(JCR *jcr, const char *item)
 	 state = state_error;
 	 break;
       }
-      current_opts->regex.append(preg);
       state = state_options;
+      if (subcode == ' ') {
+	 current_opts->regex.append(preg);
+      } else if (subcode == 'D') {
+	 current_opts->regexdir.append(preg);
+      } else if (subcode == 'F') {
+	 current_opts->regexfile.append(preg);
+      } else {
+	 state = state_error;
+      }
       break;
    case 'B':
       current_opts = start_options(ff);
       current_opts->base.append(bstrdup(item));
       state = state_options;
       break;
-   case 'W':
+   case 'X':
       current_opts = start_options(ff);
-      current_opts->wild.append(bstrdup(item));
+      current_opts->fstype.append(bstrdup(item));
       state = state_options;
       break;
-   case 'O':   
+   case 'W':
+      current_opts = start_options(ff);
+      state = state_options;
+      if (subcode == ' ') {
+	 current_opts->wild.append(bstrdup(item));
+      } else if (subcode == 'D') {
+	 current_opts->wilddir.append(bstrdup(item));
+      } else if (subcode == 'F') {
+	 current_opts->wildfile.append(bstrdup(item));
+      } else {
+	 state = state_error;
+      }
+      break;
+   case 'O':
       current_opts = start_options(ff);
       set_options(current_opts, item);
       state = state_options;
@@ -797,11 +864,26 @@ static bool term_fileset(JCR *jcr)
 	 for (k=0; k<fo->regex.size(); k++) {
             Dmsg1(400, "R %s\n", (char *)fo->regex.get(k));
 	 }
+	 for (k=0; k<fo->regexdir.size(); k++) {
+            Dmsg1(400, "RD %s\n", (char *)fo->regexdir.get(k));
+	 }
+	 for (k=0; k<fo->regexfile.size(); k++) {
+            Dmsg1(400, "RF %s\n", (char *)fo->regexfile.get(k));
+	 }
 	 for (k=0; k<fo->wild.size(); k++) {
             Dmsg1(400, "W %s\n", (char *)fo->wild.get(k));
 	 }
+	 for (k=0; k<fo->wilddir.size(); k++) {
+            Dmsg1(400, "WD %s\n", (char *)fo->wilddir.get(k));
+	 }
+	 for (k=0; k<fo->wildfile.size(); k++) {
+            Dmsg1(400, "WF %s\n", (char *)fo->wildfile.get(k));
+	 }
 	 for (k=0; k<fo->base.size(); k++) {
             Dmsg1(400, "B %s\n", (char *)fo->base.get(k));
+	 }
+	 for (k=0; k<fo->fstype.size(); k++) {
+            Dmsg1(400, "X %s\n", (char *)fo->fstype.get(k));
 	 }
 	 if (fo->reader) {
             Dmsg1(400, "D %s\n", fo->reader);
@@ -822,11 +904,26 @@ static bool term_fileset(JCR *jcr)
 	 for (k=0; k<fo->regex.size(); k++) {
             Dmsg1(400, "R %s\n", (char *)fo->regex.get(k));
 	 }
+	 for (k=0; k<fo->regexdir.size(); k++) {
+            Dmsg1(400, "RD %s\n", (char *)fo->regexdir.get(k));
+	 }
+	 for (k=0; k<fo->regexfile.size(); k++) {
+            Dmsg1(400, "RF %s\n", (char *)fo->regexfile.get(k));
+	 }
 	 for (k=0; k<fo->wild.size(); k++) {
             Dmsg1(400, "W %s\n", (char *)fo->wild.get(k));
 	 }
+	 for (k=0; k<fo->wilddir.size(); k++) {
+            Dmsg1(400, "WD %s\n", (char *)fo->wilddir.get(k));
+	 }
+	 for (k=0; k<fo->wildfile.size(); k++) {
+            Dmsg1(400, "WF %s\n", (char *)fo->wildfile.get(k));
+	 }
 	 for (k=0; k<fo->base.size(); k++) {
             Dmsg1(400, "B %s\n", (char *)fo->base.get(k));
+	 }
+	 for (k=0; k<fo->fstype.size(); k++) {
+            Dmsg1(400, "X %s\n", (char *)fo->fstype.get(k));
 	 }
       }
       for (j=0; j<incexe->name_list.size(); j++) {
@@ -861,6 +958,12 @@ static void set_options(findFOPTS *fo, const char *opts)
       case 'h':                 /* no recursion */
 	 fo->flags |= FO_NO_RECURSION;
 	 break;
+      case 'H':                 /* no hard link handling */
+	 fo->flags |= FO_NO_HARDLINK;
+	 break;
+      case 'i':
+	 fo->flags |= FO_IGNORECASE;
+	 break;
       case 'M':                 /* MD5 */
 	 fo->flags |= FO_MD5;
 	 break;
@@ -870,6 +973,8 @@ static void set_options(findFOPTS *fo, const char *opts)
       case 'p':                 /* use portable data format */
 	 fo->flags |= FO_PORTABLE;
 	 break;
+      case 'R':                 /* Resource forks and Finder Info */
+	 fo->flags |= FO_HFSPLUS;
       case 'r':                 /* read fifo */
 	 fo->flags |= FO_READFIFO;
 	 break;
@@ -911,11 +1016,11 @@ static void set_options(findFOPTS *fo, const char *opts)
 	 break;
       }
    }
-} 
+}
 
 
 /*
- * Director is passing his Fileset   
+ * Director is passing his Fileset
  */
 static int fileset_cmd(JCR *jcr)
 {
@@ -972,7 +1077,7 @@ static int bootstrap_cmd(JCR *jcr)
    bs = fopen(fname, "a+");           /* create file */
    if (!bs) {
       berrno be;
-      /* 
+      /*
        * Suck up what he is sending to us so that he will then
        *   read our error message.
        */
@@ -1005,8 +1110,6 @@ static int level_cmd(JCR *jcr)
 {
    BSOCK *dir = jcr->dir_bsock;
    POOLMEM *level, *buf = NULL;
-   struct tm tm;
-   time_t mtime;
    int mtime_only;
 
    level = get_memory(dir->msglen+1);
@@ -1017,29 +1120,17 @@ static int level_cmd(JCR *jcr)
    /* Base backup requested? */
    if (strcmp(level, "base") == 0) {
       jcr->JobLevel = L_BASE;
-   /* Full backup requested? */ 
+   /* Full backup requested? */
    } else if (strcmp(level, "full") == 0) {
       jcr->JobLevel = L_FULL;
-   /* 
-    * Backup requested since <date> <time>
-    *  This form is also used for incremental and differential
-    *  This code is deprecated.  See since_utime for new code.
-    */
-   } else if (strcmp(level, "since") == 0) {
-      jcr->JobLevel = L_SINCE;
-      if (sscanf(dir->msg, "level = since %d-%d-%d %d:%d:%d mtime_only=%d", 
-		 &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-		 &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &mtime_only) != 7) {
-	 goto bail_out;
-      }
-      tm.tm_year -= 1900;
-      tm.tm_mon  -= 1;
-      tm.tm_wday = tm.tm_yday = 0;		
-      tm.tm_isdst = -1;
-      mtime = mktime(&tm);
-      Dmsg2(100, "Got since time: %s mtime_only=%d\n", ctime(&mtime), mtime_only);
-      jcr->incremental = 1;	      /* set incremental or decremental backup */
-      jcr->mtime = mtime;	      /* set since time */
+   } else if (strcmp(level, "differential") == 0) {
+      jcr->JobLevel = L_DIFFERENTIAL;
+      free_memory(level);
+      return 1;
+   } else if (strcmp(level, "incremental") == 0) {
+      jcr->JobLevel = L_INCREMENTAL;
+      free_memory(level);
+      return 1;   
    /*
     * We get his UTC since time, then sync the clocks and correct it
     *	to agree with our clock.
@@ -1048,15 +1139,17 @@ static int level_cmd(JCR *jcr)
       buf = get_memory(dir->msglen+1);
       utime_t since_time, adj;
       btime_t his_time, bt_start, rt=0, bt_adj=0;
-      jcr->JobLevel = L_SINCE;
-      if (sscanf(dir->msg, "level = since_utime %s mtime_only=%d", 
-		 buf, &mtime_only) != 2) { 
+      if (jcr->JobLevel == L_NONE) {
+	 jcr->JobLevel = L_SINCE;     /* if no other job level set, do it now */
+      }
+      if (sscanf(dir->msg, "level = since_utime %s mtime_only=%d",
+		 buf, &mtime_only) != 2) {
 	 goto bail_out;
       }
       since_time = str_to_uint64(buf);	/* this is the since time */
       char ed1[50], ed2[50];
-      /* 
-       * Sync clocks by polling him for the time. We take	 
+      /*
+       * Sync clocks by polling him for the time. We take
        *   10 samples of his time throwing out the first two.
        */
       for (int i=0; i<10; i++) {
@@ -1082,7 +1175,7 @@ static int level_cmd(JCR *jcr)
       adj = btime_to_utime(bt_adj);
       since_time += adj;	      /* adjust for clock difference */
       if (adj != 0) {
-         Jmsg(jcr, M_INFO, 0, _("Since time adjusted by %d seconds.\n"), adj);
+         Jmsg(jcr, M_INFO, 0, _("DIR and FD clocks differ by %d seconds, FD automatically adjusting.\n"), adj);
       }
       bnet_sig(dir, BNET_EOD);
 
@@ -1120,7 +1213,7 @@ static int session_cmd(JCR *jcr)
    Dmsg1(100, "SessionCmd: %s", dir->msg);
    if (sscanf(dir->msg, sessioncmd, jcr->VolumeName,
 	      &jcr->VolSessionId, &jcr->VolSessionTime,
-	      &jcr->StartFile, &jcr->EndFile, 
+	      &jcr->StartFile, &jcr->EndFile,
 	      &jcr->StartBlock, &jcr->EndBlock) != 7) {
       pm_strcpy(jcr->errmsg, dir->msg);
       Jmsg(jcr, M_FATAL, 0, "Bad session command: %s", jcr->errmsg);
@@ -1150,7 +1243,7 @@ static int storage_cmd(JCR *jcr)
    Dmsg3(110, "Open storage: %s:%d ssl=%d\n", jcr->stored_addr, stored_port, enable_ssl);
    /* Open command communications with Storage daemon */
    /* Try to connect for 1 hour at 10 second intervals */
-   sd = bnet_connect(jcr, 10, (int)me->SDConnectTimeout, _("Storage daemon"), 
+   sd = bnet_connect(jcr, 10, (int)me->SDConnectTimeout, _("Storage daemon"),
 		     jcr->stored_addr, NULL, stored_port, 1);
    if (sd == NULL) {
       Jmsg(jcr, M_FATAL, 0, _("Failed to connect to Storage daemon: %s:%d\n"),
@@ -1175,11 +1268,11 @@ static int storage_cmd(JCR *jcr)
 }
 
 
-/*  
+/*
  * Do a backup. For now, we handle only Full and Incremental.
  */
 static int backup_cmd(JCR *jcr)
-{ 
+{
    BSOCK *dir = jcr->dir_bsock;
    BSOCK *sd = jcr->store_bsock;
    int ok = 0;
@@ -1198,12 +1291,12 @@ static int backup_cmd(JCR *jcr)
    bnet_fsend(dir, OKbackup);
    Dmsg1(110, "bfiled>dird: %s", dir->msg);
 
-   /* 
+   /*
     * Send Append Open Session to Storage daemon
     */
    bnet_fsend(sd, append_open);
    Dmsg1(110, ">stored: %s", sd->msg);
-   /* 
+   /*
     * Expect to receive back the Ticket number
     */
    if (bget_msg(sd) >= 0) {
@@ -1218,20 +1311,20 @@ static int backup_cmd(JCR *jcr)
       goto cleanup;
    }
 
-   /* 
+   /*
     * Send Append data command to Storage daemon
     */
    bnet_fsend(sd, append_data, jcr->Ticket);
    Dmsg1(110, ">stored: %s", sd->msg);
 
-   /* 
-    * Expect to get OK data 
+   /*
+    * Expect to get OK data
     */
    Dmsg1(110, "<stored: %s", sd->msg);
    if (!response(jcr, sd, OK_data, "Append Data")) {
       goto cleanup;
    }
-      
+
    /*
     * Send Files to Storage daemon
     */
@@ -1246,15 +1339,15 @@ static int backup_cmd(JCR *jcr)
 	 bnet_suppress_error_messages(sd, 1);
 	 goto cleanup;		      /* bail out now */
       }
-      /* 
+      /*
        * Expect to get response to append_data from Storage daemon
        */
       if (!response(jcr, sd, OK_append, "Append Data")) {
 	 set_jcr_job_status(jcr, JS_ErrorTerminated);
 	 goto cleanup;
       }
-     
-      /* 
+
+      /*
        * Send Append End Data to Storage daemon
        */
       bnet_fsend(sd, append_end, jcr->Ticket);
@@ -1285,20 +1378,20 @@ static int backup_cmd(JCR *jcr)
    }
 
 cleanup:
-   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles, 
-      edit_uint64(jcr->ReadBytes, ed1), 
-      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);	
+   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles,
+      edit_uint64(jcr->ReadBytes, ed1),
+      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);
    Dmsg1(110, "End FD msg: %s\n", dir->msg);
 
    return 0;			      /* return and stop command loop */
 }
 
-/*  
+/*
  * Do a Verify for Director
  *
  */
 static int verify_cmd(JCR *jcr)
-{ 
+{
    BSOCK *dir = jcr->dir_bsock;
    BSOCK *sd  = jcr->store_bsock;
    char level[100], ed1[50], ed2[50];
@@ -1306,7 +1399,7 @@ static int verify_cmd(JCR *jcr)
    jcr->JobType = JT_VERIFY;
    if (sscanf(dir->msg, verifycmd, level) != 1) {
       bnet_fsend(dir, "2994 Bad verify command: %s\n", dir->msg);
-      return 0;   
+      return 0;
    }
    if (strcasecmp(level, "init") == 0) {
       jcr->JobLevel = L_VERIFY_INIT;
@@ -1318,9 +1411,9 @@ static int verify_cmd(JCR *jcr)
       jcr->JobLevel = L_VERIFY_DATA;
    } else if (strcasecmp(level, "disk_to_catalog") == 0) {
       jcr->JobLevel = L_VERIFY_DISK_TO_CATALOG;
-   } else {   
+   } else {
       bnet_fsend(dir, "2994 Bad verify level: %s\n", dir->msg);
-      return 0;   
+      return 0;
    }
 
    bnet_fsend(dir, OKverify);
@@ -1338,7 +1431,7 @@ static int verify_cmd(JCR *jcr)
       start_dir_heartbeat(jcr);
       do_verify_volume(jcr);
       stop_dir_heartbeat(jcr);
-      /* 
+      /*
        * Send Close session command to Storage daemon
        */
       bnet_fsend(sd, read_close, jcr->Ticket);
@@ -1356,27 +1449,27 @@ static int verify_cmd(JCR *jcr)
       break;
    default:
       bnet_fsend(dir, "2994 Bad verify level: %s\n", dir->msg);
-      return 0; 
+      return 0;
    }
 
    bnet_sig(dir, BNET_EOD);
 
    /* Send termination status back to Dir */
-   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles, 
-      edit_uint64(jcr->ReadBytes, ed1), 
-      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);	
+   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles,
+      edit_uint64(jcr->ReadBytes, ed1),
+      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);
 
    /* Inform Director that we are done */
    bnet_sig(dir, BNET_TERMINATE);
    return 0;			      /* return and terminate command loop */
 }
 
-/*  
+/*
  * Do a Restore for Director
  *
  */
 static int restore_cmd(JCR *jcr)
-{ 
+{
    BSOCK *dir = jcr->dir_bsock;
    BSOCK *sd = jcr->store_bsock;
    POOLMEM *where;
@@ -1404,7 +1497,7 @@ static int restore_cmd(JCR *jcr)
    if (where[0] == '/' && where[1] == 0) {
       where[0] = 0;
    }
-      
+
    Dmsg2(150, "Got replace %c, where=%s\n", replace, where);
    unbash_spaces(where);
    jcr->where = bstrdup(where);
@@ -1425,19 +1518,19 @@ static int restore_cmd(JCR *jcr)
 
    set_jcr_job_status(jcr, JS_Running);
 
-   /* 
+   /*
     * Do restore of files and data
     */
    start_dir_heartbeat(jcr);
    do_restore(jcr);
    stop_dir_heartbeat(jcr);
-   
+
    set_jcr_job_status(jcr, JS_Terminated);
    if (jcr->JobStatus != JS_Terminated) {
       bnet_suppress_error_messages(sd, 1);
    }
 
-   /* 
+   /*
     * Send Close session command to Storage daemon
     */
    bnet_fsend(sd, read_close, jcr->Ticket);
@@ -1454,9 +1547,9 @@ bail_out:
       set_jcr_job_status(jcr, JS_ErrorTerminated);
    }
    /* Send termination status back to Dir */
-   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles, 
-      edit_uint64(jcr->ReadBytes, ed1), 
-      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);	
+   bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles,
+      edit_uint64(jcr->ReadBytes, ed1),
+      edit_uint64(jcr->JobBytes, ed2), jcr->Errors);
 
    /* Inform Director that we are done */
    bnet_sig(dir, BNET_TERMINATE);
@@ -1476,15 +1569,15 @@ static int open_sd_read_session(JCR *jcr)
    Dmsg4(120, "VolSessId=%ld VolsessT=%ld SF=%ld EF=%ld\n",
       jcr->VolSessionId, jcr->VolSessionTime, jcr->StartFile, jcr->EndFile);
    Dmsg2(120, "JobId=%d vol=%s\n", jcr->JobId, "DummyVolume");
-   /* 
+   /*
     * Open Read Session with Storage daemon
     */
    bnet_fsend(sd, read_open, jcr->VolumeName,
-      jcr->VolSessionId, jcr->VolSessionTime, jcr->StartFile, jcr->EndFile, 
+      jcr->VolSessionId, jcr->VolSessionTime, jcr->StartFile, jcr->EndFile,
       jcr->StartBlock, jcr->EndBlock);
    Dmsg1(110, ">stored: %s", sd->msg);
 
-   /* 
+   /*
     * Get ticket number
     */
    if (bget_msg(sd) >= 0) {
@@ -1503,13 +1596,13 @@ static int open_sd_read_session(JCR *jcr)
       return 0;
    }
 
-   /* 
+   /*
     * Start read of data with Storage daemon
     */
    bnet_fsend(sd, read_data, jcr->Ticket);
    Dmsg1(110, ">stored: %s", sd->msg);
 
-   /* 
+   /*
     * Get OK data
     */
    if (!response(jcr, sd, OK_data, "Read Data")) {
@@ -1518,11 +1611,11 @@ static int open_sd_read_session(JCR *jcr)
    return 1;
 }
 
-/* 
+/*
  * Destroy the Job Control Record and associated
  * resources (sockets).
  */
-static void filed_free_jcr(JCR *jcr) 
+static void filed_free_jcr(JCR *jcr)
 {
    if (jcr->store_bsock) {
       bnet_close(jcr->store_bsock);
@@ -1539,7 +1632,7 @@ static void filed_free_jcr(JCR *jcr)
       free_pool_memory(jcr->RunAfterJob);
    }
 
-      
+
    return;
 }
 
@@ -1560,7 +1653,7 @@ int response(JCR *jcr, BSOCK *sd, char *resp, const char *cmd)
       if (strcmp(sd->msg, resp) == 0) {
 	 return 1;
       }
-   } 
+   }
    if (job_canceled(jcr)) {
       return 0; 		      /* if canceled avoid useless error messages */
    }
@@ -1589,16 +1682,16 @@ static int send_bootstrap_file(JCR *jcr)
    bs = fopen(jcr->RestoreBootstrap, "r");
    if (!bs) {
       berrno be;
-      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"), 
+      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"),
 	 jcr->RestoreBootstrap, be.strerror());
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       goto bail_out;
    }
-   sd->msglen = pm_strcpy(sd->msg, bootstrap);	
+   sd->msglen = pm_strcpy(sd->msg, bootstrap);
    bnet_send(sd);
    while (fgets(buf, sizeof(buf), bs)) {
       sd->msglen = Mmsg(sd->msg, "%s", buf);
-      bnet_send(sd);	   
+      bnet_send(sd);
    }
    bnet_sig(sd, BNET_EOD);
    fclose(bs);
