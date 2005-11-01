@@ -162,7 +162,7 @@ bacService::ShowStatus()
 #define BAC_SERVICEDISPLAYNAME "Bacula File Server"
 
 // List other required serves 
-#define BAC_DEPENDENCIES __TEXT("tcpip\0afd\0+File System\0") 
+#define BAC_DEPENDENCIES       ""
 
 
 // Internal service state
