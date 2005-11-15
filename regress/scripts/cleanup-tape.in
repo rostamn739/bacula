@@ -1,8 +1,0 @@
-#!/bin/sh
-#
-# Cleanup left over files -- both before and after test run
-#
-scripts/cleanup
-
-mt -f @tape_drive@ rewind
-mt -f @tape_drive@ weof

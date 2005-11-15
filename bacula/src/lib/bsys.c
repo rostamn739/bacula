@@ -216,8 +216,6 @@ void *bcalloc (size_t size1, size_t size2)
    return buf;
 }
 
-/* Code now in src/lib/bsnprintf.c */
-#ifndef USE_BSNPRINTF
 
 #define BIG_BUF 5000
 /*
@@ -261,7 +259,6 @@ int bvsnprintf(char *str, int32_t size, const char  *format, va_list ap)
    return len;
 #endif
 }
-#endif /* USE_BSNPRINTF */
 
 #ifndef HAVE_LOCALTIME_R
 

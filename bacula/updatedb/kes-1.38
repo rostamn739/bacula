@@ -1,0 +1,19 @@
+              Technical notes on version 1.38  
+                        Kern Sibbald
+
+General:
+
+Changes to 1.38.0:
+- Modify configure.in to add execute option to sqlite3 catalog  
+  scripts.
+- Create update_xxx_table_8_to_9 scripts for updatedb
+- Fix wrong variable in bpipe.c debug output reported by user.
+- Fix improper placement of encode_and_send_attributes() in
+  FD backup.c causing first file of non-portable Win32 backup
+  to have wrong stream. Reported by Thorsten.
+- Move the -lcrypt for PostgreSQL after the PostgreSQL libs in
+  autoconf/bacula-macros/db.m4 as suggested by user.  Fixes bug #457.
+- Remove @STATIC_CONS@ from tray-monitor Makefile as suggested
+  by user. Fixes bug #456.
+
+Released 1.38.0 (28Oct05): 31 October 2005
