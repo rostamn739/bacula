@@ -35,7 +35,6 @@ static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 #ifdef HAVE_LIBZ
 static const char *zlib_strerror(int stat);
 #endif
-
 int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       uint64_t *addr, int flags);
 
@@ -227,7 +226,7 @@ void do_restore(JCR *jcr)
 
          attr->data_stream = decode_stat(attr->attr, &attr->statp, &attr->LinkFI);
 
-         if (!is_restore_stream_supported(attr->data_stream)) {
+         if (!is_stream_supported(attr->data_stream)) {
             if (!non_support_data++) {
                Jmsg(jcr, M_ERROR, 0, _("%s stream not supported on this Client.\n"),
                   stream_to_ascii(attr->data_stream));
@@ -291,12 +290,6 @@ void do_restore(JCR *jcr)
                   || stream == STREAM_WIN32_GZIP_DATA) {
                flags |= FO_GZIP;
             }
-
-            if (is_win32_stream(stream) && !have_win32_api()) {
-               set_portable_backup(&bfd);
-               flags |= FO_WIN32DECOMP;    /* "decompose" BackupWrite data */
-            }
-
             if (extract_data(jcr, &bfd, sd->msg, sd->msglen, &fileAddr, flags) < 0) {
                extract = false;
                bclose(&bfd);
@@ -541,14 +534,7 @@ int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       Dmsg2(30, "Write %u bytes, total before write=%s\n", wsize, edit_uint64(jcr->JobBytes, ec1));
    }
 
-   if (flags & FO_WIN32DECOMP) {
-      if (!processWin32BackupAPIBlock(bfd, wbuf, wsize)) {
-         berrno be;
-         Jmsg2(jcr, M_ERROR, 0, _("Write error in Win32 Block Decomposition on %s: %s\n"), 
-               jcr->last_fname, be.strerror(bfd->berrno));
-         return -1;
-      }
-   } else if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
+   if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
       berrno be;
       Jmsg2(jcr, M_ERROR, 0, _("Write error on %s: %s\n"), 
             jcr->last_fname, be.strerror(bfd->berrno));

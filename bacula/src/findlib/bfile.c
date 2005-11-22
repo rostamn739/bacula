@@ -12,14 +12,19 @@
    Copyright (C) 2003-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   version 2 as amended with additional clauses defined in the
-   file LICENSE in the main source directory.
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-   the file LICENSE for additional details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public
+   License along with this program; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+   MA 02111-1307, USA.
 
  */
 
@@ -92,140 +97,6 @@ const char *stream_to_ascii(int stream)
    }
 }
 
-   
-void int64_LE2BE(int64_t* pBE, const int64_t v)
-{
-   /* convert little endian to big endian */
-   if (htonl(1) != 1L) { /* no work if on little endian machine */
-           memcpy(pBE, &v, sizeof(int64_t));
-   } else {
-           int i;
-           uint8_t rv[sizeof(int64_t)];
-           uint8_t *pv = (uint8_t *) &v;
-
-           for (i = 0; i < 8; i++) {
-              rv[i] = pv[7 - i];
-           }
-           memcpy(pBE, &rv, sizeof(int64_t));
-   }    
-}
-
-
-void int32_LE2BE(int32_t* pBE, const int32_t v)
-{
-   /* convert little endian to big endian */
-   if (htonl(1) != 1L) { /* no work if on little endian machine */
-           memcpy(pBE, &v, sizeof(int32_t));
-   } else {
-           int i;
-           uint8_t rv[sizeof(int32_t)];
-           uint8_t *pv = (uint8_t *) &v;
-
-           for (i = 0; i < 4; i++) {
-              rv[i] = pv[3 - i];
-           }
-           memcpy(pBE, &rv, sizeof(int32_t));
-   }    
-}
-
-
-bool processWin32BackupAPIBlock (BFILE *bfd, void *pBuffer, ssize_t dwSize)
-{   
-   /* pByte contains the buffer 
-      dwSize the len to be processed.  function assumes to be
-      called in successive incremental order over the complete
-      BackupRead stream beginning at pos 0 and ending at the end.
-    */
-
-   PROCESS_WIN32_BACKUPAPIBLOCK_CONTEXT* pContext = &(bfd->win32DecompContext);
-   bool bContinue = false;
-   int64_t dwDataOffset = 0;
-   int64_t dwDataLen;
-
-   /* Win32 Stream Header size without name of stream.
-    * = sizeof (WIN32_STREAM_ID)- sizeof(WCHAR*); 
-    */
-   int32_t dwSizeHeader = 20; 
-
-   do {               
-      if (pContext->liNextHeader >= dwSize) {                        
-         dwDataLen = dwSize-dwDataOffset;
-         bContinue = false; /* 1 iteration is enough */
-      }
-      else {                        
-         dwDataLen = pContext->liNextHeader-dwDataOffset;
-         bContinue = true; /* multiple iterations may be necessary */
-      }
-
-      /* flush */
-      /* copy block of real DATA */
-      if (pContext->bIsInData) {
-         if (bwrite(bfd, ((char *)pBuffer)+dwDataOffset, dwDataLen) != (ssize_t)dwDataLen)
-            return false;         
-      }
-
-      if (pContext->liNextHeader < dwSize) {/* is a header in this block ? */
-         int32_t dwOffsetTarget;
-         int32_t dwOffsetSource;
-            
-         if (pContext->liNextHeader < 0) {
-            /* start of header was before this block, so we
-             * continue with the part in the current block 
-             */
-            dwOffsetTarget = -pContext->liNextHeader;        
-            dwOffsetSource = 0;                            
-         } else {
-            /* start of header is inside of this block */
-            dwOffsetTarget = 0;
-            dwOffsetSource = pContext->liNextHeader;                        
-         }
-
-         int32_t dwHeaderPartLen = dwSizeHeader-dwOffsetTarget;
-         bool bHeaderIsComplete;
-
-         if (dwHeaderPartLen <= dwSize-dwOffsetSource) 
-            /* header (or rest of header) is completely available
-               in current block 
-             */
-            bHeaderIsComplete = true;
-         else  {
-            /* header will continue in next block */
-            bHeaderIsComplete = false;
-            dwHeaderPartLen = dwSize-dwOffsetSource;
-         }
-
-         /* copy the available portion of header to persistent copy */
-         memcpy(((char *)&pContext->header_stream)+dwOffsetTarget, ((char *)pBuffer)+dwOffsetSource, dwHeaderPartLen);
-
-         /* recalculate position of next header */
-         if (bHeaderIsComplete) {
-            /* convert stream name size (32 bit little endian) to machine type */
-            int32_t dwNameSize; 
-            int32_LE2BE (&dwNameSize, pContext->header_stream.dwStreamNameSize);
-            dwDataOffset = dwNameSize+pContext->liNextHeader+dwSizeHeader;
-            
-            /* convert stream size (64 bit little endian) to machine type */
-            int64_LE2BE (&(pContext->liNextHeader), pContext->header_stream.Size);
-            pContext->liNextHeader += dwDataOffset;
-
-            pContext->bIsInData = pContext->header_stream.dwStreamId == WIN32_BACKUP_DATA;
-            if (dwDataOffset == dwSize)
-                  bContinue = false;
-         }
-         else {
-            /* stop and continue with next block */
-            bContinue = false;
-            pContext->bIsInData = false;
-         }
-      }                
-   } while (bContinue);    
-
-   /* set "NextHeader" relative to the beginning of the next block */
-   pContext->liNextHeader-= dwSize;
-
-   return TRUE;
-}
-
 
 
 /* ===============================================================
@@ -293,22 +164,22 @@ bool have_win32_api()
 
 
 /*
- * Return true  if we support the stream
- *        false if we do not support the stream
- *
- *  This code is running under Win32, so we
- *    do not need #ifdef on MACOS ...
+ * Return 1 if we support the stream
+ *        0 if we do not support the stream
  */
-bool is_restore_stream_supported(int stream)
+bool is_stream_supported(int stream)
 {
+   /* No Win32 backup on this machine */
    switch (stream) {
-
-/* Streams known not to be supported */
 #ifndef HAVE_LIBZ
    case STREAM_GZIP_DATA:
    case STREAM_SPARSE_GZIP_DATA:
-   case STREAM_WIN32_GZIP_DATA:
+      return 0;
 #endif
+   case STREAM_WIN32_DATA:
+   case STREAM_WIN32_GZIP_DATA:
+      return have_win32_api();
+
    case STREAM_MACOS_FORK_DATA:
    case STREAM_HFSPLUS_ATTRIBUTES:
       return false;
@@ -317,9 +188,7 @@ bool is_restore_stream_supported(int stream)
 #ifdef HAVE_LIBZ
    case STREAM_GZIP_DATA:
    case STREAM_SPARSE_GZIP_DATA:
-   case STREAM_WIN32_GZIP_DATA:
 #endif
-   case STREAM_WIN32_DATA:
    case STREAM_UNIX_ATTRIBUTES:
    case STREAM_FILE_DATA:
    case STREAM_MD5_SIGNATURE:
@@ -345,7 +214,7 @@ int bopen(BFILE *bfd, const char *fname, int flags, mode_t mode)
    POOLMEM *win32_fname_wchar;
 
    DWORD dwaccess, dwflags, dwshare;
-
+   
    /* Convert to Windows path format */
    win32_fname = get_pool_memory(PM_FNAME);
    win32_fname_wchar = get_pool_memory(PM_FNAME);
@@ -464,8 +333,6 @@ int bopen(BFILE *bfd, const char *fname, int flags, mode_t mode)
    }
    bfd->errmsg = NULL;
    bfd->lpContext = NULL;
-   bfd->win32DecompContext.bIsInData = false;
-   bfd->win32DecompContext.liNextHeader = 0;
    free_pool_memory(win32_fname_wchar);
    free_pool_memory(win32_fname);
    return bfd->mode == BF_CLOSED ? -1 : 1;
@@ -664,18 +531,17 @@ bool set_prog(BFILE *bfd, char *prog, JCR *jcr)
 
 }
 
-/* 
- * This code is running on a non-Win32 machine 
- */
-bool is_restore_stream_supported(int stream)
+
+bool is_stream_supported(int stream)
 {
    /* No Win32 backup on this machine */
-     switch (stream) {
+   switch (stream) {
 #ifndef HAVE_LIBZ
    case STREAM_GZIP_DATA:
    case STREAM_SPARSE_GZIP_DATA:
-   case STREAM_WIN32_GZIP_DATA:    
 #endif
+   case STREAM_WIN32_DATA:
+   case STREAM_WIN32_GZIP_DATA:
 #ifndef HAVE_DARWIN_OS
    case STREAM_MACOS_FORK_DATA:
    case STREAM_HFSPLUS_ATTRIBUTES:
@@ -686,9 +552,7 @@ bool is_restore_stream_supported(int stream)
 #ifdef HAVE_LIBZ
    case STREAM_GZIP_DATA:
    case STREAM_SPARSE_GZIP_DATA:
-   case STREAM_WIN32_GZIP_DATA:    
 #endif
-   case STREAM_WIN32_DATA:
    case STREAM_UNIX_ATTRIBUTES:
    case STREAM_FILE_DATA:
    case STREAM_MD5_SIGNATURE:
@@ -701,12 +565,42 @@ bool is_restore_stream_supported(int stream)
    case STREAM_MACOS_FORK_DATA:
    case STREAM_HFSPLUS_ATTRIBUTES:
 #endif
-   case 0:   /* compatibility with old tapes */
+   case 0:                            /* compatibility with old tapes */
       return true;
 
    }
-   return false;
+   return 0;
 }
+
+/* Old file reader code */
+#ifdef xxx
+   if (bfd->prog) {
+      POOLMEM *ecmd = get_pool_memory(PM_FNAME);
+      ecmd = edit_job_codes(bfd->jcr, ecmd, bfd->prog, fname);
+      const char *pmode;
+      if (flags & O_RDONLY) {
+         pmode = "r";
+      } else {
+         pmode = "w";
+      }
+      bfd->bpipe = open_bpipe(ecmd, 0, pmode);
+      if (bfd->bpipe == NULL) {
+         bfd->berrno = errno;
+         bfd->fid = -1;
+         free_pool_memory(ecmd);
+         return -1;
+      }
+      free_pool_memory(ecmd);
+      if (flags & O_RDONLY) {
+         bfd->fid = fileno(bfd->bpipe->rfd);
+      } else {
+         bfd->fid = fileno(bfd->bpipe->wfd);
+      }
+      errno = 0;
+      return bfd->fid;
+   }
+#endif
+
 
 int bopen(BFILE *bfd, const char *fname, int flags, mode_t mode)
 {
@@ -721,10 +615,6 @@ int bopen(BFILE *bfd, const char *fname, int flags, mode_t mode)
    bfd->berrno = errno;
    Dmsg1(400, "Open file %d\n", bfd->fid);
    errno = bfd->berrno;
-
-   bfd->win32DecompContext.bIsInData = false;
-   bfd->win32DecompContext.liNextHeader = 0;
-
    return bfd->fid;
 }
 

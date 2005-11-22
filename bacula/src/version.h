@@ -3,7 +3,7 @@
  */
 
 #undef  VERSION
-#define VERSION "1.39.0"
+#define VERSION "1.38.2"
 #define BDATE   "20 November 2005"
 #define LSMDATE "20Nov05"
 
@@ -15,7 +15,7 @@
 #define TRACE_FILE 1
 
 /* If this is set stdout will not be closed on startup */
-#define DEVELOPER 1
+/* #define DEVELOPER 1 */
 
 /* #define USE_BSNPRINTF */
 
