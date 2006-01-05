@@ -423,7 +423,7 @@ void store_password(LEX *lc, RES_ITEM *item, int index, int pass)
 {
    unsigned int i, j;
    struct MD5Context md5c;
-   unsigned char digest[CRYPTO_DIGEST_MD5_SIZE];
+   unsigned char signature[16];
    char sig[100];
 
 
@@ -431,9 +431,9 @@ void store_password(LEX *lc, RES_ITEM *item, int index, int pass)
    if (pass == 1) {
       MD5Init(&md5c);
       MD5Update(&md5c, (unsigned char *) (lc->str), lc->str_len);
-      MD5Final(digest, &md5c);
-      for (i = j = 0; i < sizeof(digest); i++) {
-         sprintf(&sig[j], "%02x", digest[i]);
+      MD5Final(signature, &md5c);
+      for (i = j = 0; i < sizeof(signature); i++) {
+         sprintf(&sig[j], "%02x", signature[i]);
          j += 2;
       }
       *(item->value) = bstrdup(sig);

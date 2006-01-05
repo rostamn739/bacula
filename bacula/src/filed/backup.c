@@ -27,7 +27,7 @@
 
 /* Forward referenced functions */
 static int save_file(FF_PKT *ff_pkt, void *pkt, bool top_level);
-static int send_data(JCR *jcr, int stream, FF_PKT *ff_pkt, DIGEST *digest, DIGEST *signature_digest);
+static int send_data(JCR *jcr, int stream, FF_PKT *ff_pkt, struct CHKSUM *chksum);
 static bool encode_and_send_attributes(JCR *jcr, FF_PKT *ff_pkt, int &data_stream);
 static bool read_and_send_acl(JCR *jcr, int acltype, int stream);
 
@@ -47,8 +47,6 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 {
    BSOCK *sd;
    bool ok = true;
-   // TODO landonf: Allow user to specify encryption algorithm
-   crypto_cipher_t cipher = CRYPTO_CIPHER_AES_128_CBC;
 
    sd = jcr->store_bsock;
 
@@ -81,11 +79,6 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
    jcr->compress_buf_size = jcr->buf_size + ((jcr->buf_size+999) / 1000) + 30;
    jcr->compress_buf = get_memory(jcr->compress_buf_size);
 
-   if (jcr->pki_encrypt) {
-      /* Create per-job session encryption context */
-      jcr->pki_recipients = crypto_recipients_new(cipher, jcr->pki_readers);
-   }
-
    Dmsg1(300, "set_find_options ff=%p\n", jcr->ff);
    set_find_options((FF_PKT *)jcr->ff, jcr->incremental, jcr->mtime);
    Dmsg0(300, "start find files\n");
@@ -115,11 +108,6 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
       free_pool_memory(jcr->compress_buf);
       jcr->compress_buf = NULL;
    }
-
-   if (jcr->pki_recipients) {
-      crypto_recipients_free(jcr->pki_recipients);
-   }
-
    Dmsg1(100, "end blast_data ok=%d\n", ok);
    return ok;
 }
@@ -137,15 +125,7 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
 {
    int stat, data_stream;
-   DIGEST *digest = NULL;
-   DIGEST *signing_digest = NULL;
-   int digest_stream = STREAM_NONE;
-   // TODO landonf: Allow the user to specify the digest algorithm
-#ifdef HAVE_SHA2
-   crypto_digest_t signing_algorithm = CRYPTO_DIGEST_SHA256;
-#else
-   crypto_digest_t signing_algorithm = CRYPTO_DIGEST_SHA1;
-#endif
+   struct CHKSUM chksum;
    BSOCK *sd;
    JCR *jcr = (JCR *)vjcr;
 
@@ -244,51 +224,13 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
 
    Dmsg1(130, "bfiled: sending %s to stored\n", ff_pkt->fname);
 
-   /*
-    * Setup for digest handling. If this fails, the digest will be set to NULL
-    * and not used.
-    */
-   if (ff_pkt->flags & FO_MD5) {
-      digest = crypto_digest_new(CRYPTO_DIGEST_MD5);
-      digest_stream = STREAM_MD5_DIGEST;
-
-   } else if (ff_pkt->flags & FO_SHA1) {
-      digest = crypto_digest_new(CRYPTO_DIGEST_SHA1);
-      digest_stream = STREAM_SHA1_DIGEST;
-
-   } else if (ff_pkt->flags & FO_SHA256) {
-      digest = crypto_digest_new(CRYPTO_DIGEST_SHA256);
-      digest_stream = STREAM_SHA256_DIGEST;
-
-   } else if (ff_pkt->flags & FO_SHA512) {
-      digest = crypto_digest_new(CRYPTO_DIGEST_SHA512);
-      digest_stream = STREAM_SHA512_DIGEST;
-   }
-
-   /* Did digest initialization fail? */
-   if (digest_stream != STREAM_NONE && digest == NULL) {
-      Jmsg(jcr, M_WARNING, 0, _("%s digest initialization failed\n"),
-         stream_to_ascii(digest_stream));
-   }
 
    /*
-    * Set up signature digest handling. If this fails, the signature digest will be set to
-    * NULL and not used.
+    * Setup for signature handling.
+    * Then initialise the file descriptor we use for data and other streams.
     */
-   // TODO landonf: We should really only calculate the digest once, for both verification and signing.
-   if (jcr->pki_sign) {
-      signing_digest = crypto_digest_new(signing_algorithm);
-   }
+   chksum_init(&chksum, ff_pkt->flags);
 
-   /* Full-stop if a failure occured initializing the signature digest */
-   if (jcr->pki_sign && signing_digest == NULL) {
-      Jmsg(jcr, M_NOTSAVED, 0, _("%s signature digest initialization failed\n"),
-         stream_to_ascii(signing_algorithm));
-      jcr->Errors++;
-      return 1;
-   }
-
-   /* Initialise the file descriptor we use for data and other streams. */
    binit(&ff_pkt->bfd);
    if (ff_pkt->flags & FO_PORTABLE) {
       set_portable_backup(&ff_pkt->bfd); /* disable Win32 BackupRead() */
@@ -301,7 +243,6 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       }
    }
 
-   /* Send attributes -- must be done after binit() */
    if (!encode_and_send_attributes(jcr, ff_pkt, data_stream)) {
       return 0;
    }
@@ -338,7 +279,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
          stop_thread_timer(tid);
          tid = NULL;
       }
-      stat = send_data(jcr, data_stream, ff_pkt, digest, signing_digest);
+      stat = send_data(jcr, data_stream, ff_pkt, &chksum);
       bclose(&ff_pkt->bfd);
       if (!stat) {
          return 0;
@@ -364,7 +305,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
          }
          flags = ff_pkt->flags;
          ff_pkt->flags &= ~(FO_GZIP|FO_SPARSE);
-         stat = send_data(jcr, STREAM_MACOS_FORK_DATA, ff_pkt, digest);
+         stat = send_data(jcr, STREAM_MACOS_FORK_DATA, ff_pkt, &chksum);
          ff_pkt->flags = flags;
          bclose(&ff_pkt->bfd);
          if (!stat) {
@@ -377,12 +318,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       Dmsg1(300, "bfiled>stored:header %s\n", sd->msg);
       memcpy(sd->msg, ff_pkt->hfsinfo.fndrinfo, 32);
       sd->msglen = 32;
-      if (digest) {
-         crypto_digest_update(digest, sd->msg, sd->msglen);
-      }
-      if (signature_digest) {
-         crypto_digest_update(signature_digest, sd->msg, sd->msglen);
-      }
+      chksum_update(&chksum, (unsigned char *)sd->msg, sd->msglen);
       bnet_send(sd);
       bnet_sig(sd, BNET_EOD);
    }
@@ -401,78 +337,25 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       }
    }
 
-   /* Terminate the signing digest and send it to the Storage daemon */
-   if (signing_digest) {
-      SIGNATURE *sig;
-      size_t size = 0;
-      void *buf;
-
-      if ((sig = crypto_sign_new()) == NULL) {
-         Jmsg(jcr, M_FATAL, 0, _("Failed to allocate memory for stream signature.\n"));
-         return 0;
+   /* Terminate any signature and send it to Storage daemon and the Director */
+   if (chksum.updated) {
+      int stream = 0;
+      chksum_final(&chksum);
+      if (chksum.type == CHKSUM_MD5) {
+         stream = STREAM_MD5_SIGNATURE;
+      } else if (chksum.type == CHKSUM_SHA1) {
+         stream = STREAM_SHA1_SIGNATURE;
+      } else {
+         Jmsg1(jcr, M_WARNING, 0, _("Unknown signature type %i.\n"), chksum.type);
       }
-
-      if (crypto_sign_add_signer(sig, signing_digest, jcr->pki_keypair) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
-         return 0;
-      }
-
-      /* Get signature size */
-      if (crypto_sign_encode(sig, NULL, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
-         return 0;
-      }
-
-      /* Allocate signature data buffer */
-      buf = malloc(size);
-      if (!buf) {
-         free(buf);
-         return 0;
-      }
-
-      /* Encode signature data */
-      if (crypto_sign_encode(sig, buf, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
-         return 0;
-      }
-
-      /* Send our header */
-      bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, STREAM_SIGNED_DIGEST);
-      Dmsg1(300, "bfiled>stored:header %s\n", sd->msg);
-
-      /* Grow the bsock buffer to fit our message if necessary */
-      if ((size_t) sizeof_pool_memory(sd->msg) < size) {
-         sd->msg = realloc_pool_memory(sd->msg, size);
-      }
-
-      /* Copy our message over and send it */
-      memcpy(sd->msg, buf, size);
-      sd->msglen = size;
-      bnet_send(sd);
-      bnet_sig(sd, BNET_EOD);              /* end of checksum */
-
-      crypto_digest_free(signing_digest);
-      crypto_sign_free(sig);        
-      free(buf);
-   }
-
-   /* Terminate any digest and send it to Storage daemon and the Director */
-   if (digest) {
-      char md[CRYPTO_DIGEST_MAX_SIZE];
-      size_t size;
-
-      size = sizeof(md);
-
-      if (crypto_digest_finalize(digest, &md, &size)) {
-         bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, digest_stream);
+      if (stream != 0) {
+         bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, stream);
          Dmsg1(300, "bfiled>stored:header %s\n", sd->msg);
-         memcpy(sd->msg, md, size);
-         sd->msglen = size;
+         memcpy(sd->msg, chksum.signature, chksum.length);
+         sd->msglen = chksum.length;
          bnet_send(sd);
          bnet_sig(sd, BNET_EOD);              /* end of checksum */
       }
-
-      crypto_digest_free(digest);
    }
 
    return 1;
@@ -488,7 +371,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
  * Currently this is not a problem as the only other stream, resource forks,
  * are not handled as sparse files.
  */
-int send_data(JCR *jcr, int stream, FF_PKT *ff_pkt, DIGEST *digest, DIGEST *signing_digest)
+static int send_data(JCR *jcr, int stream, FF_PKT *ff_pkt, struct CHKSUM *chksum)
 {
    BSOCK *sd = jcr->store_bsock;
    uint64_t fileAddr = 0;             /* file address */
@@ -580,14 +463,7 @@ int send_data(JCR *jcr, int stream, FF_PKT *ff_pkt, DIGEST *digest, DIGEST *sign
       fileAddr += sd->msglen;
 
       /* Update checksum if requested */
-      if (digest) {
-         crypto_digest_update(digest, rbuf, sd->msglen);
-      }
-
-      /* Update signing digest if requested */
-      if (signing_digest) {
-         crypto_digest_update(signing_digest, rbuf, sd->msglen);
-      }
+      chksum_update(chksum, (unsigned char *)rbuf, sd->msglen);
 
 #ifdef HAVE_LIBZ
       /* Do compression if turned on */

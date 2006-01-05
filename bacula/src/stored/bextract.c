@@ -425,14 +425,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 #endif
       break;
 
-   case STREAM_MD5_DIGEST:
-   case STREAM_SHA1_DIGEST:
-   case STREAM_SHA256_DIGEST:
-   case STREAM_SHA512_DIGEST:
-      break;
-
-   case STREAM_SIGNED_DIGEST:
-      // TODO landonf: Investigate signed digest support in the storage daemon
+   case STREAM_MD5_SIGNATURE:
+   case STREAM_SHA1_SIGNATURE:
       break;
 
    case STREAM_PROGRAM_NAMES:

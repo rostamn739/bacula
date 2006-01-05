@@ -294,8 +294,6 @@ static void free_common_jcr(JCR *jcr)
    case JT_BACKUP:
    case JT_VERIFY:
    case JT_RESTORE:
-   case JT_MIGRATE:
-   case JT_COPY:
    case JT_ADMIN:
       num_jobs_run++;
       last_job.Errors = jcr->Errors;

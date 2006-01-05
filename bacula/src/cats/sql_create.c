@@ -709,17 +709,17 @@ bail_out:
 static int db_create_file_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
 {
    int stat;
-   static char *no_digest = "0";
-   char *digest;
+   static char *no_sig = "0";
+   char *sig;
 
    ASSERT(ar->JobId);
    ASSERT(ar->PathId);
    ASSERT(ar->FilenameId);
 
-   if (ar->Digest == NULL) {
-      digest = no_digest;
+   if (ar->Sig == NULL) {
+      sig = no_sig;
    } else {
-      digest = ar->Digest;
+      sig = ar->Sig;
    }
 
    /* Must create it */
@@ -727,7 +727,7 @@ static int db_create_file_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
         "INSERT INTO File (FileIndex,JobId,PathId,FilenameId,"
         "LStat,MD5) VALUES (%u,%u,%u,%u,'%s','%s')",
         ar->FileIndex, ar->JobId, ar->PathId, ar->FilenameId,
-        ar->attr, digest);
+        ar->attr, sig);
 
    if (!INSERT_DB(jcr, mdb, mdb->cmd)) {
       Mmsg2(&mdb->errmsg, _("Create db File record %s failed. ERR=%s"),

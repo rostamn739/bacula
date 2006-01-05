@@ -89,9 +89,9 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
        return "WIN32-DATA";
     case STREAM_WIN32_GZIP_DATA:
        return "WIN32-GZIP";
-    case STREAM_MD5_DIGEST:
+    case STREAM_MD5_SIGNATURE:
        return "MD5";
-    case STREAM_SHA1_DIGEST:
+    case STREAM_SHA1_SIGNATURE:
        return "SHA1";
     case STREAM_GZIP_DATA:
        return "GZIP";
@@ -109,12 +109,6 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
        return "MACOS-RSRC";
     case STREAM_HFSPLUS_ATTRIBUTES:
        return "HFSPLUS-ATTR";
-    case STREAM_SHA256_DIGEST:
-       return "SHA256";
-    case STREAM_SHA512_DIGEST:
-       return "SHA512";
-    case STREAM_SIGNED_DIGEST:
-       return "SIGNED-DIGEST";
     case -STREAM_UNIX_ATTRIBUTES:
        return "contUATTR";
     case -STREAM_FILE_DATA:
@@ -123,9 +117,9 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
        return "contWIN32-DATA";
     case -STREAM_WIN32_GZIP_DATA:
        return "contWIN32-GZIP";
-    case -STREAM_MD5_DIGEST:
+    case -STREAM_MD5_SIGNATURE:
        return "contMD5";
-    case -STREAM_SHA1_DIGEST:
+    case -STREAM_SHA1_SIGNATURE:
        return "contSHA1";
     case -STREAM_GZIP_DATA:
        return "contGZIP";
@@ -143,12 +137,6 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
        return "contMACOS-RSRC";
     case -STREAM_HFSPLUS_ATTRIBUTES:
        return "contHFSPLUS-ATTR";
-    case -STREAM_SHA256_DIGEST:
-       return "contSHA256";
-    case -STREAM_SHA512_DIGEST:
-       return "contSHA512";
-    case -STREAM_SIGNED_DIGEST:
-       return "contSIGNED-DIGEST";
     default:
        sprintf(buf, "%d", stream);
        return buf;

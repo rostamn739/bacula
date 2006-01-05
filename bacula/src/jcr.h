@@ -45,11 +45,12 @@
 #define JT_BACKUP                'B'  /* Backup Job */
 #define JT_VERIFY                'V'  /* Verify Job */
 #define JT_RESTORE               'R'  /* Restore Job */
-#define JT_CONSOLE               'c'  /* console program */
+#define JT_CONSOLE               'C'  /* console program */
 #define JT_SYSTEM                'I'  /* internal system "job" */
 #define JT_ADMIN                 'D'  /* admin job */
 #define JT_ARCHIVE               'A'  /* Archive Job */
-#define JT_COPY                  'C'  /* Copy Job */
+#define JT_COPY                  'Y'  /* Copy Job */
+#define JT_MIGRATION             'M'  /* Migration Job */
 #define JT_MIGRATE               'M'  /* Migration Job */
 #define JT_SCAN                  'S'  /* Scan Job */
 
@@ -229,13 +230,6 @@ public:
    volatile BSOCK *hb_bsock;          /* duped SD socket */
    volatile BSOCK *hb_dir_bsock;      /* duped DIR socket */
    POOLMEM *RunAfterJob;              /* Command to run after job */
-   bool pki_sign;                     /* Enable PKI Signatures? */
-   bool pki_encrypt;                  /* Enable PKI Encryption? */
-   DIGEST *digest;                    /* Last file's digest context */
-   X509_KEYPAIR *pki_keypair;         /* Encryption key pair */
-   alist *pki_signers;                /* Trusted Signers */
-   alist *pki_readers;                /* Trusted Readers */
-   CRYPTO_RECIPIENTS *pki_recipients; /* PKE Public Keys + Symmetric Session Keys */
    DIRRES* director;                  /* Director resource */
 #endif /* FILE_DAEMON */
 

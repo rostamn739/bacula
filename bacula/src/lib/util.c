@@ -20,6 +20,7 @@
 
  */
 
+
 #include "bacula.h"
 #include "jcr.h"
 #include "findlib/find.h"
@@ -293,12 +294,6 @@ const char *job_type_to_str(int type)
       break;
    case JT_ADMIN:
       str = _("Admin");
-      break;
-   case JT_MIGRATE:
-      str = _("Migrate");
-      break;
-   case JT_COPY:
-      str = _("Copy");
       break;
    default:
       str = _("Unknown Type");

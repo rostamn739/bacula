@@ -35,8 +35,6 @@ static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 #ifdef HAVE_LIBZ
 static const char *zlib_strerror(int stat);
 #endif
-
-int verify_signature(JCR *jcr, SIGNATURE *sig);
 int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       uint64_t *addr, int flags);
 
@@ -82,7 +80,6 @@ void do_restore(JCR *jcr)
    BFILE altbfd;                      /* Alternative data stream */
    uint64_t alt_addr = 0;             /* Write address for alternative stream */
    intmax_t alt_size = 0;             /* Size of alternate stream */
-   SIGNATURE *sig = NULL;             /* Cryptographic signature (if any) for file */
    int flags;                         /* Options for extract_data() */
    int stat;
    ATTR *attr;
@@ -139,8 +136,7 @@ void do_restore(JCR *jcr)
     *    or  c. Alternate data stream (e.g. Resource Fork)
     *    or  d. Finder info
     *    or  e. ACLs
-    *    or  f. Possibly a cryptographic signature
-    *    or  g. Possibly MD5 or SHA1 record
+    *    or  f. Possibly MD5 or SHA1 record
     *   3. Repeat step 1
     *
     * NOTE: We keep track of two bacula file descriptors:
@@ -198,7 +194,7 @@ void do_restore(JCR *jcr)
          Dmsg1(30, "Stream=Unix Attributes. extract=%d\n", extract);
          /*
           * If extracting, it was from previous stream, so
-          * close the output file and validate the signature.
+          * close the output file.
           */
          if (extract) {
             if (size > 0 && !is_bopen(&bfd)) {
@@ -206,23 +202,6 @@ void do_restore(JCR *jcr)
             }
             set_attributes(jcr, attr, &bfd);
             extract = false;
-
-            /* Verify the cryptographic signature, if any */
-            if (jcr->pki_sign) {
-               if (sig) {
-                  if (!verify_signature(jcr, sig)) {
-                     // TODO landonf: Better signature failure handling.
-                     // The failure is reported to the director in verify_signature() ...
-                     Dmsg1(100, "Bad signature on %s\n", jcr->last_fname);
-                  } else {
-                     Dmsg1(100, "Signature good on %s\n", jcr->last_fname);
-                  }
-                  crypto_sign_free(sig);
-                  sig = NULL;
-               } else {
-                  Jmsg1(jcr, M_ERROR, 0, _("Missing cryptographic signature for %s\n"), jcr->last_fname);
-               }
-            }
             Dmsg0(30, "Stop extracting.\n");
          } else if (is_bopen(&bfd)) {
             Jmsg0(jcr, M_ERROR, 0, _("Logic error: output file should not be open\n"));
@@ -311,12 +290,6 @@ void do_restore(JCR *jcr)
                   || stream == STREAM_WIN32_GZIP_DATA) {
                flags |= FO_GZIP;
             }
-
-            if (is_win32_stream(stream) && !have_win32_api()) {
-               set_portable_backup(&bfd);
-               flags |= FO_WIN32DECOMP;    /* "decompose" BackupWrite data */
-            }
-
             if (extract_data(jcr, &bfd, sd->msg, sd->msglen, &fileAddr, flags) < 0) {
                extract = false;
                bclose(&bfd);
@@ -371,7 +344,7 @@ void do_restore(JCR *jcr)
          pm_strcpy(jcr->acl_text, sd->msg);
          Dmsg2(400, "Restoring ACL type 0x%2x <%s>\n", BACL_TYPE_ACCESS, jcr->acl_text);
          if (bacl_set(jcr, BACL_TYPE_ACCESS) != 0) {
-               Qmsg1(jcr, M_WARNING, 0, _("Can't restore ACL of %s\n"), jcr->last_fname);
+               Jmsg1(jcr, M_WARNING, 0, _("Can't restore ACL of %s\n"), jcr->last_fname);
          }
 #else 
          non_support_acl++;
@@ -383,22 +356,15 @@ void do_restore(JCR *jcr)
          pm_strcpy(jcr->acl_text, sd->msg);
          Dmsg2(400, "Restoring ACL type 0x%2x <%s>\n", BACL_TYPE_DEFAULT, jcr->acl_text);
          if (bacl_set(jcr, BACL_TYPE_DEFAULT) != 0) {
-               Qmsg1(jcr, M_WARNING, 0, _("Can't restore default ACL of %s\n"), jcr->last_fname);
+               Jmsg1(jcr, M_WARNING, 0, _("Can't restore default ACL of %s\n"), jcr->last_fname);
          }
 #else 
          non_support_acl++;
 #endif
          break;
 
-      case STREAM_SIGNED_DIGEST:
-         /* Save signature. */
-         sig = crypto_sign_decode(sd->msg, (size_t) sd->msglen);
-         break;
-
-      case STREAM_MD5_DIGEST:
-      case STREAM_SHA1_DIGEST:
-      case STREAM_SHA256_DIGEST:
-      case STREAM_SHA512_DIGEST:
+      case STREAM_MD5_SIGNATURE:
+      case STREAM_SHA1_SIGNATURE:
          break;
 
       case STREAM_PROGRAM_NAMES:
@@ -502,66 +468,6 @@ static const char *zlib_strerror(int stat)
 }
 #endif
 
-static int do_file_digest(FF_PKT *ff_pkt, void *pkt, bool top_level) {
-   JCR *jcr = (JCR *) pkt;
-   return (digest_file(jcr, ff_pkt, jcr->digest));
-}
-
-/*
- * Verify the signature for the last restored file
- * Return value is either true (signature correct)
- * or false (signature could not be verified).
- */
-int verify_signature(JCR *jcr, SIGNATURE *sig)
-{
-   X509_KEYPAIR *keypair;
-   DIGEST *digest = NULL;
-   crypto_error_t err;
-
-
-   /* Iterate through the trusted signers */
-   foreach_alist(keypair, jcr->pki_signers) {
-      err = crypto_sign_get_digest(sig, jcr->pki_keypair, &digest);
-
-      switch (err) {
-      case CRYPTO_ERROR_NONE:
-         /* Signature found, digest allocated */
-         jcr->digest = digest;
-
-         /* Checksum the entire file */
-         if (find_one_file(jcr, jcr->ff, do_file_digest, jcr, jcr->last_fname, (dev_t)-1, 1) != 0) {
-            Qmsg(jcr, M_ERROR, 0, _("Signature validation failed for %s: \n"), jcr->last_fname);
-            return false;
-         }
-
-         /* Verify the signature */
-         if ((err = crypto_sign_verify(sig, keypair, digest)) != CRYPTO_ERROR_NONE) {
-            Qmsg2(jcr, M_ERROR, 0, _("Signature validation failed for %s: %s\n"), jcr->last_fname, crypto_strerror(err));
-            crypto_digest_free(digest);
-            return false;
-         }
-
-         /* Valid signature */
-         crypto_digest_free(digest);
-         return true;
-
-      case CRYPTO_ERROR_NOSIGNER:
-         /* Signature not found, try again */
-         continue;
-      default:
-         /* Something strange happened (that shouldn't happen!)... */
-         Qmsg2(jcr, M_ERROR, 0, _("Signature validation failed for %s: %s\n"), jcr->last_fname, crypto_strerror(err));
-         if (digest) {
-            crypto_digest_free(digest);
-         }
-         return false;
-      }
-   }
-
-   /* Unreachable */
-   return false;
-}
-
 /*
  * In the context of jcr, write data to bfd.
  * We write buflen bytes in buf at addr. addr is updated in place.
@@ -613,7 +519,7 @@ int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       Dmsg2(100, "Comp_len=%d msglen=%d\n", compress_len, wsize);
       if ((stat=uncompress((Byte *)jcr->compress_buf, &compress_len,
                   (const Byte *)wbuf, (uLong)rsize)) != Z_OK) {
-         Qmsg(jcr, M_ERROR, 0, _("Uncompression error on file %s. ERR=%s\n"),
+         Jmsg(jcr, M_ERROR, 0, _("Uncompression error on file %s. ERR=%s\n"),
                jcr->last_fname, zlib_strerror(stat));
          return -1;
       }
@@ -621,21 +527,14 @@ int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       wsize = compress_len;
       Dmsg2(100, "Write uncompressed %d bytes, total before write=%s\n", compress_len, edit_uint64(jcr->JobBytes, ec1));
 #else
-      Qmsg(jcr, M_ERROR, 0, _("GZIP data stream found, but GZIP not configured!\n"));
+      Jmsg(jcr, M_ERROR, 0, _("GZIP data stream found, but GZIP not configured!\n"));
       return -1;
 #endif
    } else {
       Dmsg2(30, "Write %u bytes, total before write=%s\n", wsize, edit_uint64(jcr->JobBytes, ec1));
    }
 
-   if (flags & FO_WIN32DECOMP) {
-      if (!processWin32BackupAPIBlock(bfd, wbuf, wsize)) {
-         berrno be;
-         Jmsg2(jcr, M_ERROR, 0, _("Write error in Win32 Block Decomposition on %s: %s\n"), 
-               jcr->last_fname, be.strerror(bfd->berrno));
-         return -1;
-      }
-   } else if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
+   if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
       berrno be;
       Jmsg2(jcr, M_ERROR, 0, _("Write error on %s: %s\n"), 
             jcr->last_fname, be.strerror(bfd->berrno));
