@@ -126,7 +126,7 @@ depend:
 	@$(MV) Makefile Makefile.bak
 	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
 	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile
-	@$(CXX) -S -M $(CPPFLAGS) $(CONS_CPPFLAGS) -I$(srcdir) -I$(basedir) $(CONSSRCS) >> Makefile
+	@$(CXX) -S -M $(CPPFLAGS) $(CONS_CPPFLAGS) -I$(srcdir) -I$(basedir) $(OPENSSL_INC) $(CONSSRCS) >> Makefile
 	@if test -f Makefile ; then \
 	    $(RMF) Makefile.bak; \
 	else \

@@ -305,7 +305,10 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
    }
 
    if (!relabel && (i=find_arg_keyword(ua, barcode_keyword)) >= 0) {
-      *ua->argk[i] = 0;      /* zap barcode keyword */
+      i = find_arg(ua, barcode_keyword[i]);
+      if (i > 0) {
+         *ua->argk[i] = 0;      /* zap barcode keyword */
+      }
       label_barcodes = true;
    }
 

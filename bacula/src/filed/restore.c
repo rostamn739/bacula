@@ -35,11 +35,8 @@ static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 #ifdef HAVE_LIBZ
 static const char *zlib_strerror(int stat);
 #endif
-
-int verify_signature(JCR *jcr, SIGNATURE *sig);
 int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
-      uint64_t *addr, int flags, CIPHER_CONTEXT *cipher, size_t cipher_block_size);
-bool flush_cipher(JCR *jcr, BFILE *bfd, int flags, CIPHER_CONTEXT *cipher, size_t cipher_block_size);
+      uint64_t *addr, int flags);
 
 #define RETRY 10                      /* retry wait time */
 
@@ -83,11 +80,7 @@ void do_restore(JCR *jcr)
    BFILE altbfd;                      /* Alternative data stream */
    uint64_t alt_addr = 0;             /* Write address for alternative stream */
    intmax_t alt_size = 0;             /* Size of alternate stream */
-   SIGNATURE *sig = NULL;             /* Cryptographic signature (if any) for file */
-   CRYPTO_SESSION *cs = NULL;         /* Cryptographic session data (if any) for file */
-   CIPHER_CONTEXT *cipher_ctx = NULL; /* Cryptographic cipher context (if any) for file */
-   size_t cipher_block_size = 0;      /* Cryptographic algorithm block size for file */
-   int flags = 0;                     /* Options for extract_data() */
+   int flags;                         /* Options for extract_data() */
    int stat;
    ATTR *attr;
 
@@ -133,23 +126,17 @@ void do_restore(JCR *jcr)
    jcr->compress_buf_size = compress_buf_size;
 #endif
 
-#ifdef HAVE_CRYPTO
-   jcr->crypto_buf = get_memory(CRYPTO_CIPHER_MAX_BLOCK_SIZE);
-#endif
-   
    /*
     * Get a record from the Storage daemon. We are guaranteed to
     *   receive records in the following order:
     *   1. Stream record header
     *   2. Stream data
     *        a. Attributes (Unix or Win32)
-    *        b. Possibly stream encryption session data (e.g., symmetric session key)
-    *    or  c. File data for the file
-    *    or  d. Alternate data stream (e.g. Resource Fork)
-    *    or  e. Finder info
-    *    or  f. ACLs
-    *    or  g. Possibly a cryptographic signature
-    *    or  h. Possibly MD5 or SHA1 record
+    *    or  b. File data for the file
+    *    or  c. Alternate data stream (e.g. Resource Fork)
+    *    or  d. Finder info
+    *    or  e. ACLs
+    *    or  f. Possibly MD5 or SHA1 record
     *   3. Repeat step 1
     *
     * NOTE: We keep track of two bacula file descriptors:
@@ -207,39 +194,14 @@ void do_restore(JCR *jcr)
          Dmsg1(30, "Stream=Unix Attributes. extract=%d\n", extract);
          /*
           * If extracting, it was from previous stream, so
-          * close the output file and validate the signature.
+          * close the output file.
           */
          if (extract) {
             if (size > 0 && !is_bopen(&bfd)) {
                Jmsg0(jcr, M_ERROR, 0, _("Logic error: output file should be open\n"));
             }
-            /* Flush and deallocate previous stream's cipher context */
-            if (cipher_ctx && prev_stream != STREAM_ENCRYPTED_SESSION_DATA) {
-               flush_cipher(jcr, &bfd, flags, cipher_ctx, cipher_block_size);
-               crypto_cipher_free(cipher_ctx);
-               cipher_ctx = NULL;
-            }
             set_attributes(jcr, attr, &bfd);
             extract = false;
-
-            /* Verify the cryptographic signature, if any */
-            if (jcr->pki_sign) {
-               if (sig) {
-                  // Failure is reported in verify_signature() ...
-                  verify_signature(jcr, sig);
-               } else {
-                  Jmsg1(jcr, M_ERROR, 0, _("Missing cryptographic signature for %s\n"), jcr->last_fname);
-               }
-            }
-            /* Free Signature */
-            if (sig) {
-               crypto_sign_free(sig);
-               sig = NULL;
-            }
-            if (cs) {
-               crypto_session_free(cs);
-               cs = NULL;
-            }
             Dmsg0(30, "Stop extracting.\n");
          } else if (is_bopen(&bfd)) {
             Jmsg0(jcr, M_ERROR, 0, _("Logic error: output file should not be open\n"));
@@ -311,85 +273,24 @@ void do_restore(JCR *jcr)
          break;
 
       /* Data stream */
-      case STREAM_ENCRYPTED_SESSION_DATA:
-         crypto_error_t cryptoerr;
-
-         Dmsg1(30, "Stream=Encrypted Session Data, size: %d\n", sd->msglen);
-
-         /* Decode and save session keys. */
-         cryptoerr = crypto_session_decode(sd->msg, (size_t) sd->msglen, jcr->pki_recipients, &cs);
-         switch(cryptoerr) {
-         case CRYPTO_ERROR_NONE:
-            /* Success */
-            break;
-         case CRYPTO_ERROR_NORECIPIENT:
-            Jmsg(jcr, M_ERROR, 0, _("Missing private key required to decrypt encrypted backup data."));
-            break;
-         case CRYPTO_ERROR_DECRYPTION:
-            Jmsg(jcr, M_ERROR, 0, _("Decrypt of the session key failed."));
-            break;
-         default:
-            /* Shouldn't happen */
-            Jmsg1(jcr, M_ERROR, 0, _("An error occured while decoding encrypted session data stream: %s"), crypto_strerror(cryptoerr));
-            break;
-         }
-
-         if (cryptoerr != CRYPTO_ERROR_NONE) {
-            extract = false;
-            bclose(&bfd);
-            continue;
-         }
-
-         /* Set up a decryption context */
-         if ((cipher_ctx = crypto_cipher_new(cs, false, &cipher_block_size)) == NULL) {
-            Jmsg1(jcr, M_ERROR, 0, _("Failed to initialize decryption context for %s\n"), jcr->last_fname);
-            crypto_session_free(cs);
-            cs = NULL;
-            extract = false;
-            bclose(&bfd);
-            continue;
-         }
-         break;
-
       case STREAM_FILE_DATA:
       case STREAM_SPARSE_DATA:
       case STREAM_WIN32_DATA:
       case STREAM_GZIP_DATA:
       case STREAM_SPARSE_GZIP_DATA:
       case STREAM_WIN32_GZIP_DATA:
-      case STREAM_ENCRYPTED_FILE_DATA:
-      case STREAM_ENCRYPTED_WIN32_DATA:
-      case STREAM_ENCRYPTED_FILE_GZIP_DATA:
-      case STREAM_ENCRYPTED_WIN32_GZIP_DATA:
          /* Force an expected, consistent stream type here */
          if (extract && (prev_stream == stream || prev_stream == STREAM_UNIX_ATTRIBUTES
-                  || prev_stream == STREAM_UNIX_ATTRIBUTES_EX
-                  || prev_stream == STREAM_ENCRYPTED_SESSION_DATA)) {
+                  || prev_stream == STREAM_UNIX_ATTRIBUTES_EX)) {
             flags = 0;
-
             if (stream == STREAM_SPARSE_DATA || stream == STREAM_SPARSE_GZIP_DATA) {
                flags |= FO_SPARSE;
             }
-
             if (stream == STREAM_GZIP_DATA || stream == STREAM_SPARSE_GZIP_DATA
-                  || stream == STREAM_WIN32_GZIP_DATA || stream == STREAM_ENCRYPTED_FILE_GZIP_DATA
-                  || stream == STREAM_ENCRYPTED_WIN32_GZIP_DATA) {
+                  || stream == STREAM_WIN32_GZIP_DATA) {
                flags |= FO_GZIP;
             }
-
-            if (stream == STREAM_ENCRYPTED_FILE_DATA
-                  || stream == STREAM_ENCRYPTED_FILE_GZIP_DATA
-                  || stream == STREAM_ENCRYPTED_WIN32_DATA
-                  || stream == STREAM_ENCRYPTED_WIN32_GZIP_DATA) {
-               flags |= FO_ENCRYPT;
-            }
-
-            if (is_win32_stream(stream) && !have_win32_api()) {
-               set_portable_backup(&bfd);
-               flags |= FO_WIN32DECOMP;    /* "decompose" BackupWrite data */
-            }
-
-            if (extract_data(jcr, &bfd, sd->msg, sd->msglen, &fileAddr, flags, cipher_ctx, cipher_block_size) < 0) {
+            if (extract_data(jcr, &bfd, sd->msg, sd->msglen, &fileAddr, flags) < 0) {
                extract = false;
                bclose(&bfd);
                continue;
@@ -399,8 +300,6 @@ void do_restore(JCR *jcr)
 
       /* Resource fork stream - only recorded after a file to be restored */
       /* Silently ignore if we cannot write - we already reported that */
-      case STREAM_ENCRYPTED_MACOS_FORK_DATA:
-         flags |= FO_ENCRYPT;
       case STREAM_MACOS_FORK_DATA:
 #ifdef HAVE_DARWIN_OS
          if (extract) {
@@ -414,7 +313,7 @@ void do_restore(JCR *jcr)
                Dmsg0(30, "Restoring resource fork\n");
             }
             flags = 0;
-            if (extract_data(jcr, &altbfd, sd->msg, sd->msglen, &alt_addr, flags, cipher_ctx, cipher_block_size) < 0) {
+            if (extract_data(jcr, &altbfd, sd->msg, sd->msglen, &alt_addr, flags) < 0) {
                extract = false;
                bclose(&altbfd);
                continue;
@@ -445,7 +344,7 @@ void do_restore(JCR *jcr)
          pm_strcpy(jcr->acl_text, sd->msg);
          Dmsg2(400, "Restoring ACL type 0x%2x <%s>\n", BACL_TYPE_ACCESS, jcr->acl_text);
          if (bacl_set(jcr, BACL_TYPE_ACCESS) != 0) {
-               Qmsg1(jcr, M_WARNING, 0, _("Can't restore ACL of %s\n"), jcr->last_fname);
+               Jmsg1(jcr, M_WARNING, 0, _("Can't restore ACL of %s\n"), jcr->last_fname);
          }
 #else 
          non_support_acl++;
@@ -457,24 +356,15 @@ void do_restore(JCR *jcr)
          pm_strcpy(jcr->acl_text, sd->msg);
          Dmsg2(400, "Restoring ACL type 0x%2x <%s>\n", BACL_TYPE_DEFAULT, jcr->acl_text);
          if (bacl_set(jcr, BACL_TYPE_DEFAULT) != 0) {
-               Qmsg1(jcr, M_WARNING, 0, _("Can't restore default ACL of %s\n"), jcr->last_fname);
+               Jmsg1(jcr, M_WARNING, 0, _("Can't restore default ACL of %s\n"), jcr->last_fname);
          }
 #else 
          non_support_acl++;
 #endif
          break;
 
-      case STREAM_SIGNED_DIGEST:
-         /* Save signature. */
-         if ((sig = crypto_sign_decode(sd->msg, (size_t) sd->msglen)) == NULL) {
-            Jmsg1(jcr, M_ERROR, 0, _("Failed to decode message signature for %s\n"), jcr->last_fname);
-         }
-         break;
-
-      case STREAM_MD5_DIGEST:
-      case STREAM_SHA1_DIGEST:
-      case STREAM_SHA256_DIGEST:
-      case STREAM_SHA512_DIGEST:
+      case STREAM_MD5_SIGNATURE:
+      case STREAM_SHA1_SIGNATURE:
          break;
 
       case STREAM_PROGRAM_NAMES:
@@ -492,24 +382,7 @@ void do_restore(JCR *jcr)
             if (size > 0 && !is_bopen(&bfd)) {
                Jmsg0(jcr, M_ERROR, 0, _("Logic error: output file should be open\n"));
             }
-            /* Flush and deallocate cipher context */
-            if (cipher_ctx) {
-               flush_cipher(jcr, &bfd, flags, cipher_ctx, cipher_block_size);
-               crypto_cipher_free(cipher_ctx);
-               cipher_ctx = NULL;
-            }
             set_attributes(jcr, attr, &bfd);
-
-            /* Verify the cryptographic signature if any */
-            if (jcr->pki_sign) {
-               if (sig) {
-                  // Failure is reported in verify_signature() ...
-                  verify_signature(jcr, sig);
-               } else {
-                  Jmsg1(jcr, M_ERROR, 0, _("Missing cryptographic signature for %s\n"), jcr->last_fname);
-               }
-            }
-
             extract = false;
          } else if (is_bopen(&bfd)) {
             Jmsg0(jcr, M_ERROR, 0, _("Logic error: output file should not be open\n"));
@@ -529,55 +402,21 @@ void do_restore(JCR *jcr)
       bclose_chksize(jcr, &altbfd, alt_size);
    }
    if (extract) {
-      /* Flush and deallocate cipher context */
-      if (cipher_ctx) {
-         flush_cipher(jcr, &bfd, flags, cipher_ctx, cipher_block_size);
-         crypto_cipher_free(cipher_ctx);
-         cipher_ctx = NULL;
-      }
       set_attributes(jcr, attr, &bfd);
    }
    if (is_bopen(&bfd)) {
       bclose(&bfd);
    }
-   /* Verify the cryptographic signature on the last file, if any */
-   if (jcr->pki_sign) {
-      if (sig) {
-         // Failure is reported in verify_signature() ...
-         verify_signature(jcr, sig);
-      } else {
-         Jmsg1(jcr, M_ERROR, 0, _("Missing cryptographic signature for %s\n"), jcr->last_fname);
-      }
-   }
-
    set_jcr_job_status(jcr, JS_Terminated);
    goto ok_out;
 
 bail_out:
    set_jcr_job_status(jcr, JS_ErrorTerminated);
 ok_out:
-
-   /* Free Signature & Crypto Data */
-   if (sig) {
-      crypto_sign_free(sig);
-      sig = NULL;
-   }
-   if (cs) {
-      crypto_session_free(cs);
-      cs = NULL;
-   }
-   if (cipher_ctx) {
-      crypto_cipher_free(cipher_ctx);
-      cipher_ctx = NULL;
-   }
    if (jcr->compress_buf) {
       free(jcr->compress_buf);
       jcr->compress_buf = NULL;
       jcr->compress_buf_size = 0;
-   }
-   if (jcr->crypto_buf) {
-      free_pool_memory(jcr->crypto_buf);
-      jcr->crypto_buf = NULL;
    }
    bclose(&altbfd);
    bclose(&bfd);
@@ -629,70 +468,6 @@ static const char *zlib_strerror(int stat)
 }
 #endif
 
-static int do_file_digest(FF_PKT *ff_pkt, void *pkt, bool top_level) {
-   JCR *jcr = (JCR *) pkt;
-   return (digest_file(jcr, ff_pkt, jcr->digest));
-}
-
-/*
- * Verify the signature for the last restored file
- * Return value is either true (signature correct)
- * or false (signature could not be verified).
- * TODO landonf: Better signature failure handling.
- */
-int verify_signature(JCR *jcr, SIGNATURE *sig)
-{
-   X509_KEYPAIR *keypair;
-   DIGEST *digest = NULL;
-   crypto_error_t err;
-
-   /* Iterate through the trusted signers */
-   foreach_alist(keypair, jcr->pki_signers) {
-      err = crypto_sign_get_digest(sig, jcr->pki_keypair, &digest);
-
-      switch (err) {
-      case CRYPTO_ERROR_NONE:
-         /* Signature found, digest allocated */
-         jcr->digest = digest;
-
-         /* Checksum the entire file */
-         if (find_one_file(jcr, jcr->ff, do_file_digest, jcr, jcr->last_fname, (dev_t)-1, 1) != 0) {
-            Qmsg(jcr, M_ERROR, 0, _("Signature validation failed for %s: \n"), jcr->last_fname);
-            return false;
-         }
-
-         /* Verify the signature */
-         if ((err = crypto_sign_verify(sig, keypair, digest)) != CRYPTO_ERROR_NONE) {
-            Dmsg1(100, "Bad signature on %s\n", jcr->last_fname);
-            Qmsg2(jcr, M_ERROR, 0, _("Signature validation failed for %s: %s\n"), jcr->last_fname, crypto_strerror(err));
-            crypto_digest_free(digest);
-            return false;
-         }
-
-         /* Valid signature */
-         Dmsg1(100, "Signature good on %s\n", jcr->last_fname);
-         crypto_digest_free(digest);
-         return true;
-
-      case CRYPTO_ERROR_NOSIGNER:
-         /* Signature not found, try again */
-         continue;
-      default:
-         /* Something strange happened (that shouldn't happen!)... */
-         Qmsg2(jcr, M_ERROR, 0, _("Signature validation failed for %s: %s\n"), jcr->last_fname, crypto_strerror(err));
-         if (digest) {
-            crypto_digest_free(digest);
-         }
-         return false;
-      }
-   }
-
-   /* No signer */
-   Dmsg1(100, "Could not find a valid public key for signature on %s\n", jcr->last_fname);
-   crypto_digest_free(digest);
-   return false;
-}
-
 /*
  * In the context of jcr, write data to bfd.
  * We write buflen bytes in buf at addr. addr is updated in place.
@@ -700,16 +475,13 @@ int verify_signature(JCR *jcr, SIGNATURE *sig)
  * Return value is the number of bytes written, or -1 on errors.
  */
 int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
-      uint64_t *addr, int flags, CIPHER_CONTEXT *cipher, size_t cipher_block_size)
+      uint64_t *addr, int flags)
 {
    int stat;
    char *wbuf;                        /* write buffer */
    uint32_t wsize;                    /* write size */
    uint32_t rsize;                    /* read size */
    char ec1[50];                      /* Buffer printing huge values */
-   const void *cipher_input;          /* Decryption input */
-   size_t cipher_input_len;           /* Decryption input length */
-   size_t decrypted_len = 0;          /* Decryption output length */
 
    if (flags & FO_SPARSE) {
       ser_declare;
@@ -734,8 +506,6 @@ int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       rsize = buflen;
    }
    wsize = rsize;
-   cipher_input = wbuf;
-   cipher_input_len = wsize;
 
    if (flags & FO_GZIP) {
 #ifdef HAVE_LIBZ
@@ -749,111 +519,31 @@ int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
       Dmsg2(100, "Comp_len=%d msglen=%d\n", compress_len, wsize);
       if ((stat=uncompress((Byte *)jcr->compress_buf, &compress_len,
                   (const Byte *)wbuf, (uLong)rsize)) != Z_OK) {
-         Qmsg(jcr, M_ERROR, 0, _("Uncompression error on file %s. ERR=%s\n"),
+         Jmsg(jcr, M_ERROR, 0, _("Uncompression error on file %s. ERR=%s\n"),
                jcr->last_fname, zlib_strerror(stat));
          return -1;
       }
       wbuf = jcr->compress_buf;
       wsize = compress_len;
-      cipher_input = jcr->compress_buf; /* decrypt decompressed data */
-      cipher_input_len = compress_len;
       Dmsg2(100, "Write uncompressed %d bytes, total before write=%s\n", compress_len, edit_uint64(jcr->JobBytes, ec1));
 #else
-      Qmsg(jcr, M_ERROR, 0, _("GZIP data stream found, but GZIP not configured!\n"));
+      Jmsg(jcr, M_ERROR, 0, _("GZIP data stream found, but GZIP not configured!\n"));
       return -1;
 #endif
    } else {
       Dmsg2(30, "Write %u bytes, total before write=%s\n", wsize, edit_uint64(jcr->JobBytes, ec1));
    }
 
-   if (flags & FO_ENCRYPT) {
-      ASSERT(cipher);
-
-      /*
-       * Grow the crypto buffer, if necessary.
-       * crypto_cipher_update() will process only whole blocks,
-       * buffering the remaining input.
-       */
-      jcr->crypto_buf = check_pool_memory_size(jcr->crypto_buf, cipher_input_len + cipher_block_size);
-
-
-      /* Encrypt the input block */
-      if (!crypto_cipher_update(cipher, cipher_input, cipher_input_len, jcr->crypto_buf, &decrypted_len)) {
-         /* Decryption failed. Shouldn't happen. */
-         Jmsg(jcr, M_FATAL, 0, _("Decryption error\n"));
-         return -1;
-      }
-
-      if (decrypted_len == 0) {
-         /* No full block of data available, write more data */
-         goto ok;
-      }
-
-      Dmsg2(400, "decrypted len=%d undecrypted len=%d\n",
-         decrypted_len, cipher_input_len);
-      wsize = decrypted_len;
-      wbuf = jcr->crypto_buf; /* Decrypted, possibly decompressed output here. */
-   }
-
-
-   if (flags & FO_WIN32DECOMP) {
-      if (!processWin32BackupAPIBlock(bfd, wbuf, wsize)) {
-         berrno be;
-         Jmsg2(jcr, M_ERROR, 0, _("Write error in Win32 Block Decomposition on %s: %s\n"), 
-               jcr->last_fname, be.strerror(bfd->berrno));
-         return -1;
-      }
-   } else if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
+   if (bwrite(bfd, wbuf, wsize) != (ssize_t)wsize) {
       berrno be;
       Jmsg2(jcr, M_ERROR, 0, _("Write error on %s: %s\n"), 
             jcr->last_fname, be.strerror(bfd->berrno));
       return -1;
    }
 
-   if (decrypted_len && decrypted_len > wsize) {
-      /* If more than wsize is output, it was previously buffered
-       * and reported, and should not be reported again */
-      wsize = wsize - decrypted_len;
-   }
-
-ok:
    jcr->JobBytes += wsize;
    jcr->ReadBytes += rsize;
    *addr += wsize;
 
    return wsize;
-}
-
-/*
- * In the context of jcr, flush any remaining data from the cipher context,
- * writing it to bfd.
- * Return value is true on success, false on failure.
- */
-bool flush_cipher(JCR *jcr, BFILE *bfd, int flags, CIPHER_CONTEXT *cipher, size_t cipher_block_size)
-{
-   size_t decrypted_len;
-
-   /* Write out the remaining block and free the cipher context */
-   jcr->crypto_buf = check_pool_memory_size(jcr->crypto_buf, cipher_block_size);
-
-   if (!crypto_cipher_finalize(cipher, jcr->crypto_buf, &decrypted_len)) {
-      /* Writing out the final, buffered block failed. Shouldn't happen. */
-      Jmsg1(jcr, M_FATAL, 0, _("Decryption error for %s\n"), jcr->last_fname);
-   }
-
-   if (flags & FO_WIN32DECOMP) {
-      if (!processWin32BackupAPIBlock(bfd, jcr->crypto_buf, decrypted_len)) {
-         berrno be;
-         Jmsg2(jcr, M_ERROR, 0, _("Write error in Win32 Block Decomposition on %s: %s\n"), 
-               jcr->last_fname, be.strerror(bfd->berrno));
-         return false;
-      }
-   } else if (bwrite(bfd, jcr->crypto_buf, decrypted_len) != (ssize_t)decrypted_len) {
-      berrno be;
-      Jmsg2(jcr, M_ERROR, 0, _("Write error on %s: %s\n"), 
-            jcr->last_fname, be.strerror(bfd->berrno));
-      return false;
-   }
-
-   return true;
 }

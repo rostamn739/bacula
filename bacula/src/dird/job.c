@@ -7,7 +7,7 @@
  *    Version $Id$
  */
 /*
-   Copyright (C) 2000-2005 Kern Sibbald
+   Copyright (C) 2000-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -294,7 +294,7 @@ static void *job_thread(void *arg)
             admin_cleanup(jcr, JS_ErrorTerminated);
          }
          break;
-      case JT_MIGRATE:
+      case JT_MIGRATION:
       case JT_COPY:
       case JT_ARCHIVE:
          if (do_mac(jcr)) {              /* migration, archive, copy */
@@ -642,13 +642,13 @@ bool get_or_create_fileset_record(JCR *jcr)
    bstrncpy(fsr.FileSet, jcr->fileset->hdr.name, sizeof(fsr.FileSet));
    if (jcr->fileset->have_MD5) {
       struct MD5Context md5c;
-      unsigned char digest[MD5HashSize];
+      unsigned char signature[16];
       memcpy(&md5c, &jcr->fileset->md5c, sizeof(md5c));
-      MD5Final(digest, &md5c);
-      bin_to_base64(fsr.MD5, (char *)digest, MD5HashSize);
+      MD5Final(signature, &md5c);
+      bin_to_base64(fsr.MD5, (char *)signature, 16); /* encode 16 bytes */
       bstrncpy(jcr->fileset->MD5, fsr.MD5, sizeof(jcr->fileset->MD5));
    } else {
-      Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 digest not found.\n"));
+      Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 signature not found.\n"));
    }
    if (!jcr->fileset->ignore_fs_changes ||
        !db_get_fileset_record(jcr, jcr->db, &fsr)) {

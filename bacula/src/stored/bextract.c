@@ -432,8 +432,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       break;
 
    case STREAM_SIGNED_DIGEST:
-   case STREAM_ENCRYPTED_SESSION_DATA:
-      // TODO landonf: Investigate crypto support in the storage daemon
+      // TODO landonf: Investigate signed digest support in the storage daemon
       break;
 
    case STREAM_PROGRAM_NAMES:

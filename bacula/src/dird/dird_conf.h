@@ -285,10 +285,7 @@ public:
    char *RunAfterFailedJob;           /* Run program after Job that errs */
    char *ClientRunBeforeJob;          /* Run client program before Job */
    char *ClientRunAfterJob;           /* Run client program after Job */
-   union {
-      char *WriteBootstrap;           /* Where to write bootstrap Job updates */
-      char *WriteVerifyList;          /* List of changed files */
-   };
+   char *WriteBootstrap;              /* Where to write bootstrap Job updates */
    int   replace;                     /* How (overwrite, ..) */
    utime_t MaxRunTime;                /* max run time in seconds */
    utime_t MaxWaitTime;               /* max blocking time in seconds */
@@ -310,7 +307,7 @@ public:
    utime_t RescheduleInterval;        /* Reschedule interval */
    utime_t JobRetention;              /* job retention period in seconds */
    int write_part_after_job;          /* Set to write part after job in SD */
-   int enabled;                       /* Set if job enabled */
+   int enabled;                       /* Set if device is enabled */
    
    MSGS      *messages;               /* How and where to send messages */
    SCHED     *schedule;               /* When -- Automatic schedule */
