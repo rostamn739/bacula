@@ -5,7 +5,7 @@
  *  Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -219,8 +219,8 @@ bool do_append_data(JCR *jcr)
             stream_to_ascii(buf2, rec.Stream, rec.FileIndex), rec.data_len);
 
          /* Send attributes and digest to Director for Catalog */
-         if (stream == STREAM_UNIX_ATTRIBUTES || stream == STREAM_UNIX_ATTRIBUTES_EX ||
-             crypto_digest_stream_type(stream) != CRYPTO_DIGEST_NONE) {
+         if (stream == STREAM_UNIX_ATTRIBUTES    || stream == STREAM_MD5_SIGNATURE ||
+             stream == STREAM_UNIX_ATTRIBUTES_EX || stream == STREAM_SHA1_SIGNATURE) {
             if (!jcr->no_attributes) {
                if (are_attributes_spooled(jcr)) {
                   jcr->dir_bsock->spool = true;

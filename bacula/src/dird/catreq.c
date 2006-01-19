@@ -29,7 +29,6 @@
 
 #include "bacula.h"
 #include "dird.h"
-#include "findlib/find.h"
 
 /*
  * Handle catalog request
@@ -387,8 +386,8 @@ void catalog_update(JCR *jcr, BSOCK *bs)
       ar->Stream = Stream;
       ar->link = NULL;
       ar->JobId = jcr->JobId;
-      ar->Digest = NULL;
-      ar->DigestType = CRYPTO_DIGEST_NONE;
+      ar->Sig = NULL;
+      ar->SigType = 0;
       jcr->cached_attribute = true;
 
       Dmsg2(400, "dird<filed: stream=%d %s\n", Stream, fname);
@@ -399,52 +398,34 @@ void catalog_update(JCR *jcr, BSOCK *bs)
          Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), db_strerror(jcr->db));
       }
 #endif
-   } else if (crypto_digest_stream_type(Stream) != CRYPTO_DIGEST_NONE) {
+   } else if (Stream == STREAM_MD5_SIGNATURE || Stream == STREAM_SHA1_SIGNATURE) {
       fname = p;
       if (ar->FileIndex != FileIndex) {
-         Jmsg(jcr, M_WARNING, 0, _("Got %s but not same File as attributes\n"), stream_to_ascii(Stream));
+         Jmsg(jcr, M_WARNING, 0, _("Got MD5/SHA1 but not same File as attributes\n"));
       } else {
-         /* Update digest in catalog */
-         char digestbuf[CRYPTO_DIGEST_MAX_SIZE];
-         int len = 0;
-         int type = CRYPTO_DIGEST_NONE;
-
-         switch(Stream) {
-         case STREAM_MD5_DIGEST:
-            len = CRYPTO_DIGEST_MD5_SIZE;
-            type = CRYPTO_DIGEST_MD5;
-            break;
-         case STREAM_SHA1_DIGEST:
-            len = CRYPTO_DIGEST_SHA1_SIZE;
-            type = CRYPTO_DIGEST_SHA1;
-            break;
-         case STREAM_SHA256_DIGEST:
-            len = CRYPTO_DIGEST_SHA256_SIZE;
-            type = CRYPTO_DIGEST_SHA256;
-            break;
-         case STREAM_SHA512_DIGEST:
-            len = CRYPTO_DIGEST_SHA512_SIZE;
-            type = CRYPTO_DIGEST_SHA512;
-            break;
-         default:
-            /* Never reached ... */
-            Jmsg(jcr, M_ERROR, 0, _("Catalog error updating file digest. Unsupported digest stream type: %d"),
-                 Stream);
+         /* Update signature in catalog */
+         char SIGbuf[50];           /* 24 bytes should be enough */
+         int len, type;
+         if (Stream == STREAM_MD5_SIGNATURE) {
+            len = 16;
+            type = MD5_SIG;
+         } else {
+            len = 20;
+            type = SHA1_SIG;
          }
-
-         bin_to_base64(digestbuf, fname, len);
-         Dmsg3(400, "DigestLen=%d Digest=%s type=%d\n", strlen(digestbuf), digestbuf, Stream);
+         bin_to_base64(SIGbuf, fname, len);
+         Dmsg3(400, "SIGlen=%d SIG=%s type=%d\n", strlen(SIGbuf), SIGbuf, Stream);
          if (jcr->cached_attribute) {
-            ar->Digest = digestbuf;
-            ar->DigestType = type;
-            Dmsg2(400, "Cached attr with digest. Stream=%d fname=%s\n", ar->Stream, ar->fname);
+            ar->Sig = SIGbuf;
+            ar->SigType = type;
+            Dmsg2(400, "Cached attr with SIG. Stream=%d fname=%s\n", ar->Stream, ar->fname);
             if (!db_create_file_attributes_record(jcr, jcr->db, ar)) {
                Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), db_strerror(jcr->db));
             }
             jcr->cached_attribute = false; 
          } else {
-            if (!db_add_digest_to_file_record(jcr, jcr->db, ar->FileId, digestbuf, type)) {
-               Jmsg(jcr, M_ERROR, 0, _("Catalog error updating file digest. %s"),
+            if (!db_add_SIG_to_file_record(jcr, jcr->db, ar->FileId, SIGbuf, type)) {
+               Jmsg(jcr, M_ERROR, 0, _("Catalog error updating MD5/SHA1. %s"),
                   db_strerror(jcr->db));
             }
          }

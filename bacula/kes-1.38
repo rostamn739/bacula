@@ -3,6 +3,13 @@
 
 General:
 
+Update 1.38.4 for rpms rel 2 only 19Jan06:
+18Jan06
+- Modify standard rpm installation to set SD group to disk
+  so that SD will by default have access to tape drives.
+- Allow users to specify user/group and start options
+  for each daemon in /etc/sysconf/bacula file.           
+
 Release 1.38.4 released 17Jan06:
 16Jan06
 - Add two new queries to query.sql provided by Arno. One

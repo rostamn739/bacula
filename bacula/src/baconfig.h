@@ -30,18 +30,14 @@
 #define TRUE  1
 #define FALSE 0
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
 #ifdef HAVE_TLS
 #define have_tls 1
 #else
 #define have_tls 0
 #endif
+/* For compatibility with 1.39 */
+#define cleanup_crypto cleanup_tls
+#define init_crypto init_tls
 
 #ifndef ETIME
 #define ETIME ETIMEDOUT
@@ -151,7 +147,6 @@
  *   STREAM_SHA256_DIGEST
  *   STREAM_SHA512_DIGEST
  */
-#define STREAM_NONE               0    /* Reserved Non-Stream */
 #define STREAM_UNIX_ATTRIBUTES    1    /* Generic Unix attributes */
 #define STREAM_FILE_DATA          2    /* Standard uncompressed data */
 #define STREAM_MD5_SIGNATURE      3    /* deprecated */
@@ -173,15 +168,11 @@
 #define STREAM_UNIX_ATTRIBUTES_ACCESS_ACL 15 /* Standard ACL attributes on UNIX */
 #define STREAM_UNIX_ATTRIBUTES_DEFAULT_ACL 16 /* Default ACL attributes on UNIX */
 /*** FIXME ***/
-#define STREAM_SHA256_DIGEST              17   /* SHA-256 digest for the file */
-#define STREAM_SHA512_DIGEST              18   /* SHA-512 digest for the file */
-#define STREAM_SIGNED_DIGEST              19   /* Signed File Digest, ASN.1, DER Encoded */
-#define STREAM_ENCRYPTED_FILE_DATA        20   /* Encrypted, uncompressed data */
-#define STREAM_ENCRYPTED_WIN32_DATA       21   /* Encrypted, uncompressed Win32 BackupRead data */
-#define STREAM_ENCRYPTED_SESSION_DATA     22   /* Encrypted Session Data, ASN.1, DER Encoded */
-#define STREAM_ENCRYPTED_FILE_GZIP_DATA   23   /* Encrypted, compressed data */
-#define STREAM_ENCRYPTED_WIN32_GZIP_DATA  24   /* Encrypted, compressed Win32 BackupRead data */
-#define STREAM_ENCRYPTED_MACOS_FORK_DATA  25   /* Encrypted, uncompressed Mac resource fork */
+#define STREAM_SHA256_DIGEST     17    /* SHA-256 digest for the file */
+#define STREAM_SHA512_DIGEST     18    /* SHA-512 digest for the file */
+#define STREAM_SIGNED_DIGEST     19    /* Signed File Digest, ASN.1 Encoded */
+#define STREAM_ENCRYPTED_FILE_DATA 20  /* Encrypted, uncompressed data */
+#define STREAM_ENCRYPTED_WIN32_DATA 21 /* Encrypted, uncompressed Win32 BackupRead data */
 
 
 /*
@@ -219,6 +210,13 @@
 
 /* Definitions for upper part of type word (see above). */
 #define AR_DATA_STREAM (1<<16)        /* Data stream id present */
+
+/*
+ * Internal code for Signature types
+ */
+#define NO_SIG   0
+#define MD5_SIG  1
+#define SHA1_SIG 2
 
 /*
  * Tape label types -- stored in catalog

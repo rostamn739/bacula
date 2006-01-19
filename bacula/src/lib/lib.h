@@ -9,7 +9,7 @@
  */
 
 /*
-   Copyright (C) 2000-2005 Kern Sibbald
+   Copyright (C) 2000-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@
 #include "crypto.h"
 #include "mem_pool.h"
 #include "message.h"
-#include "openssl.h"
+/* #include "openssl.h" */
 #include "lex.h"
 #include "parse_conf.h"
 #include "tls.h"
