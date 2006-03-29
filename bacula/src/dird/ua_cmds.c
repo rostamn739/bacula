@@ -127,7 +127,7 @@ static struct cmdstruct commands[] = {
  { N_("use"),        use_cmd,       _("use catalog xxx")},
  { N_("var"),        var_cmd,       _("does variable expansion")},
  { N_("version"),    version_cmd,   _("print Director version")},
- { N_("wait"),       wait_cmd,      _("wait until no jobs are running [<jobname=name> | <jobid=nnn> | <jobuid=complete_name>]")},
+ { N_("wait"),       wait_cmd,      _("wait until no jobs are running [<jobname=name> | <jobid=nnn> | <ujobid=complete_name>]")},
              };
 #define comsize (sizeof(commands)/sizeof(struct cmdstruct))
 
@@ -396,7 +396,7 @@ static int cancel_cmd(UAContext *ua, const char *cmd)
             bstrncpy(jcr->Job, ua->argv[i], sizeof(jcr->Job));
          }
          break;
-      } else if (strcasecmp(ua->argk[i], _("jobuid")) == 0) {
+      } else if (strcasecmp(ua->argk[i], _("ujobid")) == 0) {
          if (!ua->argv[i]) {
             break;
          }
@@ -1247,8 +1247,6 @@ static void do_job_delete(UAContext *ua, JobId_t JobId)
 
    Mmsg(query, "DELETE FROM Job WHERE JobId=%s", edit_int64(JobId, ed1));
    db_sql_query(ua->db, query, NULL, (void *)NULL);
-   Mmsg(query, "DELETE FROM MAC WHERE JobId=%s", ed1);
-   db_sql_query(ua->db, query, NULL, (void *)NULL);
    Mmsg(query, "DELETE FROM File WHERE JobId=%s", ed1);
    db_sql_query(ua->db, query, NULL, (void *)NULL);
    Mmsg(query, "DELETE FROM JobMedia WHERE JobId=%s", ed1);
@@ -1444,7 +1442,7 @@ int wait_cmd(UAContext *ua, const char *cmd)
       return 1;
    }
 
-   /* we have jobid, jobname or jobuid argument */
+   /* we have jobid, jobname or ujobid argument */
 
    uint32_t jobid = 0 ;
 
@@ -1471,7 +1469,7 @@ int wait_cmd(UAContext *ua, const char *cmd)
             free_jcr(jcr);
          }
          break;
-      } else if (strcasecmp(ua->argk[i], "jobuid") == 0) {
+      } else if (strcasecmp(ua->argk[i], "ujobid") == 0) {
          if (!ua->argv[i]) {
             break;
          }

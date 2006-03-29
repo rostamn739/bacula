@@ -47,8 +47,7 @@ public:
     virtual BOOL CreateSnapshots(char* szDriveLetters) = 0;
     virtual BOOL CloseBackup() = 0;
     virtual const char* GetDriverName() = 0;
-    BOOL GetShadowPath  (const char* szFilePath, char* szShadowPath, int nBuflen);
-    BOOL GetShadowPathW (const WCHAR* szFilePath, WCHAR* szShadowPath, int nBuflen); /* nBuflen in characters */
+    BOOL GetShadowPath (const char* szFilePath, char* szShadowPath, int nBuflen);
 
     const size_t GetWriterCount();
     const char* GetWriterInfo(size_t nIndex);

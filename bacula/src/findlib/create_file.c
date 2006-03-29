@@ -83,20 +83,20 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
       switch (replace) {
       case REPLACE_IFNEWER:
          if (attr->statp.st_mtime <= mstatp.st_mtime) {
-            Qmsg(jcr, M_SKIPPED, 0, _("File skipped. Not newer: %s\n"), attr->ofname);
+            Jmsg(jcr, M_SKIPPED, 0, _("File skipped. Not newer: %s\n"), attr->ofname);
             return CF_SKIP;
          }
          break;
 
       case REPLACE_IFOLDER:
          if (attr->statp.st_mtime >= mstatp.st_mtime) {
-            Qmsg(jcr, M_SKIPPED, 0, _("File skipped. Not older: %s\n"), attr->ofname);
+            Jmsg(jcr, M_SKIPPED, 0, _("File skipped. Not older: %s\n"), attr->ofname);
             return CF_SKIP;
          }
          break;
 
       case REPLACE_NEVER:
-         Qmsg(jcr, M_SKIPPED, 0, _("File skipped. Already exists: %s\n"), attr->ofname);
+         Jmsg(jcr, M_SKIPPED, 0, _("File skipped. Already exists: %s\n"), attr->ofname);
          return CF_SKIP;
 
       case REPLACE_ALWAYS:
@@ -117,11 +117,11 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
        *  we may blow away a FIFO that is being used to read the
        *  restore data, or we may blow away a partition definition.
        */
-      if (exists && attr->type != FT_RAW) {
+      if (exists && attr->type != FT_RAW && attr->type != FT_FIFO) {
          /* Get rid of old copy */
          if (unlink(attr->ofname) == -1) {
             berrno be;
-            Qmsg(jcr, M_ERROR, 0, _("File %s already exists and could not be replaced. ERR=%s.\n"),
+            Jmsg(jcr, M_ERROR, 0, _("File %s already exists and could not be replaced. ERR=%s.\n"),
                attr->ofname, be.strerror());
             /* Continue despite error */
          }
@@ -173,42 +173,29 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
          }
          Dmsg1(50, "Create file: %s\n", attr->ofname);
          if (is_bopen(bfd)) {
-            Qmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
+            Jmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
             bclose(bfd);
          }
-      
-
-         if ((bopen(bfd, attr->ofname, mode, S_IRUSR | S_IWUSR)) < 0) {
-            berrno be;
-            be.set_errno(bfd->berrno);
-            Qmsg2(jcr, M_ERROR, 0, _("Could not create %s: ERR=%s\n"),
-                  attr->ofname, be.strerror());
-            return CF_ERROR;
-         }
-
-         /* this doesn't solve the Microsoft problem - Thorsten Engel 
-            so I reused the code of V 1.40
          /*
           * If the open fails, we attempt to cd into the directory
           *  and create the file with a relative path rather than
           *  the full absolute path.  This is for Win32 where
           *  path names may be too long to create.
           */
-         /*
          if ((bopen(bfd, attr->ofname, mode, S_IRUSR | S_IWUSR)) < 0) {
             berrno be;
             int stat;
             Dmsg2(000, "bopen failed errno=%d: ERR=%s\n", bfd->berrno,  
-               be.strerror(bfd->berrno));            
-            if (strlen(attr->ofname) > 250) {   // Microsoft limitation 
+               be.strerror(bfd->berrno));
+            if (strlen(attr->ofname) > 250) {   /* Microsoft limitation */
                char savechr;
                char *p, *e;
                struct saved_cwd cwd;
                savechr = attr->ofname[pnl];
-               attr->ofname[pnl] = 0;                 // terminate path 
+               attr->ofname[pnl] = 0;                 /* terminate path */
                Dmsg1(000, "Do chdir %s\n", attr->ofname);
                if (save_cwd(&cwd) != 0) {
-                  Qmsg0(jcr, M_ERROR, 0, _("Could not save_dirn"));
+                  Jmsg0(jcr, M_ERROR, 0, _("Could not save_dirn"));
                   attr->ofname[pnl] = savechr;
                   return CF_ERROR;
                }
@@ -217,7 +204,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
                   *e = 0;
                   if (chdir(p) < 0) {
                      berrno be;
-                     Qmsg2(jcr, M_ERROR, 0, _("Could not chdir to %s: ERR=%s\n"),
+                     Jmsg2(jcr, M_ERROR, 0, _("Could not chdir to %s: ERR=%s\n"),
                            attr->ofname, be.strerror());
                      restore_cwd(&cwd, NULL, NULL);
                      free_cwd(&cwd);
@@ -230,7 +217,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
                }
                if (chdir(p) < 0) {
                   berrno be;
-                  Qmsg2(jcr, M_ERROR, 0, _("Could not chdir to %s: ERR=%s\n"),
+                  Jmsg2(jcr, M_ERROR, 0, _("Could not chdir to %s: ERR=%s\n"),
                         attr->ofname, be.strerror());
                   restore_cwd(&cwd, NULL, NULL);
                   free_cwd(&cwd);
@@ -250,10 +237,10 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
                   return CF_EXTRACT;
                }
             }
-            Qmsg2(jcr, M_ERROR, 0, _("Could not create %s: ERR=%s\n"),
+            Jmsg2(jcr, M_ERROR, 0, _("Could not create %s: ERR=%s\n"),
                   attr->ofname, be.strerror(bfd->berrno));
-            return CF_ERROR; 
-         }*/
+            return CF_ERROR;
+         }
          return CF_EXTRACT;
 #ifndef HAVE_WIN32  // none of these exists on MS Windows
       case FT_RAW:                    /* Bacula raw device e.g. /dev/sda1 */
@@ -263,17 +250,15 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
             Dmsg1(200, "Restore fifo: %s\n", attr->ofname);
             if (mkfifo(attr->ofname, attr->statp.st_mode) != 0 && errno != EEXIST) {
                berrno be;
-               Qmsg2(jcr, M_ERROR, 0, _("Cannot make fifo %s: ERR=%s\n"),
+               Jmsg2(jcr, M_ERROR, 0, _("Cannot make fifo %s: ERR=%s\n"),
                      attr->ofname, be.strerror());
                return CF_ERROR;
             }
-         } else if(S_ISSOCK(attr->statp.st_mode)) {
-             Dmsg1(200, "Skipping restore of socket: %s\n", attr->ofname);
          } else {
             Dmsg1(200, "Restore node: %s\n", attr->ofname);
             if (mknod(attr->ofname, attr->statp.st_mode, attr->statp.st_rdev) != 0 && errno != EEXIST) {
                berrno be;
-               Qmsg2(jcr, M_ERROR, 0, _("Cannot make node %s: ERR=%s\n"),
+               Jmsg2(jcr, M_ERROR, 0, _("Cannot make node %s: ERR=%s\n"),
                      attr->ofname, be.strerror());
                return CF_ERROR;
             }
@@ -289,12 +274,12 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
                tid = NULL;
             }
             if (is_bopen(bfd)) {
-               Qmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
+               Jmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
             }
             if ((bopen(bfd, attr->ofname, mode, 0)) < 0) {
                berrno be;
                be.set_errno(bfd->berrno);
-               Qmsg2(jcr, M_ERROR, 0, _("Could not open %s: ERR=%s\n"),
+               Jmsg2(jcr, M_ERROR, 0, _("Could not open %s: ERR=%s\n"),
                      attr->ofname, be.strerror());
                stop_thread_timer(tid);
                return CF_ERROR;
@@ -309,7 +294,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
          Dmsg2(130, "FT_LNK should restore: %s -> %s\n", attr->ofname, attr->olname);
          if (symlink(attr->olname, attr->ofname) != 0 && errno != EEXIST) {
             berrno be;
-            Qmsg3(jcr, M_ERROR, 0, _("Could not symlink %s -> %s: ERR=%s\n"),
+            Jmsg3(jcr, M_ERROR, 0, _("Could not symlink %s -> %s: ERR=%s\n"),
                   attr->ofname, attr->olname, be.strerror());
             return CF_ERROR;
          }
@@ -319,7 +304,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
          Dmsg2(130, "Hard link %s => %s\n", attr->ofname, attr->olname);
          if (link(attr->olname, attr->ofname) != 0) {
             berrno be;
-            Qmsg3(jcr, M_ERROR, 0, _("Could not hard link %s -> %s: ERR=%s\n"),
+            Jmsg3(jcr, M_ERROR, 0, _("Could not hard link %s -> %s: ERR=%s\n"),
                   attr->ofname, attr->olname, be.strerror());
             return CF_ERROR;
          }
@@ -340,7 +325,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
        */
       if (!is_portable_backup(bfd)) {
          if (is_bopen(bfd)) {
-            Qmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
+            Jmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
          }
          if ((bopen(bfd, attr->ofname, O_WRONLY|O_BINARY, 0)) < 0) {
             berrno be;
@@ -351,7 +336,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
                return CF_SKIP;
             }
 #endif
-            Qmsg2(jcr, M_ERROR, 0, _("Could not open %s: ERR=%s\n"),
+            Jmsg2(jcr, M_ERROR, 0, _("Could not open %s: ERR=%s\n"),
                   attr->ofname, be.strerror());
             return CF_ERROR;
          }
@@ -370,10 +355,10 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
    case FT_NORECURSE:
    case FT_NOFSCHG:
    case FT_NOOPEN:
-      Qmsg2(jcr, M_ERROR, 0, _("Original file %s not saved: type=%d\n"), attr->fname, attr->type);
+      Jmsg2(jcr, M_ERROR, 0, _("Original file %s not saved: type=%d\n"), attr->fname, attr->type);
       break;
    default:
-      Qmsg2(jcr, M_ERROR, 0, _("Unknown file type %d; not restored: %s\n"), attr->type, attr->fname);
+      Jmsg2(jcr, M_ERROR, 0, _("Unknown file type %d; not restored: %s\n"), attr->type, attr->fname);
       break;
    }
    return CF_ERROR;
@@ -404,7 +389,7 @@ static int separate_path_and_file(JCR *jcr, char *fname, char *ofile)
       /* The filename length must not be zero here because we
        *  are dealing with a file (i.e. FT_REGE or FT_REG).
        */
-      Qmsg1(jcr, M_ERROR, 0, _("Zero length filename: %s\n"), fname);
+      Jmsg1(jcr, M_ERROR, 0, _("Zero length filename: %s\n"), fname);
       return -1;
    }
    pnl = f - ofile - 1;

@@ -13,7 +13,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2002-2005 Kern Sibbald
+   Copyright (C) 2002-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -81,7 +81,7 @@ int restore_cmd(UAContext *ua, const char *cmd)
    RESTORE_CTX rx;                    /* restore context */
    JOB *job;
    int i;
-   POOLMEM *fname;
+   JCR *jcr = ua->jcr;
 
    memset(&rx, 0, sizeof(rx));
    rx.path = get_pool_memory(PM_FNAME);
@@ -177,22 +177,19 @@ int restore_cmd(UAContext *ua, const char *cmd)
    }
 
    /* Build run command */
-   fname = get_pool_memory(PM_MESSAGE);
-   make_unique_restore_filename(ua, &fname);
    if (rx.where) {
       Mmsg(ua->cmd,
           "run job=\"%s\" client=\"%s\" storage=\"%s\" bootstrap=\"%s\""
           " where=\"%s\" files=%d catalog=\"%s\"",
           job->hdr.name, rx.ClientName, rx.store?rx.store->hdr.name:"",
-          fname, rx.where, rx.selected_files, ua->catalog->hdr.name);
+          jcr->RestoreBootstrap, rx.where, rx.selected_files, ua->catalog->hdr.name);
    } else {
       Mmsg(ua->cmd,
           "run job=\"%s\" client=\"%s\" storage=\"%s\" bootstrap=\"%s\""
           " files=%d catalog=\"%s\"",
           job->hdr.name, rx.ClientName, rx.store?rx.store->hdr.name:"",
-          fname, rx.selected_files, ua->catalog->hdr.name);
+          jcr->RestoreBootstrap, rx.selected_files, ua->catalog->hdr.name);
    }
-   free_pool_memory(fname);
    if (find_arg(ua, N_("yes")) > 0) {
       pm_strcat(ua->cmd, " yes");    /* pass it on to the run command */
    }
@@ -1153,7 +1150,14 @@ bail_out:
 }
 
 
-/* Return next JobId from comma separated list */
+/* 
+ * Return next JobId from comma separated list   
+ *
+ * Returns:
+ *   1 if next JobId returned
+ *   0 if no more JobIds are in list
+ *  -1 there is an error
+ */
 int get_next_jobid_from_list(char **p, JobId_t *JobId)
 {
    char jobid[30];

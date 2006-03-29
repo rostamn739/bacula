@@ -136,7 +136,7 @@ struct s_kw {
  *
  *   tape label      label code = token
  */
-static s_kw tapelabels[] = {
+struct s_kw tapelabels[] = {
    {"bacula",        B_BACULA_LABEL},
    {"ansi",          B_ANSI_LABEL},
    {"ibm",           B_IBM_LABEL},
@@ -191,10 +191,8 @@ void init_resource(int type, RES_ITEM *items, int pass)
             (items[i].flags & ITEM_DEFAULT) ? "yes" : "no",
             items[i].default_value);
       if (items[i].flags & ITEM_DEFAULT && items[i].default_value != 0) {
-         if (items[i].handler == store_bit) {
+         if (items[i].handler == store_yesno) {
             *(int *)(items[i].value) |= items[i].code;
-         } else if (items[i].handler == store_bool) {
-            *(bool *)(items[i].value) = items[i].default_value;
          } else if (items[i].handler == store_pint ||
                     items[i].handler == store_int) {
             *(int *)(items[i].value) = items[i].default_value;
@@ -305,25 +303,24 @@ void store_msgs(LEX *lc, RES_ITEM *item, int index, int pass)
  */
 static void scan_types(LEX *lc, MSGS *msg, int dest_code, char *where, char *cmd)
 {
-   int i; 
-   bool found, is_not;
+   int i, found, quit, is_not;
    int msg_type = 0;
    char *str;
 
-   for ( ;; ) {
+   for (quit=0; !quit;) {
       lex_get_token(lc, T_NAME);            /* expect at least one type */
-      found = false;
+      found = FALSE;
       if (lc->str[0] == '!') {
-         is_not = true;
+         is_not = TRUE;
          str = &lc->str[1];
       } else {
-         is_not = false;
+         is_not = FALSE;
          str = &lc->str[0];
       }
       for (i=0; msg_types[i].name; i++) {
          if (strcasecmp(str, msg_types[i].name) == 0) {
             msg_type = msg_types[i].token;
-            found = true;
+            found = TRUE;
             break;
          }
       }
@@ -336,10 +333,12 @@ static void scan_types(LEX *lc, MSGS *msg, int dest_code, char *where, char *cmd
          for (i=1; i<=M_MAX; i++) {      /* yes set all types */
             add_msg_dest(msg, dest_code, i, where, cmd);
          }
-      } else if (is_not) {
-         rem_msg_dest(msg, dest_code, msg_type, where);
       } else {
-         add_msg_dest(msg, dest_code, msg_type, where, cmd);
+         if (is_not) {
+            rem_msg_dest(msg, dest_code, msg_type, where);
+         } else {
+            add_msg_dest(msg, dest_code, msg_type, where, cmd);
+         }
       }
       if (lc->ch != ',') {
          break;
@@ -689,35 +688,19 @@ void store_time(LEX *lc, RES_ITEM *item, int index, int pass)
 
 
 /* Store a yes/no in a bit field */
-void store_bit(LEX *lc, RES_ITEM *item, int index, int pass)
+void store_yesno(LEX *lc, RES_ITEM *item, int index, int pass)
 {
    lex_get_token(lc, T_NAME);
-   if (strcasecmp(lc->str, "yes") == 0 || strcasecmp(lc->str, "true") == 0) {
+   if (strcasecmp(lc->str, "yes") == 0) {
       *(int *)(item->value) |= item->code;
-   } else if (strcasecmp(lc->str, "no") == 0 || strcasecmp(lc->str, "false") == 0) {
+   } else if (strcasecmp(lc->str, "no") == 0) {
       *(int *)(item->value) &= ~(item->code);
    } else {
-      scan_err2(lc, _("Expect %s, got: %s"), "YES, NO, TRUE, or FALSE", lc->str); /* YES and NO must not be translated */
+      scan_err3(lc, _("Expect a %s or %s, got: %s"), "YES", "NO", lc->str); /* YES and NO must not be translated */
    }
    scan_to_eol(lc);
    set_bit(index, res_all.hdr.item_present);
 }
-
-/* Store a bool in a bit field */
-void store_bool(LEX *lc, RES_ITEM *item, int index, int pass)
-{
-   lex_get_token(lc, T_NAME);
-   if (strcasecmp(lc->str, "yes") == 0 || strcasecmp(lc->str, "true") == 0) {
-      *(bool *)(item->value) = true;
-   } else if (strcasecmp(lc->str, "no") == 0 || strcasecmp(lc->str, "false") == 0) {
-      *(bool *)(item->value) = false;
-   } else {
-      scan_err2(lc, _("Expect %s, got: %s"), "YES, NO, TRUE, or FALSE", lc->str); /* YES and NO must not be translated */
-   }
-   scan_to_eol(lc);
-   set_bit(index, res_all.hdr.item_present);
-}
-
 
 /*
  * Store Tape Label Type (Bacula, ANSI, IBM)

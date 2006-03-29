@@ -49,7 +49,7 @@ extern int UpdateDB(const char *file, int line, JCR *jcr, B_DB *db, char *update
  */
 /* Update the attributes record by adding the file digest */
 int
-db_add_digest_to_file_record(JCR *jcr, B_DB *mdb, FileId_t FileId, char *digest,
+db_add_SIG_to_file_record(JCR *jcr, B_DB *mdb, FileId_t FileId, char *digest,
                           int type)
 {
    int stat;

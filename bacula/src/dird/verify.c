@@ -43,7 +43,6 @@ static char storaddr[]     = "storage address=%s port=%d ssl=0\n";
 /* Responses received from File daemon */
 static char OKverify[]    = "2000 OK verify\n";
 static char OKstore[]     = "2000 OK storage\n";
-static char OKbootstrap[] = "2000 OK bootstrap\n";
 
 /* Forward referenced functions */
 static void prt_fname(JCR *jcr);
@@ -60,7 +59,7 @@ bool do_verify_init(JCR *jcr)
    JobId_t verify_jobid = 0;
    const char *Name;
 
-   memset(&jcr->target_jr, 0, sizeof(jcr->target_jr));
+   memset(&jcr->previous_jr, 0, sizeof(jcr->previous_jr));
 
    Dmsg1(9, "bdird: created client %s record\n", jcr->client->hdr.name);
 
@@ -104,19 +103,19 @@ bool do_verify_init(JCR *jcr)
    if (jcr->JobLevel == L_VERIFY_CATALOG ||
        jcr->JobLevel == L_VERIFY_VOLUME_TO_CATALOG ||
        jcr->JobLevel == L_VERIFY_DISK_TO_CATALOG) {
-      jcr->target_jr.JobId = verify_jobid;
-      if (!db_get_job_record(jcr, jcr->db, &jcr->target_jr)) {
+      jcr->previous_jr.JobId = verify_jobid;
+      if (!db_get_job_record(jcr, jcr->db, &jcr->previous_jr)) {
          Jmsg(jcr, M_FATAL, 0, _("Could not get job record for previous Job. ERR=%s"),
               db_strerror(jcr->db));
          return false;
       }
-      if (jcr->target_jr.JobStatus != 'T') {
+      if (jcr->previous_jr.JobStatus != 'T') {
          Jmsg(jcr, M_FATAL, 0, _("Last Job %d did not terminate normally. JobStatus=%c\n"),
-            verify_jobid, jcr->target_jr.JobStatus);
+            verify_jobid, jcr->previous_jr.JobStatus);
          return false;
       }
       Jmsg(jcr, M_INFO, 0, _("Verifying against JobId=%d Job=%s\n"),
-         jcr->target_jr.JobId, jcr->target_jr.Job);
+         jcr->previous_jr.JobId, jcr->previous_jr.Job);
    }
 
    /*
@@ -126,9 +125,27 @@ bool do_verify_init(JCR *jcr)
     *   File daemon but not used).
     */
    if (jcr->JobLevel == L_VERIFY_VOLUME_TO_CATALOG) {
-      if (!create_restore_bootstrap_file(jcr)) {
+      RESTORE_CTX rx;
+      UAContext *ua;
+      memset(&rx, 0, sizeof(rx));
+      rx.bsr = new_bsr();
+      rx.JobIds = "";                       
+      rx.bsr->JobId = jcr->previous_jr.JobId;
+      ua = new_ua_context(jcr);
+      complete_bsr(ua, rx.bsr);
+      rx.bsr->fi = new_findex();
+      rx.bsr->fi->findex = 1;
+      rx.bsr->fi->findex2 = jcr->previous_jr.JobFiles;
+      jcr->ExpectedFiles = write_bsr_file(ua, rx);
+      if (jcr->ExpectedFiles == 0) {
+         free_ua_context(ua);
+         free_bsr(rx.bsr);
          return false;
       }
+      free_ua_context(ua);
+      free_bsr(rx.bsr);
+      jcr->needs_sd = true;
+
    } else {
       jcr->sd_auth_key = bstrdup("dummy");    /* dummy Storage daemon key */
    }
@@ -136,7 +153,7 @@ bool do_verify_init(JCR *jcr)
    if (jcr->JobLevel == L_VERIFY_DISK_TO_CATALOG && jcr->verify_job) {
       jcr->fileset = jcr->verify_job->fileset;
    }
-   Dmsg2(100, "ClientId=%u JobLevel=%c\n", jcr->target_jr.ClientId, jcr->JobLevel);
+   Dmsg2(100, "ClientId=%u JobLevel=%c\n", jcr->previous_jr.ClientId, jcr->JobLevel);
    return true;
 }
 
@@ -238,8 +255,7 @@ bool do_verify(JCR *jcr)
       /*
        * Send the bootstrap file -- what Volumes/files to restore
        */
-      if (!send_bootstrap_file(jcr, fd) ||
-          !response(jcr, fd, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
+      if (!send_bootstrap_file(jcr)) {
          return false;
       }
 
@@ -285,19 +301,19 @@ bool do_verify(JCR *jcr)
       Dmsg0(10, "Verify level=catalog\n");
       jcr->sd_msg_thread_done = true;   /* no SD msg thread, so it is done */
       jcr->SDJobStatus = JS_Terminated;
-      get_attributes_and_compare_to_catalog(jcr, jcr->target_jr.JobId);
+      get_attributes_and_compare_to_catalog(jcr, jcr->previous_jr.JobId);
       break;
 
    case L_VERIFY_VOLUME_TO_CATALOG:
       Dmsg0(10, "Verify level=volume\n");
-      get_attributes_and_compare_to_catalog(jcr, jcr->target_jr.JobId);
+      get_attributes_and_compare_to_catalog(jcr, jcr->previous_jr.JobId);
       break;
 
    case L_VERIFY_DISK_TO_CATALOG:
       Dmsg0(10, "Verify level=disk_to_catalog\n");
       jcr->sd_msg_thread_done = true;   /* no SD msg thread, so it is done */
       jcr->SDJobStatus = JS_Terminated;
-      get_attributes_and_compare_to_catalog(jcr, jcr->target_jr.JobId);
+      get_attributes_and_compare_to_catalog(jcr, jcr->previous_jr.JobId);
       break;
 
    case L_VERIFY_INIT:
@@ -421,7 +437,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
          jcr->fileset->hdr.name,
          level_to_str(jcr->JobLevel),
          jcr->client->hdr.name,
-         jcr->target_jr.JobId,
+         jcr->previous_jr.JobId,
          Name,
          sdt,
          edt,
@@ -454,7 +470,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
          jcr->fileset->hdr.name,
          level_to_str(jcr->JobLevel),
          jcr->client->hdr.name,
-         jcr->target_jr.JobId,
+         jcr->previous_jr.JobId,
          Name,
          sdt,
          edt,
@@ -479,7 +495,7 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
    int stat = JS_Terminated;
    char buf[MAXSTRING];
    POOLMEM *fname = get_pool_memory(PM_MESSAGE);
-   int do_Digest = CRYPTO_DIGEST_NONE;
+   int do_SIG = NO_SIG;
    int32_t file_index = 0;
 
    memset(&fdbr, 0, sizeof(FILE_DBR));
@@ -493,7 +509,7 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
     * We expect:
     *   FileIndex
     *   Stream
-    *   Options or Digest (MD5/SHA1)
+    *   Options or SIG (MD5/SHA1)
     *   Filename
     *   Attributes
     *   Link name  ???
@@ -501,11 +517,11 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
    while ((n=bget_dirmsg(fd)) >= 0 && !job_canceled(jcr)) {
       int stream;
       char *attr, *p, *fn;
-      char Opts_Digest[MAXSTRING];        /* Verify Opts or MD5/SHA1 digest */
+      char Opts_SIG[MAXSTRING];        /* Verify Opts or MD5/SHA1 signature */
 
       fname = check_pool_memory_size(fname, fd->msglen);
       jcr->fname = check_pool_memory_size(jcr->fname, fd->msglen);
-      Dmsg1(200, "Atts+Digest=%s\n", fd->msg);
+      Dmsg1(200, "Atts+SIG=%s\n", fd->msg);
       if ((len = sscanf(fd->msg, "%ld %d %100s", &file_index, &stream,
             fname)) != 3) {
          Jmsg3(jcr, M_FATAL, 0, _("bird<filed: bad attributes, expected 3 fields got %d\n"
@@ -516,13 +532,13 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
        * We read the Options or Signature into fname
        *  to prevent overrun, now copy it to proper location.
        */
-      bstrncpy(Opts_Digest, fname, sizeof(Opts_Digest));
+      bstrncpy(Opts_SIG, fname, sizeof(Opts_SIG));
       p = fd->msg;
       skip_nonspaces(&p);             /* skip FileIndex */
       skip_spaces(&p);
       skip_nonspaces(&p);             /* skip Stream */
       skip_spaces(&p);
-      skip_nonspaces(&p);             /* skip Opts_Digest */
+      skip_nonspaces(&p);             /* skip Opts_SIG */
       p++;                            /* skip space */
       fn = fname;
       while (*p != 0) {
@@ -539,7 +555,7 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
          jcr->JobFiles++;
          jcr->FileIndex = file_index;    /* remember attribute file_index */
          decode_stat(attr, &statf, &LinkFIf);  /* decode file stat packet */
-         do_Digest = CRYPTO_DIGEST_NONE;
+         do_SIG = NO_SIG;
          jcr->fn_printed = false;
          pm_strcpy(jcr->fname, fname);  /* move filename into JCR */
 
@@ -551,7 +567,7 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
           */
          fdbr.FileId = 0;
          if (!db_get_file_attributes_record(jcr, jcr->db, jcr->fname,
-              &jcr->target_jr, &fdbr)) {
+              &jcr->previous_jr, &fdbr)) {
             Jmsg(jcr, M_INFO, 0, _("New file: %s\n"), jcr->fname);
             Dmsg1(020, _("File not in catalog: %s\n"), jcr->fname);
             stat = JS_Differences;
@@ -565,13 +581,13 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
          }
 
          Dmsg3(400, "Found %s in catalog. inx=%d Opts=%s\n", jcr->fname,
-            file_index, Opts_Digest);
+            file_index, Opts_SIG);
          decode_stat(fdbr.LStat, &statc, &LinkFIc); /* decode catalog stat */
          /*
           * Loop over options supplied by user and verify the
           * fields he requests.
           */
-         for (p=Opts_Digest; *p; p++) {
+         for (p=Opts_SIG; *p; p++) {
             char ed1[30], ed2[30];
             switch (*p) {
             case 'i':                /* compare INODEs */
@@ -656,10 +672,10 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
                break;
             case '5':                /* compare MD5 */
                Dmsg1(500, "set Do_MD5 for %s\n", jcr->fname);
-               do_Digest = CRYPTO_DIGEST_MD5;
+               do_SIG = MD5_SIG;
                break;
             case '1':                 /* compare SHA1 */
-               do_Digest = CRYPTO_DIGEST_SHA1;
+               do_SIG = SHA1_SIG;
                break;
             case ':':
             case 'V':
@@ -668,13 +684,13 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
             }
          }
       /*
-       * Got Digest Signature from Storage daemon
-       *  It came across in the Opts_Digest field.
+       * Got SIG Signature from Storage daemon
+       *  It came across in the Opts_SIG field.
        */
-      } else if (crypto_digest_stream_type(stream) != CRYPTO_DIGEST_NONE) {
-         Dmsg2(400, "stream=Digest inx=%d Digest=%s\n", file_index, Opts_Digest);
+      } else if (stream == STREAM_MD5_SIGNATURE || stream == STREAM_SHA1_SIGNATURE) {
+         Dmsg2(400, "stream=SIG inx=%d SIG=%s\n", file_index, Opts_SIG);
          /*
-          * When ever we get a digest is MUST have been
+          * When ever we get a signature is MUST have been
           * preceded by an attributes record, which sets attr_file_index
           */
          if (jcr->FileIndex != (uint32_t)file_index) {
@@ -682,20 +698,20 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
                file_index, jcr->FileIndex);
             return false;
          }
-         if (do_Digest != CRYPTO_DIGEST_NONE) {
-            db_escape_string(buf, Opts_Digest, strlen(Opts_Digest));
-            if (strcmp(buf, fdbr.Digest) != 0) {
+         if (do_SIG) {
+            db_escape_string(buf, Opts_SIG, strlen(Opts_SIG));
+            if (strcmp(buf, fdbr.SIG) != 0) {
                prt_fname(jcr);
                if (debug_level >= 10) {
                   Jmsg(jcr, M_INFO, 0, _("      %s not same. File=%s Cat=%s\n"),
-                       stream_to_ascii(stream), buf, fdbr.Digest);
+                       stream==STREAM_MD5_SIGNATURE?"MD5":"SHA1", buf, fdbr.SIG);
                } else {
                   Jmsg(jcr, M_INFO, 0, _("      %s differs.\n"),
-                       stream_to_ascii(stream));
+                       stream==STREAM_MD5_SIGNATURE?"MD5":"SHA1");
                }
                stat = JS_Differences;
             }
-            do_Digest = CRYPTO_DIGEST_NONE;
+            do_SIG = FALSE;
          }
       }
       jcr->JobFiles = file_index;

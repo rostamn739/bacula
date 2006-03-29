@@ -73,24 +73,10 @@ void term_job_server()
  */
 JobId_t run_job(JCR *jcr)
 {
-   int stat;
-   if (setup_job(jcr)) {
-      /* Queue the job to be run */
-      if ((stat = jobq_add(&job_queue, jcr)) != 0) {
-         berrno be;
-         Jmsg(jcr, M_FATAL, 0, _("Could not add job queue: ERR=%s\n"), be.strerror(stat));
-         return 0;
-      }
-      return jcr->JobId;
-   }
-   return 0;
-}            
+   int stat, errstat;
+   JobId_t JobId = 0;
 
-bool setup_job(JCR *jcr) 
-{
-   int errstat;
-
-   P(jcr->mutex);
+   jcr->lock();
    sm_check(__FILE__, __LINE__, true);
    init_msg(jcr, jcr->messages);
 
@@ -102,6 +88,9 @@ bool setup_job(JCR *jcr)
    }
    jcr->term_wait_inited = true;
 
+   create_unique_job_name(jcr, jcr->job->hdr.name);
+   set_jcr_job_status(jcr, JS_Created);
+   jcr->unlock();
 
    /*
     * Open database
@@ -124,14 +113,12 @@ bool setup_job(JCR *jcr)
    /*
     * Create Job record
     */
-   create_unique_job_name(jcr, jcr->job->hdr.name);
-   set_jcr_job_status(jcr, JS_Created);
    init_jcr_job_record(jcr);
    if (!db_create_job_record(jcr, jcr->db, &jcr->jr)) {
       Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
       goto bail_out;
    }
-   jcr->JobId = jcr->jr.JobId;
+   JobId = jcr->JobId = jcr->jr.JobId;
    Dmsg4(100, "Created job record JobId=%d Name=%s Type=%c Level=%c\n",
        jcr->JobId, jcr->Job, jcr->jr.JobType, jcr->jr.JobLevel);
 
@@ -147,17 +134,23 @@ bool setup_job(JCR *jcr)
 
    Dmsg0(200, "Add jrc to work queue\n");
 
+   /* Queue the job to be run */
+   if ((stat = jobq_add(&job_queue, jcr)) != 0) {
+      berrno be;
+      Jmsg(jcr, M_FATAL, 0, _("Could not add job queue: ERR=%s\n"), be.strerror(stat));
+      JobId = 0;
+      goto bail_out;
+   }
+   Dmsg0(100, "Done run_job()\n");
 
-   V(jcr->mutex);
-   return true;
+   return JobId;
 
 bail_out:
    if (jcr->fname) {
       free_memory(jcr->fname);
       jcr->fname = NULL;
    }
-   V(jcr->mutex);
-   return false;
+   return JobId;
 }
 
 
@@ -385,6 +378,7 @@ bool cancel_job(UAContext *ua, JCR *jcr)
       return true;
 
    default:
+
       /* Cancel File daemon */
       if (jcr->file_bsock) {
          ua->jcr->client = jcr->client;
@@ -406,7 +400,7 @@ bool cancel_job(UAContext *ua, JCR *jcr)
       /* Cancel Storage daemon */
       if (jcr->store_bsock) {
          if (!ua->jcr->storage) {
-            copy_storage(ua->jcr, jcr->storage);
+            copy_storage(ua->jcr, jcr);
          } else {
             set_storage(ua->jcr, jcr->store);
          }
@@ -647,13 +641,13 @@ bool get_or_create_fileset_record(JCR *jcr)
    bstrncpy(fsr.FileSet, jcr->fileset->hdr.name, sizeof(fsr.FileSet));
    if (jcr->fileset->have_MD5) {
       struct MD5Context md5c;
-      unsigned char digest[MD5HashSize];
+      unsigned char signature[16];
       memcpy(&md5c, &jcr->fileset->md5c, sizeof(md5c));
-      MD5Final(digest, &md5c);
-      bin_to_base64(fsr.MD5, (char *)digest, MD5HashSize);
+      MD5Final(signature, &md5c);
+      bin_to_base64(fsr.MD5, (char *)signature, 16); /* encode 16 bytes */
       bstrncpy(jcr->fileset->MD5, fsr.MD5, sizeof(jcr->fileset->MD5));
    } else {
-      Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 digest not found.\n"));
+      Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 signature not found.\n"));
    }
    if (!jcr->fileset->ignore_fs_changes ||
        !db_get_fileset_record(jcr, jcr->db, &fsr)) {
@@ -828,6 +822,7 @@ void dird_free_jcr(JCR *jcr)
  */
 void set_jcr_defaults(JCR *jcr, JOB *job)
 {
+   STORE *st;
    jcr->job = job;
    jcr->JobType = job->JobType;
    switch (jcr->JobType) {
@@ -841,7 +836,18 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
    jcr->JobPriority = job->Priority;
    /* Copy storage definitions -- deleted in dir_free_jcr above */
-   copy_storage(jcr, job->storage);
+   if (job->storage) {
+      if (jcr->storage) {
+         delete jcr->storage;
+      }
+      jcr->storage = New(alist(10, not_owned_by_alist));
+      foreach_alist(st, job->storage) {
+         jcr->storage->append(st);
+      }
+   }
+   if (jcr->storage) {
+      jcr->store = (STORE *)jcr->storage->first();
+   }
    jcr->client = job->client;
    if (!jcr->client_name) {
       jcr->client_name = get_pool_memory(PM_NAME);
@@ -885,27 +891,27 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
 }
 
-
-/* 
- * Copy the storage definitions from an alist to the JCR
+/*
+ * copy the storage definitions from an old JCR to a new one
  */
-void copy_storage(JCR *jcr, alist *storage)
+void copy_storage(JCR *new_jcr, JCR *old_jcr)
 {
-   if (storage) {
+   if (old_jcr->storage) {
       STORE *st;
-      if (jcr->storage) {
-         delete jcr->storage;
+      if (new_jcr->storage) {
+         delete new_jcr->storage;
       }
-      jcr->storage = New(alist(10, not_owned_by_alist));
-      foreach_alist(st, storage) {
-         jcr->storage->append(st);
+      new_jcr->storage = New(alist(10, not_owned_by_alist));
+      foreach_alist(st, old_jcr->storage) {
+         new_jcr->storage->append(st);
       }
-   }               
-   if (jcr->storage) {
-      jcr->store = (STORE *)jcr->storage->first();
+   }
+   if (old_jcr->store) {
+      new_jcr->store = old_jcr->store;
+   } else if (new_jcr->storage) {
+      new_jcr->store = (STORE *)new_jcr->storage->first();
    }
 }
-
 
 /* Set storage override */
 void set_storage(JCR *jcr, STORE *store)
@@ -920,65 +926,4 @@ void set_storage(JCR *jcr, STORE *store)
    }
    /* Store not in list, so add it */
    jcr->storage->prepend(store);
-}
-
-void create_clones(JCR *jcr)
-{
-   /*
-    * Fire off any clone jobs (run directives)
-    */
-   Dmsg2(900, "cloned=%d run_cmds=%p\n", jcr->cloned, jcr->job->run_cmds);
-   if (!jcr->cloned && jcr->job->run_cmds) {
-      char *runcmd;
-      JOB *job = jcr->job;
-      POOLMEM *cmd = get_pool_memory(PM_FNAME);
-      UAContext *ua = new_ua_context(jcr);
-      ua->batch = true;
-      foreach_alist(runcmd, job->run_cmds) {
-         cmd = edit_job_codes(jcr, cmd, runcmd, "");              
-         Mmsg(ua->cmd, "run %s cloned=yes", cmd);
-         Dmsg1(900, "=============== Clone cmd=%s\n", ua->cmd);
-         parse_ua_args(ua);                 /* parse command */
-         int stat = run_cmd(ua, ua->cmd);
-         if (stat == 0) {
-            Jmsg(jcr, M_ERROR, 0, _("Could not start clone job.\n"));
-         } else {
-            Jmsg(jcr, M_INFO, 0, _("Clone JobId %d started.\n"), stat);
-         }
-      }
-      free_ua_context(ua);
-      free_pool_memory(cmd);
-   }
-}
-
-bool create_restore_bootstrap_file(JCR *jcr)
-{
-   RESTORE_CTX rx;
-   UAContext *ua;
-   memset(&rx, 0, sizeof(rx));
-   rx.bsr = new_bsr();
-   rx.JobIds = "";                       
-   rx.bsr->JobId = jcr->target_jr.JobId;
-   ua = new_ua_context(jcr);
-   complete_bsr(ua, rx.bsr);
-   rx.bsr->fi = new_findex();
-   rx.bsr->fi->findex = 1;
-   rx.bsr->fi->findex2 = jcr->target_jr.JobFiles;
-   jcr->ExpectedFiles = write_bsr_file(ua, rx);
-   if (jcr->ExpectedFiles == 0) {
-      free_ua_context(ua);
-      free_bsr(rx.bsr);
-      return false;
-   }
-   if (jcr->RestoreBootstrap) {
-      free(jcr->RestoreBootstrap);
-   }
-   POOLMEM *fname = get_pool_memory(PM_MESSAGE);
-   make_unique_restore_filename(ua, &fname);
-   jcr->RestoreBootstrap = bstrdup(fname);
-   free_ua_context(ua);
-   free_bsr(rx.bsr);
-   free_pool_memory(fname);
-   jcr->needs_sd = true;
-   return true;
 }

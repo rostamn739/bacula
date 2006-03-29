@@ -56,15 +56,6 @@ int select_data_stream(FF_PKT *ff_pkt)
 {
    int stream;
 
-   /*
-    *  Fix all incompatible options
-    */
-
-   /* No sparse option for encrypted data */
-   if (ff_pkt->flags & FO_ENCRYPT) {
-      ff_pkt->flags &= ~FO_SPARSE;
-   }
-
    /* Note, no sparse option for win32_data */
    if (!is_portable_backup(&ff_pkt->bfd)) {
       stream = STREAM_WIN32_DATA;
@@ -74,65 +65,17 @@ int select_data_stream(FF_PKT *ff_pkt)
    } else {
       stream = STREAM_FILE_DATA;
    }
-
-   /* Encryption is only supported for file data */
-   if (stream != STREAM_FILE_DATA && stream != STREAM_WIN32_DATA &&
-         stream != STREAM_MACOS_FORK_DATA) {
-      ff_pkt->flags &= ~FO_ENCRYPT;
-   }
-
-   /* Compression is not supported for Mac fork data */
-   if (stream == STREAM_MACOS_FORK_DATA) {
-      ff_pkt->flags &= ~FO_GZIP;
-   }
-
-   /*
-    * Handle compression and encryption options
-    */
 #ifdef HAVE_LIBZ
    if (ff_pkt->flags & FO_GZIP) {
-      switch (stream) {
-      case STREAM_WIN32_DATA:
+      if (stream == STREAM_WIN32_DATA) {
          stream = STREAM_WIN32_GZIP_DATA;
-         break;
-      case STREAM_SPARSE_DATA:
-         stream = STREAM_SPARSE_GZIP_DATA;
-         break;
-      case STREAM_FILE_DATA:
+      } else if (stream == STREAM_FILE_DATA) {
          stream = STREAM_GZIP_DATA;
-         break;
-      default:
-         /* All stream types that do not support gzip should clear out
-          * FO_GZIP above, and this code block should be unreachable. */
-         ASSERT(!ff_pkt->flags & FO_GZIP);
-         return STREAM_NONE;
+      } else {
+         stream = STREAM_SPARSE_GZIP_DATA;
       }
    }
 #endif
-#ifdef HAVE_CRYPTO
-   if (ff_pkt->flags & FO_ENCRYPT) {
-      switch (stream) {
-      case STREAM_WIN32_DATA:
-         stream = STREAM_ENCRYPTED_WIN32_DATA;
-         break;
-      case STREAM_WIN32_GZIP_DATA:
-         stream = STREAM_ENCRYPTED_WIN32_GZIP_DATA;
-         break;
-      case STREAM_FILE_DATA:
-         stream = STREAM_ENCRYPTED_FILE_DATA;
-         break;
-      case STREAM_GZIP_DATA:
-         stream = STREAM_ENCRYPTED_FILE_GZIP_DATA;
-         break;
-      default:
-         /* All stream types that do not support encryption should clear out
-          * FO_ENCRYPT above, and this code block should be unreachable. */
-         ASSERT(!ff_pkt->flags & FO_ENCRYPT);
-         return STREAM_NONE;
-      }
-   }
-#endif
-
    return stream;
 }
 
@@ -512,12 +455,12 @@ int encode_attribsEx(JCR *jcr, char *attribsEx, FF_PKT *ff_pkt)
 
    attribsEx[0] = 0;                  /* no extended attributes */
 
-   unix_name_to_win32(&ff_pkt->sys_fname, ff_pkt->fname);
-
    // try unicode version
    if (p_GetFileAttributesExW)  {
+      unix_name_to_win32(&ff_pkt->sys_fname, ff_pkt->fname);
+
       POOLMEM* pwszBuf = get_pool_memory (PM_FNAME);   
-      make_win32_path_UTF8_2_wchar(&pwszBuf, ff_pkt->fname);
+      UTF8_2_wchar(&pwszBuf, ff_pkt->sys_fname);
 
       BOOL b=p_GetFileAttributesExW((LPCWSTR) pwszBuf, GetFileExInfoStandard, (LPVOID)&atts);
       free_pool_memory(pwszBuf);
@@ -529,7 +472,9 @@ int encode_attribsEx(JCR *jcr, char *attribsEx, FF_PKT *ff_pkt)
    }
    else {
       if (!p_GetFileAttributesExA)
-         return STREAM_UNIX_ATTRIBUTES;      
+         return STREAM_UNIX_ATTRIBUTES;
+
+      unix_name_to_win32(&ff_pkt->sys_fname, ff_pkt->fname);
 
       if (!p_GetFileAttributesExA(ff_pkt->sys_fname, GetFileExInfoStandard,
                               (LPVOID)&atts)) {
@@ -630,6 +575,8 @@ static bool set_win32_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
    win32_ofile = get_pool_memory(PM_FNAME);
    unix_name_to_win32(&win32_ofile, attr->ofname);
 
+
+
    /* At this point, we have reconstructed the WIN32_FILE_ATTRIBUTE_DATA pkt */
 
    if (!is_bopen(ofd)) {
@@ -653,7 +600,7 @@ static bool set_win32_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
    {
       if (p_SetFileAttributesW) {
          POOLMEM* pwszBuf = get_pool_memory (PM_FNAME);   
-         make_win32_path_UTF8_2_wchar(&pwszBuf, attr->ofname);
+         UTF8_2_wchar(&pwszBuf, win32_ofile);
 
          BOOL b=p_SetFileAttributesW((LPCWSTR)pwszBuf, atts.dwFileAttributes & SET_ATTRS);
          free_pool_memory(pwszBuf);

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2001-2005 Kern Sibbald
+  Copyright (C) 2001-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -125,6 +125,8 @@ _("\n"
 "       -f          set the From: field\n"
 "       -h          use mailhost:port as the SMTP server\n"
 "       -s          set the Subject: field\n"
+"       -r          set the Reply-To: field\n"
+"       -l          set the maximum number of lines that should be sent (default: unlimited)\n"
 "       -?          print this message.\n"
 "\n"), MY_NAME);
 
@@ -142,18 +144,20 @@ int main (int argc, char *argv[])
     struct sockaddr_in sin;
     struct hostent *hp;
     int s, r, i, ch;
+    unsigned long maxlines, lines;
     struct passwd *pwd;
     char *cp, *p;
     time_t now = time(NULL);
     struct tm tm;
     
-   setlocale(LC_ALL, "");
+   setlocale(LC_ALL, "en_US");
    bindtextdomain("bacula", LOCALEDIR);
    textdomain("bacula");
 
    my_name_is(argc, argv, "bsmtp");
+   maxlines = 0;
 
-   while ((ch = getopt(argc, argv, "c:d:f:h:r:s:?")) != -1) {
+   while ((ch = getopt(argc, argv, "c:d:f:h:r:s:l:?")) != -1) {
       switch (ch) {
       case 'c':
          Dmsg1(20, "cc=%s\n", optarg);
@@ -190,6 +194,11 @@ int main (int argc, char *argv[])
       case 'r':                    /* reply address */
          reply_addr = optarg;
          break;
+
+      case 'l':
+	 Dmsg1(20, "maxlines=%s\n", optarg);
+	 maxlines = (unsigned long) atol(optarg);
+	 break;
 
       case '?':
       default:
@@ -313,48 +322,69 @@ hp:
     *  Send message header
     */
    fprintf(sfp, "From: %s\r\n", from_addr);
+   Dmsg1(10, "From: %s\r\n", from_addr);
    if (subject) {
       fprintf(sfp, "Subject: %s\r\n", subject);
+      Dmsg1(10, "Subject: %s\r\n", subject);
    }
    if (reply_addr) {
       fprintf(sfp, "Reply-To: %s\r\n", reply_addr);
+      Dmsg1(10, "Reply-To: %s\r\n", reply_addr);
    }
    if (err_addr) {
       fprintf(sfp, "Errors-To: %s\r\n", err_addr);
+      Dmsg1(10, "Errors-To: %s\r\n", err_addr);
    }
    if ((pwd = getpwuid(getuid())) == 0) {
       fprintf(sfp, "Sender: userid-%d@%s\r\n", (int)getuid(), my_hostname);
+      Dmsg2(10, "Sender: userid-%d@%s\r\n", (int)getuid(), my_hostname);
    } else {
       fprintf(sfp, "Sender: %s@%s\r\n", pwd->pw_name, my_hostname);
+      Dmsg2(10, "Sender: %s@%s\r\n", pwd->pw_name, my_hostname);
    }
 
    fprintf(sfp, "To: %s", argv[0]);
+   Dmsg1(10, "To: %s", argv[0]);
    for (i = 1; i < argc; i++) {
       fprintf(sfp, ",%s", argv[i]);
+      Dmsg1(10, ",%s", argv[i]);
    }
 
    fprintf(sfp, "\r\n");
+   Dmsg0(10, "\r\n");
    if (cc_addr) {
       fprintf(sfp, "Cc: %s\r\n", cc_addr);
+      Dmsg1(10, "Cc: %s\r\n", cc_addr);
    }
 
    /* Add RFC822 date */
    localtime_r(&now, &tm);
    strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", &tm);
    fprintf(sfp, "Date: %s\r\n", buf);
+   Dmsg1(10, "Date: %s\r\n", buf);
 
    fprintf(sfp, "\r\n");
 
    /*
     *  Send message body
     */
+   lines = 0;
    while (fgets(buf, sizeof(buf), stdin)) {
+      if (maxlines > 0 && ++lines > maxlines) {
+         Dmsg1(20, "skip line because of maxlines limit: %lu\n", maxlines);
+	 continue;
+      }
       buf[strlen(buf)-1] = 0;
       if (strcmp(buf, ".") == 0) { /* quote lone dots */
          fprintf(sfp, "..\r\n");
       } else {                     /* pass body through unchanged */
          fprintf(sfp, "%s\r\n", buf);
       }
+   }
+
+   if (lines > maxlines) {
+      Dmsg1(10, "hit maxlines limit: %lu\n", maxlines);
+      fprintf(sfp, "\r\n[maximum of %lu lines exceeded, skipped %lu lines of output]\r\n", maxlines, lines-maxlines);
    }
 
    /*

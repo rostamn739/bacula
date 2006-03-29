@@ -53,16 +53,16 @@ extern void split_path_and_file(JCR *jcr, B_DB *mdb, const char *fname);
 
 
 /* Create a new record for the Job
- * Returns: false on failure
- *          true  on success
+ * Returns: 0 on failure
+ *          1 on success
  */
-bool
+int
 db_create_job_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr)
 {
    char dt[MAX_TIME_LENGTH];
    time_t stime;
    struct tm tm;
-   bool ok;
+   int stat;
    utime_t JobTDate;
    char ed1[30];
 
@@ -86,64 +86,14 @@ db_create_job_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr)
       Mmsg2(&mdb->errmsg, _("Create DB Job record %s failed. ERR=%s\n"),
             mdb->cmd, sql_strerror(mdb));
       jr->JobId = 0;
-      ok = false;
+      stat = 0;
    } else {
       jr->JobId = sql_insert_id(mdb, N_("Job"));
-      ok = true;
+      stat = 1;
    }
    db_unlock(mdb);
-   return ok;
+   return stat;
 }
-
-/* Create a new migration, archive, copy
- * Returns: false on failure
- *          true  on success
- */
-bool
-db_create_mac_record(JCR *jcr, B_DB *mdb, MAC_DBR *mr)
-{
-   char schedt[MAX_TIME_LENGTH], sdt[MAX_TIME_LENGTH], edt[MAX_TIME_LENGTH];
-   time_t stime;
-   struct tm tm;
-   bool ok;
-   utime_t JobTDate;
-   char ed1[30], ed2[30];
-
-   db_lock(mdb);
-
-   stime = mr->SchedTime;
-   ASSERT(stime != 0);
-
-   localtime_r(&stime, &tm);
-   strftime(schedt, sizeof(schedt), "%Y-%m-%d %T", &tm);
-   JobTDate = (utime_t)stime;
-   localtime_r(&mr->StartTime, &tm);
-   strftime(sdt, sizeof(sdt), "%Y-%m-%d %T", &tm);
-   localtime_r(&mr->EndTime, &tm);
-   strftime(edt, sizeof(edt), "%Y-%m-%d %T", &tm);
-
-   /* Must create it */
-   Mmsg(mdb->cmd,
-"INSERT INTO MAC (OriginaJobId,JobType,JobLevel,SchedTime,"
-"StartTime,EndTime,JobTDate) VALUES "
-"('%s','%c','%c','%s','%s','%s',%s)",
-           edit_int64(mr->OriginalJobId, ed1),
-           (char)(mr->JobType), (char)(mr->JobLevel),
-           schedt, sdt, edt, edit_uint64(JobTDate, ed2));
-
-   if (!INSERT_DB(jcr, mdb, mdb->cmd)) {
-      Mmsg2(&mdb->errmsg, _("Create DB MAC record %s failed. ERR=%s\n"),
-            mdb->cmd, sql_strerror(mdb));
-      mr->JobId = 0;
-      ok = false;
-   } else {
-      mr->JobId = sql_insert_id(mdb, N_("Job"));
-      ok = true;
-   }
-   db_unlock(mdb);
-   return ok;
-}
-
 
 /* Create a JobMedia record for medium used this job
  * Returns: false on failure
@@ -441,11 +391,11 @@ db_create_media_record(JCR *jcr, B_DB *mdb, MEDIA_DBR *mr)
 
    /* Must create it */
    Mmsg(mdb->cmd,
-"INSERT INTO Media (VolumeName,MediaType,MediaTypeId,PoolId,MaxVolBytes,"
-"VolCapacityBytes,Recycle,VolRetention,VolUseDuration,MaxVolJobs,MaxVolFiles,"
+"INSERT INTO Media (VolumeName,MediaType,PoolId,MaxVolBytes,VolCapacityBytes,"
+"Recycle,VolRetention,VolUseDuration,MaxVolJobs,MaxVolFiles,"
 "VolStatus,Slot,VolBytes,InChanger,VolReadTime,VolWriteTime,VolParts,"
-"EndFile,EndBlock,LabelType,StorageId,DeviceId,LocationId) "
-"VALUES ('%s','%s',0,%u,%s,%s,%d,%s,%s,%u,%u,'%s',%d,%s,%d,%s,%s,%d,0,0,%d,%s,0,0)",
+"EndFile,EndBlock,LabelType,StorageId) "
+"VALUES ('%s','%s',%u,%s,%s,%d,%s,%s,%u,%u,'%s',%d,%s,%d,%s,%s,%d,0,0,%d,%s)",
           mr->VolumeName,
           mr->MediaType, mr->PoolId,
           edit_uint64(mr->MaxVolBytes,ed1),
@@ -759,17 +709,17 @@ bail_out:
 static int db_create_file_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
 {
    int stat;
-   static char *no_digest = "0";
-   char *digest;
+   static char *no_sig = "0";
+   char *sig;
 
    ASSERT(ar->JobId);
    ASSERT(ar->PathId);
    ASSERT(ar->FilenameId);
 
-   if (ar->Digest == NULL) {
-      digest = no_digest;
+   if (ar->Sig == NULL) {
+      sig = no_sig;
    } else {
-      digest = ar->Digest;
+      sig = ar->Sig;
    }
 
    /* Must create it */
@@ -777,7 +727,7 @@ static int db_create_file_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
         "INSERT INTO File (FileIndex,JobId,PathId,FilenameId,"
         "LStat,MD5) VALUES (%u,%u,%u,%u,'%s','%s')",
         ar->FileIndex, ar->JobId, ar->PathId, ar->FilenameId,
-        ar->attr, digest);
+        ar->attr, sig);
 
    if (!INSERT_DB(jcr, mdb, mdb->cmd)) {
       Mmsg2(&mdb->errmsg, _("Create db File record %s failed. ERR=%s"),

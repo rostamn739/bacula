@@ -613,9 +613,9 @@ export LDFLAGS=-L/usr/lib64/mysql
         --with-scriptdir=/etc/bacula \
         --enable-smartalloc \
         --enable-client-only \
-	%if %{mdk}
-	--disable-nls \
-	%endif
+        %if %{mdk}
+        --disable-nls \
+        %endif
         --enable-static-fd
 
 make
@@ -851,6 +851,9 @@ chmod 644 $RPM_BUILD_ROOT/etc/bacula/tray-monitor.conf
 # The rest is DB backend independent
 %attr(-, root, %{daemon_group}) %dir /etc/bacula
 %attr(-, root, %{daemon_group}) /etc/bacula/bacula
+%attr(-, root, %{daemon_group}) /etc/bacula/bacula-ctl-dir
+%attr(-, root, %{daemon_group}) /etc/bacula/bacula-ctl-fd
+%attr(-, root, %{daemon_group}) /etc/bacula/bacula-ctl-sd
 %attr(-, root, %{daemon_group}) /etc/bacula/bconsole
 %attr(-, root, %{daemon_group}) /etc/bacula/create_bacula_database
 %attr(-, root, %{daemon_group}) /etc/bacula/drop_bacula_database
