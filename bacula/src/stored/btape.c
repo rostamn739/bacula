@@ -14,7 +14,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -303,7 +303,7 @@ static void terminate_btape(int stat)
    jcr = NULL;
 
    if (dev) {
-      dev->term();
+      term_dev(dev);
    }
 
    if (debug_level > 10)
@@ -363,7 +363,7 @@ static void labelcmd()
 
    if (!dev->is_open()) {
       if (!first_open_device(dcr)) {
-         Pmsg1(0, _("Device open failed. ERR=%s\n"), dev->bstrerror());
+         Pmsg1(0, _("Device open failed. ERR=%s\n"), strerror_dev(dev));
       }
    }
    dev->rewind(dcr);
@@ -388,13 +388,13 @@ static void readlabelcmd()
       Pmsg0(0, _("Volume label read correctly.\n"));
       break;
    case VOL_IO_ERROR:
-      Pmsg1(0, _("I/O error on device: ERR=%s"), dev->bstrerror());
+      Pmsg1(0, _("I/O error on device: ERR=%s"), strerror_dev(dev));
       break;
    case VOL_NAME_ERROR:
       Pmsg0(0, _("Volume name error\n"));
       break;
    case VOL_CREATE_ERROR:
-      Pmsg1(0, _("Error creating label. ERR=%s"), dev->bstrerror());
+      Pmsg1(0, _("Error creating label. ERR=%s"), strerror_dev(dev));
       break;
    case VOL_VERSION_ERROR:
       Pmsg0(0, _("Volume version error.\n"));
@@ -421,7 +421,7 @@ static void loadcmd()
 {
 
    if (!load_dev(dev)) {
-      Pmsg1(0, _("Bad status from load. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from load. ERR=%s\n"), strerror_dev(dev));
    } else
       Pmsg1(0, _("Loaded %s\n"), dev->print_name());
 }
@@ -432,7 +432,7 @@ static void loadcmd()
 static void rewindcmd()
 {
    if (!dev->rewind(dcr)) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       clrerror_dev(dev, -1);
    } else {
       Pmsg1(0, _("Rewound %s\n"), dev->print_name());
@@ -462,7 +462,7 @@ static void weofcmd()
    }
 
    if ((stat = weof_dev(dev, num)) < 0) {
-      Pmsg2(0, _("Bad status from weof %d. ERR=%s\n"), stat, dev->bstrerror());
+      Pmsg2(0, _("Bad status from weof %d. ERR=%s\n"), stat, strerror_dev(dev));
       return;
    } else {
       if (num==1) {
@@ -483,8 +483,8 @@ static void weofcmd()
  */
 static void eomcmd()
 {
-   if (!dev->eod()) {
-      Pmsg1(0, "%s", dev->bstrerror());
+   if (!eod_dev(dev)) {
+      Pmsg1(0, "%s", strerror_dev(dev));
       return;
    } else {
       Pmsg0(0, _("Moved to end of medium.\n"));
@@ -513,8 +513,8 @@ static void bsfcmd()
       num = 1;
    }
 
-   if (!dev->bsf(num)) {
-      Pmsg1(0, _("Bad status from bsf. ERR=%s\n"), dev->bstrerror());
+   if (!bsf_dev(dev, num)) {
+      Pmsg1(0, _("Bad status from bsf. ERR=%s\n"), strerror_dev(dev));
    } else {
       Pmsg2(0, _("Backspaced %d file%s.\n"), num, num==1?"":"s");
    }
@@ -532,8 +532,8 @@ static void bsrcmd()
    if (num <= 0) {
       num = 1;
    }
-   if (!dev->bsr(num)) {
-      Pmsg1(0, _("Bad status from bsr. ERR=%s\n"), dev->bstrerror());
+   if (!bsr_dev(dev, num)) {
+      Pmsg1(0, _("Bad status from bsr. ERR=%s\n"), strerror_dev(dev));
    } else {
       Pmsg2(0, _("Backspaced %d record%s.\n"), num, num==1?"":"s");
    }
@@ -699,19 +699,19 @@ static int re_read_block_test()
    if (dev_cap(dev, CAP_TWOEOF)) {
       weofcmd();
    }
-   if (!dev->bsf(1)) {
-      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), dev->bstrerror());
+   if (!bsf_dev(dev, 1)) {
+      Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    if (dev_cap(dev, CAP_TWOEOF)) {
-      if (!dev->bsf(1)) {
-         Pmsg1(0, _("Backspace file failed! ERR=%s\n"), dev->bstrerror());
+      if (!bsf_dev(dev, 1)) {
+         Pmsg1(0, _("Backspace file failed! ERR=%s\n"), strerror_dev(dev));
          goto bail_out;
       }
    }
    Pmsg0(0, _("Backspaced over EOF OK.\n"));
-   if (!dev->bsr(1)) {
-      Pmsg1(0, _("Backspace record failed! ERR=%s\n"), dev->bstrerror());
+   if (!bsr_dev(dev, 1)) {
+      Pmsg1(0, _("Backspace record failed! ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg0(0, _("Backspace record OK.\n"));
@@ -772,7 +772,7 @@ static int write_read_test()
    block = dcr->block;
    rec = new_record();
    if (!dev->rewind(dcr)) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    rec->data = check_pool_memory_size(rec->data, block->buf_len);
@@ -814,7 +814,7 @@ static int write_read_test()
       weofcmd();
    }
    if (!dev->rewind(dcr)) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    } else {
       Pmsg0(0, _("Rewind OK.\n"));
@@ -884,7 +884,7 @@ static int position_test()
    empty_block(block);
    rec = new_record();
    if (!dev->rewind(dcr)) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    rec->data = check_pool_memory_size(rec->data, block->buf_len);
@@ -926,7 +926,7 @@ static int position_test()
       weofcmd();
    }
    if (!dev->rewind(dcr)) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    } else {
       Pmsg0(0, _("Rewind OK.\n"));
@@ -970,7 +970,7 @@ static int position_test()
          continue;
       }
       Pmsg2(-1, _("Reposition to file:block %d:%d\n"), file, blk);
-      if (!dev->reposition(file, blk)) {
+      if (!reposition_dev(dev, file, blk)) {
          Pmsg0(0, _("Reposition error.\n"));
          goto bail_out;
       }
@@ -1053,7 +1053,7 @@ static int append_test()
    if (dev_cap(dev, CAP_TWOEOF)) {
       weofcmd();
    }
-   dev->close();              /* release device */
+   force_close_device(dev);              /* release device */
    if (!open_the_device()) {
       return -1;
    }
@@ -1147,8 +1147,9 @@ try_again:
    Dmsg1(100, "Results from loaded query=%s\n", results);
    if (loaded) {
       dcr->VolCatInfo.Slot = loaded;
+      offline_or_rewind_dev(dev);
       /* We are going to load a new tape, so close the device */
-      dev->close();
+      force_close_device(dev);
       Pmsg2(-1, _("3302 Issuing autochanger \"unload %d %d\" command.\n"),
          loaded, dev->drive_index);
       changer = edit_device_codes(dcr, changer, 
@@ -1173,7 +1174,7 @@ try_again:
    changer = edit_device_codes(dcr, changer, 
                 dcr->device->changer_command, "load");
    Dmsg1(100, "Changer=%s\n", changer);
-   dev->close();
+   force_close_device(dev);
    status = run_program(changer, timeout, results);
    if (status == 0) {
       Pmsg2(-1,  _("3303 Autochanger \"load %d %d\" status is OK.\n"),
@@ -1194,7 +1195,7 @@ try_again:
     */
    bmicrosleep(sleep_time, 0);
    if (!dev->rewind(dcr) || weof_dev(dev,1) < 0) {
-      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from rewind. ERR=%s\n"), strerror_dev(dev));
       clrerror_dev(dev, -1);
       Pmsg0(-1, _("\nThe test failed, probably because you need to put\n"
                 "a longer sleep time in the mtx-script in the load) case.\n"
@@ -1206,7 +1207,7 @@ try_again:
    }
 
    if ((status = weof_dev(dev, 1)) < 0) {
-      Pmsg2(0, _("Bad status from weof %d. ERR=%s\n"), status, dev->bstrerror());
+      Pmsg2(0, _("Bad status from weof %d. ERR=%s\n"), status, strerror_dev(dev));
       goto bail_out;
    } else {
       Pmsg1(0, _("Wrote EOF to %s\n"), dev->print_name());
@@ -1274,7 +1275,7 @@ test_again:
    rewindcmd();
    Pmsg0(0, _("Now forward spacing 1 file.\n"));
    if (!dev->fsf(1)) {
-      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg2(-1, _("We should be in file 1. I am at file %d. %s\n"),
@@ -1286,7 +1287,7 @@ test_again:
 
    Pmsg0(0, _("Now forward spacing 2 files.\n"));
    if (!dev->fsf(2)) {
-      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg2(-1, _("We should be in file 3. I am at file %d. %s\n"),
@@ -1299,7 +1300,7 @@ test_again:
    rewindcmd();
    Pmsg0(0, _("Now forward spacing 4 files.\n"));
    if (!dev->fsf(4)) {
-      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg2(-1, _("We should be in file 4. I am at file %d. %s\n"),
@@ -1317,7 +1318,7 @@ test_again:
    Pmsg0(-1, "\n");
    Pmsg0(0, _("Now forward spacing 1 more file.\n"));
    if (!dev->fsf(1)) {
-      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), strerror_dev(dev));
    }
    Pmsg2(-1, _("We should be in file 5. I am at file %d. %s\n"),
       dev->file, dev->file == 5 ? _("This is correct!") : _("This is NOT correct!!!!"));
@@ -1464,7 +1465,7 @@ static void fsfcmd()
       num = 1;
    }
    if (!dev->fsf(num)) {
-      Pmsg1(0, _("Bad status from fsf. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsf. ERR=%s\n"), strerror_dev(dev));
       return;
    }
    if (num == 1) {
@@ -1486,7 +1487,7 @@ static void fsrcmd()
       num = 1;
    }
    if (!dev->fsr(num)) {
-      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), dev->bstrerror());
+      Pmsg1(0, _("Bad status from fsr. ERR=%s\n"), strerror_dev(dev));
       return;
    }
    if (num == 1) {
@@ -1593,7 +1594,7 @@ static void scancmd()
          clrerror_dev(dev, -1);
          Mmsg2(dev->errmsg, _("read error on %s. ERR=%s.\n"),
             dev->dev_name, be.strerror());
-         Pmsg2(0, _("Bad status from read %d. ERR=%s\n"), stat, dev->bstrerror());
+         Pmsg2(0, _("Bad status from read %d. ERR=%s\n"), stat, strerror_dev(dev));
          if (blocks > 0) {
             if (blocks==1) {
                printf(_("1 block of %d bytes in file %d\n"), block_size, dev->file);
@@ -1670,7 +1671,7 @@ static void scan_blocks()
    tot_files = dev->file;
    for (;;) {
       if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
-         Dmsg1(100, "!read_block(): ERR=%s\n", dev->bstrerror());
+         Dmsg1(100, "!read_block(): ERR=%s\n", strerror_dev(dev));
          if (dev->state & ST_EOT) {
             if (blocks > 0) {
                if (blocks==1) {
@@ -1709,7 +1710,7 @@ static void scan_blocks()
             printf(_("Short block read.\n"));
             continue;
          }
-         printf(_("Error reading block. ERR=%s\n"), dev->bstrerror());
+         printf(_("Error reading block. ERR=%s\n"), strerror_dev(dev));
          goto bail_out;
       }
       if (block->block_len != block_size) {
@@ -1755,7 +1756,7 @@ static void statcmd()
 {
    int debug = debug_level;
    debug_level = 30;
-   Pmsg2(0, _("Device status: %u. ERR=%s\n"), status_dev(dev), dev->bstrerror());
+   Pmsg2(0, _("Device status: %u. ERR=%s\n"), status_dev(dev), strerror_dev(dev));
 #ifdef xxxx
    dump_volume_label(dev);
 #endif
@@ -1851,7 +1852,7 @@ static void fillcmd()
    if (!write_session_label(dcr, SOS_LABEL)) {
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       Jmsg1(jcr, M_FATAL, 0, _("Write session label failed. ERR=%s\n"),
-         dev->bstrerror());
+         strerror_dev(dev));
       ok = false;
    }
    Pmsg0(-1, _("Wrote Start of Session label.\n"));
@@ -1972,7 +1973,7 @@ static void fillcmd()
          set_jcr_job_status(jcr, JS_ErrorTerminated);
       }
       if (!write_session_label(dcr, EOS_LABEL)) {
-         Pmsg1(000, _("Error writting end session label. ERR=%s\n"), dev->bstrerror());
+         Pmsg1(000, _("Error writting end session label. ERR=%s\n"), strerror_dev(dev));
          ok = false;
       }
       /* Write out final block of this session */
@@ -2102,11 +2103,11 @@ static void do_unfill()
       /* Multiple Volume tape */
       /* Close device so user can use autochanger if desired */
       if (dev_cap(dev, CAP_OFFLINEUNMOUNT)) {
-         dev->offline();
+         offline_dev(dev);
       }
       autochanger = autoload_device(dcr, 1, NULL);
       if (!autochanger) {
-         dev->close();
+         force_close_device(dev);
          get_cmd(_("Mount first tape. Press enter when ready: "));
       }
       free_restore_volume_list(jcr);
@@ -2114,7 +2115,8 @@ static void do_unfill()
       set_volume_name("TestVolume1", 1);
       jcr->bsr = NULL;
       create_restore_volume_list(jcr);
-      dev->close();
+      close_device(dev);
+      dev->state &= ~(ST_READ|ST_APPEND);
       dev->num_writers = 0;
       if (!acquire_device_for_read(dcr)) {
          Pmsg1(-1, "%s", dev->errmsg);
@@ -2137,13 +2139,13 @@ static void do_unfill()
    read_records(dcr, quickie_cb, my_mount_next_read_volume);
    Pmsg4(-1, _("Reposition from %u:%u to %u:%u\n"), dev->file, dev->block_num,
          last_file, last_block_num);
-   if (!dev->reposition(last_file, last_block_num)) {
-      Pmsg1(-1, _("Reposition error. ERR=%s\n"), dev->bstrerror());
+   if (!reposition_dev(dev, last_file, last_block_num)) {
+      Pmsg1(-1, _("Reposition error. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg1(-1, _("Reading block %u.\n"), last_block_num);
    if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
-      Pmsg1(-1, _("Error reading block: ERR=%s\n"), dev->bstrerror());
+      Pmsg1(-1, _("Error reading block: ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    if (compare_blocks(last_block, block)) {
@@ -2165,7 +2167,7 @@ static void do_unfill()
    /* Multiple Volume tape */
    /* Close device so user can use autochanger if desired */
    if (dev_cap(dev, CAP_OFFLINEUNMOUNT)) {
-      dev->offline();
+      offline_dev(dev);
    }
 
    free_restore_volume_list(jcr);
@@ -2174,7 +2176,7 @@ static void do_unfill()
    create_restore_volume_list(jcr);
    autochanger = autoload_device(dcr, 1, NULL);
    if (!autochanger) {
-      dev->close();
+      force_close_device(dev);
       get_cmd(_("Mount second tape. Press enter when ready: "));
    }
 
@@ -2188,13 +2190,13 @@ static void do_unfill()
     * on the previous tape.
     */
    Pmsg2(-1, _("Reposition from %u:%u to 0:1\n"), dev->file, dev->block_num);
-   if (!dev->reposition(0, 1)) {
-      Pmsg1(-1, _("Reposition error. ERR=%s\n"), dev->bstrerror());
+   if (!reposition_dev(dev, 0, 1)) {
+      Pmsg1(-1, _("Reposition error. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg1(-1, _("Reading block %d.\n"), dev->block_num);
    if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
-      Pmsg1(-1, _("Error reading block: ERR=%s\n"), dev->bstrerror());
+      Pmsg1(-1, _("Error reading block: ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    if (compare_blocks(first_block, block)) {
@@ -2204,13 +2206,13 @@ static void do_unfill()
    /* Now find and compare the last block */
    Pmsg4(-1, _("Reposition from %u:%u to %u:%u\n"), dev->file, dev->block_num,
          last_file, last_block_num);
-   if (!dev->reposition(last_file, last_block_num)) {
-      Pmsg1(-1, _("Reposition error. ERR=%s\n"), dev->bstrerror());
+   if (!reposition_dev(dev, last_file, last_block_num)) {
+      Pmsg1(-1, _("Reposition error. ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    Pmsg1(-1, _("Reading block %d.\n"), dev->block_num);
    if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
-      Pmsg1(-1, _("Error reading block: ERR=%s\n"), dev->bstrerror());
+      Pmsg1(-1, _("Error reading block: ERR=%s\n"), strerror_dev(dev));
       goto bail_out;
    }
    if (compare_blocks(last_block, block)) {
@@ -2337,7 +2339,7 @@ static int flush_block(DEV_BLOCK *block, int dump)
       } else {
          /* Full test in progress */
          if (!fixup_device_block_write_error(jcr->dcr)) {
-            Pmsg1(000, _("Cannot fixup device error. %s\n"), dev->bstrerror());
+            Pmsg1(000, _("Cannot fixup device error. %s\n"), strerror_dev(dev));
             ok = false;
             unlock_device(dev);
             return 0;
@@ -2675,7 +2677,11 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr)
    if (dcr->VolumeName[0] == 0) {
       return dir_ask_sysop_to_create_appendable_volume(dcr);
    }
-   dev->close();
+   /* Close device so user can use autochanger if desired */
+   if (dev_cap(dev, CAP_OFFLINEUNMOUNT)) {
+      offline_dev(dev);
+   }
+   force_close_device(dev);
    Pmsg1(-1, "%s", dev->errmsg);           /* print reason */
    if (dcr->VolumeName[0] == 0 || strcmp(dcr->VolumeName, "TestVolume2") == 0) {
       fprintf(stderr, _("Mount second Volume on device %s and press return when ready: "),
@@ -2700,11 +2706,11 @@ bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr)
    }
    /* Close device so user can use autochanger if desired */
    if (dev_cap(dev, CAP_OFFLINEUNMOUNT)) {
-      dev->offline();
+      offline_dev(dev);
    }
    autochanger = autoload_device(dcr, 1, NULL);
    if (!autochanger) {
-      dev->close();
+      force_close_device(dev);
       fprintf(stderr, _("Mount blank Volume on device %s and press return when ready: "),
          dev->print_name());
       getchar();
@@ -2747,7 +2753,8 @@ static bool my_mount_next_read_volume(DCR *dcr)
    set_volume_name("TestVolume2", 2);
    jcr->bsr = NULL;
    create_restore_volume_list(jcr);
-   dev->close();
+   close_device(dev);
+   dev->clear_read();
    if (!acquire_device_for_read(dcr)) {
       Pmsg2(0, _("Cannot open Dev=%s, Vol=%s\n"), dev->print_name(), dcr->VolumeName);
       return false;
@@ -2765,3 +2772,4 @@ static void set_volume_name(const char *VolName, int volnum)
    bstrncpy(dcr->VolumeName, VolName, sizeof(dcr->VolumeName));
    dcr->VolCatInfo.Slot = volnum;
 }
+

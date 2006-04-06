@@ -43,7 +43,6 @@ static char storaddr[]     = "storage address=%s port=%d ssl=0\n";
 /* Responses received from File daemon */
 static char OKrestore[]   = "2000 OK restore\n";
 static char OKstore[]     = "2000 OK storage\n";
-static char OKbootstrap[] = "2000 OK bootstrap\n";
 
 /*
  * Do a restore of the specified files
@@ -142,8 +141,7 @@ bool do_restore(JCR *jcr)
    /*
     * Send the bootstrap file -- what Volumes/files to restore
     */
-   if (!send_bootstrap_file(jcr, fd) ||
-       !response(jcr, fd, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
+   if (!send_bootstrap_file(jcr)) {
       restore_cleanup(jcr, JS_ErrorTerminated);
       return false;
    }
