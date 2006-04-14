@@ -45,7 +45,6 @@ static bool dump_label = false;
 static bool list_blocks = false;
 static bool list_jobs = false;
 static DEV_RECORD *rec;
-static DEV_BLOCK *block;
 static JCR *jcr;
 static SESSION_LABEL sessrec;
 static uint32_t num_files = 0;
@@ -216,7 +215,6 @@ int main (int argc, char *argv[])
       }
       dcr = jcr->dcr;
       rec = new_record();
-      block = new_block(dev);
       attr = new_attr();
       /*
        * Assume that we have already read the volume label.
@@ -251,9 +249,8 @@ static void do_close(JCR *jcr)
    release_device(jcr->dcr);
    free_attr(attr);
    free_record(rec);
-   free_block(block);
    free_jcr(jcr);
-   dev->term();
+   term_dev(dev);
 }
 
 
@@ -261,6 +258,7 @@ static void do_close(JCR *jcr)
 static void do_blocks(char *infname)
 {
    char buf1[100], buf2[100];
+   DEV_BLOCK *block = dcr->block;
    for ( ;; ) {
       if (!read_block_from_device(dcr, NO_BLOCK_NUMBER_CHECK)) {
          Dmsg1(100, "!read_block(): ERR=%s\n", dev->strerror());
@@ -279,7 +277,7 @@ static void do_blocks(char *infname)
             free_record(record);
             Jmsg(jcr, M_INFO, 0, _("Mounted Volume \"%s\".\n"), dcr->VolumeName);
          } else if (dev->at_eof()) {
-            Jmsg(jcr, M_INFO, 0, _("Got EOF at file %u on device %s, Volume \"%s\"\n"),
+            Jmsg(jcr, M_INFO, 0, _("End of file %u on device %s, Volume \"%s\"\n"),
                dev->file, dev->print_name(), dcr->VolumeName);
             Dmsg0(20, "read_record got eof. try again\n");
             continue;
@@ -409,7 +407,6 @@ static void get_session_record(DEVICE *dev, DEV_RECORD *rec, SESSION_LABEL *sess
    case EOS_LABEL:
       rtype = _("End Job Session");
       break;
-   case 0:
    case EOM_LABEL:
       rtype = _("End of Medium");
       break;

@@ -2,6 +2,199 @@
                         Kern Sibbald
 
 General:
+Release 1.38.8 (14Apr06) released 14Apr06
+15Apr06
+- Correct Makefile bug found by Dan Langille.
+14Apr06
+- Correct Makefile for Solaris /bin/sh
+- Correct mtx-changer.in for Solaris /bin/sh
+- Abort if a conf resource does not have a Name =
+12Apr06
+- Change the name of the regex program to bregex.
+- Add the bwild program to the tools directory. It is similar
+  to the bregex program.
+- Implement create bregex.h and bregex.c in src/lib from the
+  Python regexp program.  
+- Use the new bregex.c to implement Regex expressions on Win32.
+11Apr06
+- Modify Makefile to change the permissions on Working Directory
+  to 770 if the directory is created.
+- Do not fail the Makefile if changing the permissions or 
+  owner/group on WorkingDir fails.
+- Correct the old recycling algorithm so that Scratch Volumes
+  are selected when looking for a Volume in the changer.
+- Correct a typo in the Verify SQL reported by Joe Park.
+10Apr06
+- Remove automatic case folding on Windows FDs. You must
+  explictly use the 'Ignore Case = yes' option.
+- Remove the code added to 1.38.6 and 1.38.7 that pulls a
+  scratch volume in an Autochanger early in the 'recycling'
+  algorithm.  
+08Apr06
+- Tweak license to include Microsoft restrictions.
+- Move mysql.reconnect to after real_connect().  Thanks to
+  Frank Sweetser for the patch.
+- Disallow a backslash in a File = directive (Windows junk)
+  unless the string is quoted.
+- Apply Eric's patch to ua_label.c so that daemon protocol
+  is not translated.
+
+Release 1.38.7 (06Apr06) released 07Apr06
+06Apr06
+- Remove timed wait for VSS on Win2K3 as it is not yet
+  implemented.
+- Correct bacula.in script to reference bacula-ctl-xx in the
+  sysconfig directory rather than the bin directory.
+
+Release 1.38.6 (28Mar06) released 29Mar06
+28Mar06
+- Back port from 1.39 fixes to lib/jcr.c to use foreach_jcr() 
+  and new jcr chain locking.
+26Mar06
+- Fix a long standing bug in the bacula start/stop scripts.
+- Attempt to add the new bacula-ctl-* files to the rpm.
+- Switch to using typeof() for list traversing to avoid
+  as many FC5 g++ compiler warnings as possible.
+25Mar06
+- Split the bacula start/start script into four files:
+   bacula         -- starts and stops calling other scripts
+   bacula-ctl-dir -- starts/stops the director
+   bacula-ctl-fd  -- starts/stops the File daemon
+   bacula-ctl-sd  -- starts/stops the Storage daemon
+24Mar06
+- Create datestyle fix for PostgreSQL. Fixes bug #574.
+- Correct editing of JobId from int to int64 in fd_cmds.c
+- Eliminate FileSet name race with bash_spaces() and multiple
+  threads by bashing in a local.
+- Fix error return from 'use storage' to print a correct error
+  message rather than nothing.
+- Correct false re-read last block error message when two jobs 
+  are simultaneously writing at the end of a tape.
+- Simplify exit conditions in the reserve.c code to avoid  
+  possible non-release of reservation_lock().
+- Suffle lock order in reserve to avoid deadlock between
+  reservation lock and device mutex.
+- Add Thorsten's VSS timeout code to 1.38 branch.
+21Mar06
+- Initialize jcr mutex before first use. Thanks to Thorsten for
+  tracking this down for me !!!! as it broke the Win32 build.
+20Mar06
+- Integrate addition of line count limitation to bsmtp -l from
+  Sebastian Stark <stark at tuebingen.mpg.de>
+17Mar06
+- Implement regex test program in tools directory.
+- Attempt to fix time problem with bsmtp with foreign langs.
+- Add strip_trailing_newline() submitted by user.
+
+16Mar06
+- Fix bug #537 to allow arbitrary time to mount a volume for
+  restore, if polling is turned on.     
+- Disallow multiple storage specifications for a job. Should fix Arno's
+  problem.
+- Add back a missing store of poolid in jr.poolid.    
+- If dir_user or dir-group is specified in ./configure apply it to
+  the working-dir. Fixes bug #533.
+- If rescheduling a job cancel the previous incarnation with the SD.
+  Fixes bugs #566 and 557.
+- Fix bug #567 do_message() definition type conflict.
+
+
+14Mar06
+- Add more jcr methods and make mutex and use_count private.
+- Create lock/unlock methods for jcr.
+- Fix PostgreSQL bug doing sql_data_seeek() by explicitly reading
+  records to get to seek position.
+- Integrate patch from bug #561 to correct conio.c signal definitions.
+- Fix Rescheduling failed Jobs. Ensure that SD message thread 
+  terminates correctly by doing pthread_kill(). Do not destroy
+  SD cond wait variable between executions of the job. Use local
+  mutex for cond variable to avoid blocking jcr chain. Fix poor 
+  use of jcr use count in jobq.c for restarted jobs.
+- Fix obsolete usage of foreach_dlist() to use foreach_jcr() in
+  lib/jcr.c -- prevents locking the jcr chaing.
+- Apply patch from bug #564, which corrects listing volumes with
+  multiple autochangers. Apply same fix to next volume list.
+- Fix bug #562 where restore bootstrap file is not unique.
+- Use new routine lock_reservations() to lock the reservations
+  system, and call it while looking for a volume in askdir.c.
+  This could possibly fix bug #543.
+- Stop SD command loop if job is canceled.
+
+09Mar06
+- Use John Kodis' edit_with_suffix code to edit VolBytes.
+- Backport some fixes for acquire.c. Most importantly, to explicitly
+  have a reserved_device flag for acquire_for_read().  Hopefully
+  this will correct the remaining issues with failed restores holding
+  a drive.
+- Add a job_canceled() check in SD command loop.
+
+Release 1.38.6 beta3 4Mar06
+04Mar06
+- The po files should now be current.
+- Fix new sql_use_result() code to properly release the
+  buffers in all cases.
+- Convert to using new Python class definitons with (object).
+- Use the keyword ujobid to mean the unique job id; job or jobname
+  to mean the Job name given on the Name directive, and jobid to
+  be the numeric (non-unique) job id.
+- Allow listing by any of the above.
+- Add the user friendly job report code for reporting job elapsed time
+  and rates with suffexes from John Kodis <kodis at comcast.net>.
+- Add Priority and JobLevel as Python settable items.
+- Use TEMPORARY table creation where the table is created by
+  Bacula.
+- Add new code submitted by Eric for waiting on specific jobid.
+- Add ACL checking for the dot commands.
+- Fix restore of writable FIFOs.
+- Fix a bug in bpipe where the string was freed too early.
+
+26Feb06
+- Fix bug reported by Arno listing blocks with bls
+- Update the po files at Eric's request.
+
+Release 1.38.6-beta2 25Feb06
+25Feb06
+- Add sql_use_result() define.
+
+Release 1.38.6 beta1 24Feb06
+24Feb06
+- Don't open default catalog if not in ACL.
+
+22Feb06
+- Add virtual disk autochanger code.
+- Add user supplied bug fix to make two autochangers work
+  correctly using StorageId with InChanger checks.
+- Correct new/old_jcr confusion in copy_storage().
+- Remove & from Job during scan in msgchan.c -- probably
+  trashed the stack.
+- When getting the next Volume if no Volume in Append mode   
+  exists and we are dealing with an Autochanger, search
+  for a Scratch Volume.  
+- Check for missing value in dot commands -- bug fix.
+- Fix bug in update barcodes command line scanning.
+- Make sure Pool Max Vols is respected.
+- Check that user supplied a value before referencing
+  it in restore -- pointed out by Karl Hakimian. 
+- Add Karl Hakimian's table insert code.
+- Don't ask user to select a specific Volume when
+  updating all volumes in a Pool.
+- Remove reservation if set for read when removing dcr.
+- Lock code that requests next appendable volume so that
+  two jobs to get the same Volume at the same time.
+- Add new Device Type = xxx code. Values are file, tape,
+  dvd, and fifo.
+- Preserve certain modes (ST_LABEL|ST_APPEND|ST_READ) across
+  a re-open to change read/write permission on a device.
+- Correct a misplaced double quote in certain autochanger  
+  scripts.
+- Make make_catalog_backup.in a bit more portable.
+- Implement Karl Hakimian's sql_use_result(), which speeds
+  up restore tree building and reduces the memory load.
+- Correct a number of minor bugs in getting a Volume from  
+  the Scratch Pool.
+- Implement additional command line options for update Volume.
+- Don't require user to enter a Volume name when updating
+  all Volumes in a pool.
 
 Release 1.38.5 released 19Jan06:
 19Jan06

@@ -24,12 +24,13 @@
 #include "bacula.h"
 #include "stored.h"
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* Imported variables */
 extern uint32_t VolSessionTime;
 
 /* Imported functions */
 extern uint32_t newVolSessionId();
-extern bool do_mac(JCR *jcr);
 
 /* Requests from the Director daemon */
 static char jobcmd[] = "JobId=%d job=%127s job_name=%127s client_name=%127s "
@@ -39,7 +40,7 @@ static char jobcmd[] = "JobId=%d job=%127s job_name=%127s client_name=%127s "
 
 /* Responses sent to Director daemon */
 static char OKjob[]     = "3000 OK Job SDid=%u SDtime=%u Authorization=%s\n";
-static char BAD_job[]   = "3915 Bad Job command: %s\n";
+static char BAD_job[]   = "3915 Bad Job command. stat=%d CMD: %s\n";
 //static char OK_query[]  = "3001 OK query\n";
 //static char NO_query[]  = "3918 Query failed\n";
 //static char BAD_query[] = "3917 Bad query command: %s\n";
@@ -62,22 +63,22 @@ bool job_cmd(JCR *jcr)
    POOL_MEM job_name, client_name, job, fileset_name, fileset_md5;
    int JobType, level, spool_attributes, no_attributes, spool_data;
    int write_part_after_job, PreferMountedVols;
-
+   int stat;
    JCR *ojcr;
 
    /*
     * Get JobId and permissions from Director
     */
    Dmsg1(100, "<dird: %s", dir->msg);
-   if (sscanf(dir->msg, jobcmd, &JobId, job.c_str(), job_name.c_str(),
+   stat = sscanf(dir->msg, jobcmd, &JobId, job.c_str(), job_name.c_str(),
               client_name.c_str(),
               &JobType, &level, fileset_name.c_str(), &no_attributes,
               &spool_attributes, fileset_md5.c_str(), &spool_data, 
-              &write_part_after_job, &PreferMountedVols) != 13) {
+              &write_part_after_job, &PreferMountedVols);
+   if (stat != 13) {
       pm_strcpy(jcr->errmsg, dir->msg);
-      bnet_fsend(dir, BAD_job, jcr->errmsg);
+      bnet_fsend(dir, BAD_job, stat, jcr->errmsg);
       Dmsg1(100, ">dird: %s", dir->msg);
-      Emsg1(M_FATAL, 0, _("Bad Job Command from Director: %s\n"), jcr->errmsg);
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       return false;
    }
@@ -142,7 +143,7 @@ bool run_cmd(JCR *jcr)
    case JT_COPY:
    case JT_ARCHIVE:
       jcr->authenticated = true;
-      do_mac(jcr);
+      run_job(jcr);
       return false;
    }
 
@@ -159,14 +160,14 @@ bool run_cmd(JCR *jcr)
     *  when he does, we will be released, unless the 30 minutes
     *  expires.
     */
-   P(jcr->mutex);
+   P(mutex);
    for ( ;!job_canceled(jcr); ) {
-      errstat = pthread_cond_timedwait(&jcr->job_start_wait, &jcr->mutex, &timeout);
+      errstat = pthread_cond_timedwait(&jcr->job_start_wait, &mutex, &timeout);
       if (errstat == 0 || errstat == ETIMEDOUT) {
          break;
       }
    }
-   V(jcr->mutex);
+   V(mutex);
 
    memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
 
@@ -215,12 +216,10 @@ void handle_filed_connection(BSOCK *fd, char *job_name)
       Dmsg1(110, "OK Authentication Job %s\n", jcr->Job);
    }
 
-   P(jcr->mutex);
    if (!jcr->authenticated) {
       set_jcr_job_status(jcr, JS_ErrorTerminated);
    }
    pthread_cond_signal(&jcr->job_start_wait); /* wake waiting job */
-   V(jcr->mutex);
    free_jcr(jcr);
    return;
 }

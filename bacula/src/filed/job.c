@@ -25,6 +25,7 @@
 #include "filed.h"
 #ifdef WIN32_VSS
 #include "vss.h"   
+static pthread_mutex_t vss_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 extern char my_name[];
@@ -173,11 +174,6 @@ void *handle_client_request(void *dirp)
    jcr->last_fname[0] = 0;
    jcr->client_name = get_memory(strlen(my_name) + 1);
    pm_strcpy(jcr->client_name, my_name);
-   jcr->pki_sign = me->pki_sign;
-   jcr->pki_encrypt = me->pki_encrypt;
-   jcr->pki_keypair = me->pki_keypair;
-   jcr->pki_signers = me->pki_signers;
-   jcr->pki_recipients = me->pki_recipients;
    dir->jcr = jcr;
    enable_backup_privileges(NULL, 1 /* ignore_errors */);
 
@@ -328,16 +324,9 @@ static int cancel_cmd(JCR *jcr)
          bnet_fsend(dir, _("2901 Job %s not found.\n"), Job);
       } else {
          if (cjcr->store_bsock) {
-            P(cjcr->mutex);
             cjcr->store_bsock->timed_out = 1;
             cjcr->store_bsock->terminated = 1;
-/*
- * #if !defined(HAVE_CYGWIN) && !defined(HAVE_WIN32)
- */
-#if !defined(HAVE_CYGWIN)
             pthread_kill(cjcr->my_thread_id, TIMEOUT_SIGNAL);
-#endif
-            V(cjcr->mutex);
          }
          set_jcr_job_status(cjcr, JS_Canceled);
          free_jcr(cjcr);
@@ -870,32 +859,7 @@ static void set_options(findFOPTS *fo, const char *opts)
          fo->flags |= FO_READFIFO;
          break;
       case 'S':
-	 switch(*(p + 1)) {
-         case ' ':
-            /* Old director did not specify SHA variant */
-            fo->flags |= FO_SHA1;
-            break;
-	 case '1':
-	    fo->flags |= FO_SHA1;
-            p++;
-	    break;
-#ifdef HAVE_SHA2
-	 case '2':
-	    fo->flags |= FO_SHA256;
-            p++;
-	    break;
-	 case '3':
-	    fo->flags |= FO_SHA512;
-            p++;
-      	    break;
-#endif
-	 default:
-	    /* Automatically downgrade to SHA-1 if an unsupported
-	     * SHA variant is specified */
-	    fo->flags |= FO_SHA1;
-            p++;
-	    break;
-	 }
+         fo->flags |= FO_SHA1;
          break;
       case 's':
          fo->flags |= FO_SPARSE;
@@ -1242,6 +1206,8 @@ static int backup_cmd(JCR *jcr)
 #ifdef WIN32_VSS
    /* START VSS ON WIN 32 */
    if (g_pVSSClient && enable_vss) {
+      /* Run only one at a time */
+      P(vss_mutex);
       if (g_pVSSClient->InitializeForBackup()) {
          /* tell vss which drives to snapshot */   
          char szWinDriveLetters[27];   
@@ -1334,8 +1300,10 @@ cleanup:
 #ifdef WIN32_VSS
    /* STOP VSS ON WIN 32 */
    /* tell vss to close the backup session */
-   if (g_pVSSClient && enable_vss == 1)
+   if (g_pVSSClient && enable_vss) {
       g_pVSSClient->CloseBackup();
+      V(vss_mutex);
+   }
 #endif
 
    bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles,
@@ -1538,7 +1506,7 @@ static int open_sd_read_session(JCR *jcr)
    /*
     * Open Read Session with Storage daemon
     */
-   bnet_fsend(sd, read_open, "DummyVolume",
+   bnet_fsend(sd, read_open, jcr->VolumeName,
       jcr->VolSessionId, jcr->VolSessionTime, jcr->StartFile, jcr->EndFile,
       jcr->StartBlock, jcr->EndBlock);
    Dmsg1(110, ">stored: %s", sd->msg);

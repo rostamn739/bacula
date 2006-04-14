@@ -97,9 +97,9 @@ static RES_ITEM dir_items[] = {
    {"password",    store_password, ITEM(res_dir.password), 0, ITEM_REQUIRED, 0},
    {"fdconnecttimeout", store_time,ITEM(res_dir.FDConnectTimeout), 0, ITEM_DEFAULT, 60 * 30},
    {"sdconnecttimeout", store_time,ITEM(res_dir.SDConnectTimeout), 0, ITEM_DEFAULT, 60 * 30},
-   {"tlsenable",            store_bool,      ITEM(res_dir.tls_enable), 0, 0, 0},
-   {"tlsrequire",           store_bool,      ITEM(res_dir.tls_require), 0, 0, 0},
-   {"tlsverifypeer",        store_bool,      ITEM(res_dir.tls_verify_peer), 0, ITEM_DEFAULT, true},
+   {"tlsenable",            store_yesno,     ITEM(res_dir.tls_enable), 1, 0, 0},
+   {"tlsrequire",           store_yesno,     ITEM(res_dir.tls_require), 1, 0, 0},
+   {"tlsverifypeer",        store_yesno,     ITEM(res_dir.tls_verify_peer), 1, ITEM_DEFAULT, 1},
    {"tlscacertificatefile", store_dir,       ITEM(res_dir.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",  store_dir,       ITEM(res_dir.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",       store_dir,       ITEM(res_dir.tls_certfile), 0, 0, 0},
@@ -127,9 +127,9 @@ static RES_ITEM con_items[] = {
    {"commandacl",  store_acl,      ITEM(res_con.ACL_lists), Command_ACL, 0, 0},
    {"filesetacl",  store_acl,      ITEM(res_con.ACL_lists), FileSet_ACL, 0, 0},
    {"catalogacl",  store_acl,      ITEM(res_con.ACL_lists), Catalog_ACL, 0, 0},
-   {"tlsenable",            store_bool,      ITEM(res_con.tls_enable), 0, 0, 0},
-   {"tlsrequire",           store_bool,      ITEM(res_con.tls_require), 0, 0, 0},
-   {"tlsverifypeer",        store_bool,      ITEM(res_con.tls_verify_peer), 0, ITEM_DEFAULT, true},
+   {"tlsenable",            store_yesno,     ITEM(res_con.tls_enable), 1, 0, 0},
+   {"tlsrequire",           store_yesno,     ITEM(res_con.tls_require), 1, 0, 0},
+   {"tlsverifypeer",        store_yesno,     ITEM(res_con.tls_verify_peer), 1, ITEM_DEFAULT, 1},
    {"tlscacertificatefile", store_dir,       ITEM(res_con.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",  store_dir,       ITEM(res_con.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",       store_dir,       ITEM(res_con.tls_certfile), 0, 0, 0},
@@ -157,10 +157,10 @@ static RES_ITEM cli_items[] = {
    {"catalog",  store_res,        ITEM(res_client.catalog),  R_CATALOG, ITEM_REQUIRED, 0},
    {"fileretention", store_time,  ITEM(res_client.FileRetention), 0, ITEM_DEFAULT, 60*60*24*60},
    {"jobretention",  store_time,  ITEM(res_client.JobRetention),  0, ITEM_DEFAULT, 60*60*24*180},
-   {"autoprune", store_bool,      ITEM(res_client.AutoPrune), 0, ITEM_DEFAULT, true},
+   {"autoprune", store_yesno,     ITEM(res_client.AutoPrune), 1, ITEM_DEFAULT, 1},
    {"maximumconcurrentjobs", store_pint, ITEM(res_client.MaxConcurrentJobs), 0, ITEM_DEFAULT, 1},
-   {"tlsenable",            store_bool,      ITEM(res_client.tls_enable), 0, 0, 0},
-   {"tlsrequire",           store_bool,      ITEM(res_client.tls_require), 0, 0, 0},
+   {"tlsenable",            store_yesno,     ITEM(res_client.tls_enable), 1, 0, 0},
+   {"tlsrequire",           store_yesno,     ITEM(res_client.tls_require), 1, 0, 0},
    {"tlscacertificatefile", store_dir,       ITEM(res_client.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",  store_dir,       ITEM(res_client.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",       store_dir,       ITEM(res_client.tls_certfile), 0, 0, 0},
@@ -182,12 +182,12 @@ static RES_ITEM store_items[] = {
    {"sdpassword",  store_password, ITEM(res_store.password),   0, 0, 0},
    {"device",      store_device,   ITEM(res_store.device),     R_DEVICE, ITEM_REQUIRED, 0},
    {"mediatype",   store_strname,  ITEM(res_store.media_type), 0, ITEM_REQUIRED, 0},
-   {"autochanger", store_bool,     ITEM(res_store.autochanger), 0, ITEM_DEFAULT, 0},
-   {"enabled",     store_bool,     ITEM(res_store.enabled),     0, ITEM_DEFAULT, true},
+   {"autochanger", store_yesno,    ITEM(res_store.autochanger), 1, ITEM_DEFAULT, 0},
+   {"enabled",     store_yesno,    ITEM(res_store.enabled),     1, ITEM_DEFAULT, 1},
    {"maximumconcurrentjobs", store_pint, ITEM(res_store.MaxConcurrentJobs), 0, ITEM_DEFAULT, 1},
    {"sddport", store_pint, ITEM(res_store.SDDport), 0, 0, 0}, /* deprecated */
-   {"tlsenable",            store_bool,      ITEM(res_store.tls_enable), 0, 0, 0},
-   {"tlsrequire",           store_bool,      ITEM(res_store.tls_require), 0, 0, 0},
+   {"tlsenable",            store_yesno,     ITEM(res_store.tls_enable), 1, 0, 0},
+   {"tlsrequire",           store_yesno,     ITEM(res_store.tls_require), 1, 0, 0},
    {"tlscacertificatefile", store_dir,       ITEM(res_store.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",  store_dir,       ITEM(res_store.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",       store_dir,       ITEM(res_store.tls_certfile), 0, 0, 0},
@@ -213,7 +213,7 @@ static RES_ITEM cat_items[] = {
    {"dbname",   store_str,      ITEM(res_cat.db_name),     0, ITEM_REQUIRED, 0},
    {"dbsocket", store_str,      ITEM(res_cat.db_socket),   0, 0, 0},
    /* Turned off for the moment */
-   {"multipleconnections", store_bit, ITEM(res_cat.mult_db_connections), 0, 0, 0},
+   {"multipleconnections", store_yesno, ITEM(res_cat.mult_db_connections), 0, 0, 0},
    {NULL, NULL, NULL, 0, 0, 0}
 };
 
@@ -228,7 +228,7 @@ RES_ITEM job_items[] = {
    {"type",      store_jobtype, ITEM(res_job.JobType),  0, ITEM_REQUIRED, 0},
    {"level",     store_level,   ITEM(res_job.JobLevel),    0, 0, 0},
    {"messages",  store_res,     ITEM(res_job.messages), R_MSGS, ITEM_REQUIRED, 0},
-   {"storage",   store_alist_res, ITEM(res_job.storage),  R_STORAGE, 0, 0},
+   {"storage",   store_alist_res, ITEM(res_job.storage),  R_STORAGE, ITEM_REQUIRED, 0},
    {"pool",      store_res,     ITEM(res_job.pool),     R_POOL, ITEM_REQUIRED, 0},
    {"fullbackuppool",  store_res, ITEM(res_job.full_pool),   R_POOL, 0, 0},
    {"incrementalbackuppool",  store_res, ITEM(res_job.inc_pool), R_POOL, 0, 0},
@@ -237,16 +237,11 @@ RES_ITEM job_items[] = {
    {"fileset",   store_res,     ITEM(res_job.fileset),  R_FILESET, ITEM_REQUIRED, 0},
    {"schedule",  store_res,     ITEM(res_job.schedule), R_SCHEDULE, 0, 0},
    {"verifyjob", store_res,     ITEM(res_job.verify_job), R_JOB, 0, 0},
-   {"migrationjob", store_res,  ITEM(res_job.migration_job), R_JOB, 0, 0},
    {"jobdefs",   store_res,     ITEM(res_job.jobdefs),    R_JOBDEFS, 0, 0},
    {"run",       store_alist_str, ITEM(res_job.run_cmds), 0, 0, 0},
-   /* Root of where to restore files */
    {"where",    store_dir,      ITEM(res_job.RestoreWhere), 0, 0, 0},
-   /* Where to find bootstrap during restore */
    {"bootstrap",store_dir,      ITEM(res_job.RestoreBootstrap), 0, 0, 0},
-   /* Where to write bootstrap file during backup */
    {"writebootstrap",store_dir, ITEM(res_job.WriteBootstrap), 0, 0, 0},
-   {"writeverifylist",store_dir, ITEM(res_job.WriteVerifyList), 0, 0, 0},
    {"replace",  store_replace,  ITEM(res_job.replace), 0, ITEM_DEFAULT, REPLACE_ALWAYS},
    {"maxruntime",   store_time, ITEM(res_job.MaxRunTime), 0, 0, 0},
    {"fullmaxwaittime",  store_time, ITEM(res_job.FullMaxWaitTime), 0, 0, 0},
@@ -255,26 +250,26 @@ RES_ITEM job_items[] = {
    {"maxwaittime",  store_time, ITEM(res_job.MaxWaitTime), 0, 0, 0},
    {"maxstartdelay",store_time, ITEM(res_job.MaxStartDelay), 0, 0, 0},
    {"jobretention", store_time, ITEM(res_job.JobRetention),  0, 0, 0},
-   {"prefixlinks", store_bool, ITEM(res_job.PrefixLinks), 0, ITEM_DEFAULT, false},
-   {"prunejobs",   store_bool, ITEM(res_job.PruneJobs), 0, ITEM_DEFAULT, false},
-   {"prunefiles",  store_bool, ITEM(res_job.PruneFiles), 0, ITEM_DEFAULT, false},
-   {"prunevolumes",store_bool, ITEM(res_job.PruneVolumes), 0, ITEM_DEFAULT, false},
-   {"enabled",     store_bool, ITEM(res_job.enabled), 0, ITEM_DEFAULT, true},
-   {"spoolattributes",store_bool, ITEM(res_job.SpoolAttributes), 0, ITEM_DEFAULT, false},
-   {"spooldata",   store_bit, ITEM(res_job.spool_data), 0, ITEM_DEFAULT, false},
-   {"rerunfailedlevels",   store_bool, ITEM(res_job.rerun_failed_levels), 0, ITEM_DEFAULT, false},
-   {"prefermountedvolumes", store_bool, ITEM(res_job.PreferMountedVolumes), 0, ITEM_DEFAULT, true},
+   {"prefixlinks", store_yesno, ITEM(res_job.PrefixLinks), 1, ITEM_DEFAULT, 0},
+   {"prunejobs",   store_yesno, ITEM(res_job.PruneJobs), 1, ITEM_DEFAULT, 0},
+   {"prunefiles",  store_yesno, ITEM(res_job.PruneFiles), 1, ITEM_DEFAULT, 0},
+   {"prunevolumes",store_yesno, ITEM(res_job.PruneVolumes), 1, ITEM_DEFAULT, 0},
+   {"enabled",     store_yesno, ITEM(res_job.enabled), 1, ITEM_DEFAULT, 1},
+   {"spoolattributes",store_yesno, ITEM(res_job.SpoolAttributes), 1, ITEM_DEFAULT, 0},
+   {"spooldata",   store_yesno, ITEM(res_job.spool_data), 1, ITEM_DEFAULT, 0},
+   {"rerunfailedlevels",   store_yesno, ITEM(res_job.rerun_failed_levels), 1, ITEM_DEFAULT, 0},
+   {"prefermountedvolumes", store_yesno, ITEM(res_job.PreferMountedVolumes), 1, ITEM_DEFAULT, 1},
    {"runbeforejob", store_str,  ITEM(res_job.RunBeforeJob), 0, 0, 0},
    {"runafterjob",  store_str,  ITEM(res_job.RunAfterJob),  0, 0, 0},
    {"runafterfailedjob",  store_str,  ITEM(res_job.RunAfterFailedJob),  0, 0, 0},
    {"clientrunbeforejob", store_str,  ITEM(res_job.ClientRunBeforeJob), 0, 0, 0},
    {"clientrunafterjob",  store_str,  ITEM(res_job.ClientRunAfterJob),  0, 0, 0},
    {"maximumconcurrentjobs", store_pint, ITEM(res_job.MaxConcurrentJobs), 0, ITEM_DEFAULT, 1},
-   {"rescheduleonerror", store_bool, ITEM(res_job.RescheduleOnError), 0, ITEM_DEFAULT, false},
+   {"rescheduleonerror", store_yesno, ITEM(res_job.RescheduleOnError), 1, ITEM_DEFAULT, 0},
    {"rescheduleinterval", store_time, ITEM(res_job.RescheduleInterval), 0, ITEM_DEFAULT, 60 * 30},
    {"rescheduletimes", store_pint, ITEM(res_job.RescheduleTimes), 0, 0, 0},
    {"priority",   store_pint, ITEM(res_job.Priority), 0, ITEM_DEFAULT, 10},
-   {"writepartafterjob",   store_bool, ITEM(res_job.write_part_after_job), 0, ITEM_DEFAULT, false},
+   {"writepartafterjob",   store_yesno, ITEM(res_job.write_part_after_job), 1, ITEM_DEFAULT, 0},
    {NULL, NULL, NULL, 0, 0, 0}
 };
 
@@ -287,8 +282,8 @@ static RES_ITEM fs_items[] = {
    {"description", store_str,  ITEM(res_fs.hdr.desc), 0, 0, 0},
    {"include",     store_inc,  NULL,                  0, ITEM_NO_EQUALS, 0},
    {"exclude",     store_inc,  NULL,                  1, ITEM_NO_EQUALS, 0},
-   {"ignorefilesetchanges", store_bool, ITEM(res_fs.ignore_fs_changes), 0, ITEM_DEFAULT, false},
-   {"enablevss",   store_bool, ITEM(res_fs.enable_vss), 0, ITEM_DEFAULT, false},
+   {"ignorefilesetchanges", store_yesno, ITEM(res_fs.ignore_fs_changes), 1, ITEM_DEFAULT, 0},
+   {"enablevss",   store_yesno, ITEM(res_fs.enable_vss), 1, ITEM_DEFAULT, 0},
    {NULL,          NULL,       NULL,                  0, 0, 0}
 };
 
@@ -314,27 +309,22 @@ static RES_ITEM pool_items[] = {
    {"pooltype",        store_strname, ITEM(res_pool.pool_type),     0, ITEM_REQUIRED, 0},
    {"labelformat",     store_strname, ITEM(res_pool.label_format),  0, 0,     0},
    {"labeltype",       store_label,   ITEM(res_pool.LabelType),     0, 0,     0},     
-   {"cleaningprefix",  store_strname, ITEM(res_pool.cleaning_prefix), 0, 0,   0},
-   {"usecatalog",      store_bool,    ITEM(res_pool.use_catalog),    0, ITEM_DEFAULT, true},
-   {"usevolumeonce",   store_bool,    ITEM(res_pool.use_volume_once), 0, 0,   0},
-   {"purgeoldestvolume", store_bool,  ITEM(res_pool.purge_oldest_volume), 0, 0, 0},
-   {"recycleoldestvolume", store_bool,  ITEM(res_pool.recycle_oldest_volume), 0, 0, 0},
-   {"recyclecurrentvolume", store_bool, ITEM(res_pool.recycle_current_volume), 0, 0, 0},
+   {"cleaningprefix",  store_strname, ITEM(res_pool.cleaning_prefix), 0, 0,     0},
+   {"usecatalog",      store_yesno,   ITEM(res_pool.use_catalog),    1, ITEM_DEFAULT,  1},
+   {"usevolumeonce",   store_yesno,   ITEM(res_pool.use_volume_once),1, 0,        0},
+   {"purgeoldestvolume", store_yesno, ITEM(res_pool.purge_oldest_volume), 1, 0, 0},
+   {"recycleoldestvolume", store_yesno,  ITEM(res_pool.recycle_oldest_volume), 1, 0, 0},
+   {"recyclecurrentvolume", store_yesno, ITEM(res_pool.recycle_current_volume), 1, 0, 0},
    {"maximumvolumes",  store_pint,    ITEM(res_pool.max_volumes),   0, 0,        0},
    {"maximumvolumejobs", store_pint,  ITEM(res_pool.MaxVolJobs),    0, 0,       0},
    {"maximumvolumefiles", store_pint, ITEM(res_pool.MaxVolFiles),   0, 0,       0},
    {"maximumvolumebytes", store_size, ITEM(res_pool.MaxVolBytes),   0, 0,       0},
-   {"acceptanyvolume", store_bool,    ITEM(res_pool.accept_any_volume), 0, ITEM_DEFAULT, true},
-   {"catalogfiles",    store_bool,    ITEM(res_pool.catalog_files),  0, ITEM_DEFAULT, true},
+   {"acceptanyvolume", store_yesno,   ITEM(res_pool.accept_any_volume), 1, ITEM_DEFAULT,     1},
+   {"catalogfiles",    store_yesno,   ITEM(res_pool.catalog_files),  1, ITEM_DEFAULT,  1},
    {"volumeretention", store_time,    ITEM(res_pool.VolRetention),   0, ITEM_DEFAULT, 60*60*24*365},
    {"volumeuseduration", store_time,  ITEM(res_pool.VolUseDuration), 0, 0, 0},
-   {"migrationtime",  store_time,     ITEM(res_pool.MigrationTime), 0, 0, 0},
-   {"migrationhighbytes", store_size, ITEM(res_pool.MigrationHighBytes), 0, 0, 0},
-   {"migrationlowbytes", store_size,  ITEM(res_pool.MigrationLowBytes), 0, 0, 0},
-   {"nextpool",      store_res,       ITEM(res_pool.NextPool), R_POOL, 0, 0},
-   {"storage",       store_alist_res, ITEM(res_pool.storage),  R_STORAGE, 0, 0},
-   {"autoprune",       store_bool,    ITEM(res_pool.AutoPrune), 0, ITEM_DEFAULT, true},
-   {"recycle",         store_bool,    ITEM(res_pool.Recycle),   0, ITEM_DEFAULT, true},
+   {"autoprune",       store_yesno,   ITEM(res_pool.AutoPrune), 1, ITEM_DEFAULT, 1},
+   {"recycle",         store_yesno,   ITEM(res_pool.Recycle),     1, ITEM_DEFAULT, 1},
    {NULL, NULL, NULL, 0, 0, 0}
 };
 
@@ -412,8 +402,6 @@ struct s_jt jobtypes[] = {
    {"admin",         JT_ADMIN},
    {"verify",        JT_VERIFY},
    {"restore",       JT_RESTORE},
-   {"copy",          JT_COPY},
-   {"migrate",       JT_MIGRATE},
    {NULL,            0}
 };
 
@@ -448,7 +436,7 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, const char *fm
 {
    URES *res = (URES *)reshdr;
    bool recurse = true;
-   char ed1[100], ed2[100], ed3[100];
+   char ed1[100], ed2[100];
    DEVICE *dev;
 
    if (res == NULL) {
@@ -474,8 +462,13 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, const char *fm
       }
       break;
    case R_CONSOLE:
+#ifdef HAVE_TLS
       sendit(sock, _("Console: name=%s SSL=%d\n"),
          res->res_con.hdr.name, res->res_con.tls_enable);
+#else
+      sendit(sock, _("Console: name=%s SSL=%d\n"),
+         res->res_con.hdr.name, BNET_TLS_NONE);
+#endif
       break;
    case R_COUNTER:
       if (res->res_counter.WrapCounter) {
@@ -781,21 +774,6 @@ next_run:
               res->res_pool.recycle_oldest_volume,
               res->res_pool.purge_oldest_volume,
               res->res_pool.MaxVolJobs, res->res_pool.MaxVolFiles);
-      sendit(sock, _("      MigTime=%s MigHiBytes=%s MigLoBytes=%s\n"),
-              edit_utime(res->res_pool.MigrationTime, ed1, sizeof(ed1)),
-              edit_uint64(res->res_pool.MigrationHighBytes, ed2),
-              edit_uint64(res->res_pool.MigrationLowBytes, ed3));
-      if (res->res_pool.NextPool) {
-         sendit(sock, _("  --> "));
-         dump_resource(-R_POOL, (RES *)res->res_pool.NextPool, sendit, sock);
-      }
-      if (res->res_pool.storage) {
-         STORE *store;
-         foreach_alist(store, res->res_pool.storage) {
-            sendit(sock, _("  --> "));
-            dump_resource(-R_STORAGE, (RES *)store, sendit, sock);
-         }
-      }
       break;
    case R_MSGS:
       sendit(sock, _("Messages: name=%s\n"), res->res_msgs.hdr.name);
@@ -1043,9 +1021,6 @@ void free_resource(RES *sres, int type)
       if (res->res_pool.cleaning_prefix) {
          free(res->res_pool.cleaning_prefix);
       }
-      if (res->res_pool.storage) {
-         delete res->res_pool.storage;
-      }
       break;
    case R_SCHEDULE:
       if (res->res_sch.run) {
@@ -1165,27 +1140,13 @@ void save_resource(int type, RES_ITEM *items, int pass)
       switch (type) {
       /* Resources not containing a resource */
       case R_CATALOG:
+      case R_POOL:
       case R_MSGS:
       case R_FILESET:
       case R_DEVICE:
          break;
 
-      /*
-       * Resources containing another resource or alist. First
-       *  look up the resource which contains another resource. It
-       *  was written during pass 1.  Then stuff in the pointers to
-       *  the resources it contains, which were inserted this pass.
-       *  Finally, it will all be stored back.
-       */
-      case R_POOL:
-         /* Find resource saved in pass 1 */
-         if ((res = (URES *)GetResWithName(R_POOL, res_all.res_con.hdr.name)) == NULL) {
-            Emsg1(M_ERROR_TERM, 0, _("Cannot find Pool resource %s\n"), res_all.res_con.hdr.name);
-         }
-         /* Explicitly copy resource pointers from this pass (res_all) */
-         res->res_pool.NextPool = res_all.res_pool.NextPool;
-         res->res_pool.storage    = res_all.res_pool.storage;
-         break;
+      /* Resources containing another resource or alist */
       case R_CONSOLE:
          if ((res = (URES *)GetResWithName(R_CONSOLE, res_all.res_con.hdr.name)) == NULL) {
             Emsg1(M_ERROR_TERM, 0, _("Cannot find Console resource %s\n"), res_all.res_con.hdr.name);

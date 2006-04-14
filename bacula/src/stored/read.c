@@ -6,7 +6,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -75,7 +75,7 @@ bool do_read_data(JCR *jcr)
    /* Send end of data to FD */
    bnet_sig(fd, BNET_EOD);
 
-   if (!release_device(jcr->read_dcr)) {
+   if (!release_device(dcr)) {
       ok = false;
    }
 

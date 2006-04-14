@@ -74,6 +74,18 @@
 #define JS_WaitStartTime         't'  /* Waiting for start time */
 #define JS_WaitPriority          'p'  /* Waiting for higher priority jobs to finish */
 
+/* Migration selection types */
+enum {
+   MT_SMALLEST_VOL = 1,
+   MT_OLDEST_VOL,
+   MT_POOL_OCCUPANCY,
+   MT_POOL_TIME,
+   MT_CLIENT,
+   MT_VOLUME,
+   MT_JOB,
+   MT_SQLQUERY
+};
+
 #define job_canceled(jcr) \
   (jcr->JobStatus == JS_Canceled || \
    jcr->JobStatus == JS_ErrorTerminated || \
@@ -97,15 +109,22 @@ typedef void (JCR_free_HANDLER)(JCR *jcr);
 
 /* Job Control Record (JCR) */
 class JCR {
+private:
+   pthread_mutex_t mutex;             /* jcr mutex */
+   volatile int _use_count;           /* use count */
 public:
-   void inc_use_count(void) {P(mutex); use_count++; V(mutex); };
-   void dec_use_count(void) {P(mutex); use_count--; V(mutex); };
+   void inc_use_count(void) {P(mutex); _use_count++; V(mutex); };
+   void dec_use_count(void) {P(mutex); _use_count--; V(mutex); };
+   int  use_count() { return _use_count; };
+   void init_mutex(void) {pthread_mutex_init(&mutex, NULL); };
+   void destroy_mutex(void) {pthread_mutex_destroy(&mutex); };
+   void lock() {P(mutex); };
+   void unlock() {V(mutex); };
+   bool is_job_canceled() {return job_canceled(this); };
 
    /* Global part of JCR common to all daemons */
    dlink link;                        /* JCR chain link */
-   volatile int use_count;            /* use count */
    pthread_t my_thread_id;            /* id of thread controlling jcr */
-   pthread_mutex_t mutex;             /* jcr mutex */
    BSOCK *dir_bsock;                  /* Director bsock or NULL if we are him */
    BSOCK *store_bsock;                /* Storage connection socket */
    BSOCK *file_bsock;                 /* File daemon connection socket */
@@ -157,17 +176,14 @@ public:
    /* This should be empty in the library */
 
 #ifdef DIRECTOR_DAEMON
-   /* Director Daemon specific part of JCR */
+   /* Director Daemon specific data part of JCR */
    pthread_t SD_msg_chan;             /* Message channel thread id */
    pthread_cond_t term_wait;          /* Wait for job termination */
    workq_ele_t *work_item;            /* Work queue item if scheduled */
    volatile bool sd_msg_thread_done;  /* Set when Storage message thread terms */
    BSOCK *ua;                         /* User agent */
    JOB *job;                          /* Job resource */
-   union {
-      JOB *verify_job;                /* Job resource of verify target job */
-      JOB *migration_job;             /* Job resource of migration target job */
-   };  
+   JOB *verify_job;                   /* Job resource of verify previous job */
    alist *storage;                    /* Storage possibilities */
    STORE *store;                      /* Storage daemon selected */
    CLIENT *client;                    /* Client resource */
@@ -185,15 +201,20 @@ public:
    volatile int FDJobStatus;          /* File daemon Job Status */
    uint32_t ExpectedFiles;            /* Expected restore files */
    uint32_t MediaId;                  /* DB record IDs associated with this job */
+   uint32_t PoolId;                   /* PoolId associated with Job */
    FileId_t FileId;                   /* Last file id inserted */
    uint32_t FileIndex;                /* Last FileIndex processed */
    POOLMEM *fname;                    /* name to put into catalog */
    JOB_DBR jr;                        /* Job DB record for current job */
-   JOB_DBR target_jr;                 /* target job */
-   JCR *target_jcr;                   /* target job control record */
+   JOB_DBR previous_jr;               /* previous job database record */
+   JOB *previous_job;                 /* Job resource of migration previous job */
+   JCR *previous_jcr;                 /* previous job control record */
    char FSCreateTime[MAX_TIME_LENGTH]; /* FileSet CreateTime as returned from DB */
    char since[MAX_TIME_LENGTH];       /* since time */
-   uint32_t RestoreJobId;             /* Id specified by UA */
+   union {
+      JobId_t RestoreJobId;           /* Id specified by UA */
+      JobId_t MigrateJobId;
+   };
    POOLMEM *client_uname;             /* client uname */
    int replace;                       /* Replace option */
    int NumVols;                       /* Number of Volume used in pool */
@@ -237,10 +258,10 @@ public:
    bool pki_sign;                     /* Enable PKI Signatures? */
    bool pki_encrypt;                  /* Enable PKI Encryption? */
    DIGEST *digest;                    /* Last file's digest context */
-   X509_KEYPAIR *pki_keypair;         /* Encryption key pair */
+// X509_KEYPAIR *pki_keypair;         /* Encryption key pair */
    alist *pki_signers;                /* Trusted Signers */
    alist *pki_recipients;             /* Trusted Recipients */
-   CRYPTO_SESSION *pki_session;       /* PKE Public Keys + Symmetric Session Keys */
+// CRYPTO_SESSION *pki_session;       /* PKE Public Keys + Symmetric Session Keys */
    void *pki_session_encoded;         /* Cached DER-encoded copy of pki_session */
    size_t pki_session_encoded_size;   /* Size of DER-encoded pki_session */
    POOLMEM *crypto_buf;               /* Encryption/Decryption buffer */

@@ -14,7 +14,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -86,11 +86,6 @@ bool read_records(DCR *dcr,
                break;
             }
             jcr->mount_next_volume = false;
-            /*  
-             * The Device can change at the end of a tape, so refresh it
-             *   from the dcr.
-             */
-            dev = dcr->dev;
             /*
              * We just have a new tape up, now read the label (first record)
              *  and pass it off to the callback routine, then continue
@@ -107,10 +102,10 @@ bool read_records(DCR *dcr,
 
          } else if (dev->at_eof()) {
             if (verbose) {
-               Jmsg(jcr, M_INFO, 0, _("Got EOF at file %u  on device %s, Volume \"%s\"\n"),
+               Jmsg(jcr, M_INFO, 0, _("End of file %u  on device %s, Volume \"%s\"\n"),
                   dev->file, dev->print_name(), dcr->VolumeName);
             }
-            Dmsg3(200, "Got EOF at file %u  on device %s, Volume \"%s\"\n",
+            Dmsg3(200, "End of file %u  on device %s, Volume \"%s\"\n",
                   dev->file, dev->print_name(), dcr->VolumeName);
             continue;
          } else if (dev->is_short_block()) {
@@ -210,7 +205,7 @@ bool read_records(DCR *dcr,
                Dmsg2(300, "All done=(file:block) %u:%u\n", dev->file, dev->block_num);
                break;
             } else if (stat == 0) {  /* no match */
-               Dmsg4(300, "BSR no match: clear rem=%d FI=%d before set_eof pos %u:%u\n",
+               Dmsg4(300, "Clear rem=%d FI=%d before set_eof pos %u:%u\n",
                   rec->remainder, rec->FileIndex, dev->file, dev->block_num);
                rec->remainder = 0;
                rec->state &= ~REC_PARTIAL_RECORD;
@@ -228,7 +223,7 @@ bool read_records(DCR *dcr,
             break;                    /* read second part of record */
          }
          ok = record_cb(dcr, rec);
-         if (crypto_digest_stream_type(rec->Stream) != CRYPTO_DIGEST_NONE) {
+         if (rec->Stream == STREAM_MD5_SIGNATURE || rec->Stream == STREAM_SHA1_SIGNATURE) {
             Dmsg3(300, "Done FI=%u before set_eof pos %u:%u\n", rec->FileIndex,
                   dev->file, dev->block_num);
             if (match_set_eof(jcr->bsr, rec) && try_repositioning(jcr, rec, dev)) {
@@ -285,7 +280,7 @@ static bool try_repositioning(JCR *jcr, DEV_RECORD *rec, DEVICE *dev)
       Dmsg4(300, "Try_Reposition from (file:block) %u:%u to %u:%u\n",
             dev->file, dev->block_num, bsr->volfile->sfile,
             bsr->volblock->sblock);
-      dev->reposition(bsr->volfile->sfile, bsr->volblock->sblock);
+      reposition_dev(dev, bsr->volfile->sfile, bsr->volblock->sblock);
       rec->Block = 0;
    }
    return false;
@@ -309,7 +304,7 @@ static BSR *position_to_first_file(JCR *jcr, DEVICE *dev)
             bsr->volfile->sfile, bsr->volblock->sblock);
          Dmsg2(300, "Forward spacing to file:block %u:%u.\n",
             bsr->volfile->sfile, bsr->volblock->sblock);
-         dev->reposition(bsr->volfile->sfile, bsr->volblock->sblock);
+         reposition_dev(dev, bsr->volfile->sfile, bsr->volblock->sblock);
       }
    }
    return bsr;

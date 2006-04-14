@@ -13,7 +13,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -29,11 +29,10 @@
 
 #include "bacula.h"
 #include "dird.h"
-#include "findlib/find.h"
 
 /* Commands sent to File daemon */
 static char filesetcmd[]  = "fileset%s\n"; /* set full fileset */
-static char jobcmd[]      = "JobId=%d Job=%s SDid=%u SDtime=%u Authorization=%s\n";
+static char jobcmd[]      = "JobId=%s Job=%s SDid=%u SDtime=%u Authorization=%s\n";
 /* Note, mtime_only is not used here -- implemented as file option */
 static char levelcmd[]    = "level = %s%s mtime_only=%d\n";
 static char runbefore[]   = "RunBeforeJob %s\n";
@@ -43,6 +42,7 @@ static char runafter[]    = "RunAfterJob %s\n";
 /* Responses received from File daemon */
 static char OKinc[]       = "2000 OK include\n";
 static char OKjob[]       = "2000 OK Job";
+static char OKbootstrap[] = "2000 OK bootstrap\n";
 static char OKlevel[]     = "2000 OK level\n";
 static char OKRunBefore[] = "2000 OK RunBefore\n";
 static char OKRunAfter[]  = "2000 OK RunAfter\n";
@@ -67,6 +67,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
                            int verbose)
 {
    BSOCK   *fd;
+   char ed1[30];
 
    if (!jcr->file_bsock) {
       fd = bnet_connect(jcr, retry_interval, max_retry_time,
@@ -92,7 +93,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    /*
     * Now send JobId and authorization key
     */
-   bnet_fsend(fd, jobcmd, jcr->JobId, jcr->Job, jcr->VolSessionId,
+   bnet_fsend(fd, jobcmd, edit_int64(jcr->JobId, ed1), jcr->Job, jcr->VolSessionId,
       jcr->VolSessionTime, jcr->sd_auth_key);
    if (strcmp(jcr->sd_auth_key, "dummy") != 0) {
       memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
@@ -421,19 +422,19 @@ bool send_exclude_list(JCR *jcr)
 
 
 /*
- * Send bootstrap file if any to the socket given (FD or SD).
- *  This is used for restore, verify VolumeToCatalog, and
- *  for migration.
+ * Send bootstrap file if any to the File daemon.
+ *  This is used for restore and verify VolumeToCatalog
  */
-bool send_bootstrap_file(JCR *jcr, BSOCK *sock)
+bool send_bootstrap_file(JCR *jcr)
 {
    FILE *bs;
    char buf[1000];
+   BSOCK *fd = jcr->file_bsock;
    const char *bootstrap = "bootstrap\n";
 
    Dmsg1(400, "send_bootstrap_file: %s\n", jcr->RestoreBootstrap);
    if (!jcr->RestoreBootstrap) {
-      return true;
+      return 1;
    }
    bs = fopen(jcr->RestoreBootstrap, "r");
    if (!bs) {
@@ -441,19 +442,23 @@ bool send_bootstrap_file(JCR *jcr, BSOCK *sock)
       Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"),
          jcr->RestoreBootstrap, be.strerror());
       set_jcr_job_status(jcr, JS_ErrorTerminated);
-      return false;
+      return 0;
    }
-   bnet_fsend(sock, bootstrap);
+   bnet_fsend(fd, bootstrap);
    while (fgets(buf, sizeof(buf), bs)) {
-      bnet_fsend(sock, "%s", buf);
+      bnet_fsend(fd, "%s", buf);
    }
-   bnet_sig(sock, BNET_EOD);
+   bnet_sig(fd, BNET_EOD);
    fclose(bs);
    if (jcr->unlink_bsr) {
       unlink(jcr->RestoreBootstrap);
       jcr->unlink_bsr = false;
    }                         
-   return true;
+   if (!response(jcr, fd, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
+      set_jcr_job_status(jcr, JS_ErrorTerminated);
+      return 0;
+   }
+   return 1;
 }
 
 /*
@@ -504,7 +509,7 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
    jcr->FileIndex = 0;
 
    Dmsg0(120, "bdird: waiting to receive file attributes\n");
-   /* Pickup file attributes and digest */
+   /* Pickup file attributes and signature */
    while (!fd->errors && (n = bget_dirmsg(fd)) > 0) {
 
    /*****FIXME****** improve error handling to stop only on
@@ -514,11 +519,11 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
       long file_index;
       int stream, len;
       char *attr, *p, *fn;
-      char Opts_Digest[MAXSTRING];      /* either Verify opts or MD5/SHA1 digest */
-      char digest[CRYPTO_DIGEST_MAX_SIZE];
+      char Opts_SIG[MAXSTRING];      /* either Verify opts or MD5/SHA1 signature */
+      char SIG[MAXSTRING];
 
       jcr->fname = check_pool_memory_size(jcr->fname, fd->msglen);
-      if ((len = sscanf(fd->msg, "%ld %d %s", &file_index, &stream, Opts_Digest)) != 3) {
+      if ((len = sscanf(fd->msg, "%ld %d %s", &file_index, &stream, Opts_SIG)) != 3) {
          Jmsg(jcr, M_FATAL, 0, _("<filed: bad attributes, expected 3 fields got %d\n"
 "msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
          set_jcr_job_status(jcr, JS_ErrorTerminated);
@@ -550,8 +555,8 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
          ar.ClientId = jcr->ClientId;
          ar.PathId = 0;
          ar.FilenameId = 0;
-         ar.Digest = NULL;
-         ar.DigestType = CRYPTO_DIGEST_NONE;
+         ar.Sig = NULL;
+         ar.SigType = 0;
 
          Dmsg2(111, "dird<filed: stream=%d %s\n", stream, jcr->fname);
          Dmsg1(120, "dird<filed: attr=%s\n", attr);
@@ -562,17 +567,17 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
             continue;
          }
          jcr->FileId = ar.FileId;
-      } else if (crypto_digest_stream_type(stream) != CRYPTO_DIGEST_NONE) {
+      } else if (stream == STREAM_MD5_SIGNATURE || stream == STREAM_SHA1_SIGNATURE) {
          if (jcr->FileIndex != (uint32_t)file_index) {
-            Jmsg3(jcr, M_ERROR, 0, _("%s index %d not same as attributes %d\n"),
-               stream_to_ascii(stream), file_index, jcr->FileIndex);
+            Jmsg2(jcr, M_ERROR, 0, _("MD5/SHA1 index %d not same as attributes %d\n"),
+               file_index, jcr->FileIndex);
             set_jcr_job_status(jcr, JS_Error);
             continue;
          }
-         db_escape_string(digest, Opts_Digest, strlen(Opts_Digest));
-         Dmsg2(120, "DigestLen=%d Digest=%s\n", strlen(digest), digest);
-         if (!db_add_digest_to_file_record(jcr, jcr->db, jcr->FileId, digest,
-                   crypto_digest_stream_type(stream))) {
+         db_escape_string(SIG, Opts_SIG, strlen(Opts_SIG));
+         Dmsg2(120, "SIGlen=%d SIG=%s\n", strlen(SIG), SIG);
+         if (!db_add_SIG_to_file_record(jcr, jcr->db, jcr->FileId, SIG,
+                   stream==STREAM_MD5_SIGNATURE?MD5_SIG:SHA1_SIG)) {
             Jmsg1(jcr, M_ERROR, 0, "%s", db_strerror(jcr->db));
             set_jcr_job_status(jcr, JS_Error);
          }
