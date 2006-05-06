@@ -50,4 +50,7 @@ typedef struct TLS_Context TLS_CONTEXT;
 /* Opaque TLS Connection Structure */
 typedef struct TLS_Connection TLS_CONNECTION;
 
+/* PEM Decryption Passphrase Callback */
+typedef int (TLS_PEM_PASSWD_CB) (char *buf, int size, const void *userdata);
+
 #endif /* __TLS_H_ */

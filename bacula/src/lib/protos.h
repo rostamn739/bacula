@@ -4,22 +4,17 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2005 Kern Sibbald
+   Copyright (C) 2000-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License as
-   published by the Free Software Foundation; either version 2 of
-   the License, or (at your option) any later version.
+   modify it under the terms of the GNU General Public License
+   version 2 as amended with additional clauses defined in the
+   file LICENSE in the main source directory.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-   General Public License for more details.
-
-   You should have received a copy of the GNU General Public
-   License along with this program; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-   MA 02111-1307, USA.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+   the file LICENSE for additional details.
 
  */
 
@@ -113,49 +108,15 @@ void hmac_md5(uint8_t* text, int text_len, uint8_t*  key,
 
 uint32_t bcrc32(uint8_t *buf, int len);
 
-/* crypto.c */
-int                init_crypto                 (void);
-int                cleanup_crypto              (void);
-DIGEST *           crypto_digest_new           (crypto_digest_t type);
-bool               crypto_digest_update        (DIGEST *digest, const void *data, size_t length);
-bool               crypto_digest_finalize      (DIGEST *digest, void *dest, size_t *length);
-void               crypto_digest_free          (DIGEST *digest);
-SIGNATURE *        crypto_sign_new             (void);
-crypto_error_t     crypto_sign_get_digest      (SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST **digest);
-crypto_error_t     crypto_sign_verify          (SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST *digest);
-int                crypto_sign_add_signer      (SIGNATURE *sig, DIGEST *digest, X509_KEYPAIR *keypair);
-int                crypto_sign_encode          (SIGNATURE *sig, void *dest, size_t *length);
-SIGNATURE *        crypto_sign_decode          (const void *sigData, size_t length);
-void               crypto_sign_free            (SIGNATURE *sig);
-CRYPTO_SESSION *   crypto_session_new          (crypto_cipher_t cipher, alist *pubkeys);
-void               crypto_session_free         (CRYPTO_SESSION *cs);
-bool               crypto_session_encode       (CRYPTO_SESSION *cs, void *dest, size_t *length);
-crypto_error_t     crypto_session_decode       (const void *data, size_t length, alist *keypairs, CRYPTO_SESSION **session); 
-CRYPTO_SESSION *   crypto_session_decode       (const void *data, size_t length);
-CIPHER_CONTEXT *   crypto_cipher_new           (CRYPTO_SESSION *cs, bool encrypt, size_t *blocksize);
-bool               crypto_cipher_update        (CIPHER_CONTEXT *cipher_ctx, const void *data, size_t length, const void *dest, size_t *written);
-bool               crypto_cipher_finalize      (CIPHER_CONTEXT *cipher_ctx, void *dest, size_t *written);
-void               crypto_cipher_free          (CIPHER_CONTEXT *cipher_ctx);
-X509_KEYPAIR *     crypto_keypair_new          (void);
-X509_KEYPAIR *     crypto_keypair_dup          (X509_KEYPAIR *keypair);
-int                crypto_keypair_load_cert    (X509_KEYPAIR *keypair, const char *file);
-bool               crypto_keypair_has_key      (const char *file);
-int                crypto_keypair_load_key     (X509_KEYPAIR *keypair, const char *file, CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata);
-void               crypto_keypair_free         (X509_KEYPAIR *keypair);
-int                crypto_default_pem_callback (char *buf, int size, const void *userdata);
-const char *       crypto_digest_name          (DIGEST *digest);
-crypto_digest_t    crypto_digest_stream_type   (int stream);
-const char *       crypto_strerror             (crypto_error_t error);
-
 /* daemon.c */
 void     daemon_start            ();
 
 /* edit.c */
 uint64_t         str_to_uint64(char *str);
 int64_t          str_to_int64(char *str);
-#define str_to_int32(str) ((int32_t)str_to_int64(str))
-char *           edit_uint64_with_commas   (uint64_t val, char *buf);
+#define          str_to_int32(str) ((int32_t)str_to_int64(str))
 char *           edit_uint64_with_suffix   (uint64_t val, char *buf);
+char *           edit_uint64_with_commas   (uint64_t val, char *buf);
 char *           add_commas              (char *val, char *buf);
 char *           edit_uint64             (uint64_t val, char *buf);
 char *           edit_int64              (int64_t val, char *buf);
@@ -227,6 +188,8 @@ void init_python_interpreter(const char *progname, const char *scripts,
 void term_python_interpreter();
 //extern EVENT_HANDLER *generate_daemon_event;
 int generate_daemon_event(JCR *jcr, const char *event);
+void lock_python();
+void unlock_python();
 
 /* signal.c */
 void             init_signals             (void terminate(int sig));
@@ -235,6 +198,7 @@ void             init_stack_dump          (void);
 /* scan.c */
 void             strip_leading_space     (char *str);
 void             strip_trailing_junk     (char *str);
+void             strip_trailing_newline  (char *str);
 void             strip_trailing_slashes  (char *dir);
 bool             skip_spaces             (char **msg);
 bool             skip_nonspaces          (char **msg);
@@ -248,11 +212,14 @@ int             bsscanf(const char *buf, const char *fmt, ...);
 
 
 /* tls.c */
+int              init_tls                (void);
+int              cleanup_tls             (void);
+
 TLS_CONTEXT      *new_tls_context        (const char *ca_certfile,
                                           const char *ca_certdir,
                                           const char *certfile,
                                           const char *keyfile,
-                                          CRYPTO_PEM_PASSWD_CB *pem_callback,
+                                          TLS_PEM_PASSWD_CB *pem_callback,
                                           const void *pem_userdata,
                                           const char *dhfile,
                                           bool verify_peer);

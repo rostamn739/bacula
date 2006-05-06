@@ -290,7 +290,7 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
    bool print_reminder = true;
    bool label_barcodes = false;
    int ok = FALSE;
-   int i;
+   int i, j;
    int drive;
    bool media_record_exists = false;
    static const char *barcode_keyword[] = {
@@ -304,8 +304,12 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
       return 1;
    }
 
+   /* Look for one of the barcode keywords */
    if (!relabel && (i=find_arg_keyword(ua, barcode_keyword)) >= 0) {
-      *ua->argk[i] = 0;      /* zap barcode keyword */
+      /* Now find the keyword in the list */
+      if ((j = find_arg(ua, barcode_keyword[i])) > 0) {
+         *ua->argk[j] = 0;      /* zap barcode keyword */
+      }
       label_barcodes = true;
    }
 
@@ -736,7 +740,7 @@ static char *get_volume_name_from_SD(UAContext *ua, int Slot, int drive)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger list of volumes */
-   bnet_fsend(sd, _("readlabel %s Slot=%d drive=%d\n"), dev_name, Slot, drive);
+   bnet_fsend(sd, "readlabel %s Slot=%d drive=%d\n", dev_name, Slot, drive);
    Dmsg1(100, "Sent: %s", sd->msg);
 
    /* Get Volume name in this Slot */
@@ -778,7 +782,7 @@ static vol_list_t *get_vol_list_from_SD(UAContext *ua, bool scan)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger list of volumes */
-   bnet_fsend(sd, _("autochanger list %s \n"), dev_name);
+   bnet_fsend(sd, "autochanger list %s \n", dev_name);
 
    /* Read and organize list of Volumes */
    while (bnet_recv(sd) >= 0) {
@@ -890,7 +894,7 @@ static int get_num_slots_from_SD(UAContext *ua)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger number of slots */
-   bnet_fsend(sd, _("autochanger slots %s\n"), dev_name);
+   bnet_fsend(sd, "autochanger slots %s\n", dev_name);
 
    while (bnet_recv(sd) >= 0) {
       if (sscanf(sd->msg, "slots=%d\n", &slots) == 1) {
@@ -922,7 +926,7 @@ int get_num_drives_from_SD(UAContext *ua)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger number of slots */
-   bnet_fsend(sd, _("autochanger drives %s\n"), dev_name);
+   bnet_fsend(sd, "autochanger drives %s\n", dev_name);
 
    while (bnet_recv(sd) >= 0) {
       if (sscanf(sd->msg, "drives=%d\n", &drives) == 1) {

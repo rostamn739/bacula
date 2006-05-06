@@ -23,9 +23,6 @@
 #include "bacula.h"                   /* pull in global headers */
 #include "stored.h"                   /* pull in Storage Deamon headers */
 
-/* Forward referenced functions */
-static void detach_dcr_from_dev(DCR *dcr);
-
 
 /*********************************************************************
  * Acquire device for reading. 
@@ -36,17 +33,18 @@ static void detach_dcr_from_dev(DCR *dcr);
  *  Returns: NULL if failed for any reason
  *           dcr  if successful
  */
-bool acquire_device_for_read(DCR *dcr)
+DCR *acquire_device_for_read(DCR *dcr)
 {
    DEVICE *dev = dcr->dev;
    JCR *jcr = dcr->jcr;
-   bool ok = false;
+   bool vol_ok = false;
    bool tape_previously_mounted;
    bool tape_initially_mounted;
    VOL_LIST *vol;
    bool try_autochanger = true;
    int i;
    int vol_label_status;
+   int retry = 0;
    
    dev->block(BST_DOING_ACQUIRE);
 
@@ -70,71 +68,6 @@ bool acquire_device_for_read(DCR *dcr)
       goto get_out;                   /* should not happen */   
    }
    bstrncpy(dcr->VolumeName, vol->VolumeName, sizeof(dcr->VolumeName));
-   bstrncpy(dcr->media_type, vol->MediaType, sizeof(dcr->media_type));
-   dcr->VolCatInfo.Slot = vol->Slot;
-    
-   /*
-    * If the MediaType requested for this volume is not the
-    *  same as the current drive, we attempt to find the same
-    *  device that was used to write the orginal volume.  If
-    *  found, we switch to using that device.
-    */
-   Dmsg2(100, "MediaType dcr=%s dev=%s\n", dcr->media_type, dev->device->media_type);
-   if (dcr->media_type[0] && strcmp(dcr->media_type, dev->device->media_type) != 0) {
-      RCTX rctx;
-      DIRSTORE *store;
-      int stat;
-      memset(&rctx, 0, sizeof(RCTX));
-      rctx.jcr = jcr;
-      jcr->reserve_msgs = New(alist(10, not_owned_by_alist));
-      rctx.any_drive = true;
-      rctx.device_name = vol->device;
-      store = new DIRSTORE;
-      memset(store, 0, sizeof(DIRSTORE));
-      store->name[0] = 0; /* No dir name */
-      bstrncpy(store->media_type, vol->MediaType, sizeof(store->media_type));
-      bstrncpy(store->pool_name, dcr->pool_name, sizeof(store->pool_name));
-      bstrncpy(store->pool_type, dcr->pool_type, sizeof(store->pool_type));
-      store->append = false;
-      rctx.store = store;
-      
-      /*
-       * Note, if search_for_device() succeeds, we get a new_dcr,
-       *  which we do not use except for the dev info.
-       */
-      stat = search_res_for_device(rctx);
-      release_msgs(jcr);              /* release queued messages */
-      if (stat == 1) {
-         DCR *new_dcr = jcr->read_dcr;
-         dev->unblock();
-         detach_dcr_from_dev(dcr);    /* release old device */
-         /* Copy important info from the new dcr */
-         dev = dcr->dev = new_dcr->dev; 
-         jcr->read_dcr = dcr; 
-         dcr->device = new_dcr->device;
-         dcr->max_job_spool_size = dcr->device->max_job_spool_size;
-         if (dev->fd != 0 && jcr && jcr->JobType != JT_SYSTEM) {
-            dev->attached_dcrs->append(dcr);  /* attach dcr to device */
-         }
-         new_dcr->VolumeName[0] = 0;
-         free_dcr(new_dcr);
-         dev->block(BST_DOING_ACQUIRE); 
-         Jmsg(jcr, M_INFO, 0, _("Media Type change.  New device %s chosen.\n"),
-            dev->print_name());
-         bstrncpy(dcr->VolumeName, vol->VolumeName, sizeof(dcr->VolumeName));
-         bstrncpy(dcr->media_type, vol->MediaType, sizeof(dcr->media_type));
-         dcr->VolCatInfo.Slot = vol->Slot;
-         bstrncpy(dcr->pool_name, store->pool_name, sizeof(dcr->pool_name));
-         bstrncpy(dcr->pool_type, store->pool_type, sizeof(dcr->pool_type));
-      } else if (stat == 0) {   /* device busy */
-         Dmsg1(000, "Device %s is busy.\n", vol->device);
-      } else {
-         /* error */
-         Jmsg1(jcr, M_FATAL, 0, _("No suitable device found to read Volume \"%s\"\n"),
-            vol->VolumeName);
-         goto get_out;
-      }
-   }
 
    init_device_wait_timers(dcr);
 
@@ -149,7 +82,11 @@ bool acquire_device_for_read(DCR *dcr)
       Jmsg1(jcr, M_WARNING, 0, "%s", jcr->errmsg);
    }
    
-   for (i=0; i<5; i++) {
+   for ( ;; ) {
+      /* If not polling limit retries */
+      if (!dev->poll && retry++ > 10) {
+         break;
+      }
       dev->clear_labeled();              /* force reread of label */
       if (job_canceled(jcr)) {
          Mmsg1(dev->errmsg, _("Job %d canceled.\n"), jcr->JobId);
@@ -164,12 +101,12 @@ bool acquire_device_for_read(DCR *dcr)
       if (dev->open(dcr, OPEN_READ_ONLY) < 0) {
          if (dev->dev_errno == EIO) {   /* no tape loaded */
            Jmsg3(jcr, M_WARNING, 0, _("Read open device %s Volume \"%s\" failed (EIO): ERR=%s\n"),
-                 dev->print_name(), dcr->VolumeName, dev->bstrerror());
+                 dev->print_name(), dcr->VolumeName, strerror_dev(dev));
             goto default_path;
          }
          
          Jmsg3(jcr, M_FATAL, 0, _("Read open device %s Volume \"%s\" failed: ERR=%s\n"),
-             dev->print_name(), dcr->VolumeName, dev->bstrerror());
+             dev->print_name(), dcr->VolumeName, strerror_dev(dev));
          goto get_out;
       }
       Dmsg1(100, "opened dev %s OK\n", dev->print_name());
@@ -180,7 +117,7 @@ bool acquire_device_for_read(DCR *dcr)
       vol_label_status = read_dev_volume_label(dcr);
       switch (vol_label_status) {
       case VOL_OK:
-         ok = true;
+         vol_ok = true;
          memcpy(&dev->VolCatInfo, &dcr->VolCatInfo, sizeof(dev->VolCatInfo));
          break;                    /* got it */
       case VOL_IO_ERROR:
@@ -198,17 +135,22 @@ bool acquire_device_for_read(DCR *dcr)
             tape_initially_mounted = false;
             goto default_path;
          }
+         /* If polling and got a previous bad name, ignore it */
+         if (dev->poll && strcmp(dev->BadVolName, dev->VolHdr.VolumeName) == 0) {
+            goto default_path;
+         } else {
+             bstrncpy(dev->BadVolName, dev->VolHdr.VolumeName, sizeof(dev->BadVolName));
+         }
          /* Fall through */
       default:
          Jmsg1(jcr, M_WARNING, 0, "%s", jcr->errmsg);
 default_path:
          tape_previously_mounted = true;
          
-         /*
-          * If the device requires mount, close it, so the device can be ejected.
-          */
+         /* If the device requires mount, close it, so the device can be ejected.
+          * FIXME: This should perhaps be done for all devices. */
          if (dev->requires_mount()) {
-            dev->close();
+            force_close_device(dev);
          }
          
          /* Call autochanger only once unless ask_sysop called */
@@ -233,7 +175,7 @@ default_path:
       } /* end switch */
       break;
    } /* end for loop */
-   if (!ok) {
+   if (!vol_ok) {
       Jmsg1(jcr, M_FATAL, 0, _("Too many errors trying to mount device %s.\n"),
             dev->print_name());
       goto get_out;
@@ -255,7 +197,8 @@ get_out:
    }
    V(dev->mutex);
    dev->unblock();
-   return ok;
+   Dmsg1(000, "jcr->dcr=%p\n", jcr->dcr);
+   return dcr;
 }
 
 
@@ -373,7 +316,7 @@ DCR *acquire_device_for_append(DCR *dcr)
    P(dev->mutex);
    if (dcr->reserved_device) {
       dev->reserved_device--;
-      Dmsg2(100, "Dec reserve=%d dev=%s\n", dev->reserved_device, dev->print_name());
+      Dmsg1(100, "Dec reserve=%d\n", dev->reserved_device);
       dcr->reserved_device = false;
    }
    V(dev->mutex);
@@ -387,14 +330,14 @@ get_out:
    P(dev->mutex);
    if (dcr->reserved_device) {
       dev->reserved_device--;
-      Dmsg2(100, "Dec reserve=%d dev=%s\n", dev->reserved_device, dev->print_name());
+      Dmsg1(100, "Dec reserve=%d\n", dev->reserved_device);
       dcr->reserved_device = false;
    }
    V(dev->mutex);
+   free_dcr(dcr);
    dev->unblock();
    return NULL;
 }
-
 
 /*
  * This job is done, so release the device. From a Unix standpoint,
@@ -408,12 +351,12 @@ bool release_device(DCR *dcr)
    bool ok = true;
 
    lock_device(dev);
-   Dmsg2(100, "release_device device %s is %s\n", dev->print_name(), dev->is_tape()?"tape":"disk");
+   Dmsg1(100, "release_device device is %s\n", dev->is_tape()?"tape":"disk");
 
    /* if device is reserved, job never started, so release the reserve here */
    if (dcr->reserved_device) {
       dev->reserved_device--;
-      Dmsg2(100, "Dec reserve=%d dev=%s\n", dev->reserved_device, dev->print_name());
+      Dmsg1(100, "Dec reserve=%d\n", dev->reserved_device);
       dcr->reserved_device = false;
    }
 
@@ -461,7 +404,8 @@ bool release_device(DCR *dcr)
 
    /* If no writers, close if file or !CAP_ALWAYS_OPEN */
    if (dev->num_writers == 0 && (!dev->is_tape() || !dev_cap(dev, CAP_ALWAYSOPEN))) {
-      dev->close();
+      offline_or_rewind_dev(dev);
+      close_device(dev);
    }
 
    /* Fire off Alert command and include any output */
@@ -552,18 +496,22 @@ static void remove_dcr_from_dcrs(DCR *dcr)
 }
 #endif
 
-static void detach_dcr_from_dev(DCR *dcr)
+/*
+ * Free up all aspects of the given dcr -- i.e. dechain it,
+ *  release allocated memory, zap pointers, ...
+ */
+void free_dcr(DCR *dcr)
 {
+   JCR *jcr = dcr->jcr;
    DEVICE *dev = dcr->dev;
 
    if (dcr->reserved_device) {
-      dcr->reserved_device = false;
       lock_device(dev);
       dev->reserved_device--;
       Dmsg2(100, "Dec reserve=%d dev=%s\n", dev->reserved_device, dev->print_name());
       dcr->reserved_device = false;
       /* If we set read mode in reserving, remove it */
-      if (dev->can_read()) {
+       if (dev->can_read()) {
          dev->clear_read();
       }
       if (dev->num_writers < 0) {
@@ -574,24 +522,10 @@ static void detach_dcr_from_dev(DCR *dcr)
    }
 
    /* Detach this dcr only if the dev is initialized */
-   if (dcr->dev->fd != 0 && dcr->jcr && dcr->jcr->JobType != JT_SYSTEM) {
-      dcr->dev->attached_dcrs->remove(dcr);  /* detach dcr from device */
+   if (dev->fd != 0 && jcr && jcr->JobType != JT_SYSTEM) {
+      dev->attached_dcrs->remove(dcr);  /* detach dcr from device */
 //    remove_dcr_from_dcrs(dcr);      /* remove dcr from jcr list */
    }
-   free_unused_volume(dcr);           /* free unused vols attached to this dcr */
-   pthread_cond_broadcast(&dcr->dev->wait_next_vol);
-   pthread_cond_broadcast(&wait_device_release);
-}
-
-/*
- * Free up all aspects of the given dcr -- i.e. dechain it,
- *  release allocated memory, zap pointers, ...
- */
-void free_dcr(DCR *dcr)
-{
-
-   detach_dcr_from_dev(dcr);
-
    if (dcr->block) {
       free_block(dcr->block);
    }
@@ -601,5 +535,8 @@ void free_dcr(DCR *dcr)
    if (dcr->jcr) {
       dcr->jcr->dcr = NULL;
    }
+   free_unused_volume(dcr);           /* free unused vols attached to this dcr */
    free(dcr);
+   pthread_cond_broadcast(&dev->wait_next_vol);
+   pthread_cond_broadcast(&wait_device_release);
 }

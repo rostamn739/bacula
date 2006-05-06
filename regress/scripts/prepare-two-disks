@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-# Create two blank tapes
-#
-rm -rf tmp/disk-changer
-mkdir tmp/disk-changer

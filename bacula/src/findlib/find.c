@@ -10,7 +10,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2005 Kern Sibbald
+   Copyright (C) 2000-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -38,13 +38,7 @@ int32_t path_max;              /* path name max length */
 static int our_callback(FF_PKT *ff, void *hpkt, bool top_level);
 static bool accept_file(FF_PKT *ff);
 
-/* Fold case in fnmatch() on Win32 */
-#ifdef WIN32
-static const int fnmode = FNM_CASEFOLD;
-#else
 static const int fnmode = 0;
-#endif
-
 
 /*
  * Initialize the find files "global" variables
@@ -242,7 +236,6 @@ static bool accept_file(FF_PKT *ff)
             return true;              /* accept file */
          }
       }
-#ifndef WIN32
       if (S_ISDIR(ff->statp.st_mode)) {
          for (k=0; k<fo->regexdir.size(); k++) {
             const int nmatch = 30;
@@ -276,7 +269,6 @@ static bool accept_file(FF_PKT *ff)
             return true;              /* accept file */
          }
       }
-#endif
       /*
        * If we have an empty Options clause with exclude, then
        *  exclude the file

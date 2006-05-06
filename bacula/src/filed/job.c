@@ -25,6 +25,7 @@
 #include "filed.h"
 #ifdef WIN32_VSS
 #include "vss.h"   
+static pthread_mutex_t vss_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 extern char my_name[];
@@ -173,11 +174,6 @@ void *handle_client_request(void *dirp)
    jcr->last_fname[0] = 0;
    jcr->client_name = get_memory(strlen(my_name) + 1);
    pm_strcpy(jcr->client_name, my_name);
-   jcr->pki_sign = me->pki_sign;
-   jcr->pki_encrypt = me->pki_encrypt;
-   jcr->pki_keypair = me->pki_keypair;
-   jcr->pki_signers = me->pki_signers;
-   jcr->pki_recipients = me->pki_recipients;
    dir->jcr = jcr;
    enable_backup_privileges(NULL, 1 /* ignore_errors */);
 
@@ -328,16 +324,9 @@ static int cancel_cmd(JCR *jcr)
          bnet_fsend(dir, _("2901 Job %s not found.\n"), Job);
       } else {
          if (cjcr->store_bsock) {
-            P(cjcr->mutex);
             cjcr->store_bsock->timed_out = 1;
             cjcr->store_bsock->terminated = 1;
-/*
- * #if !defined(HAVE_CYGWIN) && !defined(HAVE_WIN32)
- */
-#if !defined(HAVE_CYGWIN)
             pthread_kill(cjcr->my_thread_id, TIMEOUT_SIGNAL);
-#endif
-            V(cjcr->mutex);
          }
          set_jcr_job_status(cjcr, JS_Canceled);
          free_jcr(cjcr);
@@ -870,32 +859,7 @@ static void set_options(findFOPTS *fo, const char *opts)
          fo->flags |= FO_READFIFO;
          break;
       case 'S':
-	 switch(*(p + 1)) {
-         case ' ':
-            /* Old director did not specify SHA variant */
-            fo->flags |= FO_SHA1;
-            break;
-	 case '1':
-	    fo->flags |= FO_SHA1;
-            p++;
-	    break;
-#ifdef HAVE_SHA2
-	 case '2':
-	    fo->flags |= FO_SHA256;
-            p++;
-	    break;
-	 case '3':
-	    fo->flags |= FO_SHA512;
-            p++;
-      	    break;
-#endif
-	 default:
-	    /* Automatically downgrade to SHA-1 if an unsupported
-	     * SHA variant is specified */
-	    fo->flags |= FO_SHA1;
-            p++;
-	    break;
-	 }
+         fo->flags |= FO_SHA1;
          break;
       case 's':
          fo->flags |= FO_SPARSE;
@@ -1059,6 +1023,7 @@ static int level_cmd(JCR *jcr)
          goto bail_out;
       }
       since_time = str_to_uint64(buf);  /* this is the since time */
+      Dmsg1(100, "since_time=%d\n", (int)since_time);
       char ed1[50], ed2[50];
       /*
        * Sync clocks by polling him for the time. We take
@@ -1078,8 +1043,10 @@ static int level_cmd(JCR *jcr)
          }
          his_time = str_to_uint64(buf);
          rt = get_current_btime() - bt_start; /* compute round trip time */
-         bt_adj -= his_time - bt_start - rt/2;
-         Dmsg2(200, "rt=%s adj=%s\n", edit_uint64(rt, ed1), edit_uint64(bt_adj, ed2));
+         Dmsg2(100, "Dirtime=%s FDtime=%s\n", edit_uint64(his_time, ed1),
+               edit_uint64(bt_start, ed2));
+         bt_adj +=  bt_start - his_time - rt/2;
+         Dmsg2(100, "rt=%s adj=%s\n", edit_uint64(rt, ed1), edit_uint64(bt_adj, ed2));
       }
 
       bt_adj = bt_adj / 8;            /* compute average time */
@@ -1191,6 +1158,18 @@ static int backup_cmd(JCR *jcr)
    int SDJobStatus;
    char ed1[50], ed2[50];
 
+#ifdef WIN32_VSS
+   // capture state here, if client is backed up by multiple directors
+   // and one enables vss and the other does not then enable_vss can change
+   // between here and where its evaluated after the job completes.
+   bool bDoVSS = false;
+
+   bDoVSS = g_pVSSClient && enable_vss;
+   if (bDoVSS)
+      /* Run only one at a time */
+      P(vss_mutex);
+#endif
+
    set_jcr_job_status(jcr, JS_Blocked);
    jcr->JobType = JT_BACKUP;
    Dmsg1(100, "begin backup ff=%p\n", jcr->ff);
@@ -1241,39 +1220,38 @@ static int backup_cmd(JCR *jcr)
 
 #ifdef WIN32_VSS
    /* START VSS ON WIN 32 */
-   if (g_pVSSClient && enable_vss) {
-      if (g_pVSSClient->InitializeForBackup()) {
-         /* tell vss which drives to snapshot */   
-         char szWinDriveLetters[27];   
-         if (get_win32_driveletters(jcr->ff, szWinDriveLetters)) {
+   if (bDoVSS) {      
+      if (g_pVSSClient->InitializeForBackup()) {   
+        /* tell vss which drives to snapshot */   
+        char szWinDriveLetters[27];   
+        if (get_win32_driveletters(jcr->ff, szWinDriveLetters)) {
             Jmsg(jcr, M_INFO, 0, _("Generate VSS snapshots. Driver=\"%s\", Drive(s)=\"%s\"\n"), g_pVSSClient->GetDriverName(), szWinDriveLetters);
-            if (!g_pVSSClient->CreateSnapshots(szWinDriveLetters)) {
-               berrno be;
-               Jmsg(jcr, M_WARNING, 0, _("Generate VSS snapshots failed. ERR=%s\n"),
-                  be.strerror());
+            if (!g_pVSSClient->CreateSnapshots(szWinDriveLetters)) {               
+               Jmsg(jcr, M_WARNING, 0, _("Generate VSS snapshots failed.\n"));
+               jcr->Errors++;
             } else {
                /* tell user if snapshot creation of a specific drive failed */
                size_t i;
                for (i=0; i<strlen (szWinDriveLetters); i++) {
                   if (islower(szWinDriveLetters[i])) {
                      Jmsg(jcr, M_WARNING, 0, _("Generate VSS snapshot of drive \"%c:\\\" failed\n"), szWinDriveLetters[i]);
+                     jcr->Errors++;
                   }
                }
                /* inform user about writer states */
-               for (i=0; i<g_pVSSClient->GetWriterCount(); i++) {
-                  int msg_type = M_INFO;
-                  if (g_pVSSClient->GetWriterState(i) < 0) {
-                     msg_type = M_WARNING;
-                  }
-                  Jmsg(jcr, msg_type, 0, _("VSS Writer: %s\n"), g_pVSSClient->GetWriterInfo(i));
-               }
+               for (i=0; i<g_pVSSClient->GetWriterCount(); i++)                
+                  if (g_pVSSClient->GetWriterState(i) < 1) {
+                     Jmsg(jcr, M_WARNING, 0, _("VSS Writer (PrepareForBackup): %s\n"), g_pVSSClient->GetWriterInfo(i));                    
+                     jcr->Errors++;
+                  }                            
             }
-         } else {
+        } else {
             Jmsg(jcr, M_INFO, 0, _("No drive letters found for generating VSS snapshots.\n"));
-         }
+        }
       } else {
-         Jmsg(jcr, M_WARNING, 0, _("VSS was not initialized properly. VSS support is disabled.\n"));
-      }
+         berrno be;
+         Jmsg(jcr, M_WARNING, 0, _("VSS was not initialized properly. VSS support is disabled. ERR=%s\n"), be.strerror());
+      } 
    }
 #endif
 
@@ -1334,8 +1312,20 @@ cleanup:
 #ifdef WIN32_VSS
    /* STOP VSS ON WIN 32 */
    /* tell vss to close the backup session */
-   if (g_pVSSClient && enable_vss == 1)
-      g_pVSSClient->CloseBackup();
+   if (bDoVSS) {
+      if (g_pVSSClient->CloseBackup()) {             
+         /* inform user about writer states */
+         for (size_t i=0; i<g_pVSSClient->GetWriterCount(); i++) {
+            int msg_type = M_INFO;
+            if (g_pVSSClient->GetWriterState(i) < 1) {
+               msg_type = M_WARNING;
+               jcr->Errors++;
+            }
+            Jmsg(jcr, msg_type, 0, _("VSS Writer (BackupComplete): %s\n"), g_pVSSClient->GetWriterInfo(i));
+         }
+      }
+      V(vss_mutex);
+   }
 #endif
 
    bnet_fsend(dir, EndJob, jcr->JobStatus, jcr->JobFiles,
@@ -1538,7 +1528,7 @@ static int open_sd_read_session(JCR *jcr)
    /*
     * Open Read Session with Storage daemon
     */
-   bnet_fsend(sd, read_open, "DummyVolume",
+   bnet_fsend(sd, read_open, jcr->VolumeName,
       jcr->VolSessionId, jcr->VolSessionTime, jcr->StartFile, jcr->EndFile,
       jcr->StartBlock, jcr->EndBlock);
    Dmsg1(110, ">stored: %s", sd->msg);

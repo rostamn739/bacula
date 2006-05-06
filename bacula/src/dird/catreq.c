@@ -13,7 +13,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2001-2006 Kern Sibbald
+   Copyright (C) 2001-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -29,7 +29,6 @@
 
 #include "bacula.h"
 #include "dird.h"
-#include "findlib/find.h"
 
 /*
  * Handle catalog request
@@ -122,9 +121,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       ok = db_get_pool_record(jcr, jcr->db, &pr);
       if (ok) {
          mr.PoolId = pr.PoolId;
-         if (jcr->store->StorageId) {
-            mr.StorageId = jcr->store->StorageId;
-         }
+         mr.StorageId = jcr->store->StorageId;
          ok = find_next_volume_for_append(jcr, &mr, index, true /*permit create new vol*/);
       }
       /*
@@ -160,7 +157,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
              *   Pool matches, and it is either Append or Recycle
              *   and Media Type matches and Pool allows any volume.
              */
-            if (mr.PoolId != jcr->jr.PoolId) {
+            if (mr.PoolId != jcr->PoolId) {
                reason = _("not in Pool");
             } else if (strcmp(mr.MediaType, jcr->store->media_type) != 0) {
                reason = _("not correct MediaType");
@@ -279,13 +276,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       &jm.FirstIndex, &jm.LastIndex, &jm.StartFile, &jm.EndFile,
       &jm.StartBlock, &jm.EndBlock, &jm.Copy, &jm.Stripe) == 9) {
 
-      if (jcr->target_jcr) {
-         jm.JobId = jcr->target_jcr->JobId;
-         jm.MediaId = jcr->MediaId;
-      } else {
-         jm.JobId = jcr->JobId;
-         jm.MediaId = jcr->MediaId;
-      }
+      jm.JobId = jcr->JobId;
+      jm.MediaId = jcr->MediaId;
       Dmsg6(400, "create_jobmedia JobId=%d MediaId=%d SF=%d EF=%d FI=%d LI=%d\n",
          jm.JobId, jm.MediaId, jm.StartFile, jm.EndFile, jm.FirstIndex, jm.LastIndex);
       if (!db_create_jobmedia_record(jcr, jcr->db, &jm)) {
@@ -394,64 +386,47 @@ void catalog_update(JCR *jcr, BSOCK *bs)
       ar->FileIndex = FileIndex;
       ar->Stream = Stream;
       ar->link = NULL;
-      if (jcr->target_jcr) {
-         ar->JobId = jcr->target_jcr->JobId;
-      } else {
-         ar->JobId = jcr->JobId;
-      }
-      ar->Digest = NULL;
-      ar->DigestType = CRYPTO_DIGEST_NONE;
+      ar->JobId = jcr->JobId;
+      ar->Sig = NULL;
+      ar->SigType = 0;
       jcr->cached_attribute = true;
 
       Dmsg2(400, "dird<filed: stream=%d %s\n", Stream, fname);
       Dmsg1(400, "dird<filed: attr=%s\n", attr);
 
-   } else if (crypto_digest_stream_type(Stream) != CRYPTO_DIGEST_NONE) {
+#ifdef xxx_old_code
+      if (!db_create_file_attributes_record(jcr, jcr->db, ar)) {
+         Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), db_strerror(jcr->db));
+      }
+#endif
+   } else if (Stream == STREAM_MD5_SIGNATURE || Stream == STREAM_SHA1_SIGNATURE) {
       fname = p;
       if (ar->FileIndex != FileIndex) {
-         Jmsg(jcr, M_WARNING, 0, _("Got %s but not same File as attributes\n"), stream_to_ascii(Stream));
+         Jmsg(jcr, M_WARNING, 0, _("Got MD5/SHA1 but not same File as attributes\n"));
       } else {
-         /* Update digest in catalog */
-         char digestbuf[CRYPTO_DIGEST_MAX_SIZE];
-         int len = 0;
-         int type = CRYPTO_DIGEST_NONE;
-
-         switch(Stream) {
-         case STREAM_MD5_DIGEST:
-            len = CRYPTO_DIGEST_MD5_SIZE;
-            type = CRYPTO_DIGEST_MD5;
-            break;
-         case STREAM_SHA1_DIGEST:
-            len = CRYPTO_DIGEST_SHA1_SIZE;
-            type = CRYPTO_DIGEST_SHA1;
-            break;
-         case STREAM_SHA256_DIGEST:
-            len = CRYPTO_DIGEST_SHA256_SIZE;
-            type = CRYPTO_DIGEST_SHA256;
-            break;
-         case STREAM_SHA512_DIGEST:
-            len = CRYPTO_DIGEST_SHA512_SIZE;
-            type = CRYPTO_DIGEST_SHA512;
-            break;
-         default:
-            /* Never reached ... */
-            Jmsg(jcr, M_ERROR, 0, _("Catalog error updating file digest. Unsupported digest stream type: %d"),
-                 Stream);
+         /* Update signature in catalog */
+         char SIGbuf[50];           /* 24 bytes should be enough */
+         int len, type;
+         if (Stream == STREAM_MD5_SIGNATURE) {
+            len = 16;
+            type = MD5_SIG;
+         } else {
+            len = 20;
+            type = SHA1_SIG;
          }
-
-         bin_to_base64(digestbuf, fname, len);
-         Dmsg3(400, "DigestLen=%d Digest=%s type=%d\n", strlen(digestbuf), digestbuf, Stream);
+         bin_to_base64(SIGbuf, fname, len);
+         Dmsg3(400, "SIGlen=%d SIG=%s type=%d\n", strlen(SIGbuf), SIGbuf, Stream);
          if (jcr->cached_attribute) {
-            ar->Digest = digestbuf;
-            ar->DigestType = type;
-            Dmsg2(400, "Cached attr with digest. Stream=%d fname=%s\n", ar->Stream, ar->fname);
+            ar->Sig = SIGbuf;
+            ar->SigType = type;
+            Dmsg2(400, "Cached attr with SIG. Stream=%d fname=%s\n", ar->Stream, ar->fname);
             if (!db_create_file_attributes_record(jcr, jcr->db, ar)) {
                Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), db_strerror(jcr->db));
             }
             jcr->cached_attribute = false; 
          } else {
-            if (!db_add_digest_to_file_record(jcr, jcr->db, ar->FileId, digestbuf, type)) {
-               Jmsg(jcr, M_ERROR, 0, _("Catalog error updating file digest. %s"),
+            if (!db_add_SIG_to_file_record(jcr, jcr->db, ar->FileId, SIGbuf, type)) {
+               Jmsg(jcr, M_ERROR, 0, _("Catalog error updating MD5/SHA1. %s"),
                   db_strerror(jcr->db));
             }
          }

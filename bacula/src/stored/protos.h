@@ -23,7 +23,7 @@ uint32_t new_VolSessionId();
 
 /* From acquire.c */
 DCR     *acquire_device_for_append(DCR *dcr);
-bool     acquire_device_for_read(DCR *dcr);
+DCR     *acquire_device_for_read(DCR *dcr);
 bool     release_device(DCR *dcr);
 DCR     *new_dcr(JCR *jcr, DEVICE *dev);
 void     free_dcr(DCR *dcr);
@@ -91,6 +91,7 @@ void     clrerror_dev(DEVICE *dev, int func);
 bool     update_pos_dev(DEVICE *dev);
 bool     rewind_dev(DEVICE *dev);
 bool     load_dev(DEVICE *dev);
+bool     offline_dev(DEVICE *dev);
 int      flush_dev(DEVICE *dev);
 int      weof_dev(DEVICE *dev, int num);
 int      write_block(DEVICE *dev);
@@ -98,9 +99,12 @@ uint32_t status_dev(DEVICE *dev);
 bool     eod_dev(DEVICE *dev);
 bool     fsf_dev(DEVICE *dev, int num);
 bool     bsf_dev(DEVICE *dev, int num);
+bool     bsr_dev(DEVICE *dev, int num);
 void     attach_jcr_to_device(DEVICE *dev, JCR *jcr);
 void     detach_jcr_from_device(DEVICE *dev, JCR *jcr);
 JCR     *next_attached_jcr(DEVICE *dev, JCR *jcr);
+bool     offline_or_rewind_dev(DEVICE *dev);
+bool     reposition_dev(DEVICE *dev, uint32_t file, uint32_t block);
 void     init_device_wait_timers(DCR *dcr);
 void     init_jcr_device_wait_timers(JCR *jcr);
 bool     double_dev_wait_time(DEVICE *dev);
@@ -114,16 +118,18 @@ uint32_t dev_file(DEVICE *dev);
 int  dvd_open_next_part(DCR *dcr);
 bool dvd_write_part(DCR *dcr); 
 bool dvd_close_job(DCR *dcr);
-bool mount_dvd(DEVICE* dev, int timeout);
-bool unmount_dvd(DEVICE* dev, int timeout);
+bool mount_dev(DEVICE* dev, int timeout);
+bool unmount_dev(DEVICE* dev, int timeout);
 void update_free_space_dev(DEVICE *dev);
 void make_mounted_dvd_filename(DEVICE *dev, POOL_MEM &archive_name);
 void make_spooled_dvd_filename(DEVICE *dev, POOL_MEM &archive_name);
-bool truncate_dvd(DCR *dcr);
+bool truncate_dvd_dev(DCR *dcr);
 bool check_can_write_on_non_blank_dvd(DCR *dcr);
 
 /* From device.c */
 bool     open_device(DCR *dcr);
+void     close_device(DEVICE *dev);
+void     force_close_device(DEVICE *dev);
 bool     first_open_device(DCR *dcr);
 bool     fixup_device_block_write_error(DCR *dcr);
 void     _lock_device(const char *file, int line, DEVICE *dev);
@@ -144,7 +150,7 @@ void     *handle_connection_request(void *arg);
 
 /* From fd_cmds.c */
 void     run_job(JCR *jcr);
-bool get_bootstrap_file(JCR *jcr, BSOCK *bsock);
+bool     bootstrap_cmd(JCR *jcr);
 
 /* From job.c */
 void     stored_free_jcr(JCR *jcr);
@@ -208,12 +214,16 @@ bool read_records(DCR *dcr,
        bool mount_cb(DCR *dcr));
 
 /* From reserve.c */
+void    init_reservations_lock();
+void    term_reservations_lock();
+void    lock_reservations();
+void    unlock_reservations();
 void    release_volume(DCR *dcr);
 VOLRES *new_volume(DCR *dcr, const char *VolumeName);
 VOLRES *find_volume(const char *VolumeName);
 bool    free_volume(DEVICE *dev);
 void    free_unused_volume(DCR *dcr);
-void    init_volume_list();
+void    create_volume_list();
 void    free_volume_list();
 void    list_volumes(BSOCK *user);
 bool    is_volume_in_use(DCR *dcr);
@@ -221,7 +231,6 @@ void    send_drive_reserve_messages(JCR *jcr, BSOCK *user);
 bool    find_suitable_device_for_job(JCR *jcr, RCTX &rctx);
 int     search_res_for_device(RCTX &rctx);
 void    release_msgs(JCR *jcr);
-
 
 /* From spool.c */
 bool    begin_data_spool          (DCR *dcr);
