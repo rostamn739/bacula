@@ -97,17 +97,34 @@ bool do_backup_init(JCR *jcr)
          }
       }
    }
+   jcr->PoolId = pr.PoolId;
    jcr->jr.PoolId = pr.PoolId;
 
-   /* If pool storage specified, use it instead of job storage */
-   copy_storage(jcr, jcr->pool->storage);
-
-   if (!jcr->storage) {
-      Jmsg(jcr, M_FATAL, 0, _("No Storage specification found in Job or Pool.\n"));
-      return false;
+   /*
+    * Fire off any clone jobs (run directives)
+    */
+   Dmsg2(900, "cloned=%d run_cmds=%p\n", jcr->cloned, jcr->job->run_cmds);
+   if (!jcr->cloned && jcr->job->run_cmds) {
+      char *runcmd;
+      JOB *job = jcr->job;
+      POOLMEM *cmd = get_pool_memory(PM_FNAME);
+      UAContext *ua = new_ua_context(jcr);
+      ua->batch = true;
+      foreach_alist(runcmd, job->run_cmds) {
+         cmd = edit_job_codes(jcr, cmd, runcmd, "");              
+         Mmsg(ua->cmd, "run %s cloned=yes", cmd);
+         Dmsg1(900, "=============== Clone cmd=%s\n", ua->cmd);
+         parse_ua_args(ua);                 /* parse command */
+         int stat = run_cmd(ua, ua->cmd);
+         if (stat == 0) {
+            Jmsg(jcr, M_ERROR, 0, _("Could not start clone job.\n"));
+         } else {
+            Jmsg(jcr, M_INFO, 0, _("Clone JobId %d started.\n"), stat);
+         }
+      }
+      free_ua_context(ua);
+      free_pool_memory(cmd);
    }
-
-   create_clones(jcr);                /* run any clone jobs */
 
    return true;
 }
@@ -158,6 +175,16 @@ bool do_backup(JCR *jcr)
    if (!start_storage_daemon_job(jcr, NULL, jcr->storage)) {
       return false;
    }
+
+   /*
+    * Start the job prior to starting the message thread below
+    * to avoid two threads from using the BSOCK structure at
+    * the same time.
+    */
+   if (!bnet_fsend(jcr->store_bsock, "run")) {
+      return false;
+   }
+
    /*
     * Now start a Storage daemon message thread.  Note,
     *   this thread is used to provide the catalog services
@@ -169,28 +196,24 @@ bool do_backup(JCR *jcr)
    }
    Dmsg0(150, "Storage daemon connection OK\n");
 
-   if (!bnet_fsend(jcr->store_bsock, "run")) {
-      return false;
-   }
-
    set_jcr_job_status(jcr, JS_WaitFD);
    if (!connect_to_file_daemon(jcr, 10, FDConnectTimeout, 1)) {
-      return false;
+      goto bail_out;
    }
 
    set_jcr_job_status(jcr, JS_Running);
    fd = jcr->file_bsock;
 
    if (!send_include_list(jcr)) {
-      return false;
+      goto bail_out;
    }
 
    if (!send_exclude_list(jcr)) {
-      return false;
+      goto bail_out;
    }
 
    if (!send_level_command(jcr)) {
-      return false;
+      goto bail_out;
    }
 
    /*
@@ -212,18 +235,34 @@ bool do_backup(JCR *jcr)
 
    bnet_fsend(fd, storaddr, store->address, store->SDDport, tls_need);
    if (!response(jcr, fd, OKstore, "Storage", DISPLAY_ERROR)) {
-      return false;
+      goto bail_out;
    }
 
 
    if (!send_run_before_and_after_commands(jcr)) {
-      return false;
+      goto bail_out;
+   }
+
+   /*    
+    * We re-update the job start record so that the start
+    *  time is set after the run before job.  This avoids 
+    *  that any files created by the run before job will
+    *  be saved twice.  They will be backed up in the current
+    *  job, but not in the next one unless they are changed.
+    *  Without this, they will be backed up in this job and
+    *  in the next job run because in that case, their date 
+    *   is after the start of this run.
+    */
+   jcr->start_time = time(NULL);
+   jcr->jr.StartTime = jcr->start_time;
+   if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
+      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
    }
 
    /* Send backup command */
    bnet_fsend(fd, backupcmd);
    if (!response(jcr, fd, OKbackup, "backup", DISPLAY_ERROR)) {
-      return false;
+      goto bail_out;
    }
 
    /* Pickup Job termination data */
@@ -232,6 +271,14 @@ bool do_backup(JCR *jcr)
       backup_cleanup(jcr, stat);
       return true;
    }     
+   return false;
+
+/* Come here only after starting SD thread */
+bail_out:
+   set_jcr_job_status(jcr, JS_ErrorTerminated);
+   Dmsg1(400, "wait for sd. use=%d\n", jcr->use_count());
+   wait_for_storage_daemon_termination(jcr);
+   Dmsg1(400, "after wait for sd. use=%d\n", jcr->use_count());
    return false;
 }
 
@@ -309,7 +356,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
 {
    char sdt[50], edt[50], schedt[50];
    char ec1[30], ec2[30], ec3[30], ec4[30], ec5[30], compress[50];
-   char ec6[30], ec7[30], elapsed[50];
+   char ec6[30], ec7[30], ec8[30], elapsed[50];
    char term_code[100], fd_term_msg[100], sd_term_msg[100];
    const char *term_msg;
    int msg_type;
@@ -346,7 +393,6 @@ void backup_cleanup(JCR *jcr, int TermCode)
    }
 
    update_bootstrap_file(jcr);
-
 
    msg_type = M_INFO;                 /* by default INFO message */
    switch (jcr->JobStatus) {
@@ -441,7 +487,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
 "  Volume name(s):         %s\n"
 "  Volume Session Id:      %d\n"
 "  Volume Session Time:    %d\n"
-"  Last Volume Bytes:      %s\n"
+"  Last Volume Bytes:      %s (%sB)\n"
 "  Non-fatal FD errors:    %d\n"
 "  SD Errors:              %d\n"
 "  FD termination status:  %s\n"
@@ -474,6 +520,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
         jcr->VolSessionId,
         jcr->VolSessionTime,
         edit_uint64_with_commas(mr.VolBytes, ec7),
+        edit_uint64_with_suffix(mr.VolBytes, ec8),
         jcr->Errors,
         jcr->SDErrors,
         fd_term_msg,

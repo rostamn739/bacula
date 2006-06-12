@@ -1,20 +1,19 @@
 bimagemgr.pl
-14 Nov 2004
+14 May 2006
 
 This is a utility to monitor and burn file backups to CDR. It is a web
 based interface written in perl. It requires perl and an apache or other
 http server. It also requires the perl DBI module and the driver for the
 database used to store your bacula catalog. It has been tested on MySQL
-catalogs but an untested configuration is present for Postgresql.
+catalogs but an untested configuration is present for Postgresql and SQLite.
 
 It can be run on the same server as bacula or on another machine on the 
 network if you are willing to relax permissions on the backup Volume files 
 (see below).
 
-Installation:
-
+Installation from tarball:
 1. Examine the Makefile and adjust it to your configuration if needed.
-2. Edit the configuration section of bimagemgr.pl to fit your configuration.
+2. Edit config.pm to fit your configuration.
 3. Do 'make install' as root.
 4. Edit httpd.conf and change the Timeout value. The web server must not time
 out and close the connection before the burn process is finished. The exact
@@ -23,8 +22,18 @@ burning on the bacula server on on another machine across your network. In my
 case I set it to 1000 seconds. Restart httpd.
 5. Make sure that cdrecord is setuid root.
 
+Installation from rpm package:
+1. Install the rpm package for your platform.
+2. Edit /cgi-bin/config.pm to fit your configuration.
+3. Edit httpd.conf and change the Timeout value. The web server must not time
+out and close the connection before the burn process is finished. The exact
+value needed may vary depending upon your cd recorder speed and whether you are
+burning on the bacula server on on another machine across your network. In my 
+case I set it to 1000 seconds. Restart httpd.
+4. Make sure that cdrecord is setuid root.
+
 For bacula systems less than 1.36:
-1. Edit the configuration section of create_cdimage_table.pl to fit your configuration.
+1. Edit the configuration section of config.pm to fit your configuration.
 2. Run /etc/bacula/create_cdimage_table.pl from a console on your bacula
 server (as root) to add the CDImage table to your bacula database.
 
@@ -45,10 +54,26 @@ Note: step 3 should also be done in /etc/init.d/bacula-sd but released versions
 of this file prior to 1.36 do not support it. In that case it would be necessary after 
 a reboot of the server to execute '/etc/bacula/bacula restart'.
 
-For bacula-1.36 installed from rpm -
+For bacula-1.38 installed from tarball -
+1. Your configure statement should include:
+	--with-dir-user=bacula
+        --with-dir-group=bacula
+        --with-sd-user=bacula
+        --with-sd-group=disk
+        --with-fd-user=root
+        --with-fd-group=bacula
+2. Add the user apache to the bacula group for Red Hat or Mandrake systems. 
+For SuSE systems add the user wwwrun to the bacula group.
+3. Check/change ownership of all of your Volume files to root.bacula
+
+For bacula-1.36 or bacula-1.38 installed from rpm -
 1. Add the user apache to the group bacula for Red Hat or Mandrake systems. 
 For SuSE systems add the user wwwrun to the bacula group.
-2. Change ownership of all of your Volume files to root.bacula
+2. Check/change ownership of all of your Volume files to root.bacula
+
+bimagemgr installed from rpm > 1.38.9 will add the web server user to the 
+bacula group in a post install script. Be sure to edit the configuration 
+information in config.pm after installation of rpm package.
 
 bimagemgr will now be able to read the Volume files but they are still not 
 world readable.
@@ -60,4 +85,5 @@ be taken if you are sure of the security of your environment as it exposes
 the backup Volume files to world read.
 
 That's it. Call the script from a web browser as http://server/cgi-bin/bimagemgr.pl
-place a blank cd in your recorder and press a Burn button.
+place a blank cd in your recorder and press a Burn button. See the bimagemgr section 
+in the bacula manual for more information.

@@ -193,6 +193,8 @@ int main (int argc, char *argv[])
       Jmsg((JCR *)NULL, M_ERROR_TERM, 0, _("Please correct configuration file: %s\n"), configfile);
    }
 
+   init_reservations_lock();
+
    if (test_config) {
       terminate_stored(0);
    }
@@ -228,7 +230,7 @@ int main (int argc, char *argv[])
     /*
      * Start the device allocation thread
      */
-   init_volume_list();                /* do before device_init */
+   create_volume_list();              /* do before device_init */
    if (pthread_create(&thid, NULL, device_initialization, NULL) != 0) {
       Emsg1(M_ABORT, 0, _("Unable to create thread. ERR=%s\n"), strerror(errno));
    }
@@ -449,7 +451,7 @@ void *device_initialization(void *arg)
 
    foreach_res(device, R_DEVICE) {
       Dmsg1(90, "calling init_dev %s\n", device->device_name);
-      dev = init_dev(NULL, device);
+      device->dev = dev = init_dev(NULL, device);
       Dmsg1(10, "SD init done %s\n", device->device_name);
       if (!dev) {
          Jmsg1(NULL, M_ERROR, 0, _("Could not initialize %s\n"), device->device_name);
@@ -548,8 +550,7 @@ void terminate_stored(int sig)
       Dmsg1(10, "Term device %s\n", device->device_name);
       if (device->dev) {
          free_volume(device->dev);
-         device->dev->term();
-         device->dev = NULL;
+         term_dev(device->dev);
       } else {
          Dmsg1(10, "No dev structure %s\n", device->device_name);
       }
@@ -564,6 +565,7 @@ void terminate_stored(int sig)
    if (debug_level > 10) {
       print_memory_pool_stats();
    }
+   term_reservations_lock();
    term_msg();
    stop_watchdog();
    cleanup_crypto();

@@ -3,9 +3,9 @@
  */
 
 #undef  VERSION
-#define VERSION "1.39.5"
-#define BDATE   "20 February 2006"
-#define LSMDATE "20Feb06"
+#define VERSION "1.38.10"
+#define BDATE   "08 June 2006"
+#define LSMDATE "08Jun06"
 
 /* Debug flags */
 #undef  DEBUG
@@ -15,7 +15,7 @@
 #define TRACE_FILE 1
 
 /* If this is set stdout will not be closed on startup */
-#define DEVELOPER 1
+/* #define DEVELOPER 1 */
 
 /* #define USE_BSNPRINTF */
 

@@ -6,17 +6,22 @@
  *    Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000, 2001, 2002 Kern Sibbald and John Walker
 
    This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   version 2 as amended with additional clauses defined in the
-   file LICENSE in the main source directory.
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-   the file LICENSE for additional details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public
+   License along with this program; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+   MA 02111-1307, USA.
 
  */
 
@@ -43,8 +48,7 @@ void db_end_transaction(JCR *jcr, B_DB *mdb);
 
 /* create.c */
 int db_create_file_attributes_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar);
-bool db_create_job_record(JCR *jcr, B_DB *db, JOB_DBR *jr);
-bool db_create_mac_record(JCR *jcr, B_DB *db, MAC_DBR *mr);
+int db_create_job_record(JCR *jcr, B_DB *db, JOB_DBR *jr);
 int db_create_media_record(JCR *jcr, B_DB *db, MEDIA_DBR *media_dbr);
 int db_create_client_record(JCR *jcr, B_DB *db, CLIENT_DBR *cr);
 bool db_create_fileset_record(JCR *jcr, B_DB *db, FILESET_DBR *fsr);
@@ -68,8 +72,7 @@ bool db_find_failed_job_since(JCR *jcr, B_DB *mdb, JOB_DBR *jr, POOLMEM *stime, 
 /* get.c */
 bool db_get_pool_record(JCR *jcr, B_DB *db, POOL_DBR *pdbr);
 int db_get_client_record(JCR *jcr, B_DB *mdb, CLIENT_DBR *cr);
-bool db_get_job_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr);
-bool db_get_mac_record(JCR *jcr, B_DB *mdb, MAC_DBR *mr);
+int db_get_job_record(JCR *jcr, B_DB *mdb, JOB_DBR *jr);
 int db_get_job_volume_names(JCR *jcr, B_DB *mdb, JobId_t JobId, POOLMEM **VolumeNames);
 int db_get_file_attributes_record(JCR *jcr, B_DB *mdb, char *fname, JOB_DBR *jr, FILE_DBR *fdbr);
 int db_get_fileset_record(JCR *jcr, B_DB *mdb, FILESET_DBR *fsr);
@@ -107,7 +110,7 @@ bool db_update_storage_record(JCR *jcr, B_DB *mdb, STORAGE_DBR *sr);
 int  db_update_media_record(JCR *jcr, B_DB *db, MEDIA_DBR *mr);
 int  db_update_media_defaults(JCR *jcr, B_DB *mdb, MEDIA_DBR *mr);
 int  db_update_counter_record(JCR *jcr, B_DB *mdb, COUNTER_DBR *cr);
-int  db_add_digest_to_file_record(JCR *jcr, B_DB *mdb, FileId_t FileId, char *digest, int type);
+int  db_add_SIG_to_file_record(JCR *jcr, B_DB *mdb, FileId_t FileId, char *SIG, int type);
 int  db_mark_file_record(JCR *jcr, B_DB *mdb, FileId_t FileId, JobId_t JobId);
 void db_make_inchanger_unique(JCR *jcr, B_DB *mdb, MEDIA_DBR *mr);
 

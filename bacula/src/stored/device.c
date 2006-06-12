@@ -291,17 +291,38 @@ bool open_device(DCR *dcr)
       /* If polling, ignore the error */
       /* If DVD, also ignore the error, very often you cannot open the device
        * (when there is no DVD, or when the one inserted is a wrong one) */
-      if (!dev->poll && !dev->is_dvd() && !dev->is_removable()) {
+      if ((!dev->poll) && (!dev->is_dvd())) {
          Jmsg2(dcr->jcr, M_FATAL, 0, _("Unable to open device %s: ERR=%s\n"),
-            dev->print_name(), dev->bstrerror());
+            dev->print_name(), strerror_dev(dev));
          Pmsg2(000, _("Unable to open archive %s: ERR=%s\n"), 
-            dev->print_name(), dev->bstrerror());
+            dev->print_name(), strerror_dev(dev));
       }
       return false;
    }
    return true;
 }
 
+/*
+ * Release any Volume attached to this device 
+ *  then close the device.
+ */
+void close_device(DEVICE *dev)
+{
+   free_volume(dev);
+   dev->close();
+}
+
+/*
+ */
+void force_close_device(DEVICE *dev)
+{
+   if (!dev || dev->fd < 0) {
+      return;
+   }
+   Dmsg1(29, "Force close_dev %s\n", dev->print_name());
+   free_volume(dev);
+   dev->close();
+}
 
 
 void dev_lock(DEVICE *dev)

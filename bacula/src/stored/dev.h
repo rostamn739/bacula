@@ -309,6 +309,8 @@ public:
                      dev_blocked == BST_WAITING_FOR_SYSOP ||
                      dev_blocked == BST_UNMOUNTED_WAITING_FOR_SYSOP); };
    bool weof() { return !weof_dev(this, 1); };
+   bool fsr(int num);   /* in dev.c */
+   bool fsf(int num);   /* in dev.c */
    const char *strerror() const;
    const char *archive_name() const;
    const char *name() const;
@@ -319,7 +321,7 @@ public:
    void set_eof() { state |= ST_EOF; };
    void set_append() { state |= ST_APPEND; };
    void set_labeled() { state |= ST_LABEL; };
-   inline void set_read() { state |= ST_READ; };
+   void set_read() { state |= ST_READ; };
    void set_offline() { state |= ST_OFFLINE; };
    void set_mounted() { state |= ST_MOUNTED; };
    void set_media() { state |= ST_MEDIA; };
@@ -339,28 +341,14 @@ public:
    void clear_mounted() { state &= ~ST_MOUNTED; };
    void clear_media() { state &= ~ST_MEDIA; };
    void clear_short_block() { state &= ~ST_SHORT; };
-   void clear_freespace_ok() { state &= ~ST_FREESPACE_OK; };
-   char *bstrerror(void) { return errmsg; };
+   void clear_freespace_ok() { state &= ~ST_FREESPACE_OK; }
 
-   void block(int why);          /* in dev.c */
-   void unblock();               /* in dev.c */
-   void close();                 /* in dev.c */
-   bool truncate(DCR *dcr);      /* in dev.c */
+   void block(int why); /* in dev.c */
+   void unblock();      /* in dev.c */
+   void close();        /* in dev.c */
    int open(DCR *dcr, int mode); /* in dev.c */
-   void term(void);              /* in dev.c */
-   bool rewind(DCR *dcr);        /* in dev.c */
-   bool mount(int timeout);      /* in dev.c */
-   bool unmount(int timeout);    /* in dev.c */
-   void edit_mount_codes(POOL_MEM &omsg, const char *imsg); /* in dev.c */
-   bool offline_or_rewind();     /* in dev.c */
-   bool offline();               /* in dev.c */
-   bool bsf(int count);          /* in dev.c */
-   bool eod();                   /* in dev.c */
-   bool fsr(int num);            /* in dev.c */
-   bool fsf(int num);            /* in dev.c */
-   bool bsr(int num);            /* in dev.c */
-   bool scan_dir_for_volume(DCR *dcr); /* in scan.c */
-   bool reposition(uint32_t rfile, uint32_t rblock); /* in dev.c */
+   bool rewind(DCR *dcr);         /* in dev.c */
+
 
    void set_blocked(int block) { dev_blocked = block; };
    int  get_blocked() const { return dev_blocked; };
@@ -368,12 +356,11 @@ public:
    bool is_blocked() const { return dev_blocked != BST_NOT_BLOCKED; };
 
 private:
-   bool do_mount(int mount, int timeout);      /* in dev.c */
-   void set_mode(int omode);                   /* in dev.c */
+   void set_mode(int omode); /* in dev.c */
    void open_tape_device(DCR *dcr, int omode); /* in dev.c */
-   void open_file_device(DCR *dcr, int omode); /* in dev.c */
-   void open_dvd_device(DCR *dcr, int omode);  /* in dev.c */
-   void set_blocking();                        /* in dev.c */
+   void open_file_device(int omode); /* in dev.c */
+   void open_dvd_device(DCR *dcr, int omode); /* in dev.c */
+   void set_blocking(); /* in dev.c */
 
 };
 

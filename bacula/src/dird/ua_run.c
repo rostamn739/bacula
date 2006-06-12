@@ -34,7 +34,7 @@ extern struct s_kw ReplaceOptions[];
  *     run [job=]<job-name> level=<level-name>
  *
  * For Restore Jobs
- *     run <job-name> 
+ *     run <job-name> jobid=nn
  *
  *  Returns: 0 on error
  *           JobId if OK
@@ -47,16 +47,13 @@ int run_cmd(UAContext *ua, const char *cmd)
    char *where, *fileset_name, *client_name, *bootstrap;
    const char *replace;
    char *when, *verify_job_name, *catalog_name;
-   char *migration_job_name;
    char *since = NULL;
-   char *verify_list;
    bool cloned = false;
    int Priority = 0;
    int i, j, opt, files = 0;
    bool kw_ok;
    JOB *job = NULL;
    JOB *verify_job = NULL;
-   JOB *migration_job = NULL;
    STORE *store = NULL;
    CLIENT *client = NULL;
    FILESET *fileset = NULL;
@@ -82,8 +79,6 @@ int run_cmd(UAContext *ua, const char *cmd)
       "catalog",                      /* 17 override catalog */
       "since",                        /* 18 since */
       "cloned",                       /* 19 cloned */
-      "verifylist",                   /* 20 verify output list */
-      "migrationjob",                 /* 21 migration job name */
       NULL};
 
 #define YES_POS 14
@@ -104,9 +99,7 @@ int run_cmd(UAContext *ua, const char *cmd)
    bootstrap = NULL;
    replace = NULL;
    verify_job_name = NULL;
-   migration_job_name = NULL;
    catalog_name = NULL;
-   verify_list = NULL;
 
    for (i=1; i<ua->argc; i++) {
       Dmsg2(800, "Doing arg %d = %s\n", i, ua->argk[i]);
@@ -254,20 +247,6 @@ int run_cmd(UAContext *ua, const char *cmd)
                kw_ok = true;
                break;
 
-            case 20: /* write verify list output */
-               verify_list = ua->argv[i];
-               kw_ok = true;
-               break;
-            case 21: /* Migration Job */
-               if (migration_job_name) {
-                  bsendmsg(ua, _("Migration Job specified twice.\n"));
-                  return 0;
-               }
-               migration_job_name = ua->argv[i];
-               kw_ok = true;
-               break;
-
-
             default:
                break;
             }
@@ -414,17 +393,6 @@ int run_cmd(UAContext *ua, const char *cmd)
       verify_job = job->verify_job;
    }
 
-   if (migration_job_name) {
-      migration_job = (JOB *)GetResWithName(R_JOB, migration_job_name);
-      if (!migration_job) {
-         bsendmsg(ua, _("Migration Job \"%s\" not found.\n"), migration_job_name);
-         migration_job = select_job_resource(ua);
-      }
-   } else {
-      migration_job = job->verify_job;
-   }
-
-
    /*
     * Create JCR to run job.  NOTE!!! after this point, free_jcr()
     *  before returning.
@@ -433,7 +401,6 @@ int run_cmd(UAContext *ua, const char *cmd)
    set_jcr_defaults(jcr, job);
 
    jcr->verify_job = verify_job;
-   jcr->migration_job = migration_job;
    set_storage(jcr, store);
    jcr->client = client;
    jcr->fileset = fileset;
@@ -574,12 +541,6 @@ try_again:
          } else {
             Name = "";
          }
-         if (!verify_list) {
-            verify_list = job->WriteVerifyList;
-         }
-         if (!verify_list) {
-            verify_list = "";
-         }
          bsendmsg(ua, _("Run %s job\n"
 "JobName:     %s\n"
 "FileSet:     %s\n"
@@ -588,7 +549,6 @@ try_again:
 "Storage:     %s\n"
 "Pool:        %s\n"
 "Verify Job:  %s\n"
-"Verify List: %s\n"
 "When:        %s\n"
 "Priority:    %d\n"),
               _("Verify"),
@@ -599,7 +559,6 @@ try_again:
               jcr->store->hdr.name,
               NPRT(jcr->pool->hdr.name),
               Name,
-              verify_list,
               bstrutime(dt, sizeof(dt), jcr->sched_time),
               jcr->JobPriority);
       }
@@ -663,36 +622,11 @@ try_again:
               jcr->JobPriority);
       }
       break;
-   case JT_MIGRATE:
-      jcr->JobLevel = L_FULL;      /* default level */
-      bsendmsg(ua, _("Run Restore job\n"
-                     "JobName:       %s\n"
-                     "Bootstrap:     %s\n"
-                     "Where:         %s\n"
-                     "Replace:       %s\n"
-                     "FileSet:       %s\n"
-                     "Client:        %s\n"
-                     "Storage:       %s\n"
-                     "Migration Job: %s\n"
-                     "When:          %s\n"
-                     "Catalog:       %s\n"
-                     "Priority:      %d\n"),
-           job->hdr.name,
-           NPRT(jcr->RestoreBootstrap),
-           jcr->where?jcr->where:NPRT(job->RestoreWhere),
-           replace,
-           jcr->fileset->hdr.name,
-           jcr->client->hdr.name,
-           jcr->store->hdr.name,
-           jcr->migration_job->hdr.name,
-           bstrutime(dt, sizeof(dt), jcr->sched_time),
-           jcr->catalog->hdr.name,
-           jcr->JobPriority);
-      break;
    default:
       bsendmsg(ua, _("Unknown Job Type=%d\n"), jcr->JobType);
       goto bail_out;
    }
+
 
    if (!get_cmd(ua, _("OK to run? (yes/mod/no): "))) {
       goto bail_out;
