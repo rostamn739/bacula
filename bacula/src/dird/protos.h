@@ -4,7 +4,7 @@
  *   Version $Id$
  */
 /*
-   Copyright (C) 2000-2005 Kern Sibbald
+   Copyright (C) 2000-2006 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@ extern int connect_to_file_daemon(JCR *jcr, int retry_interval,
                                   int max_retry_time, int verbose);
 extern bool send_include_list(JCR *jcr);
 extern bool send_exclude_list(JCR *jcr);
-extern bool send_bootstrap_file(JCR *jcr, BSOCK *sock);
+extern bool send_bootstrap_file(JCR *jcr);
 extern bool send_level_command(JCR *jcr);
 extern int get_attributes_and_put_in_catalog(JCR *jcr);
 extern int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId);
@@ -97,11 +97,8 @@ extern bool get_or_create_fileset_record(JCR *jcr);
 extern JobId_t run_job(JCR *jcr);
 extern bool cancel_job(UAContext *ua, JCR *jcr);
 extern void init_jcr_job_record(JCR *jcr);
-extern void copy_storage(JCR *jcr, alist *storage);
+extern void copy_storage(JCR *new_jcr, JCR *old_jcr);
 extern void set_storage(JCR *jcr, STORE *store);
-extern bool setup_job(JCR *jcr);
-extern void create_clones(JCR *jcr);
-extern bool create_restore_bootstrap_file(JCR *jcr);
 
 /* mac.c */
 extern bool do_mac(JCR *jcr);
@@ -146,7 +143,7 @@ bool acl_access_ok(UAContext *ua, int acl, char *item, int len);
 int do_a_command(UAContext *ua, const char *cmd);
 int do_a_dot_command(UAContext *ua, const char *cmd);
 int qmessagescmd(UAContext *ua, const char *cmd);
-int open_db(UAContext *ua);
+bool open_db(UAContext *ua);
 void close_db(UAContext *ua);
 enum e_pool_op {
    POOL_OP_UPDATE,

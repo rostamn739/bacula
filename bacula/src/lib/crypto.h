@@ -46,10 +46,7 @@ typedef struct Digest DIGEST;
 typedef struct Signature SIGNATURE;
 
 /* Opaque PKI Symmetric Key Data Structure */
-typedef struct Crypto_Session CRYPTO_SESSION;
-
-/* Opaque Encryption/Decryption Context Structure */
-typedef struct Cipher_Context CIPHER_CONTEXT;
+typedef struct Crypto_Recipients CRYPTO_RECIPIENTS;
 
 /* PEM Decryption Passphrase Callback */
 typedef int (CRYPTO_PEM_PASSWD_CB) (char *buf, int size, const void *userdata);
@@ -77,12 +74,9 @@ typedef enum {
 typedef enum {
    CRYPTO_ERROR_NONE           = 0, /* No error */
    CRYPTO_ERROR_NOSIGNER       = 1, /* Signer not found */
-   CRYPTO_ERROR_NORECIPIENT    = 2, /* Recipient not found */
-   CRYPTO_ERROR_INVALID_DIGEST = 3, /* Unsupported digest algorithm */
-   CRYPTO_ERROR_INVALID_CRYPTO = 4, /* Unsupported encryption algorithm */
-   CRYPTO_ERROR_BAD_SIGNATURE  = 5, /* Signature is invalid */
-   CRYPTO_ERROR_DECRYPTION     = 6, /* Decryption error */
-   CRYPTO_ERROR_INTERNAL       = 7  /* Internal Error */
+   CRYPTO_ERROR_INVALID_DIGEST = 2, /* Unsupported digest algorithm */
+   CRYPTO_ERROR_BAD_SIGNATURE  = 3, /* Signature is invalid */
+   CRYPTO_ERROR_INTERNAL       = 4  /* Internal Error */
 } crypto_error_t;
 
 /* Message Digest Sizes */
@@ -94,9 +88,8 @@ typedef enum {
 /* Maximum Message Digest Size */
 #ifdef HAVE_OPENSSL
 
-/* Let OpenSSL define a few things */
-#define CRYPTO_DIGEST_MAX_SIZE         EVP_MAX_MD_SIZE
-#define CRYPTO_CIPHER_MAX_BLOCK_SIZE   EVP_MAX_BLOCK_LENGTH
+/* Let OpenSSL define it */
+#define CRYPTO_DIGEST_MAX_SIZE EVP_MAX_MD_SIZE
 
 #else /* HAVE_OPENSSL */
 
@@ -112,9 +105,6 @@ typedef enum {
 #else
 #define CRYPTO_DIGEST_MAX_SIZE CRYPTO_DIGEST_SHA512_SIZE
 #endif
-
-/* Dummy Value */
-#define CRYPTO_CIPHER_MAX_BLOCK_SIZE 0
 
 #endif /* HAVE_OPENSSL */
 

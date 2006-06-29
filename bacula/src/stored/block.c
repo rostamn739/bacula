@@ -480,7 +480,7 @@ bool write_block_to_dev(DCR *dcr)
       if (weof_dev(dev, 1) != 0) {            /* write eof */
          Dmsg0(190, "WEOF error in max file size.\n");
          Jmsg(jcr, M_FATAL, 0, _("Unable to write EOF. ERR=%s\n"), 
-            dev->bstrerror());
+            strerror_dev(dev));
          terminate_writing_volume(dcr);
          dev->dev_errno = ENOSPC;
          return false;
@@ -613,20 +613,20 @@ static void reread_last_block(DCR *dcr)
     */
    if (dev->is_tape() && dev_cap(dev, CAP_BSR)) {
       /* Now back up over what we wrote and read the last block */
-      if (!dev->bsf(1)) {
+      if (!bsf_dev(dev, 1)) {
          berrno be;
          ok = false;
          Jmsg(jcr, M_ERROR, 0, _("Backspace file at EOT failed. ERR=%s\n"), 
               be.strerror(dev->dev_errno));
       }
-      if (ok && dev->has_cap(CAP_TWOEOF) && !dev->bsf(1)) {
+      if (ok && dev_cap(dev, CAP_TWOEOF) && !bsf_dev(dev, 1)) {
          berrno be;
          ok = false;
          Jmsg(jcr, M_ERROR, 0, _("Backspace file at EOT failed. ERR=%s\n"), 
               be.strerror(dev->dev_errno));
       }
       /* Backspace over record */
-      if (ok && !dev->bsr(1)) {
+      if (ok && !bsr_dev(dev, 1)) {
          berrno be;
          ok = false;
          Jmsg(jcr, M_ERROR, 0, _("Backspace record at EOT failed. ERR=%s\n"), 
@@ -637,7 +637,7 @@ static void reread_last_block(DCR *dcr)
           *    rewind(), but if we do that, higher levels in cleaning up, will
           *    most likely write the EOS record over the beginning of the
           *    tape.  The rewind *is* done later in mount.c when another
-          *    tape is requested. Note, the clrerror_dev() call in bsr()
+          *    tape is requested. Note, the clrerror_dev() call in bsr_dev()
           *    calls ioctl(MTCERRSTAT), which *should* fix the problem.
           */
       }
@@ -649,12 +649,17 @@ static void reread_last_block(DCR *dcr)
             Jmsg(jcr, M_ERROR, 0, _("Re-read last block at EOT failed. ERR=%s"), 
                  dev->errmsg);
          } else {
-            if (lblock->BlockNumber+1 == block->BlockNumber) {
-               Jmsg(jcr, M_INFO, 0, _("Re-read of last block succeeded.\n"));
-            } else {
+            /*
+             * If we wrote block and the block numbers don't agree
+             *  we have a possible problem.
+             */
+            if (lblock->VolSessionId == block->VolSessionId &&
+                lblock->BlockNumber+1 != block->BlockNumber) {
                Jmsg(jcr, M_ERROR, 0, _(
-"Re-read of last block failed. Last block=%u Current block=%u.\n"),
+"Re-read of last block OK, but block numbers differ. Last block=%u Current block=%u.\n"),
                     lblock->BlockNumber, block->BlockNumber);
+            } else {
+               Jmsg(jcr, M_INFO, 0, _("Re-read of last block succeeded.\n"));
             }
          }
          free_block(lblock);
@@ -801,7 +806,7 @@ static bool do_dvd_size_checks(DCR *dcr)
       
       if (dvd_open_next_part(dcr) < 0) {
          Jmsg2(dcr->jcr, M_FATAL, 0, _("Unable to open device next part %s: ERR=%s\n"),
-                dev->print_name(), dev->bstrerror());
+                dev->print_name(), strerror_dev(dev));
          dev->dev_errno = EIO;
          return false;
       }
@@ -905,13 +910,12 @@ reread:
    Dmsg3(100, "Tests : %d %d %d\n", (dev->VolCatInfo.VolCatParts > 0), 
          ((dev->file_addr-dev->part_start) == dev->part_size), 
          (dev->part <= dev->VolCatInfo.VolCatParts));*/
-   /* Check for part file end */
-   if ((dev->num_parts > 0) &&
-        ((dev->file_addr-dev->part_start) == dev->part_size) && 
-        (dev->part < dev->num_parts)) {
+   /* Check for DVD part file end */
+   if (dev->at_eof() && dev->is_dvd() && dev->num_parts > 0 &&
+        dev->part < dev->num_parts) {
       if (dvd_open_next_part(dcr) < 0) {
-         Jmsg2(dcr->jcr, M_FATAL, 0, _("Unable to open device next part %s: ERR=%s\n"),
-               dev->print_name(), dev->bstrerror());
+         Jmsg3(dcr->jcr, M_FATAL, 0, _("Unable to open device part=%d %s: ERR=%s\n"),
+               dev->part, dev->print_name(), strerror_dev(dev));
          dev->dev_errno = EIO;
          return false;
       }
@@ -994,8 +998,8 @@ reread:
       /* Attempt to reposition to re-read the block */
       if (dev->is_tape()) {
          Dmsg0(200, "BSR for reread; block too big for buffer.\n");
-         if (!dev->bsr(1)) {
-            Jmsg(jcr, M_ERROR, 0, "%s", dev->bstrerror());
+         if (!bsr_dev(dev, 1)) {
+            Jmsg(jcr, M_ERROR, 0, "%s", strerror_dev(dev));
             block->read_len = 0;
             return false;
          }

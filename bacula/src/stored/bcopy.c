@@ -190,8 +190,8 @@ int main (int argc, char *argv[])
    free_jcr(in_jcr);
    free_jcr(out_jcr);
 
-   in_dev->term();
-   out_dev->term();
+   term_dev(in_dev);
+   term_dev(out_dev);
    return 0;
 }
 
@@ -231,16 +231,16 @@ static bool record_cb(DCR *in_dcr, DEV_RECORD *rec)
                        rec->remainder);
             if (!write_block_to_device(out_jcr->dcr)) {
                Dmsg2(90, "Got write_block_to_dev error on device %s: ERR=%s\n",
-                  out_dev->print_name(), out_dev->bstrerror());
+                  out_dev->print_name(), strerror_dev(out_dev));
                Jmsg(out_jcr, M_FATAL, 0, _("Cannot fixup device error. %s\n"),
-                     out_dev->bstrerror());
+                     strerror_dev(out_dev));
             }
          }
          if (!write_block_to_device(out_jcr->dcr)) {
             Dmsg2(90, "Got write_block_to_dev error on device %s: ERR=%s\n",
-               out_dev->print_name(), out_dev->bstrerror());
+               out_dev->print_name(), strerror_dev(out_dev));
             Jmsg(out_jcr, M_FATAL, 0, _("Cannot fixup device error. %s\n"),
-                  out_dev->bstrerror());
+                  strerror_dev(out_dev));
          }
          break;
       case EOM_LABEL:
@@ -261,9 +261,9 @@ static bool record_cb(DCR *in_dcr, DEV_RECORD *rec)
                  rec->remainder);
       if (!write_block_to_device(out_jcr->dcr)) {
          Dmsg2(90, "Got write_block_to_dev error on device %s: ERR=%s\n",
-            out_dev->print_name(), out_dev->bstrerror());
+            out_dev->print_name(), strerror_dev(out_dev));
          Jmsg(out_jcr, M_FATAL, 0, _("Cannot fixup device error. %s\n"),
-               out_dev->bstrerror());
+               strerror_dev(out_dev));
          break;
       }
    }

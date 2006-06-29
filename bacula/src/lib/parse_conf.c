@@ -191,7 +191,7 @@ void init_resource(int type, RES_ITEM *items, int pass)
             (items[i].flags & ITEM_DEFAULT) ? "yes" : "no",
             items[i].default_value);
       if (items[i].flags & ITEM_DEFAULT && items[i].default_value != 0) {
-         if (items[i].handler == store_bit) {
+         if (items[i].handler == store_yesno) {
             *(int *)(items[i].value) |= items[i].code;
          } else if (items[i].handler == store_bool) {
             *(bool *)(items[i].value) = items[i].default_value;
@@ -305,24 +305,25 @@ void store_msgs(LEX *lc, RES_ITEM *item, int index, int pass)
  */
 static void scan_types(LEX *lc, MSGS *msg, int dest_code, char *where, char *cmd)
 {
-   int i, found, quit, is_not;
+   int i; 
+   bool found, is_not;
    int msg_type = 0;
    char *str;
 
-   for (quit=0; !quit;) {
+   for ( ;; ) {
       lex_get_token(lc, T_NAME);            /* expect at least one type */
-      found = FALSE;
+      found = false;
       if (lc->str[0] == '!') {
-         is_not = TRUE;
+         is_not = true;
          str = &lc->str[1];
       } else {
-         is_not = FALSE;
+         is_not = false;
          str = &lc->str[0];
       }
       for (i=0; msg_types[i].name; i++) {
          if (strcasecmp(str, msg_types[i].name) == 0) {
             msg_type = msg_types[i].token;
-            found = TRUE;
+            found = true;
             break;
          }
       }
@@ -335,12 +336,10 @@ static void scan_types(LEX *lc, MSGS *msg, int dest_code, char *where, char *cmd
          for (i=1; i<=M_MAX; i++) {      /* yes set all types */
             add_msg_dest(msg, dest_code, i, where, cmd);
          }
+      } else if (is_not) {
+         rem_msg_dest(msg, dest_code, msg_type, where);
       } else {
-         if (is_not) {
-            rem_msg_dest(msg, dest_code, msg_type, where);
-         } else {
-            add_msg_dest(msg, dest_code, msg_type, where, cmd);
-         }
+         add_msg_dest(msg, dest_code, msg_type, where, cmd);
       }
       if (lc->ch != ',') {
          break;
@@ -690,7 +689,7 @@ void store_time(LEX *lc, RES_ITEM *item, int index, int pass)
 
 
 /* Store a yes/no in a bit field */
-void store_bit(LEX *lc, RES_ITEM *item, int index, int pass)
+void store_yesno(LEX *lc, RES_ITEM *item, int index, int pass)
 {
    lex_get_token(lc, T_NAME);
    if (strcasecmp(lc->str, "yes") == 0 || strcasecmp(lc->str, "true") == 0) {
@@ -760,7 +759,7 @@ enum parse_state {
  *  scan_error handler is to die on an error.
  */
 int
-parse_config(const char *cf, LEX_ERROR_HANDLER *scan_error)
+parse_config(const char *cf, LEX_ERROR_HANDLER *scan_error, int err_type)
 {
    LEX *lc = NULL;
    int token, i, pass;
@@ -785,6 +784,7 @@ parse_config(const char *cf, LEX_ERROR_HANDLER *scan_error)
          } else {
             lex_set_default_error_handler(lc);
          }
+         lex_set_error_handler_error_type(lc, err_type) ;
          bstrncpy(lc->str, cf, sizeof(lc->str));
          lc->fname = lc->str;
          scan_err2(lc, _("Cannot open config file \"%s\": %s\n"),
@@ -792,6 +792,7 @@ parse_config(const char *cf, LEX_ERROR_HANDLER *scan_error)
          free(lc);
          return 0;
       }
+      lex_set_error_handler_error_type(lc, err_type) ;
       while ((token=lex_get_token(lc, T_ALL)) != T_EOF) {
          Dmsg1(900, "parse got token=%s\n", lex_tok_to_str(token));
          switch (state) {
@@ -858,6 +859,9 @@ parse_config(const char *cf, LEX_ERROR_HANDLER *scan_error)
                level--;
                state = p_none;
                Dmsg0(900, "T_EOB => define new resource\n");
+               if (res_all.hdr.name == NULL) {
+                  scan_err0(lc, _("Name not specified for resource"));
+               }
                save_resource(res_type, items, pass);  /* save resource */
                break;
 

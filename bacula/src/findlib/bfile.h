@@ -6,17 +6,22 @@
  *     Kern Sibbald May MMIII
  */
 /*
-   Copyright (C) 2003-2005 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   version 2 as amended with additional clauses defined in the
-   file LICENSE in the main source directory.
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-   the file LICENSE for additional details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public
+   License along with this program; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+   MA 02111-1307, USA.
 
  */
 
@@ -35,28 +40,6 @@ struct Python_IO {
 struct Python_IO {
 };
 #endif
-
-
-/* this should physically correspond to WIN32_STREAM_ID
- * from winbase.h on Win32. We didn't inlcude cStreamName
- * as we don't use it and don't need it for a correct struct size.
- */
-
-#define WIN32_BACKUP_DATA 1
-
-typedef struct _BWIN32_STREAM_ID {
-        int32_t        dwStreamId;
-        int32_t        dwStreamAttributes;
-        int64_t        Size;
-        int32_t        dwStreamNameSize;        
-} BWIN32_STREAM_ID, *LPBWIN32_STREAM_ID ;
-
-
-typedef struct _PROCESS_WIN32_BACKUPAPIBLOCK_CONTEXT {
-        int64_t          liNextHeader;
-        bool             bIsInData;
-        BWIN32_STREAM_ID header_stream;        
-} PROCESS_WIN32_BACKUPAPIBLOCK_CONTEXT;
 
 /*  =======================================================
  *
@@ -91,8 +74,6 @@ struct BFILE {
    char *prog;                        /* reader/writer program if any */
    JCR *jcr;                          /* jcr for editing job codes */
    Python_IO pio;                     /* Python I/O routines */
-   PROCESS_WIN32_BACKUPAPIBLOCK_CONTEXT win32DecompContext; /* context for decomposition of win32 backup streams */
-   int use_backup_decomp;             /* set if using BackupRead Stream Decomposition */
 };
 
 HANDLE bget_handle(BFILE *bfd);
@@ -113,8 +94,6 @@ struct BFILE {
    char *prog;                        /* reader/writer program if any */
    JCR *jcr;                          /* jcr for editing job codes */
    Python_IO pio;                     /* Python I/O routines */
-   PROCESS_WIN32_BACKUPAPIBLOCK_CONTEXT win32DecompContext; /* context for decomposition of win32 backup streams */
-   int use_backup_decomp;             /* set if using BackupRead Stream Decomposition */
 };
 
 #endif
@@ -138,7 +117,5 @@ ssize_t bread(BFILE *bfd, void *buf, size_t count);
 ssize_t bwrite(BFILE *bfd, void *buf, size_t count);
 off_t   blseek(BFILE *bfd, off_t offset, int whence);
 const char   *stream_to_ascii(int stream);
-
-bool processWin32BackupAPIBlock (BFILE *bfd, void *pBuffer, ssize_t dwSize);
 
 #endif /* __BFILE_H */

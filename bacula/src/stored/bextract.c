@@ -8,7 +8,7 @@
  *
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -246,7 +246,7 @@ static void do_extract(char *devname)
    release_device(dcr);
    free_attr(attr);
    free_jcr(jcr);
-   dev->term();
+   term_dev(dev);
 
    printf(_("%u files restored.\n"), num_files);
    return;
@@ -432,8 +432,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       break;
 
    case STREAM_SIGNED_DIGEST:
-   case STREAM_ENCRYPTED_SESSION_DATA:
-      // TODO landonf: Investigate crypto support in the storage daemon
+      // TODO landonf: Investigate signed digest support in the storage daemon
       break;
 
    case STREAM_PROGRAM_NAMES:

@@ -30,6 +30,7 @@
 #include <Python.h>
 
 extern char *configfile;
+extern struct s_jl joblevels[];
 extern JCR *get_jcr_from_PyObject(PyObject *self);
 extern PyObject *find_method(PyObject *eventsObject, PyObject *method, 
          const char *name);
@@ -82,6 +83,7 @@ static struct s_vars setvars[] = {
    { "JobReport",   "s"},
    { "VolumeName",  "s"},
    { "Priority",    "i"},
+   { "JobLevel",    "s"},
 
    { NULL,             NULL}
 };
@@ -235,7 +237,27 @@ int job_setattr(PyObject *self, char *attrname, PyObject *value)
       break;
    case 2:                            /* Priority */
       Dmsg1(000, "Set priority=%d\n", intval);
-      return 0;
+      if (intval >= 1 && intval <= 100) {
+         jcr->JobPriority = intval;
+      } else {
+         PyErr_SetString(PyExc_ValueError, _("Priority must be 1-100"));
+         return -1;
+      }
+   case 3:                            /* Job Level */
+      if (strcmp("JobInit", jcr->event) != 0) {
+         PyErr_SetString(PyExc_RuntimeError, _("Job Level can be set only during JobInit"));
+         return -1;
+      }
+      for (i=0; joblevels[i].level_name; i++) {
+         if (strcmp(strval, joblevels[i].level_name) == 0) {
+            if (joblevels[i].job_type == jcr->JobType) {
+               jcr->JobLevel = joblevels[i].level;
+               return 0;
+            }
+         }
+      }
+      PyErr_SetString(PyExc_ValueError, _("Bad JobLevel string"));
+      return -1;
    }
 bail_out:
    PyErr_SetString(PyExc_AttributeError, attrname);
@@ -275,7 +297,7 @@ static PyObject *job_run(PyObject *self, PyObject *arg)
       return NULL;
    }
    /* Release lock due to recursion */
-   PyEval_ReleaseLock();
+// PyEval_ReleaseLock();
    jcr = get_jcr_from_PyObject(self);
    UAContext *ua = new_ua_context(jcr);
    ua->batch = true;
@@ -283,7 +305,7 @@ static PyObject *job_run(PyObject *self, PyObject *arg)
    parse_ua_args(ua);                 /* parse command */
    stat = run_cmd(ua, ua->cmd);
    free_ua_context(ua);
-   PyEval_AcquireLock();
+// PyEval_AcquireLock();
    return PyInt_FromLong((long)stat);
 }
 
@@ -350,7 +372,7 @@ static PyObject *job_cancel(PyObject *self, PyObject *args)
       /* ***FIXME*** raise exception */
       return NULL;
    }
-   PyEval_ReleaseLock();
+// PyEval_ReleaseLock();
    UAContext *ua = new_ua_context(jcr);
    ua->batch = true;
    if (!cancel_job(ua, jcr)) {
@@ -359,7 +381,7 @@ static PyObject *job_cancel(PyObject *self, PyObject *args)
    }
    free_ua_context(ua);
    free_jcr(jcr);
-   PyEval_AcquireLock();   
+// PyEval_AcquireLock();   
    Py_INCREF(Py_None);
    return Py_None;
 }
@@ -381,7 +403,8 @@ int generate_job_event(JCR *jcr, const char *event)
       return 0;
    }
 
-   PyEval_AcquireLock();
+   lock_python();
+// PyEval_AcquireLock();
 
    method = find_method(events, method, event);
    if (!method) {
@@ -402,7 +425,8 @@ int generate_job_event(JCR *jcr, const char *event)
    Py_XDECREF(result);
 
 bail_out:
-   PyEval_ReleaseLock();
+   unlock_python();
+// PyEval_ReleaseLock();
    return stat;
 }
 

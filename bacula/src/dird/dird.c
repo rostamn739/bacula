@@ -31,6 +31,7 @@ static int check_resources();
 /* Exported subroutines */
 
 extern "C" void reload_config(int sig);
+extern void invalidate_schedules();
 
 
 /* Imported subroutines */
@@ -291,7 +292,7 @@ struct RELOAD_TABLE {
    RES **res_table;
 };
 
-static const int max_reloads = 10;
+static const int max_reloads = 32;
 static RELOAD_TABLE reload_table[max_reloads];
 
 static void init_reload(void)
@@ -401,7 +402,7 @@ void reload_config(int sig)
    reload_table[table].res_table = save_config_resources();
    Dmsg1(100, "Saved old config in table %d\n", table);
 
-   ok = parse_config(configfile, 0);  /* no exit on error */
+   ok = parse_config(configfile, 0, M_ERROR);  /* no exit on error */
 
    Dmsg0(100, "Reloaded config file\n");
    if (!ok || !check_resources()) {
@@ -422,6 +423,7 @@ void reload_config(int sig)
       }
       table = rtable;                 /* release new, bad, saved table below */
    } else {
+      invalidate_schedules();
       /*
        * Hook all active jobs so that they release this table
        */
@@ -559,7 +561,6 @@ static int check_resources()
          for (i=0; job_items[i].name; i++) {
             char **def_svalue, **svalue;  /* string value */
             int *def_ivalue, *ivalue;     /* integer value */
-            bool *def_bvalue, *bvalue;    /* bool value */
             int64_t *def_lvalue, *lvalue; /* 64 bit values */
             uint32_t offset;
 
@@ -609,9 +610,9 @@ static int check_resources()
                   }
                /*
                 * Handle integer fields
-                *    Note, our store_bit does not handle bitmaped fields
+                *    Note, our store_yesno does not handle bitmaped fields
                 */
-               } else if (job_items[i].handler == store_bit     ||
+               } else if (job_items[i].handler == store_yesno   ||
                           job_items[i].handler == store_pint    ||
                           job_items[i].handler == store_jobtype ||
                           job_items[i].handler == store_level   ||
@@ -634,16 +635,6 @@ static int check_resources()
                        job->hdr.name, job_items[i].name, *def_lvalue, i, offset);
                   lvalue = (int64_t *)((char *)job + offset);
                   *lvalue = *def_lvalue;
-                  set_bit(i, job->hdr.item_present);
-               /*
-                * Handle bool fields
-                */
-               } else if (job_items[i].handler == store_bool) {
-                  def_bvalue = (bool *)((char *)(job->jobdefs) + offset);
-                  Dmsg5(400, "Job \"%s\", field \"%s\" def_bvalue=%d item %d offset=%u\n",
-                       job->hdr.name, job_items[i].name, *def_bvalue, i, offset);
-                  bvalue = (bool *)((char *)job + offset);
-                  *bvalue = *def_bvalue;
                   set_bit(i, job->hdr.item_present);
                }
             }
@@ -680,8 +671,8 @@ static int check_resources()
                          catalog->db_port, catalog->db_socket,
                          catalog->mult_db_connections);
       if (!db || !db_open_database(NULL, db)) {
-         Jmsg(NULL, M_FATAL, 0, _("Could not open database \"%s\".\n"),
-              catalog->db_name);
+         Jmsg(NULL, M_FATAL, 0, _("Could not open Catalog \"%s\", database \"%s\".\n"),
+              catalog->hdr.name, catalog->db_name);
          if (db) {
             Jmsg(NULL, M_FATAL, 0, _("%s"), db_strerror(db));
          }

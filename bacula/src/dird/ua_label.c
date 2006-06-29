@@ -168,7 +168,7 @@ void update_slots(UAContext *ua)
    set_storage(ua->jcr, store);
    drive = get_storage_drive(ua, store);
 
-   scan = find_arg(ua, N_("scan")) >= 0;
+   scan = find_arg(ua, NT_("scan")) >= 0;
 
    max_slots = get_num_slots_from_SD(ua);
    Dmsg1(100, "max_slots=%d\n", max_slots);
@@ -290,7 +290,7 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
    bool print_reminder = true;
    bool label_barcodes = false;
    int ok = FALSE;
-   int i;
+   int i, j;
    int drive;
    bool media_record_exists = false;
    static const char *barcode_keyword[] = {
@@ -304,8 +304,12 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
       return 1;
    }
 
+   /* Look for one of the barcode keywords */
    if (!relabel && (i=find_arg_keyword(ua, barcode_keyword)) >= 0) {
-      *ua->argk[i] = 0;      /* zap barcode keyword */
+      /* Now find the keyword in the list */
+      if ((j = find_arg(ua, barcode_keyword[i])) > 0) {
+         *ua->argk[j] = 0;      /* zap barcode keyword */
+      }
       label_barcodes = true;
    }
 
@@ -495,8 +499,8 @@ static void label_from_barcodes(UAContext *ua, int drive)
       }
       bsendmsg(ua, "%4d  %s\n", vl->Slot, vl->VolName);
    }
-   if (!get_cmd(ua, _("Do you want to continue? (y/n): ")) ||
-       (ua->cmd[0] != 'y' && ua->cmd[0] != 'Y')) {
+   if (!get_yesno(ua, _("Do you want to continue? (yes|no): ")) ||
+       (ua->pint32_val == 0)) {
       goto bail_out;
    }
    /* Select a pool */
@@ -736,16 +740,16 @@ static char *get_volume_name_from_SD(UAContext *ua, int Slot, int drive)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger list of volumes */
-   bnet_fsend(sd, _("readlabel %s Slot=%d drive=%d\n"), dev_name, Slot, drive);
+   bnet_fsend(sd, NT_("readlabel %s Slot=%d drive=%d\n"), dev_name, Slot, drive);
    Dmsg1(100, "Sent: %s", sd->msg);
 
    /* Get Volume name in this Slot */
    while (bnet_recv(sd) >= 0) {
       bsendmsg(ua, "%s", sd->msg);
       Dmsg1(100, "Got: %s", sd->msg);
-      if (strncmp(sd->msg, "3001 Volume=", 12) == 0) {
+      if (strncmp(sd->msg, NT_("3001 Volume="), 12) == 0) {
          VolName = (char *)malloc(sd->msglen);
-         if (sscanf(sd->msg, "3001 Volume=%s Slot=%d", VolName, &rtn_slot) == 2) {
+         if (sscanf(sd->msg, NT_("3001 Volume=%s Slot=%d"), VolName, &rtn_slot) == 2) {
             break;
          }
          free(VolName);
@@ -778,7 +782,7 @@ static vol_list_t *get_vol_list_from_SD(UAContext *ua, bool scan)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger list of volumes */
-   bnet_fsend(sd, _("autochanger list %s \n"), dev_name);
+   bnet_fsend(sd, NT_("autochanger list %s \n"), dev_name);
 
    /* Read and organize list of Volumes */
    while (bnet_recv(sd) >= 0) {
@@ -890,7 +894,7 @@ static int get_num_slots_from_SD(UAContext *ua)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger number of slots */
-   bnet_fsend(sd, _("autochanger slots %s\n"), dev_name);
+   bnet_fsend(sd, NT_("autochanger slots %s\n"), dev_name);
 
    while (bnet_recv(sd) >= 0) {
       if (sscanf(sd->msg, "slots=%d\n", &slots) == 1) {
@@ -922,10 +926,10 @@ int get_num_drives_from_SD(UAContext *ua)
    bstrncpy(dev_name, store->dev_name(), sizeof(dev_name));
    bash_spaces(dev_name);
    /* Ask for autochanger number of slots */
-   bnet_fsend(sd, _("autochanger drives %s\n"), dev_name);
+   bnet_fsend(sd, NT_("autochanger drives %s\n"), dev_name);
 
    while (bnet_recv(sd) >= 0) {
-      if (sscanf(sd->msg, "drives=%d\n", &drives) == 1) {
+      if (sscanf(sd->msg, NT_("drives=%d\n"), &drives) == 1) {
          break;
       } else {
          bsendmsg(ua, "%s", sd->msg);
@@ -949,8 +953,9 @@ static bool is_cleaning_tape(UAContext *ua, MEDIA_DBR *mr, POOL_DBR *pr)
    /* Find Pool resource */
    ua->jcr->pool = (POOL *)GetResWithName(R_POOL, pr->Name);
    if (!ua->jcr->pool) {
-      bsendmsg(ua, _("Pool \"%s\" resource not found!\n"), pr->Name);
-      return true;
+      bsendmsg(ua, _("Pool \"%s\" resource not found for volume \"%s\"!\n"),
+         pr->Name, mr->VolumeName);
+      return false;
    }
    if (ua->jcr->pool->cleaning_prefix == NULL) {
       return false;

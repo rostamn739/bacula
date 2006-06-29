@@ -5,7 +5,7 @@
  *  Version $Id$
  */
 /*
-   Copyright (C) 2000-2006 Kern Sibbald
+   Copyright (C) 2000-2005 Kern Sibbald
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -69,7 +69,6 @@ bool do_append_data(JCR *jcr)
 
    if (!acquire_device_for_append(dcr)) {
       set_jcr_job_status(jcr, JS_ErrorTerminated);
-      jcr->dcr = NULL;
       return false;
    }
 
@@ -93,7 +92,7 @@ bool do_append_data(JCR *jcr)
     */
    if (!write_session_label(dcr, SOS_LABEL)) {
       Jmsg1(jcr, M_FATAL, 0, _("Write session label failed. ERR=%s\n"),
-         dev->bstrerror());
+         strerror_dev(dev));
       set_jcr_job_status(jcr, JS_ErrorTerminated);
       ok = false;
    }
@@ -203,9 +202,9 @@ bool do_append_data(JCR *jcr)
                        rec.remainder);
             if (!write_block_to_device(dcr)) {
                Dmsg2(90, "Got write_block_to_dev error on device %s. %s\n",
-                  dev->print_name(), dev->bstrerror());
+                  dev->print_name(), strerror_dev(dev));
                Jmsg2(jcr, M_FATAL, 0, _("Fatal append error on device %s: ERR=%s\n"),
-                     dev->print_name(), dev->bstrerror());
+                     dev->print_name(), strerror_dev(dev));
                ok = false;
                break;
             }
@@ -220,8 +219,8 @@ bool do_append_data(JCR *jcr)
             stream_to_ascii(buf2, rec.Stream, rec.FileIndex), rec.data_len);
 
          /* Send attributes and digest to Director for Catalog */
-         if (stream == STREAM_UNIX_ATTRIBUTES || stream == STREAM_UNIX_ATTRIBUTES_EX ||
-             crypto_digest_stream_type(stream) != CRYPTO_DIGEST_NONE) {
+         if (stream == STREAM_UNIX_ATTRIBUTES    || stream == STREAM_MD5_SIGNATURE ||
+             stream == STREAM_UNIX_ATTRIBUTES_EX || stream == STREAM_SHA1_SIGNATURE) {
             if (!jcr->no_attributes) {
                if (are_attributes_spooled(jcr)) {
                   jcr->dir_bsock->spool = true;
@@ -252,7 +251,10 @@ bool do_append_data(JCR *jcr)
    /* Create Job status for end of session label */
    set_jcr_job_status(jcr, ok?JS_Terminated:JS_ErrorTerminated);
 
-   Dmsg1(200, "Write EOS label JobStatus=%c\n", jcr->JobStatus);
+   Dmsg1(200, "Write session label JobStatus=%d\n", jcr->JobStatus);
+   if ((!ok || job_canceled(jcr)) && dev->VolCatInfo.VolCatName[0] == 0) {
+      Pmsg0(000, _("NULL Volume name. This shouldn't happen!!!\n"));
+   }
 
    /*
     * If !OK, check if we can still write. This may not be the case
@@ -261,7 +263,7 @@ bool do_append_data(JCR *jcr)
    if (ok || dev->can_write()) {
       if (!write_session_label(dcr, EOS_LABEL)) {
          Jmsg1(jcr, M_FATAL, 0, _("Error writting end session label. ERR=%s\n"),
-               dev->bstrerror());
+               strerror_dev(dev));
          set_jcr_job_status(jcr, JS_ErrorTerminated);
          ok = false;
       }
@@ -272,7 +274,7 @@ bool do_append_data(JCR *jcr)
       /* Flush out final partial block of this session */
       if (!write_block_to_device(dcr)) {
          Jmsg2(jcr, M_FATAL, 0, _("Fatal append error on device %s: ERR=%s\n"),
-               dev->print_name(), dev->bstrerror());
+               dev->print_name(), strerror_dev(dev));
          Dmsg0(100, _("Set ok=FALSE after write_block_to_device.\n"));
          ok = false;
       }
