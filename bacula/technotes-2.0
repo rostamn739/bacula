@@ -3,6 +3,8 @@
 General:
 Version 2.0.1
 11Jan06
+kes  Add dynamic dll entry point for SHGetFolderPath to Win32 code.
+     This *should* fix bug #747.
 kes  Modify winbacula.nsi to substitute with g bin_dir_cmd. Should fix
      bug #742.
 09Jan06
