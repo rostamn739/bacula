@@ -1,37 +1,12 @@
-              Technical notes on version 2.0
+              Technical notes on version 1.39  
 
 General:
-Version 2.0.1
-12Jan07
-kes  Fix Bacula->Documentation link on Win32 to point to index.html
-     instead of bacula.html. Fixed bug #750.
-kes  Return JobId in db_get_job_record() when JobId==0. This should
-     fix bug #741.
-kes  Do not release source pointers when restarting a failed job.
-11Jan07
-kes  Add dynamic dll entry point for SHGetFolderPath to Win32 code.
-     This *should* fix bug #747.
-kes  Modify winbacula.nsi to substitute with g bin_dir_cmd. Should fix
-     bug #742.
-09Jan07
-kes  Modify USTORE constructor to set an empty store_source string, 
-     and don't copy the store_source string in a cancel.  Hopefully
-     this will fix Arno's seg fault, bug #744.
-kes  Add back code to disable conio in configure. Fixes bug #743.
-kes  Correct the Options scanner in the FD to correctly handle  
-     SHA1 option, which was eating the next option.  Reported by    
-     Sebastien Guilbaud.
-kes  Add code to indicate when the SD is spooling, spool wait, and 
-     despooling as requested by Alan Brown.
-
-
-=========== ChangeLog prior to 2.0.0 follow =================
 Version 2.0.0 released: 4 January 2007
 03Jan07
 kes  Apply Eric's fix for client name editing on RunScripts.
 kes  Fix an incorrect dbcheck reference to Id.
 
-Version 1.39.34 Released:
+Version 1.39.34 released:
 28Dec06
 kes  Convert dbcheck to use 64 bit DB IDs.
 kes  Update projects
@@ -362,8 +337,8 @@ lf   Fix a cosmetic bug in filed.c that caused spurious OpenSSL error
      from master key files.  
 
 Version 1.39.26 released: 
-12Oct06
-kes  Apply the three patches from Richard Mortimer. 
+12Oct06 
+kes  Apply the three patches from Richard Mortimer.
      bacula-reposition.patch, bacula-tape-reopen.patch, and
      bacula-eod.patch. This corrects tape positioning on older devices,
      and also a problem with btape.
@@ -403,13 +378,12 @@ rbn  Add new /debug option. This option enables the message boxes that
 rbn  Fix bug with service not being removed on migrated installs.  This 
      should correct those cases where the file daemon install was failing
      when upgrading from versions prior to 1.39.x.
-
 08Oct06
 kes  Turn on heap reporting in Dir with zero debug level.
 kes  Send a message to the sys log when Bacula forces a SEG FAULT, and
      send the same message to stdout.
 07Oct06
-kes  Begin work on new GUI "console".
+kes  Begin work on new GUI 'console'.
 kes  Make configure look in non-standard MySQL library directory 
      for Solaris.
 kes  Make mtx-changer automatically configure the autochanger wait
@@ -431,11 +405,8 @@ rbn  Fixed path search for Windows so that Bacula\bin is automatically
 rbn  Fixed bugs in mtx-changer.cmd and made template bacula-sd.conf
      Windows specific.
 
-Version 1.39.24 beta released:
+Version 1.39.24 released:
 02Oct06
-rbn  Fix restore problem with c:\ prefix bug #676.
-rbn  Verify that drive letter is valid on restore.
-rbn  Fix re-open() options for tape.
 kes  Apply dvd find volume patch from Richard Mortimer.
 kes  Eliminate the dvd specific mount routines using only the
      dev->mount/unmount.
@@ -590,7 +561,7 @@ rbn  Save installer details log in the Bacula directory as
      install.log.
 rbn  Add installer generation of client and storage templates
      suitable for @inclusion on the director.
-rbn  Mark previously installed components for Win32 read-only since 
+rbn  Mark previously installed Win32 components read-only since 
      deselection doesn't do anything.
 
 Version 1.39.22 beta released:
