@@ -1,6 +1,9 @@
               Technical notes on version 2.0
 
 General:
+Version 2.0.2 released: xx January 2007
+27Jan07
+kes  Get current main CVS .specs for RedHat, SuSE, Mandrake.
 26Jan07
 ebl  Implement the include JobID in spool file name project.
 kes  Reorder projects file in order determined by Jan 2007 vote.
