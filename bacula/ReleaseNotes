@@ -5,6 +5,8 @@
 
 This is a bug fix release to version 2.0.1:
 
+28Jan08
+kes  Fix maxruntime bug #621.
 27Jan07
 kes  Get current main CVS .specs for RedHat, SuSE, Mandrake.
 26Jan07
