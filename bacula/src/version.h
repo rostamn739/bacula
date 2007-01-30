@@ -3,7 +3,7 @@
  */
 
 #undef  VERSION
-#define VERSION "2.1.1"
+#define VERSION "2.0.2"
 #define BDATE   "28 January 2007"
 #define LSMDATE "28Jan07"
 
@@ -47,7 +47,7 @@
 #define TRACE_FILE 1
 
 /* If this is set stdout will not be closed on startup */
-#define DEVELOPER 1
+/* #define DEVELOPER 1 */
 
 #define DATA_ENCRYPTION 1
 

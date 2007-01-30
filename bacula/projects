@@ -4,10 +4,6 @@ Projects:
                     Status updated 26 January 2007
                    After re-ordering in vote priority
 
-Items Completed:
-Item:  18   Quick release of FD-SD connection after backup.
-Item:  40   Include JobID in spool file name
-
 Summary:
 Item:   1   Accurate restoration of renamed/deleted files
 Item:   2   Implement a Bacula GUI/management tool.
@@ -26,7 +22,7 @@ Item:  14   Cause daemons to use a specific IP address to source communications
 Item:  15   Multiple threads in file daemon for the same job
 Item:  16   Add Plug-ins to the FileSet Include statements.
 Item:  17   Restore only file attributes (permissions, ACL, owner, group...)
-Item:  18*  Quick release of FD-SD connection after backup.
+Item:  18   Quick release of FD-SD connection after backup.
 Item:  19   Implement a Python interface to the Bacula catalog.
 Item:  20   Archive data
 Item:  21   Split documentation
@@ -48,7 +44,7 @@ Item:  36   An option to operate on all pools with update vol parameters
 Item:  37   Add an item to the restore option where you can select a pool
 Item:  38   Include timestamp of job launch in "stat clients" output
 Item:  39   Message mailing based on backup types
-Item:  40*  Include JobID in spool file name
+Item:  40   Include JobID in spool file name
 
 
 Item  1:  Accurate restoration of renamed/deleted files
