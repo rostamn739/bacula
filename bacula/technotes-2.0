@@ -1,9 +1,40 @@
               Technical notes on version 2.0
 
 General:
-Version 2.0.2 released: xx January 2007
+06Feb07
+kes  Delete src/lib/btree.c from win32 build, then add rblist.c
+     plus the entrypoints.
+kes  Apply patch supplied that corrects debug print
+     in canceling jobs for max run time.  Supplied as
+     part of bug #621, which was previously fixed.
 05Feb07
-ebl  Fixes bug #766 about RunsOnClient = Yes 
+kes  Test on job_canceled() and sd_msg_thread_done inside
+     loop starting the message thread to avoid a race condition.
+     Fixes bug #771.
+kes  Remove rl_catch_signal from console.c as it conflicted
+     with the header definition. Fixes bug #765.
+ebl  Fixes bug #766 about RunsOnClient = Yes
+04Feb07
+kes  Clarify some stored/acquire messages to indicate if the
+     problem is with read or append.
+02Feb07
+kes  Fix memory leak with storage ids in cats/sql_get.c
+kes  Terminate watchdog earlier to avoid reference to released
+     memory -- reported by Jason Austin.
+kes  Move closing the database from jobq.c to the director daemon
+     termination routine. This fixes memory leaks for shadow jobs
+     (i.e. migration jobs).
+kes  Free up the unique jobid chain items in migrate.c.  This fixes
+     a memory leak problem.
+kes  Convert some ugly looking for statements to use foreach_alist
+     in findlib/find.c.  This will facilitate converting the structures
+     to use dlist (for large include/exclude lists).
+kes  Fix a bug in the btree.c and btree.h routines, then rename them
+     rblist and add them to be built in src/lib.  Include some new
+     methods written by Rudolf Cejka that make the code more readable
+     (hides some of the ugly casting).
+
+Version 2.0.2 released: 30 January 2007
 28Jan08
 kes  Fix maxruntime bug #621.
 27Jan07
