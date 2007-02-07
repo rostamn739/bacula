@@ -1,0 +1,123 @@
+body { background-color: #ffffff; font-family: verdana,arial,helvetica; font-size: 8pt;}
+a { text-decoration: none;}
+.code_display   {       background-color: #b9b9ac;
+                        border: 1px solid #9d9d94;
+}
+
+abutton.formulaire { font-size: 9pt; height: 48px; width: 80px; background-color: transparent; }
+
+button.formulaire { border: 0px; font-size: 9pt;  background-color: transparent; }
+
+td.joberr { background-color: red; color: white;}
+
+.pSlice, .pSliceFull, .pSliceError, .pSliceAppend, .pSlicePurged, .pSliceRecycle, 
+.pSliceArchive, .pSliceUsed, .pSliceRead_Only, .pSliceDisabled,
+.pSliceOk,.pSliceWarn,.pSliceCrit,.pSliceEmpty
+ {
+  width: 2px;
+  height: 9px;
+  margin-right: 1px;
+  margin-bottom: 1px;
+  border: solid 1px #CCCCCC;
+  background-color: #E6E6E6;	
+}
+
+.pSliceFull, .pSliceRead_Only,.pSliceArchive, .pSliceUsed, .pSliceDisabled,
+.pSliceCrit {
+ border: solid 1px #BD0C10;
+ background-color: #FF3029;
+}
+
+.pSliceError {
+ border: solid 1px #000000;
+ background-color: #020202;
+}
+
+.pSliceAppend, .pSliceWarn {
+ border: solid 1px #CD6500;
+ background-color: #FFCE00;
+}
+
+.pSlicePurged, .pSliceRecycle, .pSliceOk {
+ border: solid 1px #009900;
+ background-color: #00FF00;
+}
+
+input.button {
+  border: 0px;
+  margin: 0 5px 0 5px;
+  padding: 0 0 0 0;
+}
+
+#menu, #menu ul {
+	float: left;
+	list-style: none;
+	line-height: 1;
+	background:#eeeae6 ;
+	font-weight: bold;
+	padding: 0;
+	border: solid #999;
+	border-width: 1px 0;
+	margin: 0 0 1em 0;
+	padding: 0.25em 2em;
+        width: 100%;
+	color: #7C6240;
+}
+
+#menu a {
+	display: block;
+	color: #7C6240;
+	text-decoration: none;
+	padding: 0.25em 2em;
+}
+
+#menu a.daddy {
+	background: url(right.gif) center right no-repeat;
+}
+
+#menu li {
+	float: left;
+	padding: 0;
+}
+
+#menu li ul {
+	position: absolute;
+	left: -999em;
+	height: auto;
+	width: 14.4em;
+	border-width: 1px;
+}
+
+#logged {
+	padding: 0.25em 2em;
+	float: right;
+	clear: left;
+	text-align: right;
+
+}
+
+#menu li li {
+	padding-right: 1em;
+}
+
+#menu li ul a {
+}
+
+#menu li ul ul {
+	margin: -1.75em 0 0 14em;
+}
+
+#menu li:hover ul ul, #menu li:hover ul ul ul, 
+#menu li.sfhover ul ul, #menu li.sfhover ul ul ul {
+	left: -999em;
+}
+
+#menu li:hover ul, #menu li li:hover ul, #menu li li li:hover ul,
+#menu li.sfhover ul, #menu li li.sfhover ul, #menu li li li.sfhover ul {
+	left: auto;
+}
+
+#menu li:hover, #menu li.sfhover {
+	background: #eeeae6;
+}
+
