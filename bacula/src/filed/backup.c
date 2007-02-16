@@ -434,6 +434,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       /* Set up the encryption context, send the session data to the SD */
       if (jcr->pki_encrypt) {
          /* Send our header */
+         Dmsg2(100, "Send hdr fi=%ld stream=%d\n", jcr->JobFiles, STREAM_ENCRYPTED_SESSION_DATA);
          bnet_fsend(sd, "%ld %d 0", jcr->JobFiles, STREAM_ENCRYPTED_SESSION_DATA);
 
          /* Grow the bsock buffer to fit our message if necessary */
@@ -446,6 +447,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
          sd->msglen = jcr->pki_session_encoded_size;
          jcr->JobBytes += sd->msglen;
 
+         Dmsg1(100, "Send data len=%d\n", sd->msglen);
          bnet_send(sd);
          bnet_sig(sd, BNET_EOD);
       }
