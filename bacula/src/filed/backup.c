@@ -124,7 +124,7 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 
       /* Get the session data size */
       if (crypto_session_encode(jcr->pki_session, (uint8_t *)0, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while encrypting the stream.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("An error occurred while encrypting the stream.\n"));
          return 0;
       }
 
@@ -136,7 +136,7 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 
       /* Encode session data */
       if (crypto_session_encode(jcr->pki_session, jcr->pki_session_encoded, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while encrypting the stream.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("An error occurred while encrypting the stream.\n"));
          return 0;
       }
 
@@ -364,7 +364,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       if (jcr->pki_sign) {
          signing_digest = crypto_digest_new(signing_algorithm);
 
-         /* Full-stop if a failure occured initializing the signature digest */
+         /* Full-stop if a failure occurred initializing the signature digest */
          if (signing_digest == NULL) {
             Jmsg(jcr, M_NOTSAVED, 0, _("%s signature digest initialization failed\n"),
                stream_to_ascii(signing_algorithm));
@@ -531,13 +531,13 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
       }
 
       if (crypto_sign_add_signer(sig, signing_digest, jcr->pki_keypair) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("An error occurred while signing the stream.\n"));
          return 0;
       }
 
       /* Get signature size */
       if (crypto_sign_encode(sig, NULL, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("An error occurred while signing the stream.\n"));
          return 0;
       }
 
@@ -550,7 +550,7 @@ static int save_file(FF_PKT *ff_pkt, void *vjcr, bool top_level)
 
       /* Encode signature data */
       if (crypto_sign_encode(sig, buf, &size) == false) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occured while signing the stream.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("An error occurred while signing the stream.\n"));
          return 0;
       }
 

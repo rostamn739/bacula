@@ -1,6 +1,9 @@
               Technical notes on version 2.0
 
 General:
+16Feb07
+kes  Add FD event sequence order prepared by Eric -- for RunScripts.
+kes  Fix 12am/pm bug as reported in bug #782.
 15Feb07
 kes  Add quick disconnect FD code from 2.1.4 to 2.0.3.  This code
      causes the SD to release the FD as soon as the FD has sent
