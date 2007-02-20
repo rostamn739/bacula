@@ -1,6 +1,12 @@
               Technical notes on version 2.0
 
 General:
+20Feb07
+ebl  Revert ClientRunBeforeJob as it was in 1.38.x
+     This fixes bug #780
+     You will not be able to generate Include/Exclude list any more.
+     If you want to use this, you can apply 
+     trunk/bacula/patches/testing/clientrunbeforejob_can_generate_include_exclude_list.patch
 19Feb07
 kes  Restore of sockets created false error messages because Bacula
      no longer restores sockets, but the code was still trying to
