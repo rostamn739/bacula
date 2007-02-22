@@ -1,6 +1,12 @@
               Technical notes on version 2.0
 
 General:
+22Feb07
+kes  Fix a few places in lib/message.c where the open fd may
+     not be zeroed.
+21Feb07
+kes  Add LANG=C to autoconf/randpass so it works with languages other
+     than English.  Fixes bug #788.
 20Feb07
 ebl  Revert ClientRunBeforeJob as it was in 1.38.x
      This fixes bug #780
