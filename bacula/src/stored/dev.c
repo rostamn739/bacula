@@ -383,7 +383,7 @@ void DEVICE::open_tape_device(DCR *dcr, int omode)
          mt_com.mt_op = MTREW;
          mt_com.mt_count = 1;
          /* rewind only if dev is a tape */
-         if (is_tape() && (ioctl(m_fd, MTIOCTOP, (char *)&mt_com) < 0)) {
+         if (is_tape() && (ioctl(fd, MTIOCTOP, (char *)&mt_com) < 0)) {
             berrno be;
             dev_errno = errno;           /* set error status from rewind */
             ::close(fd);
