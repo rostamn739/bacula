@@ -1,6 +1,14 @@
               Technical notes on version 2.0
 
 General:
+28Feb07 
+kes  Correct typeo in var.c patch.
+27Feb07
+kes  Don't let Bacula prune File or Job records for the current Job.
+kes  Fix variable substitution pad + inc bug reported (with patch)
+     in bug #791.
+26Feb07
+kes  Correct SQLite log table index as reported by Luca Berra.
 24Feb07
 ebl  Fix fifo stuff, bacula tries to rewind the fifo... Thanks to Andreas
 22Feb07
