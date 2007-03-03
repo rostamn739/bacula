@@ -1,6 +1,17 @@
-          Release Notes for brestore 1.39.28
+          Release Notes for brestore 2.0.2
 
-Version 1.40:
+Version 2.0.2-2:
+ - fix cache create bug
+
+Version 2.0.2-1:
+ - Fix bug with accent, use filenameid/pathid instead of filename
+
+Version 2.0.1-1:
+ - Do nothing if destination string is empty
+ - Fix warning message when using with bweb http connector
+ - Add CVS version number to UA brestore
+
+Version 2.0.0:
  - Add debian package
  - Add BwebConsole package to keep bconsole installation and
    scp usage on admin workstation. It permit to use brestore on
