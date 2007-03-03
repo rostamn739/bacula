@@ -38,11 +38,17 @@
      <tr><td>fv_write_path :</td> 
          <td> <input class="formulaire" title="Ce répertoire doit être accessible en écriture pour apache et être sous /bweb/fv" type='text' value='<TMPL_VAR fv_write_path>' size='64' name='fv_write_path'> 
          </td></tr>
+     <tr><td>stat_job_table :</td> 
+         <td> <input class="formulaire" title="Vous pouvez choisir une autre table que Job pour calculer vos statisques" type='text' value='<TMPL_IF stat_job_table><TMPL_VAR stat_job_table><TMPL_ELSE>Job</TMPL_IF>' size='64' name='stat_job_table'> 
+         </td></tr>
      <tr><td>bconsole :</td> 
          <td> <input class="formulaire" title="/chemin/vers/bconsole -n -c /chemin/vers/bconsole.conf" type='text' value='<TMPL_VAR NAME=bconsole>' size='64' name='bconsole'> 
          </td></tr>
+     <tr><td>display_log_time :</td>
+         <td> <input class="formulaire" title="affiche les heures dans les logs" type='checkbox' name='display_log_time' <TMPL_IF display_log_time> checked='checked' value='on' </TMPL_IF> >
+         </td></tr>
      <tr><td>debug :</td> 
-         <td> <input class="formulaire" type='checkbox' name='debug'> 
+         <td> <input class="formulaire" type='checkbox' name='debug' <TMPL_IF debug> checked='checked' value='on' </TMPL_IF> > 
          </td></tr>
     </table>
     <input type="image" name='action' value='apply_conf' src='/bweb/save.png'>

@@ -207,7 +207,7 @@ use CGI;
 our %k_re = ( dbi      => qr/^(dbi:(Pg|mysql):(?:\w+=[\w\d\.-]+;?)+)$/i,
 	      user     => qr/^([\w\d\.-]+)$/i,
 	      password => qr/^(.*)$/i,
-	      fv_write_path => qr!^([/\w\d\.-]+)$!,
+	      fv_write_path => qr!^([/\w\d\.-]*)$!,
 	      template_dir => qr!^([/\w\d\.-]+)$!,
 	      debug    => qr/^(on)?$/,
 	      email_media => qr/^([\w\d\.-]+@[\d\w\.-]+)$/,
@@ -215,6 +215,8 @@ our %k_re = ( dbi      => qr/^(dbi:(Pg|mysql):(?:\w+=[\w\d\.-]+;?)+)$/i,
 	      bconsole    => qr!^(.+)?$!,
 	      syslog_file => qr!^(.+)?$!,
 	      log_dir     => qr!^(.+)?$!,
+	      stat_job_table => qr!^(\w*)$!,
+	      display_log_time => qr!^(on)?$!,
 	      );
 
 =head1 FUNCTION
@@ -860,12 +862,13 @@ sub send_to_io
 sub transfer
 {
     my ($self, $src, $dst) = @_ ;
-    print "<pre>$self->{precmd} $self->{mtxcmd} -f $self->{device} transfer $src $dst</pre>\n";
+    if ($self->{debug}) {
+	print "<pre>$self->{precmd} $self->{mtxcmd} -f $self->{device} transfer $src $dst</pre>\n";
+    }
     my $out = `$self->{precmd} $self->{mtxcmd} -f $self->{device} transfer $src $dst 2>&1`;
     
     if ($? == 0) {
 	my $content = $self->get_slot($src);
-	print "$content ($src) => $dst<br/>";
 	$self->{slot}->[$src] = 'empty';
 	$self->set_slot($dst, $content);
 	return 1;
@@ -901,13 +904,17 @@ sub clear_io
 	if ($self->slot_is_full($slot))
 	{
 	    my $free = $self->slot_get_first_free() ;
-	    print "want to move $slot to $free\n";
+	    print "move $slot to $free :\n";
 
 	    if ($free) {
-		$self->transfer($slot, $free) || print "$self->{error}\n";
+		if ($self->transfer($slot, $free)) {
+		    print "<img src='/bweb/T.png' alt='ok'><br/>\n";
+		} else {
+		    print "<img src='/bweb/E.png' alt='ok' title='$self->{error}'><br/>\n";
+		}
 		
 	    } else {
-		$self->{error} = "E : Can't find free slot";
+		$self->{error} = "<img src='/bweb/E.png' alt='ok' title='E : Can t find free slot'><br/>\n";
 	    }
 	}
     }
@@ -969,7 +976,7 @@ WHERE Media.VolumeName IN ($media_list)
 
 	    } else {		# empty or no label
 		push @{ $param }, {realslot => $slot,
-				   volstatus => 'Unknow',
+				   volstatus => 'Unknown',
 				   volumename => $self->{slot}->[$slot]} ;
 	    }
 	} else {		# empty
@@ -1834,7 +1841,9 @@ sub get_param
 	    $ret{status} = $1;
 	    if ($1 eq 'f') {
 		$limit .= "AND Job.JobStatus IN ('f','E') ";		
-	    } else {
+	    } elsif ($1 eq 'W') {
+		$limit .= "AND Job.JobStatus = 'T' AND Job.JobErrors > 0 ";		
+            } else {
 		$limit .= "AND Job.JobStatus = '$1' ";		
 	    }
 	}
@@ -1923,6 +1932,7 @@ SELECT  Job.JobId       AS jobid,
 	Job.Name        AS jobname,
         Level           AS level,
         StartTime       AS starttime,
+        EndTime         AS endtime,
         Pool.Name       AS poolname,
         JobFiles        AS jobfiles, 
         JobBytes        AS jobbytes,
@@ -2406,7 +2416,7 @@ sub change_location
     }
     my $newloc = CGI::param('newlocation');
 
-    my $user = CGI::param('user') || 'unknow';
+    my $user = CGI::param('user') || 'unknown';
     my $comm = CGI::param('comment') || '';
     $comm = $self->dbh_quote("$user: $comm");
 
@@ -2432,7 +2442,7 @@ INSERT LocationLog (Date, Comment, MediaId, LocationId, NewVolStatus)
     $self->display({ email  => $self->{info}->{email_media},
 		     url => $url,
 		     newlocation => $newloc,
-		     # [ { volumename => 'vol1' }, { volumename => 'vol2' },..]
+		     # [ { volumename => 'vol1' }, { volumename => 'vol2' },..]
 		     medias => [ values %$medias ],
 		   },
 		   "change_location.tpl");
@@ -2618,9 +2628,11 @@ WHERE JobStatus IN ('C','R','B','e','D','F','S','m','M','s','j','c','d','t','p')
 		   "running_job.tpl") ;
 }
 
+# return the autochanger list to update
 sub eject_media
 {
     my ($self) = @_;
+    my %ret; 
     my $arg = $self->get_form('jmedias');
 
     unless ($arg->{jmedias}) {
@@ -2643,6 +2655,7 @@ WHERE Media.VolumeName IN ($arg->{jmedias})
     foreach my $vol (values %$all) {
 	my $a = $self->ach_get($vol->{location});
 	next unless ($a) ;
+	$ret{$vol->{location}} = 1;
 
 	unless ($a->{have_status}) {
 	    $a->status();
@@ -2651,11 +2664,12 @@ WHERE Media.VolumeName IN ($arg->{jmedias})
 
 	print "eject $vol->{volumename} from $vol->{storage} : ";
 	if ($a->send_to_io($vol->{slot})) {
-	    print "ok</br>";
+	    print "<img src='/bweb/T.png' alt='ok'><br/>";
 	} else {
-	    print "err</br>";
+	    print "<img src='/bweb/E.png' alt='err'><br/>";
 	}
     }
+    return keys %ret;
 }
 
 sub move_email
@@ -2712,7 +2726,8 @@ sub ach_get
 	return undef;
     }
 
-    $a->{bweb} = $self;
+    $a->{bweb}  = $self;
+    $a->{debug} = $self->{debug};
 
     return $a;
 }
@@ -2868,28 +2883,23 @@ sub do_update_media
 	$update .= " pool=$arg->{pool} " ;
     }
 
-    $arg->{volretention} ||= 0 ; 
-    if ($arg->{volretention}) {
+    if (defined $arg->{volretention}) {
 	$update .= " volretention=\"$arg->{volretention}\" " ;
     }
 
-    $arg->{voluseduration} ||= 0 ; 
-    if ($arg->{voluseduration}) {
+    if (defined $arg->{voluseduration}) {
 	$update .= " voluse=\"$arg->{voluseduration}\" " ;
     }
 
-    $arg->{maxvoljobs} ||= 0;
-    if ($arg->{maxvoljobs}) {
+    if (defined $arg->{maxvoljobs}) {
 	$update .= " maxvoljobs=$arg->{maxvoljobs} " ;
     }
     
-    $arg->{maxvolfiles} ||= 0;
-    if ($arg->{maxvolfiles}) {
+    if (defined $arg->{maxvolfiles}) {
 	$update .= " maxvolfiles=$arg->{maxvolfiles} " ;
     }    
 
-    $arg->{maxvolbytes} ||= 0;
-    if ($arg->{maxvolbytes}) {
+    if (defined $arg->{maxvolbytes}) {
 	$update .= " maxvolbytes=$arg->{maxvolbytes} " ;
     }    
 
@@ -2949,12 +2959,16 @@ sub get_job_log
 {
     my ($self) = @_;
 
-    my $arg = $self->get_form('jobid');
+    my $arg = $self->get_form('jobid', 'limit', 'offset');
     unless ($arg->{jobid}) {
 	return $self->error("Can't get jobid");
     }
 
-    my $t = CGI::param('time') || '';
+    if ($arg->{limit} == 100) {
+        $arg->{limit} = 1000;
+    }
+
+    my $t = CGI::param('time') || $self->{info}->{display_log_time} || '';
 
     my $query = "
 SELECT Job.Name as name, Client.Name as clientname
@@ -2975,7 +2989,9 @@ SELECT Time AS time, LogText AS log
     OR (Log.JobId = 0 AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
                       AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
        )
- ORDER BY LogId;
+ ORDER BY LogId
+ LIMIT $arg->{limit}
+ OFFSET $arg->{offset}
 ";
 
     my $log = $self->dbh_selectall_arrayref($query);
@@ -2995,6 +3011,8 @@ SELECT Time AS time, LogText AS log
 		     jobid => $arg->{jobid},
 		     name  => $row->{name},
 		     client => $row->{clientname},
+		     offset => $arg->{offset},
+		     limit  => $arg->{limit},
 		 }, 'display_log.tpl');
 }
 
@@ -3009,6 +3027,16 @@ sub label_barcodes
 	return $self->error("Can't find autochanger name");
     }
 
+    my $a = $self->ach_get($arg->{ach});
+    unless ($a) {
+	return $self->error("Can't find autochanger name in configuration");
+    } 
+
+    my $storage = $a->get_drive_name($arg->{drive});
+    unless ($storage) {
+	return $self->error("Can't get your drive name");
+    }
+
     my $slots = '';
     my $t = 300 ;
     if ($arg->{slots}) {
@@ -3019,12 +3047,27 @@ sub label_barcodes
     my $b = new Bconsole(pref => $self->{info}, timeout => $t,log_stdout => 1);
     print "<h1>This command can take long time, be patient...</h1>";
     print "<pre>" ;
-    $b->label_barcodes(storage => $arg->{ach},
+    $b->label_barcodes(storage => $storage,
 		       drive => $arg->{drive},
 		       pool  => 'Scratch',
 		       slots => $slots) ;
     $b->close();
     print "</pre>";
+
+    $self->dbh_do("
+  UPDATE Media 
+       SET LocationId =   (SELECT LocationId 
+                             FROM Location 
+                            WHERE Location = '$arg->{ach}'),
+
+           RecyclePoolId = PoolId
+
+     WHERE Media.PoolId = (SELECT PoolId 
+                             FROM Pool
+                            WHERE Name = 'Scratch')
+       AND (LocationId = 0 OR LocationId IS NULL)
+");
+
 }
 
 sub purge

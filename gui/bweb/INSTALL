@@ -4,9 +4,9 @@
 
 Bweb works well with 1.39 release or later.
 
-1) install perl lib
+1) install Perl lib
 2) copy your files
-3) intialise your configuration file
+3) initialize your configuration file
 4) do some sql stuff (for postgresql users)
 5) use the -n option on bconsole so that it works with Expect
 6) get bacula log more useful
@@ -14,16 +14,26 @@ Bweb works well with 1.39 release or later.
 8) using sudo with autochanger
 9) using bfileview.pl
 10) accessing to bweb
+11) setting mysql read-only account
+12) get more statistics
 
 ################ FILE COPY #####################################
- # you must get bweb cvs files
- cvs -d:pserver:anonymous@bacula.cvs.sourceforge.net:/cvsroot/bacula login 
- cvs -z3 -d:pserver:anonymous@bacula.cvs.sourceforge.net:/cvsroot/bacula co -P gui
- cd gui
+ # you must get bweb svn files
+ svn checkout https://bacula.svn.sourceforge.net/svnroot/bacula/trunk/gui/bweb bweb
 
  # or get them from the released tar files or from the apt or rpms.
 
- # first, copy the bweb perl library into your PERL5 INC path
+ #
+ # Once you have the gui directory loaded, follow the instructions below
+ #  or edit the environment variables in the file install_bweb
+ #  then execute it. install_web does everything to the next
+ #  set of #######'s.
+ #
+
+ # first, copy the bweb Perl library into your PERL5 INC path
+ perl Makefile.PL
+ make install
+ # or
  install -m 644 -o root -g root  bweb/lib/*.pm /usr/share/perl5
 
  # copy the bweb perl program to your cgi location
@@ -42,11 +52,11 @@ Bweb works well with 1.39 release or later.
 
  # copy the bweb graphics elements (bweb elements must reside in /bweb)
  mkdir /var/www/bweb
- install -m 644 -o root -g root  bweb/html/*.{js,png,css,gif,ico} /var/www/bweb
+ install -m 644 -o root -g root  bweb/html/*.{js,png,css,gif,ico,html} /var/www/bweb
 
  # done !
 
- WARNING : Your www-data user must be able to execute bconsole and able 
+ WARNING : Your www-data (or wwwrun on SuSE) user must be able to execute bconsole and able 
            to read the bconsole.conf file!
            You can create an bconsole group for that.
 
@@ -58,8 +68,8 @@ Simply use lang/fr/tpl/*.tpl files instead of tpl/*.tpl
 
  - perl modules
     - DBI (with mysql or postgresql support DBD::Pg and DBD::mysql)
-    - Gd::Graph
-    - Gd
+    - GD::Graph
+    - GD
     - HTML::Template
     - CGI
     - Expect
@@ -73,9 +83,31 @@ Simply use lang/fr/tpl/*.tpl files instead of tpl/*.tpl
  apt-get install libgd-graph-perl libhtml-template-perl libexpect-perl
  apt-get install libdbd-mysql-perl libdbd-pg-perl libdbi-perl libtime-modules-perl
 
+ Note: the best way to test if you have all the dependencies
+ fullfilled for Perl is to:
+  
+    cd /var/www/cgi-bin/bweb
+    ./bweb.pl 
+
+ you might also want to try:
+
+    ./bgraph.pl 
+
+ To make sure the graphing modules are loaded.  However, running it
+ will spray binary graphics data on your terminal.  Otherwise, you will
+ get an error.
+
+ That should show you if any of the pre-requisites are missing.
+ On SuSE 10.2, I was able to load all the appropriate modules via rpms,
+  with the exception of Expect and Time::ParseDate, which I loaded manually
+  using perl.
+
+  If you experience problems, always consult the Apache error_log
+  file.
+
 ################ APACHE CONFIGURATION ##########################
 
-It could be a good idea to protect your bweb installation.
+It could be a good idea to protect your bweb installation (optional).
 
 Put this in your httpd.conf, and add user with htpasswd
 
@@ -88,8 +120,20 @@ Put this in your httpd.conf, and add user with htpasswd
         Require valid-user
 </Directory>
 
+On SuSE 10.2, the following in /etc/apache2/default-server.conf works. 
+However, it is not secure:
+
+Directory "/srv/www/cgi-bin/bweb">
+ AllowOverride None
+ Options +ExecCGI -Includes
+ Order allow,deny
+ Allow from all
+</Directory>
+
 
 ################ CONFIGURATION #################################
+
+Note, this is automatically installed by the install_bweb script.
 
 /etc/bacula/bweb.conf looks like : (you can edit it inside bweb)
 $VAR1 = bless( {
@@ -133,23 +177,35 @@ $VAR1 = bless( {
 ################ BRESTORE ######################################
 
 If you want to use brestore with bweb, you must associate a mime type
-text/brestore with your brestore.pl.
+text/brestore with your brestore.pl, and you must install brestore.
+See gui/brestore/README for instructions on installing brestore.pl.
 
 ################ POSTGRESQL NOTES ##############################
 
 If you want to use PostgreSQL instead of MySQL, you must add
 a function to the PostgreSQL Bacula database to get Bweb to work.
 
-psql -u bacula bacula < script/bweb-postgresql.sql
+psql -U bacula bacula < script/bweb-postgresql.sql
+
+Tips: PL must be enable in your cluster, you can do this with postgres user
+postgres:~$ echo 'CREATE PROCEDURAL LANGUAGE plpgsql;' | psql bacula 
 
 ################ BCONSOLE NOTES ################################
 
 You must use bconsole without conio/readline support. For that, use
-the bconsole -n option.
+the bconsole -n option. This is done automatically with the standard
+configuration file.  In addition, please ensure that the binary
+bconsole file can be executed by your web server. It is normally
+located in /usr/bin/bconsole (or some such file), and must have
+modes 755 or it will not be executable by your web server.  The
+normal Bacula installation usually sets mode 750.
 
 ################ BACULA LOG ####################################
 
-To use Bweb log engine you MUST use catalog message type.
+If you want Bweb to be able to show listings of the Job output,
+you must add a "catalog = all, !skipped, !saved" to your
+messages resource in bacula-dir.conf and restart your Bacula 
+server.  This is shown below:
 
 Messages {
   Name = Standard
@@ -196,7 +252,7 @@ chown www-data /var/spool/bweb
 You have to remove "<!-- Remove this to activate bfileview" and "-->" from
 tpl/display_job_zoom.tpl.
 
-You must use brestore.pl -b to initialise the database, and
+You must use brestore.pl -b to initialize the database, and
 you can use bfileview.pl mode=batch jobid=xxx where=/ to compute tree size.
 
 At this time, it's a good idea to schedule brestore.pl -b after your 
@@ -216,9 +272,42 @@ To upgrade from an old installation, you can use :
 ALTER TABLE brestore_pathvisibility ADD Size int8;
 ALTER TABLE brestore_pathvisibility ADD Files int4;
 
-################ ACCESSING TO BWEB ###############################
+################ ACCESSING TO BWEB ############################
 
 Now, you are able to launch firefox/mozilla and go on
 http://your-server/bweb
+
+################ SETTING MYSQL ACCOUNT ########################
+
+At this time, Bweb needs a write access to :
+- Location 
+- LocationLog
+- Media::LocationId
+- Media::Comment
+- Media::RecyclePoolId (it will change soon)
+
+If your doesn't use Location feature, you can use ReadOnly access
+for all tables, or setup something like :
+
+GRANT SELECT ON bacula.* TO 'bweb'@'%'  IDENTIFIED BY 'password';
+GRANT INSERT,UPDATE,DELETE ON bacula.Location 
+  TO 'bweb'@'%' IDENTIFIED BY 'password';
+GRANT INSERT,UPDATE,DELETE ON bacula.LocationLog 
+  TO 'bweb'@'%' IDENTIFIED BY 'password';
+GRANT UPDATE (LocationId,Comment,RecyclePoolId) ON bacula.Media 
+  TO 'bweb'@'%'  IDENTIFIED BY 'password';
+
+################ GET MORE STATISTICS ###########################
+
+You keep Jobs informations across retention into a job_old table.
+You have to setup stat_job_table = job_old in bweb configuration.
+
+CREATE TABLE job_old (LIKE Job);
+
+And run this on crontab when you want :
+INSERT INTO job_old 
+  (SELECT * FROM Job WHERE JobId NOT IN (SELECT JobId FROM job_old) );
+
+################################################################
 
 Enjoy !
