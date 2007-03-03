@@ -1,6 +1,9 @@
               Technical notes on version 2.0
 
 General:
+02Mar07
+kes  Add Client Connect Wait to Storage daemon to permit users to
+     modify the time the SD waits for a FD connection.
 28Feb07 
 kes  Correct typeo in var.c patch.
 kes  Apply Command ACL filter to JobId list in restore command.
