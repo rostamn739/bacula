@@ -1,5 +1,56 @@
+bweb (2.0.3-2) stable; urgency=low
+
+  * Add display_log_time option to view timestamp in display_log
+  * Add db_size information (for mysql5 and postgresql users)
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Thu,  01 Feb 2007 01:10:47 +0000
+
+bweb (2.0.3-1) stable; urgency=low
+
+  * Add limit and offset options to log view (for big log)
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Wed,  28 Feb 2007 21:10:47 +0000
+
+bweb (2.0.2-3) stable; urgency=low
+
+  * Add new stat_job_table option
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Sun,  25 Feb 2007 11:10:47 +0000
+
+bweb (2.0.2-2) stable; urgency=low
+
+  * fix brestore batch mode
+  * add EndTime to display_job in bweb
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Wed,  14 Feb 2007 11:10:47 +0000
+
+bweb (2.0.2-1) stable; urgency=low
+
+  * fix utf8 bug in brestore
+  * fix dependency
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Tue,  06 Feb 2007 21:10:47 +0000
+	
+bweb (2.0.1-2) stable; urgency=low
+
+  * fv_write_path is optionnal now
+  * fix /etc/bacula permissions
+  * fix label_barcodes drive bug 
+  * add spanish translation
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Fri,  19 Jan 2007 21:10:47 +0000
+
+bweb (2.0.1-1) stable; urgency=low
+
+  * Do nothing if destination string is empty
+  * Fix warning message when using with bweb http connector
+  * Add CVS version number to UA brestore
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Fri,  12 Jan 2007 22:54:47 +0000
+
 bweb (2.0.0-2) stable; urgency=low
 
+  * Depends: DBD-Pg or DBD-Mysql 
   * Add french tpl in /usr/share/bweb/fr/tpl
   * Add favicon.ico
   * Change /etc/bacula/bweb.conf initialisation
