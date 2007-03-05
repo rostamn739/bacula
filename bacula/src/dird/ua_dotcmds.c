@@ -111,6 +111,11 @@ int do_a_dot_command(UAContext *ua, const char *cmd)
       if (strncasecmp(ua->argk[0],  _(commands[i].key), len) == 0) {
          bool gui = ua->gui;
          ua->gui = true;
+         /* Check if command permitted, but "quit" is always OK */
+         if (strcmp(ua->argk[0], NT_(".quit")) != 0 &&
+             !acl_access_ok(ua, Command_ACL, ua->argk[0], len)) {
+            break;
+         }
          stat = (*commands[i].func)(ua, cmd);   /* go execute command */
          ua->gui = gui;
          found = true;
@@ -118,7 +123,7 @@ int do_a_dot_command(UAContext *ua, const char *cmd)
       }
    }
    if (!found) {
-      pm_strcat(ua->UA_sock->msg, _(": is an invalid command\n"));
+      pm_strcat(ua->UA_sock->msg, _(": is an invalid command.\n"));
       ua->UA_sock->msglen = strlen(ua->UA_sock->msg);
       bnet_send(ua->UA_sock);
    }

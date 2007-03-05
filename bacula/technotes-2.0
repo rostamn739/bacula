@@ -1,6 +1,14 @@
               Technical notes on version 2.0
 
 General:
+5Mar07
+kes  File migrate bug with Pool Occupancy using mediaid instead
+     of jobids.  Fixes bug #795.
+kes  Fix orphaned buffers in filed backup and verify due to
+     crypto buffers not freed during errors.  Fixes bug #789.
+04Mar07
+kes  Add smartctl call to bacula-sd.conf as an example of getting
+     tape alert info.
 02Mar07
 kes  Add Client Connect Wait to Storage daemon to permit users to
      modify the time the SD waits for a FD connection.
