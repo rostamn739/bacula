@@ -1,7 +1,9 @@
               Technical notes on version 2.0
 
 General:
-5Mar07
+07Mar07
+kes  Add updated nagios plugin supplied by Christian Masopust.
+05Mar07
 kes  File migrate bug with Pool Occupancy using mediaid instead
      of jobids.  Fixes bug #795.
 kes  Fix orphaned buffers in filed backup and verify due to
