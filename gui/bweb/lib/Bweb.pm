@@ -3217,6 +3217,10 @@ sub do_update_media
 	$update .= " maxvolbytes=$arg->{maxvolbytes} " ;
     }    
 
+    if (defined $arg->{poolrecycle}) {
+	$update .= " recyclepool=\"$arg->{poolrecycle}\" " ;
+    }        
+    
     my $b = $self->get_bconsole();
 
     $self->display({
@@ -3233,9 +3237,6 @@ sub do_update_media
     if ($loc) {
 	$loc = $self->dbh_quote($loc); # is checked by db
 	push @q, "LocationId=(SELECT LocationId FROM Location WHERE Location=$loc)";
-    }
-    if ($arg->{poolrecycle}) {
-	push @q, "RecyclePoolId=(SELECT PoolId FROM Pool WHERE Name='$arg->{poolrecycle}')";
     }
     if (!$arg->{qcomment}) {
 	$arg->{qcomment} = "''";
@@ -3360,20 +3361,6 @@ sub label_barcodes
 	$t += 60*scalar( @{ $arg->{slots} }) ;
     }
 
-    $self->dbh_do("
-  UPDATE Media 
-       SET LocationId =   (SELECT LocationId 
-                             FROM Location 
-                            WHERE Location = '$arg->{ach}'),
-
-           RecyclePoolId = (SELECT PoolId 
-                             FROM Pool
-                            WHERE Name = 'Scratch')
-
-     WHERE (LocationId = 0 OR LocationId IS NULL)
-       $slots_sql
-");
-
     my $b = new Bconsole(pref => $self->{info}, timeout => $t,log_stdout => 1);
     print "<h1>This command can take long time, be patient...</h1>";
     print "<pre>" ;
@@ -3383,6 +3370,17 @@ sub label_barcodes
 		       slots => $slots) ;
     $b->close();
     print "</pre>";
+
+    $self->dbh_do("
+  UPDATE Media 
+       SET LocationId =   (SELECT LocationId 
+                             FROM Location 
+                            WHERE Location = '$arg->{ach}')
+
+     WHERE (LocationId = 0 OR LocationId IS NULL)
+       $slots_sql
+");
+
 }
 
 sub purge

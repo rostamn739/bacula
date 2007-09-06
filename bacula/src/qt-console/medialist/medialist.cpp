@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2007-2007 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -114,8 +114,8 @@ void MediaList::populateTree()
          " Media.Enabled AS enabled, Pol.Name AS RecyclePool,"
          " Media.LastWritten AS LastWritten"
          " FROM Media"
-         " LEFT OUTER JOIN Pool ON (Media.PoolId=Pool.PoolId)"
-         " LEFT OUTER JOIN Pool AS Pol ON (Media.recyclepoolid=Pol.PoolId)"
+         " JOIN Pool ON (Media.PoolId=Pool.PoolId)"
+         " LEFT OUTER JOIN Pool AS Pol ON (Media.RecyclePoolId=Pol.PoolId)"
          " WHERE";
       query += " Pool.Name='" + pool_listItem + "'";
       query += " ORDER BY Media";

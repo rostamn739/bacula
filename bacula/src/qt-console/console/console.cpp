@@ -34,7 +34,6 @@
  *
  */ 
 
-//#include <QAbstractEventDispatcher>
 #include "bat.h"
 #include "console.h"
 #include "restore.h"

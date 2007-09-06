@@ -631,9 +631,6 @@ extern int thr_setconcurrency(int);
 extern "C" int getdomainname(char *name, int len);
 #endif
 
-#ifdef HAVE_OSF1_OS
-extern "C" int mknod ( const char *path, int mode, dev_t device );
-#endif
 
 
 #if defined(HAVE_WIN32)
@@ -673,9 +670,9 @@ extern "C" int setdomainname(char *name, int namelen);
 
 
 #ifdef HAVE_OSF1_OS
-#undef HAVE_CHFLAGS  /* chflags is incorrectly detected */
 extern "C" int fchdir(int filedes);
 extern "C" long gethostid(void);
+extern "C" int mknod ( const char *path, int mode, dev_t device );
 #endif
 
 

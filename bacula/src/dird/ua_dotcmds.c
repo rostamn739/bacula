@@ -468,13 +468,17 @@ static int sql_handler(void *ctx, int num_field, char **row)
 
    for (int i=0; num_field--; i++) {
       if (i == 0) {
-         pm_strcpy(rows, row[0]);
+         pm_strcpy(rows, NPRT(row[0]));
       } else {
-         pm_strcat(rows, row[i]);
+         pm_strcat(rows, NPRT(row[i]));
       }
       pm_strcat(rows, "\t");
    }
-   ua->send_msg("%s", rows.c_str());
+   if (!rows.c_str() || !*rows.c_str()) {
+      ua->send_msg("\t");
+   } else {
+      ua->send_msg("%s", rows.c_str());
+   }
    return 0;
 }
 
