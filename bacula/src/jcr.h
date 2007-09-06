@@ -188,7 +188,6 @@ public:
    B_DB *db;                          /* database pointer */
    B_DB *db_batch;                    /* database pointer for batch insert */
    ATTR_DBR *ar;                      /* DB attribute record */
-   guid_list *id_list;                /* User/group id to name list */
 
    /* Daemon specific part of JCR */
    /* This should be empty in the library */

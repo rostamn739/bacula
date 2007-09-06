@@ -39,8 +39,9 @@ FIND_OBJS = \
 	$(OBJDIR)/find.o \
 	$(OBJDIR)/find_one.o \
 	$(OBJDIR)/fstype.o \
-	$(OBJDIR)/mkpath.o \
-	$(OBJDIR)/match.o
+	$(OBJDIR)/makepath.o \
+	$(OBJDIR)/match.o \
+	$(OBJDIR)/save-cwd.o
 
 LIB_OBJS = \
 	$(OBJDIR)/address_conf.o \
@@ -65,8 +66,8 @@ LIB_OBJS = \
 	$(OBJDIR)/daemon.o \
 	$(OBJDIR)/dlist.o \
 	$(OBJDIR)/edit.o \
+	$(OBJDIR)/enh_fnmatch.o \
 	$(OBJDIR)/fnmatch.o \
-	$(OBJDIR)/guid_to_name.o \
 	$(OBJDIR)/hmac.o \
 	$(OBJDIR)/htable.o \
 	$(OBJDIR)/idcache.o \

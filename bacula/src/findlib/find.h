@@ -55,13 +55,15 @@ struct utimbuf {
 #define MODE_RALL (S_IRUSR|S_IRGRP|S_IROTH)
 
 #include "lib/fnmatch.h"
-// #include "lib/enh_fnmatch.h"
+#include "lib/enh_fnmatch.h"
 
 #ifndef HAVE_REGEX_H
 #include "lib/bregex.h"
 #else
 #include <regex.h>
 #endif
+
+#include "save-cwd.h"
 
 #ifndef HAVE_READDIR_R
 int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);

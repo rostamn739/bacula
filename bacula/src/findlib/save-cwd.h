@@ -1,14 +1,14 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2007 Kern Sibbald
+   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version two of the GNU General Public
-   License as published by the Free Software Foundation, which is 
-   listed in the file LICENSE.
+   License as published by the Free Software Foundation and included
+   in the file LICENSE.
 
    This program is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,24 +25,21 @@
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
 */
-/*
- * Written by Kern Sibbald, July 2007 to replace idcache.c
- * 
- *  Program to convert uid and gid into names, and cache the results
- *   for preformance reasons.
- *
- *  Version $Id$
- */
 
-class guid_list {
-public:
-   dlist *uid_list;
-   dlist *gid_list;
 
-   char *uid_to_name(uid_t uid, char *name, int maxlen);
-   char *gid_to_name(gid_t gid, char *name, int maxlen);
-};
+#ifndef SAVE_CWD_H
+# define SAVE_CWD_H 1
 
-guid_list *new_guid_list();
-void free_guid_list(guid_list *list);
+struct saved_cwd
+  {
+    int do_chdir;
+    int desc;
+    char *name;
+  };
 
+int save_cwd(struct saved_cwd *cwd);
+int restore_cwd(const struct saved_cwd *cwd, const char *dest,
+                         const char *from);
+void free_cwd(struct saved_cwd *cwd);
+
+#endif
