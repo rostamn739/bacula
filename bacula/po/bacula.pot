@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-08-30 17:34+0200\n"
+"POT-Creation-Date: 2007-09-10 14:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -464,15 +464,15 @@ msgstr ""
 msgid "Backup OK -- with warnings"
 msgstr ""
 
-#: src/dird/backup.c:380 src/stored/bscan.c:1124
+#: src/dird/backup.c:380 src/stored/bscan.c:1126
 msgid "Backup OK"
 msgstr ""
 
-#: src/dird/backup.c:385 src/stored/bscan.c:1128
+#: src/dird/backup.c:385 src/stored/bscan.c:1130
 msgid "*** Backup Error ***"
 msgstr ""
 
-#: src/dird/backup.c:395 src/stored/bscan.c:1131
+#: src/dird/backup.c:395 src/stored/bscan.c:1133
 msgid "Backup Canceled"
 msgstr ""
 
@@ -2909,7 +2909,7 @@ msgstr ""
 msgid "Job DiffPool override"
 msgstr ""
 
-#: src/dird/job.c:618 src/stored/bscan.c:972
+#: src/dird/job.c:618 src/stored/bscan.c:974
 #, c-format
 msgid "Could not create Client record. ERR=%s\n"
 msgstr ""
@@ -5825,7 +5825,7 @@ msgid "Logic error: output file should not be open\n"
 msgstr ""
 
 #: src/filed/restore.c:326 src/filed/verify_vol.c:151
-#: src/stored/bextract.c:302 src/stored/bls.c:383 src/stored/bscan.c:663
+#: src/stored/bextract.c:302 src/stored/bls.c:383 src/stored/bscan.c:665
 #, c-format
 msgid "Record header file index %ld not equal record index %ld\n"
 msgstr ""
@@ -7152,7 +7152,7 @@ msgstr ""
 msgid "error fetching currval: %s\n"
 msgstr ""
 
-#: src/cats/postgresql.c:682 src/cats/postgresql.c:729
+#: src/cats/postgresql.c:684 src/cats/postgresql.c:731
 #, c-format
 msgid "error ending batch mode: %s\n"
 msgstr ""
@@ -7758,7 +7758,7 @@ msgstr ""
 msgid "%u Jobs copied. %u records copied.\n"
 msgstr ""
 
-#: src/stored/bcopy.c:224 src/stored/bscan.c:402
+#: src/stored/bcopy.c:224 src/stored/bscan.c:403
 #, c-format
 msgid "Record: SessId=%u SessTim=%u FileIndex=%d Stream=%d len=%u\n"
 msgstr ""
@@ -7786,7 +7786,7 @@ msgid "EOT label not copied.\n"
 msgstr ""
 
 #: src/stored/bcopy.c:305 src/stored/bextract.c:489 src/stored/bls.c:452
-#: src/stored/bscan.c:1283 src/stored/btape.c:2685
+#: src/stored/bscan.c:1286 src/stored/btape.c:2685
 #, c-format
 msgid "Mount Volume \"%s\" on device %s and press return when ready: "
 msgstr ""
@@ -7850,7 +7850,7 @@ msgstr ""
 msgid "Logic error output file should be open but is not.\n"
 msgstr ""
 
-#: src/stored/bextract.c:298 src/stored/bls.c:376 src/stored/bscan.c:659
+#: src/stored/bextract.c:298 src/stored/bls.c:376 src/stored/bscan.c:661
 msgid "Cannot continue.\n"
 msgstr ""
 
@@ -8633,7 +8633,7 @@ msgstr ""
 msgid "Working Directory: %s is not a directory. Cannot continue.\n"
 msgstr ""
 
-#: src/stored/bscan.c:275 src/stored/bscan.c:349
+#: src/stored/bscan.c:275 src/stored/bscan.c:350
 #, c-format
 msgid "First Volume Size = %sn"
 msgstr ""
@@ -8652,249 +8652,249 @@ msgstr ""
 msgid "Create JobMedia for Job %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:331
+#: src/stored/bscan.c:332
 #, c-format
 msgid "Could not create JobMedia record for Volume=%s Job=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:394
+#: src/stored/bscan.c:395
 #, c-format
 msgid "done: %d%%\n"
 msgstr ""
 
-#: src/stored/bscan.c:418
+#: src/stored/bscan.c:419
 msgid "Volume is prelabeled. This tape cannot be scanned.\n"
 msgstr ""
 
-#: src/stored/bscan.c:430
+#: src/stored/bscan.c:431
 #, c-format
 msgid "Pool record for %s found in DB.\n"
 msgstr ""
 
-#: src/stored/bscan.c:434
+#: src/stored/bscan.c:435
 #, c-format
 msgid "VOL_LABEL: Pool record not found for Pool: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:440
+#: src/stored/bscan.c:441
 #, c-format
 msgid "VOL_LABEL: PoolType mismatch. DB=%s Vol=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:444
+#: src/stored/bscan.c:445
 #, c-format
 msgid "Pool type \"%s\" is OK.\n"
 msgstr ""
 
-#: src/stored/bscan.c:454
+#: src/stored/bscan.c:455
 #, c-format
 msgid "Media record for %s found in DB.\n"
 msgstr ""
 
-#: src/stored/bscan.c:461
+#: src/stored/bscan.c:462
 #, c-format
 msgid "VOL_LABEL: Media record not found for Volume: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:468
+#: src/stored/bscan.c:469
 #, c-format
 msgid "VOL_LABEL: MediaType mismatch. DB=%s Vol=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:472
+#: src/stored/bscan.c:473
 #, c-format
 msgid "Media type \"%s\" is OK.\n"
 msgstr ""
 
-#: src/stored/bscan.c:481
+#: src/stored/bscan.c:483
 #, c-format
 msgid "VOL_LABEL: OK for Volume: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:488
+#: src/stored/bscan.c:490
 #, c-format
 msgid "%d \"errors\" ignored before first Start of Session record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:499
+#: src/stored/bscan.c:501
 #, c-format
 msgid "SOS_LABEL: Found Job record for JobId: %d\n"
 msgstr ""
 
-#: src/stored/bscan.c:504
+#: src/stored/bscan.c:506
 #, c-format
 msgid "SOS_LABEL: Job record not found for JobId: %d\n"
 msgstr ""
 
-#: src/stored/bscan.c:544
+#: src/stored/bscan.c:546
 #, c-format
 msgid "SOS_LABEL: VolSessId mismatch for JobId=%u. DB=%d Vol=%d\n"
 msgstr ""
 
-#: src/stored/bscan.c:550
+#: src/stored/bscan.c:552
 #, c-format
 msgid "SOS_LABEL: VolSessTime mismatch for JobId=%u. DB=%d Vol=%d\n"
 msgstr ""
 
-#: src/stored/bscan.c:556
+#: src/stored/bscan.c:558
 #, c-format
 msgid "SOS_LABEL: PoolId mismatch for JobId=%u. DB=%d Vol=%d\n"
 msgstr ""
 
-#: src/stored/bscan.c:574 src/stored/bscan.c:1077
+#: src/stored/bscan.c:576 src/stored/bscan.c:1079
 #, c-format
 msgid "Could not find SessId=%d SessTime=%d for EOS record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:618
+#: src/stored/bscan.c:620
 #, c-format
 msgid "Could not update job record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:629
+#: src/stored/bscan.c:631
 #, c-format
 msgid "End of all Volumes. VolFiles=%u VolBlocks=%u VolBytes=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:641
+#: src/stored/bscan.c:643
 #, c-format
 msgid "Could not find Job for SessId=%d SessTime=%d record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:677
+#: src/stored/bscan.c:679
 #, c-format
 msgid "%s file records. At file:blk=%s:%s bytes=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:731
+#: src/stored/bscan.c:733
 #, c-format
 msgid "Got MD5 record: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:739
+#: src/stored/bscan.c:741
 #, c-format
 msgid "Got SHA1 record: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:747
+#: src/stored/bscan.c:749
 #, c-format
 msgid "Got SHA256 record: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:755
+#: src/stored/bscan.c:757
 #, c-format
 msgid "Got SHA512 record: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:763 src/stored/bscan.c:770
+#: src/stored/bscan.c:765 src/stored/bscan.c:772
 msgid "Got signed digest record\n"
 msgstr ""
 
-#: src/stored/bscan.c:776
+#: src/stored/bscan.c:778
 #, c-format
 msgid "Got Prog Names Stream: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:782
+#: src/stored/bscan.c:784
 msgid "Got Prog Data Stream record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:792
+#: src/stored/bscan.c:794
 #, c-format
 msgid "Unknown stream type!!! stream=%d len=%i\n"
 msgstr ""
 
-#: src/stored/bscan.c:856
+#: src/stored/bscan.c:858
 #, c-format
 msgid "Could not create File Attributes record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:862
+#: src/stored/bscan.c:864
 #, c-format
 msgid "Created File record: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:906
+#: src/stored/bscan.c:908
 #, c-format
 msgid "Could not create media record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:910 src/stored/bscan.c:931
+#: src/stored/bscan.c:912 src/stored/bscan.c:933
 #, c-format
 msgid "Could not update media record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:914
+#: src/stored/bscan.c:916
 #, c-format
 msgid "Created Media record for Volume: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:935
+#: src/stored/bscan.c:937
 #, c-format
 msgid "Updated Media record at end of Volume: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:952
+#: src/stored/bscan.c:954
 #, c-format
 msgid "Could not create pool record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:956
+#: src/stored/bscan.c:958
 #, c-format
 msgid "Created Pool record for Pool: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:976
+#: src/stored/bscan.c:978
 #, c-format
 msgid "Created Client record for Client: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:993
+#: src/stored/bscan.c:995
 #, c-format
 msgid "Fileset \"%s\" already exists.\n"
 msgstr ""
 
-#: src/stored/bscan.c:997
+#: src/stored/bscan.c:999
 #, c-format
 msgid "Could not create FileSet record \"%s\". ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1002
+#: src/stored/bscan.c:1004
 #, c-format
 msgid "Created FileSet record \"%s\"\n"
 msgstr ""
 
-#: src/stored/bscan.c:1049
+#: src/stored/bscan.c:1051
 #, c-format
 msgid "Could not create JobId record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1055
+#: src/stored/bscan.c:1057
 #, c-format
 msgid "Could not update job start record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1058
+#: src/stored/bscan.c:1060
 #, c-format
 msgid "Created new JobId=%u record for original JobId=%u\n"
 msgstr ""
 
-#: src/stored/bscan.c:1108
+#: src/stored/bscan.c:1110
 #, c-format
 msgid "Could not update JobId=%u record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1113
+#: src/stored/bscan.c:1115
 #, c-format
 msgid "Updated Job termination record for JobId=%u Level=%s TermStat=%c\n"
 msgstr ""
 
-#: src/stored/bscan.c:1135
+#: src/stored/bscan.c:1137
 #, c-format
 msgid "Job Termination code: %d"
 msgstr ""
 
-#: src/stored/bscan.c:1140
+#: src/stored/bscan.c:1142
 #, c-format
 msgid ""
 "%s\n"
@@ -8914,27 +8914,27 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/stored/bscan.c:1197
+#: src/stored/bscan.c:1200
 #, c-format
 msgid "Could not create JobMedia record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1201
+#: src/stored/bscan.c:1204
 #, c-format
 msgid "Created JobMedia record JobId %d, MediaId %d\n"
 msgstr ""
 
-#: src/stored/bscan.c:1217
+#: src/stored/bscan.c:1220
 #, c-format
 msgid "Could not find SessId=%d SessTime=%d for MD5/SHA1 record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:1231
+#: src/stored/bscan.c:1234
 #, c-format
 msgid "Could not add MD5/SHA1 to File record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1236
+#: src/stored/bscan.c:1239
 msgid "Updated MD5/SHA1 record\n"
 msgstr ""
 
@@ -11412,8 +11412,8 @@ msgstr ""
 msgid "Could not ready device %s for append.\n"
 msgstr ""
 
-#: src/stored/acquire.c:506 src/stored/block.c:367 src/stored/block.c:713
-#: src/stored/block.c:788
+#: src/stored/acquire.c:506 src/stored/block.c:367 src/stored/block.c:714
+#: src/stored/block.c:789
 #, c-format
 msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
 msgstr ""
@@ -11565,110 +11565,110 @@ msgstr ""
 msgid "End of Volume \"%s\" at %u:%u on device %s. Write of %u bytes got %d.\n"
 msgstr ""
 
-#: src/stored/block.c:650 src/stored/block.c:656
+#: src/stored/block.c:651 src/stored/block.c:657
 #, c-format
 msgid "Backspace file at EOT failed. ERR=%s\n"
 msgstr ""
 
-#: src/stored/block.c:663
+#: src/stored/block.c:664
 #, c-format
 msgid "Backspace record at EOT failed. ERR=%s\n"
 msgstr ""
 
-#: src/stored/block.c:680
+#: src/stored/block.c:681
 #, c-format
 msgid "Re-read last block at EOT failed. ERR=%s"
 msgstr ""
 
-#: src/stored/block.c:690
+#: src/stored/block.c:691
 #, c-format
 msgid ""
 "Re-read of last block OK, but block numbers differ. Last block=%u Current "
 "block=%u.\n"
 msgstr ""
 
-#: src/stored/block.c:693
+#: src/stored/block.c:694
 msgid "Re-read of last block succeeded.\n"
 msgstr ""
 
-#: src/stored/block.c:721
+#: src/stored/block.c:722
 #, c-format
 msgid ""
 "Error writing final EOF to tape. This Volume may not be readable.\n"
 "%s"
 msgstr ""
 
-#: src/stored/block.c:735
+#: src/stored/block.c:736
 #, c-format
 msgid ""
 "Error writing final part to DVD. This Volume may not be readable.\n"
 "%s"
 msgstr ""
 
-#: src/stored/block.c:837
+#: src/stored/block.c:838
 #, c-format
 msgid ""
 "Error while writing, current part number is less than the total number of "
 "parts (%d/%d, device=%s)\n"
 msgstr ""
 
-#: src/stored/block.c:845
+#: src/stored/block.c:846
 #, c-format
 msgid "Unable to open device next part %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/block.c:865
+#: src/stored/block.c:866
 #, c-format
 msgid ""
 "End of Volume \"%s\" at %u:%u on device %s (part_size=%s, free_space=%s, "
 "free_space_errno=%d, errmsg=%s).\n"
 msgstr ""
 
-#: src/stored/block.c:878
+#: src/stored/block.c:879
 #, c-format
 msgid ""
 "End of Volume \"%s\" at %u:%u on device %s (part_size=%s, free_space=%s, "
 "free_space_errno=%d).\n"
 msgstr ""
 
-#: src/stored/block.c:934
+#: src/stored/block.c:935
 #, c-format
 msgid "Block buffer size looping problem on device %s\n"
 msgstr ""
 
-#: src/stored/block.c:962
+#: src/stored/block.c:963
 #, c-format
 msgid "Unable to open device part=%d %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/block.c:988
+#: src/stored/block.c:989
 #, c-format
 msgid "Read error on fd=%d at file:blk %u:%u on device %s. ERR=%s.\n"
 msgstr ""
 
-#: src/stored/block.c:1001
+#: src/stored/block.c:1002
 #, c-format
 msgid "Read zero bytes at %u:%u on device %s.\n"
 msgstr ""
 
-#: src/stored/block.c:1014
+#: src/stored/block.c:1015
 #, c-format
 msgid ""
 "Volume data error at %u:%u! Very short block of %d bytes on device %s "
 "discarded.\n"
 msgstr ""
 
-#: src/stored/block.c:1039
+#: src/stored/block.c:1040
 #, c-format
 msgid "Block length %u is greater than buffer %u. Attempting recovery.\n"
 msgstr ""
 
-#: src/stored/block.c:1058
+#: src/stored/block.c:1059
 #, c-format
 msgid "Setting block buffer size to %u bytes.\n"
 msgstr ""
 
-#: src/stored/block.c:1073
+#: src/stored/block.c:1074
 #, c-format
 msgid ""
 "Volume data error at %u:%u! Short block of %d bytes on device %s discarded.\n"
