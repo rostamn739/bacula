@@ -23,6 +23,8 @@ Version 2.2.3 is a critical bug fix release to version 2.2.2
 - Apply Martin Simmons patch that should turn off the new API usage
   when batch insert is turned off allowing building on older
   PostgreSQLs.
+- Note, you need GTK >= 2.10 to be able to link the Tray Monitor 
+  program.
 
 Version 2.2.2 is a minor bug fix release to 2.2.1
 - Detect if new PosgreSQL batch insert API is present.
