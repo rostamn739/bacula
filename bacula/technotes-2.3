@@ -1,6 +1,52 @@
               Technical notes on version 2.3
 
 General:
+12Sep07
+kes  Fix migration code to get correct Volume name with multiple volumes 
+     by skipping |.  Fixes bug #936.
+kes  Implement patch supplied by Landon to fix bug #944 where using
+     TLS with bconsole uses 99+% of the CPU.
+kes  Note, you need GTK >= 2.10 to be able to link the Tray Monitor
+     program.
+kes  Move patches into patches directory.
+11Sep07 
+ebl  Fix bug #946 about "bacula-dir -t" witch doesn't works
+     as expected.
+09Sep07 
+ebl  Using "m" in bconsole will show messages like before,
+     and not memory usage.
+kes  Fix bug #935, and probably also bug #903 where files were not
+     restored. MediaId was not properly set in JobMedia record after
+     a Volume change.
+08Sep07
+kes  Suppress chown and chmod error messages if the FD is not running
+     as root.
+07Sep07
+kes  Apply Martin Simmons patch that should turn off the new API usage
+     when batch insert is turned off allowing building on older
+     PostgreSQLs.
+kes  Add ./configure search in qwt-qt4 for qwt package
+05Sep07
+kes  Bacula is now free of 3rd party GPL copyrighted code!
+kes  Remove idcache.c 
+kes  Add guid_to_name.c/h which replace idcache.
+kes  Remove enh_fnmatch.c.  Make code that references it use fnmatch.c
+04Sep07
+ebl  Detect if new PosgreSQL batch insert API is present.
+kes  Correct incorrect mempool call causing Director crash.
+sb   Update spec files for 2.2.1 release
+03Sep07
+kes  Fix memory pool call in ua_output.c. bug #934.
+kes  Replace fnmatch.c and fnmatch.h by modified BSD versions.
+     Add test program to fnmatch.c
+02Sep07
+kes  Integrate patch to README.vc8 from 
+     Hederer Jean-Sébastien <hedererjs@asperience.fr, had to manually
+     edit it to get it into Unix patch format.
+kes  Implement mkpath.c to replace old FSF makepath.c
+01Sep07
+kes  Implement savecwd.h and savecwd.c. Remove FSF versions.
+
 Release Version 2.2.1
 30Aug07
 kes  Update POTFILES.in
