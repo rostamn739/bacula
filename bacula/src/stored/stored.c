@@ -534,6 +534,7 @@ void terminate_stored(int sig)
    JCR *jcr;
 
    if (in_here) {                     /* prevent loops */
+      bmicrosleep(2, 0);              /* yield */
       exit(1);
    }
    in_here = true;
@@ -600,10 +601,10 @@ void terminate_stored(int sig)
    if (debug_level > 10) {
       print_memory_pool_stats();
    }
-   term_reservations_lock();
    term_msg();
    cleanup_crypto();
    free_volume_list();
+   term_reservations_lock();
    close_memory_pool();
 
    sm_dump(false);                    /* dump orphaned buffers */

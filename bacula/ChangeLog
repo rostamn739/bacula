@@ -1,6 +1,55 @@
               Technical notes on version 2.2.x
 
 General:
+Release Version 2.2.4
+14Sep07
+kes  Increase size of name string when FD making connection to SD.
+     May fix bug #953.
+13Sep07
+kes  Add code to try to fix bug #908.
+kes  Add waits to multiple exit detection code to try to force pid
+     file to always be deleted.
+kes  Restore good dev.tar.gz to rescue set appropriate binary property.
+     This fixes bug #950.
+kes  Fix seg fault in error exit of acquire_for_read after unsuccessfully
+     trying to switch drives by checking for blocking before unblocking.
+     Fixes bug #906.
+kes  Cancel storage daemon in all cases where FD reports error. This
+     should fix virtually all cases of bug #920.
+12Sep07
+kes  Fix error message that was clobbered when Dir tells SD it does not
+     have write permission on Volume.  This should fix a minor point
+     in bug #942, but not the main problem.
+kes  Add code to cancel job in SD if FD connection fails. This should
+     fix bug #920.
+kes  Add code in FD exit to prevent loops and a crash on FreeBSD.
+kes  Fix migration code to get correct Volume name with multiple volumes 
+     by skipping |.  Fixes bug #936.
+kes  Implement patch supplied by Landon to fix bug #944 where using
+     TLS with bconsole uses 99+% of the CPU.
+kes  Note, you need GTK >= 2.10 to be able to link the Tray Monitor
+     program.
+kes  Move patches into patches directory.
+11Sep07 
+ebl  Fix bug #946 about "bacula-dir -t" which doesn't works
+     as expected.
+09Sep07 
+ebl  Using "m" in bconsole will show messages like before,
+     and not memory usage.
+
+Release Version 2.2.3
+kes  Note, you need GTK >= 2.10 to be able to link the Tray Monitor
+     program.
+09Sep07
+kes  Fix bug #935, and probably also bug #903 where files were not
+     restored. MediaId was not properly set in JobMedia record after 
+     a Volume change.
+07Sep07
+kes  Add ./configure search in qwt-qt4 for qwt package
+kes  Apply Martin Simmons patch that should turn off the new API usage
+     when batch insert is turned off allowing building on older
+     PostgreSQLs.
+
 Release Version 2.2.2
 04Sep07
 ebl  Detect if new PosgreSQL batch insert API is present.

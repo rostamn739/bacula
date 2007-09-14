@@ -246,6 +246,10 @@ void restore_cleanup(JCR *jcr, int TermCode)
       jcr->unlink_bsr = false;
    }
 
+   if (job_canceled(jcr)) {
+      cancel_storage_daemon_job(jcr);
+   }  
+
    switch (TermCode) {
    case JS_Terminated:
       if (jcr->ExpectedFiles > jcr->jr.JobFiles) {
