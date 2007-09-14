@@ -19,7 +19,7 @@ Director {                            # define myself
   WorkingDirectory = "@working_dir@"
   PidDirectory = "@piddir@"
   SubSysDirectory = "@subsysdir@"
-  Maximum Concurrent Jobs = 4
+  Maximum Concurrent Jobs = 10
   Password = "pNvX1WiXnwv2C/F7E52LGvw6rKjbbPvu2kyuPa9pVaL3"         # Console password
   Messages = Daemon
 }
@@ -36,9 +36,46 @@ Job {
   Messages = Standard
   Pool = Default
   Write Bootstrap = "@working_dir@/NightlySave.bsr"
-  Maximum Concurrent Jobs = 4
-  SpoolData=yes
+  Maximum Concurrent Jobs = 10
 }
+
+Job {
+  Name = @hostname1@
+  Type = Backup
+  Client = @hostname1@-fd 
+  FileSet = "@hostname1@-FileSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Maximum Concurrent Jobs = 10
+}
+
+Job {
+  Name = @hostname2@
+  Type = Backup
+  Client = @hostname2@-fd 
+  FileSet = "@hostname2@-FileSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Maximum Concurrent Jobs = 10
+}
+
+Job {
+  Name = @hostname3@
+  Type = Backup
+  Client = @hostname3@-fd 
+  FileSet = "@hostname3@-FileSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Maximum Concurrent Jobs = 10
+}
+
+
 
 Job {
   Name = "MonsterSave"
@@ -84,7 +121,7 @@ Job {
   Storage = File
   Messages = Standard
   Pool = Default
-  Maximum Concurrent Jobs = 4
+  Maximum Concurrent Jobs = 10
   Write Bootstrap = "@working_dir@/NightlySave.bsr"
 # Max Run Time = 15 seconds
 }
@@ -135,7 +172,28 @@ Job {
 FileSet {
   Name = "Full Set"
   Include  { Options { signature=MD5 }
-    File = </tmp/file-list
+    File = @hostname_files@
+  }
+}
+
+FileSet {
+  Name = "@hostname1@-FileSet"
+  Include  { Options { signature=MD5 }
+    File = @hostname1_files@
+  }
+}
+ 
+FileSet {
+  Name = "@hostname2@-FileSet"
+  Include  { Options { signature=MD5 }
+    File = @hostname2_files@
+  }
+}
+
+FileSet {
+  Name = "@hostname3@-FileSet"
+  Include  { Options { signature=MD5 }
+    File = @hostname3_files@
   }
 }
 
@@ -201,8 +259,45 @@ Client {
   File Retention = 30d                # 30 days
   Job Retention = 180d                # six months
   AutoPrune = yes                     # Prune expired Jobs/Files
-  Maximum Concurrent Jobs = 4
+  Maximum Concurrent Jobs = 10
 }
+
+Client {
+  Name = @hostname1@-fd
+  Address = @hostname1@
+  FDPort = 9102
+  Catalog = MyCatalog
+  Password = "@hostname1_password@"          # password for FileDaemon
+  File Retention = 30d                # 30 days
+  Job Retention = 180d                # six months
+  AutoPrune = yes                     # Prune expired Jobs/Files
+  Maximum Concurrent Jobs = 10
+}
+
+Client {
+  Name = @hostname2@-fd
+  Address = @hostname2@
+  FDPort = 9102
+  Catalog = MyCatalog
+  Password = "@hostname2_password@"          # password for FileDaemon
+  File Retention = 30d                # 30 days
+  Job Retention = 180d                # six months
+  AutoPrune = yes                     # Prune expired Jobs/Files
+  Maximum Concurrent Jobs = 10
+}
+
+Client {
+  Name = @hostname3@-fd
+  Address = @hostname3@
+  FDPort = 9102
+  Catalog = MyCatalog
+  Password = "@hostname3_password@"          # password for FileDaemon
+  File Retention = 30d                # 30 days
+  Job Retention = 180d                # six months
+  AutoPrune = yes                     # Prune expired Jobs/Files
+  Maximum Concurrent Jobs = 10
+}
+
 
 # Definiton of file storage device
 Storage {
@@ -212,7 +307,7 @@ Storage {
   Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
   Device = FileStorage
   Media Type = File
-  Maximum Concurrent Jobs = 4
+  Maximum Concurrent Jobs = 10
 }
 
 Storage {
@@ -222,39 +317,8 @@ Storage {
   Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
   Device = FileStorage1
   Media Type = File1
-  Maximum Concurrent Jobs = 4
+  Maximum Concurrent Jobs = 10
 }
-
-
-# Definition of DLT tape storage device
-#Storage {
-#  Name = DLTDrive
-#  Address = @hostname@                # N.B. Use a fully qualified name here
-#  SDPort = 8103
-#  Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"          # password for Storage daemon
-#  Device = "HP DLT 80"                # must be same as Device in Storage daemon
-#  Media Type = DLT8000                # must be same as MediaType in Storage daemon
-#}
-
-# Definition of DDS tape storage device
-#Storage {
-#  Name = SDT-10000
-#  Address = @hostname@                # N.B. Use a fully qualified name here
-#  SDPort = 8103
-#  Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"          # password for Storage daemon
-#  Device = SDT-10000                  # must be same as Device in Storage daemon
-#  Media Type = DDS-4                  # must be same as MediaType in Storage daemon
-#}
-
-# Definition of 8mm tape storage device
-#Storage {
-#  Name = "8mmDrive"
-#  Address = @hostname@                # N.B. Use a fully qualified name here
-#  SDPort = 8103
-#  Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
-#  Device = "Exabyte 8mm"
-#  MediaType = "8mm"
-#}
 
 
 # Generic catalog service
