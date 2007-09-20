@@ -614,9 +614,8 @@ void set_jcr_job_status(JCR *jcr, int JobStatus)
          /* Override more minor status */
          jcr->JobStatus = JobStatus;
          break;
-      default:
-         break;
       }
+      break;
    default:
       jcr->JobStatus = JobStatus;
    }
