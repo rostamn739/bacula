@@ -1,6 +1,10 @@
               Technical notes on version 2.2
 
 General:
+27Sep07 
+kes  Fix FD->SD authorization failure, which was due to spurious
+     wakeups from a pthread_cond_timedwait().  Simply check the
+     predicate before continuing.  This fixes bug #953
 22Sep07
 kes  Add code to handle tray monitor separated from Win32 FD.
 kes  Fix display of Win32 tray monitor after reboot. Fixes bug #952.
