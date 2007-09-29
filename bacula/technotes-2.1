@@ -1,6 +1,11 @@
               Technical notes on version 2.2
 
 General:
+28Sep07
+kes  Fix race condition that drops final block written to volume.
+     This happens in rare cases with multiple simultaneous jobs 
+     when the Volume fills.  This fixes bug #964.  May be related
+     to bug #935 and possibly #903.
 27Sep07 
 kes  Fix FD->SD authorization failure, which was due to spurious
      wakeups from a pthread_cond_timedwait().  Simply check the
