@@ -188,6 +188,7 @@ public:
    B_DB *db;                          /* database pointer */
    B_DB *db_batch;                    /* database pointer for batch insert */
    ATTR_DBR *ar;                      /* DB attribute record */
+   guid_list *id_list;                /* User/group id to name list */
 
    /* Daemon specific part of JCR */
    /* This should be empty in the library */
@@ -246,6 +247,7 @@ public:
    int replace;                       /* Replace option */
    int NumVols;                       /* Number of Volume used in pool */
    int reschedule_count;              /* Number of times rescheduled */
+   int64_t spool_size;                /* Spool size for this job */
    bool spool_data;                   /* Spool data in SD */
    bool acquired_resource_locks;      /* set if resource locks acquired */
    bool term_wait_inited;             /* Set when cond var inited */
@@ -322,6 +324,7 @@ public:
    bool ignore_label_errors;          /* ignore Volume label errors */
    bool spool_attributes;             /* set if spooling attributes */
    bool no_attributes;                /* set if no attributes wanted */
+   int64_t spool_size;                /* Spool size for this job */
    bool spool_data;                   /* set to spool data */
    int CurVol;                        /* Current Volume count */
    DIRRES* director;                  /* Director resource */

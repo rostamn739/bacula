@@ -380,6 +380,7 @@ public:
    utime_t RescheduleInterval;        /* Reschedule interval */
    utime_t JobRetention;              /* job retention period in seconds */
    uint32_t MaxConcurrentJobs;        /* Maximum concurrent jobs */
+   int64_t spool_size;                /* Size of spool file for this job */
    int RescheduleTimes;               /* Number of times to reschedule job */
    bool RescheduleOnError;            /* Set to reschedule on error */
    bool PrefixLinks;                  /* prefix soft links with Where path */
@@ -392,6 +393,7 @@ public:
    bool PreferMountedVolumes;         /* Prefer vols mounted rather than new one */
    bool write_part_after_job;         /* Set to write part after job in SD */
    bool enabled;                      /* Set if job enabled */
+   bool OptimizeJobScheduling;        /* Set if we should optimize Job scheduling */
    
    MSGS      *messages;               /* How and where to send messages */
    SCHED     *schedule;               /* When -- Automatic schedule */

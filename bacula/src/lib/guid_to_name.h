@@ -1,14 +1,14 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2003-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2007 Kern Sibbald
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version two of the GNU General Public
-   License as published by the Free Software Foundation and included
-   in the file LICENSE.
+   License as published by the Free Software Foundation, which is 
+   listed in the file LICENSE.
 
    This program is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,23 +26,23 @@
    Switzerland, email:ftf@fsfeurope.org.
 */
 /*
- * Process and thread timer routines, built on top of watchdogs.
+ * Written by Kern Sibbald, July 2007 to replace idcache.c
+ * 
+ *  Program to convert uid and gid into names, and cache the results
+ *   for preformance reasons.
  *
- *    Nic Bellamy <nic@bellamy.co.nz>, October 2003.
- *
-*/
+ *  Version $Id: guid_to_name.h 5460 2007-09-05 11:13:57Z kerns $
+ */
 
-#ifndef __BTIMERS_H_
-#define __BTIMERS_H_
+class guid_list {
+public:
+   dlist *uid_list;
+   dlist *gid_list;
 
-struct btimer_t {
-   watchdog_t *wd;                    /* Parent watchdog */
-   int type;
-   bool killed;
-   pid_t pid;                         /* process id if TYPE_CHILD */
-   pthread_t tid;                     /* thread id if TYPE_PTHREAD */
-   BSOCK *bsock;                      /* Pointer to BSOCK */
-   JCR *jcr;                          /* Pointer to job control record */
+   char *uid_to_name(uid_t uid, char *name, int maxlen);
+   char *gid_to_name(gid_t gid, char *name, int maxlen);
 };
 
-#endif /* __BTIMERS_H_ */
+guid_list *new_guid_list();
+void free_guid_list(guid_list *list);
+

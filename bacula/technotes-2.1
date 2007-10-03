@@ -1,6 +1,9 @@
               Technical notes on version 2.2
 
 General:
+03Oct07
+kes  Backport almost 4000 lines of 2.3 code that fixes a number of bugs.
+     The details are included in the notes in this file.
 28Sep07
 kes  Backport 2.3 code that fixes: it fixes incorrect or incomplete error
      messages; it fixes a problem opening the SQLite3 database when multiple
@@ -15,6 +18,44 @@ kes  Fix race condition that drops final block written to volume.
 kes  Fix FD->SD authorization failure, which was due to spurious
      wakeups from a pthread_cond_timedwait().  Simply check the
      predicate before continuing.  This fixes bug #953
+dvl  Add new configuration item --archivedir
+dvl  Adjust regression tests to use tmp not /tmp.  This will allow
+     multiple concurrent runs of the regression tests.
+28Sep07
+kes  Fix race condition that drops final block written to volume.
+     This happens in rare cases with multiple simultaneous jobs 
+     when the Volume fills.  This fixes bug #964.  May be related
+     to bug #935 and possibly #903.
+kes  Eliminate more strerror() and replace with bstrerror().
+kes  Remove BSD getopt and replace with unrestricted IBM version.
+kes  Fix Win32 build for changed calling sequences.
+27Sep07 
+kes  Fix FD->SD authorization failure, which was due to spurious
+     wakeups from a pthread_cond_timedwait().  Simply check the
+     predicate before continuing.  This fixes bug #953.
+kes  Add const char where needed (more to do).
+26Sep07
+kes  Setup SQLite busy handler before doing queries. Fixes bug #967.
+kes  Don't overwrite error message in check_tables_version.
+     Fixes bug #966.
+kes  Unlock batch insert tables with same calls used elsewhere.
+kes  Allow starting 59 jobs a second.
+kes  Make SD session key more random.
+kes  Add retry for SQLite opening db if it fails. Probably helps
+     for bug #967.
+kes  Suppress extra error messages during batch insert failure.
+     Fixes bug #966.
+kes  Put some FD auth code on dbglvl rather than fixed.
+kes  Return insert attributes error message in db msg buffer to avoid
+     false error messages. Helps fix bug #966.
+kes  Separate batch init error messages. Probably helps fix bug #966.
+kes  If Dir gets an error during inserting attributes, cancel SD.  
+     This reduces unnecessary error messages.
+24Sep07 
+ebl  Cleanup batch insert code. Probably fixes bug #965.
+23Sep07 
+kes  Turn off some code when batch insert not enabled.
+kes  Edit FD name in connect error messages.
 22Sep07
 kes  Add code to handle tray monitor separated from Win32 FD.
 kes  Fix display of Win32 tray monitor after reboot. Fixes bug #952.

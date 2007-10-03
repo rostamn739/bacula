@@ -34,7 +34,7 @@
 class JCR;
 
 /* attr.c */
-ATTR     *new_attr();
+ATTR     *new_attr(JCR *jcr);
 void      free_attr(ATTR *attr);
 int       unpack_attributes_record(JCR *jcr, int32_t stream, char *rec, ATTR *attr);
 void      build_attr_output_fnames(JCR *jcr, ATTR *attr);
@@ -239,12 +239,6 @@ void             bnet_server             (int port, void handle_client_request(B
 int              net_connect             (int port);
 BSOCK *          bnet_bind               (int port);
 BSOCK *          bnet_accept             (BSOCK *bsock, char *who);
-
-/* idcache.c */
-char *getuser(uid_t uid);
-void free_getuser_cache();
-char *getgroup (gid_t gid);
-void free_getgroup_cache();
 
 /* python.c */
 typedef int (EVENT_HANDLER)(JCR *jcr, const char *event);

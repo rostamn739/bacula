@@ -193,7 +193,7 @@ bool do_verify(JCR *jcr)
       if (!start_storage_daemon_job(jcr, jcr->rstorage, NULL)) {
          return false;
       }
-      if (!bnet_fsend(jcr->store_bsock, "run")) {
+      if (!jcr->store_bsock->fsend("run")) {
          return false;
       }
       /*
@@ -707,7 +707,7 @@ int get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
             return false;
          }
          if (do_Digest != CRYPTO_DIGEST_NONE) {
-            db_escape_string(buf, Opts_Digest, strlen(Opts_Digest));
+            db_escape_string(jcr, jcr->db, buf, Opts_Digest, strlen(Opts_Digest));
             if (strcmp(buf, fdbr.Digest) != 0) {
                prt_fname(jcr);
                if (debug_level >= 10) {

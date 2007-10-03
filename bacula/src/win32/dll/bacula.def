@@ -192,7 +192,7 @@ _ZN5alist9grow_listEv
 _Z15print_ls_outputP3JCRP4ATTR
 _Z24build_attr_output_fnamesP3JCRP4ATTR
 _Z24unpack_attributes_recordP3JCRiPcP4ATTR
-_Z8new_attrv
+_Z8new_attrP3JCR
 _Z9free_attrP4ATTR
  
 ; base64.o
@@ -251,7 +251,7 @@ _Z12get_bregexpsPKc
 _Z13free_bregexpsP5alist
 _Z14apply_bregexpsPKcP5alistPPc
 _Z19bregexp_build_wherePciS_S_S_
-_Z21bregexp_escape_stringPcS_c
+_Z21bregexp_escape_stringPcPKcc
 _Z28bregexp_get_build_where_sizePcS_S_
 _ZN7BREGEXP10edit_substEPKcP12b_regmatch_t
 _ZN7BREGEXP12return_fnameEPKci
@@ -352,10 +352,10 @@ _Z9tm_encodeP9date_timeP2tm
 _Z16stop_bsock_timerP8btimer_t
 _Z16stop_child_timerP8btimer_t
 _Z17start_bsock_timerP5BSOCKj
-_Z17start_child_timerij
+_Z17start_child_timerP3JCRij
 _Z17stop_thread_timerP8btimer_t
-_Z18start_thread_timerP10pthread_t_j
- 
+_Z18start_thread_timerP3JCRP10pthread_t_j
+
 ; cram-md5.o
 _Z16cram_md5_respondP5BSOCKPKcPiS3_
 _Z18cram_md5_challengeP5BSOCKPKcii
@@ -451,12 +451,12 @@ _Z23edit_uint64_with_suffixyPc
  
 ; fnmatch.o
 fnmatch
- 
-; idcache.o
-_Z18free_getuser_cachev
-_Z19free_getgroup_cachev
-_Z7getuserjPci
-_Z8getgroupjPci
+
+; guid_to_name.o
+_ZN9guid_list11uid_to_nameEjPci
+_ZN9guid_list11gid_to_nameEjPci
+_Z14free_guid_listP9guid_list
+_Z13new_guid_listv
  
 ; jcr.o
 _Z10b_free_jcrPKciP3JCR
@@ -466,11 +466,10 @@ _Z12job_end_pushP3JCRPFvS0_PvES1_
 _Z13get_jcr_by_idj
 _Z13jcr_walk_nextP3JCR
 _Z14jcr_walk_startv
-_Z16get_jcr_from_tidP10pthread_t_
-_Z16get_jcr_from_tidv
+_Z14set_jcr_in_tsdP3JCR
+_Z16get_jcr_from_tsdv
+_Z18get_jobid_from_tsdv
 _Z18get_jcr_by_sessionjj
-_Z18get_jobid_from_tidP10pthread_t_
-_Z18get_jobid_from_tidv
 _Z18init_jcr_subsystemv
 _Z18set_jcr_job_statusP3JCRi
 _Z19init_last_jobs_listv
@@ -484,6 +483,8 @@ _Z23get_jcr_by_partial_namePc
 _Z7new_jcriPFvP3JCRE
 _Z9lock_jobsv
 timeout_handler
+
+
  
 ; lex.o
 _Z11scan_to_eolP13s_lex_context

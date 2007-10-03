@@ -211,6 +211,12 @@ db_open_database(JCR *jcr, B_DB *mdb)
    }
 
    sql_query(mdb, "SET datestyle TO 'ISO, YMD'");
+   
+   /* tell PostgreSQL we are using standard conforming strings
+      and avoid warnings such as:
+       WARNING:  nonstandard use of \\ in a string literal
+   */
+   sql_query(mdb, "set standard_conforming_strings=on");
 
    V(mutex);
    return 1;
@@ -284,9 +290,17 @@ int db_next_index(JCR *jcr, B_DB *mdb, char *table, char *index)
  *         the escaped output.
  */
 void
-db_escape_string(char *snew, char *old, int len)
+db_escape_string(JCR *jcr, B_DB *mdb, char *snew, char *old, int len)
 {
-   PQescapeString(snew, old, len);
+   int error;
+  
+   PQescapeStringConn(mdb->db, snew, old, len, &error);
+   if (error) {
+      Jmsg(jcr, M_FATAL, 0, _("PQescapeStringConn returned non-zero.\n"));
+      /* error on encoding, probably invalid multibyte encoding in the source string
+        see PQescapeStringConn documentation for details. */
+      Dmsg0(500, "PQescapeStringConn failed\n");
+   }
 }
 
 /*
