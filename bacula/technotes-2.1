@@ -2,6 +2,11 @@
 
 General:
 28Sep07
+kes  Backport 2.3 code that fixes: it fixes incorrect or incomplete error
+     messages; it fixes a problem opening the SQLite3 database when multiple
+     simultaneous jobs were running; it fixes a bug with certain versions of
+     MySQL where batch inserts failed because of table name character case
+     (upper/lower) differences.
 kes  Fix race condition that drops final block written to volume.
      This happens in rare cases with multiple simultaneous jobs 
      when the Volume fills.  This fixes bug #964.  May be related

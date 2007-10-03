@@ -605,13 +605,13 @@ int my_postgresql_batch_start(JCR *jcr, B_DB *mdb)
    Dmsg0(500, "my_postgresql_batch_start started\n");
 
    if (my_postgresql_query(mdb,
-                           " CREATE TEMPORARY TABLE batch "
-                           "        (fileindex int,       "
-                           "        jobid int,            "
-                           "        path varchar,         "
-                           "        name varchar,         "
-                           "        lstat varchar,        "
-                           "        md5 varchar)") == 1)
+                           "CREATE TEMPORARY TABLE batch ("
+                               "fileindex int,"
+                               "jobid int,"
+                               "path varchar,"
+                               "name varchar,"
+                               "lstat varchar,"
+                               "md5 varchar)") == 1)
    {
       Dmsg0(500, "my_postgresql_batch_start failed\n");
       return 1;
@@ -785,22 +785,29 @@ char *my_postgresql_copy_escape(char *dest, char *src, size_t len)
    return dest;
 }
 
-char *my_pg_batch_lock_path_query = "BEGIN; LOCK TABLE Path IN SHARE ROW EXCLUSIVE MODE";
+#ifdef HAVE_BATCH_FILE_INSERT
+const char *my_pg_batch_lock_path_query = 
+   "BEGIN; LOCK TABLE Path IN SHARE ROW EXCLUSIVE MODE";
 
 
-char *my_pg_batch_lock_filename_query = "BEGIN; LOCK TABLE Filename IN SHARE ROW EXCLUSIVE MODE";
+const char *my_pg_batch_lock_filename_query = 
+   "BEGIN; LOCK TABLE Filename IN SHARE ROW EXCLUSIVE MODE";
 
-char *my_pg_batch_unlock_tables_query = "COMMIT";
+const char *my_pg_batch_unlock_tables_query = "COMMIT";
 
-char *my_pg_batch_fill_path_query = "INSERT INTO Path (Path)                                    "
-                                    "  SELECT a.Path FROM                                       "
-                                    "      (SELECT DISTINCT Path FROM batch) AS a               "
-                                    "  WHERE NOT EXISTS (SELECT Path FROM Path WHERE Path = a.Path) ";
+const char *my_pg_batch_fill_path_query = 
+   "INSERT INTO Path (Path) "
+    "SELECT a.Path FROM "
+     "(SELECT DISTINCT Path FROM batch) AS a "
+      "WHERE NOT EXISTS (SELECT Path FROM Path WHERE Path = a.Path) ";
 
 
-char *my_pg_batch_fill_filename_query = "INSERT INTO Filename (Name)        "
-                                        "  SELECT a.Name FROM               "
-                                        "    (SELECT DISTINCT Name FROM batch) as a "
-                                        "    WHERE NOT EXISTS               "
-                                        "      (SELECT Name FROM Filename WHERE Name = a.Name)";
+const char *my_pg_batch_fill_filename_query = 
+   "INSERT INTO Filename (Name) "
+    "SELECT a.Name FROM "
+     "(SELECT DISTINCT Name FROM batch) as a "
+      "WHERE NOT EXISTS "
+       "(SELECT Name FROM Filename WHERE Name = a.Name)";
+#endif /* HAVE_BATCH_FILE_INSERT */
+
 #endif /* HAVE_POSTGRESQL */

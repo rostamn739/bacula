@@ -668,6 +668,8 @@ bool db_create_fileset_record(JCR *jcr, B_DB *mdb, FILESET_DBR *fsr)
  *  };
  */
 
+#ifdef HAVE_BATCH_FILE_INSERT
+
 /*  All sql_batch_* functions are used to do bulk batch insert in File/Filename/Path
  *  tables. This code can be activated by adding "#define HAVE_BATCH_FILE_INSERT 1"
  *  in baconfig.h
@@ -690,13 +692,13 @@ bool my_batch_start(JCR *jcr, B_DB *mdb)
 
    db_lock(mdb);
    ok =  db_sql_query(mdb,
-             " CREATE TEMPORARY TABLE batch "
-             "        (fileindex integer,   "
-             "        jobid integer,        "
-             "        path blob,            "
-             "        name blob,            "
-             "        lstat tinyblob,       "
-             "        md5 tinyblob)         ",NULL, NULL);
+             "CREATE TEMPORARY TABLE batch ("
+                "FileIndex integer,"
+                "JobId integer,"
+                "Path blob,"
+                "Name blob,"
+                "LStat tinyblob,"
+                "MD5 tinyblob)",NULL, NULL);
    db_unlock(mdb);
    return ok;
 }
@@ -746,7 +748,6 @@ bool my_batch_end(JCR *jcr, B_DB *mdb, const char *error)
    return true;
 }
 
-#ifdef HAVE_BATCH_FILE_INSERT
 /* 
  * Returns 1 if OK
  *         0 if failed
@@ -794,7 +795,7 @@ bool db_write_batch_file_records(JCR *jcr)
    
    if (!db_sql_query(jcr->db_batch,sql_batch_fill_filename_query, NULL,NULL)) {
       Jmsg(jcr,M_FATAL,0,"Can't fill Filename table %s\n",jcr->db_batch->errmsg);
-      QUERY_DB(jcr, jcr->db_batch, sql_batch_unlock_tables_query);
+      db_sql_query(jcr->db_batch, sql_batch_unlock_tables_query, NULL, NULL);
       return false;            
    }
 
@@ -804,12 +805,12 @@ bool db_write_batch_file_records(JCR *jcr)
    }
    
    if (!db_sql_query(jcr->db_batch, 
-       " INSERT INTO File (FileIndex, JobId, PathId, FilenameId, LStat, MD5)"
-       "  SELECT batch.FileIndex, batch.JobId, Path.PathId,               " 
-       "         Filename.FilenameId,batch.LStat, batch.MD5               "
-       "  FROM batch                                                      "
-       "    JOIN Path ON (batch.Path = Path.Path)                         "
-       "    JOIN Filename ON (batch.Name = Filename.Name)                 ",
+       "INSERT INTO File (FileIndex, JobId, PathId, FilenameId, LStat, MD5)"
+         "SELECT batch.FileIndex, batch.JobId, Path.PathId, "
+                "Filename.FilenameId,batch.LStat, batch.MD5 "
+           "FROM batch "
+           "JOIN Path ON (batch.Path = Path.Path) "
+           "JOIN Filename ON (batch.Name = Filename.Name)",
                      NULL,NULL))
    {
       Jmsg(jcr, M_FATAL, 0, "Can't fill File table %s\n", jcr->db_batch->errmsg);
@@ -845,19 +846,24 @@ bool db_create_file_attributes_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
                                       mdb->db_port,
                                       mdb->db_socket,
                                       1 /* multi_db = true */);
+      if (!jcr->db_batch) {
+         Mmsg1(&mdb->errmsg, _("Could not init batch database: \"%s\".\n"),
+                        jcr->db->db_name);
+         Jmsg1(jcr, M_FATAL, 0, "%s", mdb->errmsg);
+         return false;
+      }
 
-      if (!jcr->db_batch || !db_open_database(jcr, jcr->db_batch)) {
-         Jmsg(jcr, M_FATAL, 0, _("Could not open database \"%s\".\n"),
-              jcr->db->db_name);
-         if (jcr->db_batch) {
-            Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db_batch));
-         }
+      if (!db_open_database(jcr, jcr->db_batch)) {
+         Mmsg2(&mdb->errmsg,  _("Could not open database \"%s\": ERR=%s\n"),
+              jcr->db->db_name, db_strerror(jcr->db_batch));
+         Jmsg1(jcr, M_FATAL, 0, "%s", mdb->errmsg);
          return false;
       }      
       
       if (!sql_batch_start(jcr, jcr->db_batch)) {
-         Jmsg(jcr, M_FATAL, 0, 
-              "Can't start batch mode %s", db_strerror(jcr->db_batch));
+         Mmsg1(&mdb->errmsg, 
+              "Can't start batch mode: ERR=%s", db_strerror(jcr->db_batch));
+         Jmsg1(jcr, M_FATAL, 0, "%s", mdb->errmsg);
          return false;
       }
       Dmsg3(100, "initdb ref=%d connected=%d db=%p\n", jcr->db_batch->ref_count,
@@ -870,10 +876,10 @@ bool db_create_file_attributes_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
     */
    if (!(ar->Stream == STREAM_UNIX_ATTRIBUTES ||
          ar->Stream == STREAM_UNIX_ATTRIBUTES_EX)) {
-      Mmsg1(&bdb->errmsg, _("Attempt to put non-attributes into catalog. Stream=%d\n"),
+      Mmsg1(&mdb->errmsg, _("Attempt to put non-attributes into catalog. Stream=%d\n"),
          ar->Stream);
-      Jmsg(jcr, M_ERROR, 0, "%s", bdb->errmsg);
-      return 0;
+      Jmsg(jcr, M_FATAL, 0, "%s", mdb->errmsg);
+      return false;
    }
 
    split_path_and_file(jcr, bdb, ar->fname);
