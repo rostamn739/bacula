@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+# Run four jobs at the same time, with two Volumes.
+#   Set max Vol bytes of first volume
+#   to less than total backup to force Bacula to use the second
+#   Volume.
+#
+TestName="2drive-concurrent-test"
+JobName=Four-concurrent-jobs
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-2disk-drive-confs
+scripts/prepare-two-disks
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+change_jobname NightlySave $JobName
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out   ${cwd}/tmp/log1.out
+label pool=Default storage=DDS-4 volume=TestVolume001 slot=1 drive=0
+label pool=Default storage=DDS-4 volume=TestVolume002 slot=2 drive=1
+update Volume=TestVolume001 MaxVolBytes=100000000
+@#50000000
+@#12
+setdebug level=001 Storage=DDS-4
+status storage=DDS-4
+llist volume=TestVolume001
+llist volume=TestVolume002
+run job=$JobName level=Full Storage=DDS-4
+yes
+reload
+llist volume=TestVolume001
+llist volume=TestVolume002
+run job=$JobName level=Full Storage=DDS-4
+yes
+reload
+llist volume=TestVolume001
+llist volume=TestVolume002
+run job=$JobName level=Full Storage=DDS-4
+yes
+reload
+llist volume=TestVolume001
+llist volume=TestVolume002
+status storage=DDS-4
+run job=$JobName level=Full Storage=DDS-4
+yes
+status storage=DDS-4
+reload
+reload
+reload
+reload
+@sleep 2
+status dir
+status storage=DDS-4
+llist volume=TestVolume001
+llist volume=TestVolume002
+reload
+@sleep 5
+messages
+reload
+reload
+wait
+status storage=DDS-4
+reload
+messages
+@# 
+@# now do a restore
+@#
+@$out   ${cwd}/tmp/log2.out
+restore where=${cwd}/tmp/bacula-restores select storage=DDS-4
+unmark *
+mark *
+done
+yes
+wait
+reload
+reload
+messages
+@output
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=DDS-4
+stop_bacula
+
+check_two_logs
+check_restore_diff
+end_test
