@@ -1,6 +1,12 @@
               Technical notes on version 2.2
 
 General:
+05Oct07
+kes  Fix listing performance problems in bat. Pointed out by 
+     Chris Howells.
+ebl  Fix replace on restore. This fixes bug #969
+kes  Fix bat code that tests for Win32. This should fix bug #968
+kes  Query 5 list wrong Vol after migration. This fixes bug #960
 04Oct07 
 kes  Correct lib/Makefile.in to include enh_fnmatch.o that was removed
      in back porting from 2.3.x
@@ -69,6 +75,7 @@ kes  Apply 2.2.4-poll-mount fix, that resolves bug #908 where a tape
      is not properly mounted (recognized) during a poll.
 kes  Apply 2.2.4-verify patch that resolves bug #958.  A Verify catalog 
      Job that has differences reports Verify OK.
+ebl  Fixes #955 bug seg fault in Dir introduced  with regexwhere relocation.
 
 Release Version 2.2.4
 14Sep07
