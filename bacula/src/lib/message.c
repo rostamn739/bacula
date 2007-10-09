@@ -1106,9 +1106,6 @@ Jmsg(JCR *jcr, int type, time_t mtime, const char *fmt,...)
     if (!msgs) {
        msgs = daemon_msgs;            /* if no jcr, we use daemon handler */
     }
-    if (!job) {
-       job = "";                      /* Set null job name if none */
-    }
 
     /*
      * Check if we have a message destination defined.
