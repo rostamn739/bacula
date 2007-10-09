@@ -2,6 +2,23 @@
 
 General:
 Release Version 2.2.5
+09Oct07
+kes  Add JobId in place of Job name in all the Jmsg() output.  
+kes  Correct the APP_DESC for the Win32 storage service (remove an e).
+06Oct07
+kes  Add new SD despooling attributes and Dir inserting attributes 
+     job status codes.  This fixes bug #961.
+kes  Fix Win32 drive display in bat version browser. Fixes bug #962.
+05Oct07
+kes  Fix doc issue. This fixes bug #963.
+kes  Fix listing performance problems in bat. Pointed out by 
+     Chris Howells.
+ebl  Fix replace on restore. This fixes bug #969
+kes  Fix bat code that tests for Win32. This should fix bug #968
+kes  Query 5 list wrong Vol after migration. This fixes bug #960
+04Oct07 
+kes  Correct lib/Makefile.in to include enh_fnmatch.o that was removed
+     in back porting from 2.3.x
 03Oct07
 kes  Backport almost 4000 lines of 2.3 code that fixes a number of bugs.
      The details are included in the notes in this file.
