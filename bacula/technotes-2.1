@@ -1,9 +1,12 @@
               Technical notes on version 2.2
 
 General:
-kes  Add new SD despooling attributes and Dir inserting attributes 
-     job status codes.  This fixes bug 961.
+09Oct07
+kes  Add JobId in place of Job name in all the Jmsg() output.  
+kes  Correct the APP_DESC for the Win32 storage service (remove an e).
 06Oct07
+kes  Add new SD despooling attributes and Dir inserting attributes 
+     job status codes.  This fixes bug #961.
 kes  Fix Win32 drive display in bat version browser. Fixes bug #962.
 05Oct07
 kes  Fix doc issue. This fixes bug #963.
@@ -36,10 +39,6 @@ dvl  Add new configuration item --archivedir
 dvl  Adjust regression tests to use tmp not /tmp.  This will allow
      multiple concurrent runs of the regression tests.
 28Sep07
-kes  Fix race condition that drops final block written to volume.
-     This happens in rare cases with multiple simultaneous jobs 
-     when the Volume fills.  This fixes bug #964.  May be related
-     to bug #935 and possibly #903.
 kes  Eliminate more strerror() and replace with bstrerror().
 kes  Remove BSD getopt and replace with unrestricted IBM version.
 kes  Fix Win32 build for changed calling sequences.
