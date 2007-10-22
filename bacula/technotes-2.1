@@ -2,6 +2,9 @@
 
 General:
 22Oct07
+kes  Add a security warning to src/cats/make_catalog_backup.in indicating
+     that passing the password via the command line (arg 3) is insecure.
+     This responds to bug #990 (it doesn't fix it).
 kes  Apply 2.2.5-postgresql-errors.patch
 kes  Remove unneeded File table index on JobId, which is already
      present as the first index of another multi-index.
