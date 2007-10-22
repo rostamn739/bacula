@@ -1,6 +1,10 @@
               Technical notes on version 2.2
 
 General:
+22Oct07
+kes  Apply 2.2.5-postgresql-errors.patch
+kes  Remove unneeded File table index on JobId, which is already
+     present as the first index of another multi-index.
 19Oct07
 kes  Set default debug_level to zero. This corrects bugs #991 and #993. 
 kes  Fix a crash in bat when it cannot connect to the Director for example
