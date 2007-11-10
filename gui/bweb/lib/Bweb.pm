@@ -3743,7 +3743,6 @@ sub update_slots
 sub get_job_log
 {
     my ($self) = @_;
-    $self->can_do('r_view_log');
 
     my $arg = $self->get_form('jobid', 'limit', 'offset');
     unless ($arg->{jobid}) {
@@ -3753,12 +3752,12 @@ sub get_job_log
     if ($arg->{limit} == 100) {
         $arg->{limit} = 1000;
     }
-    # get security filter
-    my $filter = $self->get_client_filter();
+
+    my $t = CGI::param('time') || $self->{info}->{display_log_time} || '';
 
     my $query = "
 SELECT Job.Name as name, Client.Name as clientname
- FROM  Job INNER JOIN Client USING (ClientId) $filter
+ FROM  Job INNER JOIN Client ON (Job.ClientId = Client.ClientId)
  WHERE JobId = $arg->{jobid}
 ";
 
@@ -3768,46 +3767,35 @@ SELECT Job.Name as name, Client.Name as clientname
 	return $self->error("Can't find $arg->{jobid} in catalog");
     }
 
-    # display only Error and Warning messages
-    $filter = '';
-    if (CGI::param('error')) {
-	$filter = " AND LogText $self->{sql}->{MATCH} 'Error|Warning' ";
-    }
-
-    my $logtext;
-    if (CGI::param('time') || $self->{info}->{display_log_time}) {
-	$logtext = 'LogText';
-    } else {
-	$logtext = $self->dbh_strcat('Time', ' ', 'LogText')
-    }
-
     $query = "
-SELECT count(1) AS nbline, JobId AS jobid, 
-       GROUP_CONCAT($logtext $self->{sql}->{CONCAT_SEP}) AS logtxt
-  FROM  (
-    SELECT JobId, Time, LogText
-    FROM Log 
-   WHERE ( Log.JobId = $arg->{jobid} 
-      OR (Log.JobId = 0 
-          AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
-          AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
-       ) ) $filter
+SELECT Time AS time, LogText AS log 
+  FROM  Log 
+ WHERE Log.JobId = $arg->{jobid} 
+    OR (Log.JobId = 0 AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
+                      AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
+       )
  ORDER BY LogId
  LIMIT $arg->{limit}
  OFFSET $arg->{offset}
- ) AS temp
- GROUP BY JobId
-
 ";
 
-    my $log = $self->dbh_selectrow_hashref($query);
+    my $log = $self->dbh_selectall_arrayref($query);
     unless ($log) {
 	return $self->error("Can't get log for jobid $arg->{jobid}");
     }
 
-    $self->display({ lines=> $log->{logtxt},
-		     nbline => $log->{nbline},
+    my $logtxt;
+    my $nb=0;
+    if ($t) {
+	# log contains \n
+	$logtxt = join("", map { $nb++;($_->[0] . ' ' . $_->[1]) } @$log ) ; 
+    } else {
+	$logtxt = join("", map { $nb++; $_->[1] } @$log ) ; 
+    }
+    
+    $self->display({ lines=> $logtxt,
 		     jobid => $arg->{jobid},
+		     nbline => $nb,
 		     name  => $row->{name},
 		     client => $row->{clientname},
 		     offset => $arg->{offset},
