@@ -1,4 +1,7 @@
           Release Notes for bweb 2.2
+2007/11/10
+ - Adapt Location.Enabled to be the same as Media.Enabled
+
 2007/11/08
  - Add Prev/Next on job log output
 
