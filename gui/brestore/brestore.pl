@@ -2397,6 +2397,9 @@ sub update_cache
 
     $self->update_brestore_table(map { $_->[0] } @$jobs);
 
+    $self->{conf}->{dbh}->commit();
+    $self->{conf}->{dbh}->begin_work();
+
     print STDERR "Cleaning path visibility\n";
     
     my $nb = $self->dbh_do("
@@ -3275,13 +3278,18 @@ sub HELP_MESSAGE
     exit 1;
 }
 
-my $file_conf = "$ENV{HOME}/.brestore.conf" ;
+my $file_conf = (exists $ENV{HOME})? "$ENV{HOME}/.brestore.conf" : undef ;
 my $batch_mod;
 
 GetOptions("conf=s"   => \$file_conf,
 	   "batch"    => \$batch_mod,
 	   "debug"    => \$debug,
 	   "help"     => \&HELP_MESSAGE) ;
+
+if (! defined $file_conf) {
+    print STDERR "Could not detect default config and no config file specified\n";
+    HELP_MESSAGE();
+}
 
 my $p = new Pref($file_conf);
 
@@ -3300,7 +3308,7 @@ if ($batch_mod) {
     exit (0);
 }
 
-$glade_file = $p->{glade_file};
+$glade_file = $p->{glade_file} || $glade_file;
 
 foreach my $path ('','.','/usr/share/brestore','/usr/local/share/brestore') {
     if (-f "$path/$glade_file") {

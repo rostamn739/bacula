@@ -1,4 +1,19 @@
           Release Notes for bweb 2.2
+2007/11/08
+ - Add Prev/Next on job log output
+
+2007/10/31
+ - Add a error filter to Job zoom view
+
+2007/10/30
+ - Replace VolStatus by Enabled in volume location 
+ - Add Enabled in volume update and zoom
+
+2007/10/26
+ - add an option to view only expired media
+
+2007/09/26
+ - add bresto.pl, bresto.html and bresto.js
 
 2007/08/20
  - fix update of locationid field during label barcodes 

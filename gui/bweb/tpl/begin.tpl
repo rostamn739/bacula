@@ -26,7 +26,7 @@ if (navigator.appName == 'Konqueror') {
        <li><a href="bweb.pl?action=groups">Groups</a> </li>
      </ul>
  </li>
- <li>Jobs
+ <li style="padding: 0.25em 2em;">Jobs
    <ul> 
      <li><a href="bweb.pl?action=run_job">Defined Jobs</a>
      <li><a href="bweb.pl?action=job_group">Jobs by group</a>
@@ -55,11 +55,17 @@ if (navigator.appName == 'Konqueror') {
  </li>
 </TMPL_IF> 
  <li><a href="bweb.pl?action=graph"> Statistics </a></li>
- <li> <a href="bweb.pl?action=view_conf"> Configuration </a> </li>
+ <li> <a href="bweb.pl?action=view_conf"> Configuration </a> 
+<TMPL_IF enable_security>
+  <ul> <li> <a href="bweb.pl?action=view_conf"> Configuration </a> 
+       <li> <a href="bweb.pl?action=users"> Manage users </a>
+  </ul>
+</TMPL_IF>
+</li>
  <li> <a href="bweb.pl?action=about"> About </a> </li>
  <li style="padding: 0.25em 2em;float: right;">&nbsp;Logged as <TMPL_VAR NAME=loginname> </li>
  <li style="float: right;white-space: nowrap;">
-<input type="image" class="button" title="search media" onclick="search_media();" src="/bweb/tape.png"><input type="image" title="search client" onclick="search_client();" src="/bweb/client.png">&nbsp;<input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value="search..." onclick="this.value='';" title="search media or client"></li>
+<input type="image" class="button" title="Search media" onclick="search_media();" src="/bweb/tape.png"><input type="image" title="Search client" onclick="search_client();" src="/bweb/client.png">&nbsp;<input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value="search..." onclick="this.value='';" title="Search media or client"></li>
 </ul>
 
 <form name="search" action="bweb.pl?" method='GET'>

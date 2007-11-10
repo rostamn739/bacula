@@ -84,13 +84,31 @@ if ($action eq 'begin') {		# main display
     $bweb->display_job(limit => 10); 
 
 } elsif ($action eq 'view_conf') {
+    $bweb->can_do('r_configure');
     $conf->view()
 
 } elsif ($action eq 'edit_conf') {
+    $bweb->can_do('r_configure');
     $conf->edit();
 
 } elsif ($action eq 'apply_conf') {
+    $bweb->can_do('r_configure');
     $conf->modify();
+
+} elsif ($action eq 'user_del') {
+    $bweb->users_del();
+
+} elsif ($action eq 'user_add') {
+    $bweb->users_add();
+
+} elsif ($action eq 'user_edit') {
+    $bweb->display_user();
+
+} elsif ($action eq 'user_save') {
+    $bweb->users_add();
+
+} elsif ($action eq 'users') {
+    $bweb->display_users();
 
 } elsif ($action eq 'client') {	
     $bweb->display_clients();
@@ -112,7 +130,7 @@ if ($action eq 'begin') {		# main display
 
 } elsif ($action eq 'media') {
     print "<div><table border='0'><tr><td valign='top'>\n";
-    my $fields = $bweb->get_form(qw/db_locations db_pools
+    my $fields = $bweb->get_form(qw/db_locations db_pools expired
 				    qlocations qpools volstatus qre_media
 				    limit  qmediatypes db_mediatypes/);
     $bweb->display($fields, "display_form_media.tpl");
@@ -122,10 +140,12 @@ if ($action eq 'begin') {		# main display
 			 limit => $arg->{limit});
     print "</td></tr></table></div>";
 
-} elsif ($action eq 'medias') {
-    $bweb->display_medias();
+} elsif ($action eq 'allmedia') {
+    $bweb->display_allmedia();
 
 } elsif ($action eq 'eject') {
+    $bweb->can_do('r_autochanger_mgnt');
+
     my $arg = $bweb->get_form("ach");
     my $a = $bweb->ach_get($arg->{ach});
     
@@ -147,6 +167,8 @@ if ($action eq 'begin') {		# main display
     $bweb->eject_media();
 
 } elsif ($action eq 'clear_io') {
+    $bweb->can_do('r_autochanger_mgnt');
+
     my $arg = $bweb->get_form('ach');
 
     my $a = $bweb->ach_get($arg->{ach});
@@ -163,6 +185,8 @@ if ($action eq 'begin') {		# main display
     $bweb->ach_del();
 
 } elsif ($action eq 'ach_view') {
+    $bweb->can_do('r_autochanger_mgnt');
+
     # TODO : get autochanger name and create it
     $bweb->connect_db();
     my $arg = $bweb->get_form('ach');
@@ -177,6 +201,8 @@ if ($action eq 'begin') {		# main display
     $bweb->ach_add();
 
 } elsif ($action eq 'ach_load') {
+    $bweb->can_do('r_autochanger_mgnt');
+
     my $arg = $bweb->get_form('ach', 'drive', 'slot');
     
     my $a = $bweb->ach_get($arg->{ach});
@@ -193,6 +219,8 @@ if ($action eq 'begin') {		# main display
     }
     
 } elsif ($action eq 'ach_unload') {
+    $bweb->can_do('r_autochanger_mgnt');
+
     my $arg = $bweb->get_form('drive', 'slot', 'ach');
 
     my $a = $bweb->ach_get($arg->{ach});
@@ -221,6 +249,9 @@ if ($action eq 'begin') {		# main display
     $bweb->help_extern_compute();
 
 } elsif ($action eq 'extern') {
+    $bweb->can_do('r_media_mgnt');
+    $bweb->can_do('r_autochanger_mgnt');
+
     print "<div style='float: left;'>";
     my @achs = $bweb->eject_media();
     for my $ach (@achs) {
@@ -228,7 +259,7 @@ if ($action eq 'begin') {		# main display
 	$bweb->update_slots();
     }
     print "</div><div style='float: left;margin-left: 20px;'>";
-    $bweb->move_media();
+    $bweb->move_media('no');	# enabled = no
     print "</div>";
 
 } elsif ($action eq 'move_email') {
@@ -244,10 +275,11 @@ if ($action eq 'begin') {		# main display
     $bweb->display($bweb, 'about.tpl');
 
 } elsif ($action eq 'intern') {
-    $bweb->move_media(); # TODO : remove that
+    $bweb->move_media('yes'); # TODO : remove that
 
 } elsif ($action eq 'move_media') {
-    $bweb->move_media(); 
+    my $a = $bweb->get_form('enabled');
+    $bweb->move_media($a->{enabled}); 
 
 } elsif ($action eq 'save_location') {
     $bweb->save_location();
@@ -292,9 +324,10 @@ if ($action eq 'begin') {		# main display
     $bweb->groups_del();
 
 } elsif ($action eq 'job') {
-
+    $bweb->can_do('r_view_job');
     print "<div><table border='0'><tr><td valign='top'>\n";
-    my $fields = $bweb->get_form(qw/status level db_clients db_filesets
+    my $fields = $bweb->get_form(qw/status level filter db_clients
+				    db_filesets 
 				    limit age offset qclients qfilesets
 				    jobtype qpools db_pools
 				    db_client_groups qclient_groups/); # drop this to hide 
@@ -307,9 +340,9 @@ if ($action eq 'begin') {		# main display
 		       limit => $arg->{limit});
     print "</td></tr></table></div>";
 } elsif ($action eq 'job_group') {
-
+    $bweb->can_do('r_view_job');
     print "<div><table border='0'><tr><td valign='top'>\n";
-    my $fields = $bweb->get_form(qw/limit level age 
+    my $fields = $bweb->get_form(qw/limit level age filter 
                                     db_client_groups qclient_groups/); # drop this to hide 
 
     $fields->{hide_status} = 1;
@@ -332,7 +365,6 @@ if ($action eq 'begin') {		# main display
     }
 
 } elsif ($action eq 'group_stats') {
-
     $bweb->display_group_stats(age => $arg->{age});
 
 } elsif ($action eq 'running') {
@@ -342,6 +374,7 @@ if ($action eq 'begin') {		# main display
     $bweb->display_running_job();
 
 } elsif ($action eq 'update_from_pool') {
+    $bweb->can_do('r_media_mgnt');
     my $elt = $bweb->get_form(qw/media pool/);
     unless ($elt->{media} || $elt->{pool}) {
 	$bweb->error("Can't get media or pool param");
@@ -358,6 +391,7 @@ if ($action eq 'begin') {		# main display
     $bweb->update_media();
 
 } elsif ($action eq 'client_status') {
+    $bweb->can_do('r_client_status');
     my $b;
     foreach my $client (CGI::param('client')) {
 	if ($client =~ m/$client_re/) {
@@ -415,7 +449,7 @@ if ($action eq 'begin') {		# main display
     $bweb->fileset_view();
 
 } else {
-    $bweb->error("Sorry, this action don't exist");
+    $bweb->error("Sorry, this action doesn't exist");
 }
 
 $bweb->display_end();
