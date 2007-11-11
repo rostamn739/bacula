@@ -1208,12 +1208,26 @@ sub human_enabled
 {
     my $val = shift || 0;
 
-    if ($val == 1 or $val eq "yes") {
+    if ($val eq '1' or $val eq "yes") {
 	return "yes";
-    } elsif ($val == 2 or $val eq "archived") {
+    } elsif ($val eq '2' or $val eq "archived") {
 	return "archived";
     } else {
 	return  "no";
+    }
+}
+
+# display Enabled
+sub from_human_enabled
+{
+    my $val = shift || 0;
+
+    if ($val == 1 or $val eq "yes") {
+	return 1;
+    } elsif ($val == 2 or $val eq "archived") {
+	return 2;
+    } else {
+	return  0;
     }
 }
 
@@ -1255,6 +1269,8 @@ sub connect_db
 
 	if ($self->{info}->{dbi} =~ /^dbi:Pg/i) {
 	    $self->{dbh}->do("SET datestyle TO 'ISO, YMD'");
+	} else {
+	    $self->{dbh}->do("SET group_concat_max_len=1000000");
 	}
     }
 }
@@ -2372,7 +2388,7 @@ WHERE Location.Location = $loc->{qlocation}
 ";
 
     my $row = $self->dbh_selectrow_hashref($query);
-
+    $row->{enabled} = human_enabled($row->{enabled});
     $self->display({ ID => $cur_id++,
 		     %$row }, "location_edit.tpl") ;
 }
@@ -2382,7 +2398,7 @@ sub location_save
     my ($self) = @_ ;
     $self->can_do('r_location_mgnt');
 
-    my $arg = $self->get_form(qw/qlocation qnewlocation cost/) ;
+    my $arg = $self->get_form(qw/qlocation qnewlocation cost enabled/) ;
     unless ($arg->{qlocation}) {
 	return $self->error("Can't get location");
     }    
@@ -2393,8 +2409,7 @@ sub location_save
 	return $self->error("Can't get new cost");
     }
 
-    my $enabled = CGI::param('enabled') || '';
-    $enabled = $enabled?1:0;
+    my $enabled = from_human_enabled($arg->{enabled});
 
     my $query = "
 UPDATE Location SET Cost     = $arg->{cost}, 
@@ -3728,7 +3743,6 @@ sub update_slots
 sub get_job_log
 {
     my ($self) = @_;
-    $self->can_do('r_view_log');
 
     my $arg = $self->get_form('jobid', 'limit', 'offset');
     unless ($arg->{jobid}) {
@@ -3738,12 +3752,12 @@ sub get_job_log
     if ($arg->{limit} == 100) {
         $arg->{limit} = 1000;
     }
-    # get security filter
-    my $filter = $self->get_client_filter();
+
+    my $t = CGI::param('time') || $self->{info}->{display_log_time} || '';
 
     my $query = "
 SELECT Job.Name as name, Client.Name as clientname
- FROM  Job INNER JOIN Client USING (ClientId) $filter
+ FROM  Job INNER JOIN Client ON (Job.ClientId = Client.ClientId)
  WHERE JobId = $arg->{jobid}
 ";
 
@@ -3753,46 +3767,35 @@ SELECT Job.Name as name, Client.Name as clientname
 	return $self->error("Can't find $arg->{jobid} in catalog");
     }
 
-    # display only Error and Warning messages
-    $filter = '';
-    if (CGI::param('error')) {
-	$filter = " AND LogText $self->{sql}->{MATCH} 'Error|Warning' ";
-    }
-
-    my $logtext;
-    if (CGI::param('time') || $self->{info}->{display_log_time}) {
-	$logtext = 'LogText';
-    } else {
-	$logtext = $self->dbh_strcat('Time', ' ', 'LogText')
-    }
-
     $query = "
-SELECT count(1) AS nbline, JobId AS jobid, 
-       GROUP_CONCAT($logtext $self->{sql}->{CONCAT_SEP}) AS logtxt
-  FROM  (
-    SELECT JobId, Time, LogText
-    FROM Log 
-   WHERE ( Log.JobId = $arg->{jobid} 
-      OR (Log.JobId = 0 
-          AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
-          AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
-       ) ) $filter
+SELECT Time AS time, LogText AS log 
+  FROM  Log 
+ WHERE Log.JobId = $arg->{jobid} 
+    OR (Log.JobId = 0 AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
+                      AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
+       )
  ORDER BY LogId
  LIMIT $arg->{limit}
  OFFSET $arg->{offset}
- ) AS temp
- GROUP BY JobId
-
 ";
 
-    my $log = $self->dbh_selectrow_hashref($query);
+    my $log = $self->dbh_selectall_arrayref($query);
     unless ($log) {
 	return $self->error("Can't get log for jobid $arg->{jobid}");
     }
 
-    $self->display({ lines=> $log->{logtxt},
-		     nbline => $log->{nbline},
+    my $logtxt;
+    my $nb=0;
+    if ($t) {
+	# log contains \n
+	$logtxt = join("", map { $nb++;($_->[0] . ' ' . $_->[1]) } @$log ) ; 
+    } else {
+	$logtxt = join("", map { $nb++; $_->[1] } @$log ) ; 
+    }
+    
+    $self->display({ lines=> $logtxt,
 		     jobid => $arg->{jobid},
+		     nbline => $nb,
 		     name  => $row->{name},
 		     client => $row->{clientname},
 		     offset => $arg->{offset},

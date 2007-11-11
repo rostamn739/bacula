@@ -14,10 +14,14 @@
          <td> <input class="formulaire" type='text' value='10' name='cost' size='3'>
          </td>
      </tr>
-     <tr><td>Enabled :</td> 
-         <td> <input class="formulaire" type='checkbox' value='10' name='enabled'>
-         </td>
-     </tr>
+    <tr><td>Enabled:</td>
+        <td> <select name='enabled' class='formulaire'>
+           <option value='yes'>yes</option>
+           <option value='no'>no</option>
+           <option value='archived'>archived</option>
+           </select>
+        </td>
+    </tr>
     </table>
     <input type="image" name='action' value='location_add' title="save"
       src='/bweb/save.png'>
