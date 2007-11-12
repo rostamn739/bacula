@@ -10,7 +10,7 @@ use some of the new features that affect the FD.  In other words, you should
 not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
-Version 2.2.6 is a minor bug fix realease to version 2.2.5
+Version 2.2.6 is a minor bug fix release to version 2.2.5
 - It fixes bugs: #1003, 942, 982, 990(response only), 991,   
   993, 986, 976.
 - Fix bat crash wen it cannot connect to Director.
