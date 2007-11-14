@@ -1,6 +1,11 @@
               Technical notes on version 2.2
 
 General:
+14Nov07
+kes  This patch fixes the infinite loop when trying to increase the
+     maximum number of volumes in a Pool during the add command.
+     This patch fixes bug #1008. 
+          
 Release Version 2.2.6
 09Nov07
 kes  Get fix for joblist bug in bat from trunk.
@@ -35,6 +40,7 @@ kes  Activate Close button on tray-monitor window. This fixes
 kes  Fix spurious warning message printed when creating a volume with
      a LabelFormat. This fixes bug #976.
 
+Release Version 2.2.5
 09Oct07
 kes  Add JobId in place of Job name in all the Jmsg() output.  
 kes  Correct the APP_DESC for the Win32 storage service (remove an e).

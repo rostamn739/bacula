@@ -244,12 +244,10 @@ static int add_cmd(UAContext *ua, const char *cmd)
 
    while (pr.MaxVols > 0 && pr.NumVols >= pr.MaxVols) {
       ua->warning_msg(_("Pool already has maximum volumes=%d\n"), pr.MaxVols);
-      for (;;) {
-         if (!get_pint(ua, _("Enter new maximum (zero for unlimited): "))) {
-            return 1;
-         }
-         pr.MaxVols = ua->pint32_val;
+      if (!get_pint(ua, _("Enter new maximum (zero for unlimited): "))) {
+         return 1;
       }
+      pr.MaxVols = ua->pint32_val;
    }
 
    /* Get media type */
