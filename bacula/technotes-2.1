@@ -1,12 +1,21 @@
               Technical notes on version 2.2
 
 General:
+02Dec07
+kes  This patch prevents the 'status dir' command from trying to use a scratch
+     volume and possibly moving it from one pool to another.  This patch fixes
+     bug #1019.
 30Nov07
 kes  Fix --archivedir addition to configure. Replace it with
      --with-archivedir in configure.in  This fixes the regression
      test builds.
 kes  This patch fixes bug #1012 where the job is canceled because
      of Max Run Time exceeded when the job has not yet started.
+29Nov07
+ebl  Apply Richard Mortimer patch that fixes #1016 when there are more than
+     one 'part' to write.  Instead of each part being stored on disk,
+     written to DVD, then deleted from disk, all parts are written to disk,
+     and only the last is written and deleted from disk.
 27Nov07
 kes  Correct typos in disk-changer.in
 25Nov07
