@@ -1,6 +1,11 @@
               Technical notes on version 2.2
 
 General:
+03Dec07
+kes  This patch fixes bcopy so that it produces correct Volumes.
+     It fixes bug #1022.
+kes  This patch eliminates spurious output to the console during a VerifyVolume
+     job that contains encrypted data. It fixes bug #1024.
 02Dec07
 kes  This patch prevents the 'status dir' command from trying to use a scratch
      volume and possibly moving it from one pool to another.  This patch fixes
