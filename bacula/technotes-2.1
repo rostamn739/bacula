@@ -1,6 +1,10 @@
               Technical notes on version 2.2
 
 General:
+08Dec07
+kes  Add new include to postgresql.c suggested by Marc Cousins so
+     that it compiles correctly with pgre version 8.3.  Also fix
+     misuse of %x with pointer (should be %p).
 03Dec07
 kes  This patch fixes bcopy so that it produces correct Volumes.
      It fixes bug #1022.

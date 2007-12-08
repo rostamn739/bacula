@@ -47,6 +47,7 @@
 #ifdef HAVE_POSTGRESQL
 
 #include "postgres_ext.h"       /* needed for NAMEDATALEN */
+#include "pg_config_manual.h"   /* get NAMEDATALEN on version 8.3 or later */
 
 /* -----------------------------------------------------------------------
  *
@@ -386,7 +387,7 @@ POSTGRESQL_ROW my_postgresql_fetch_row(B_DB *mdb)
       Dmsg2(500, "my_postgresql_fetch_row row number '%d' is NOT acceptable (0..%d)\n", mdb->row_number, mdb->num_rows);
    }
 
-   Dmsg1(500, "my_postgresql_fetch_row finishes returning %x\n", row);
+   Dmsg1(500, "my_postgresql_fetch_row finishes returning %p\n", row);
 
    return row;
 }
