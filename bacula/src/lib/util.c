@@ -574,7 +574,7 @@ void make_session_key(char *key, char *seed, int mode)
  *  to = recepients list
  *
  */
-POOLMEM *edit_job_codes(JCR *jcr, char *omsg, char *imsg, const char *to)
+POOLMEM *edit_job_codes(JCR *jcr, char *omsg, char *imsg, const char *to, job_code_callback_t callback)
 {
    char *p, *q;
    const char *str;
@@ -672,10 +672,17 @@ POOLMEM *edit_job_codes(JCR *jcr, char *omsg, char *imsg, const char *to)
             }
             break;
          default:
-            add[0] = '%';
-            add[1] = *p;
-            add[2] = 0;
-            str = add;
+            str = NULL;
+            if (callback != NULL) {
+                str = callback(jcr, p);
+            }
+
+            if (!str) {
+                add[0] = '%';
+                add[1] = *p;
+                add[2] = 0;
+                str = add;
+            }
             break;
          }
       } else {

@@ -1732,6 +1732,7 @@ static void store_short_runscript(LEX *lc, RES_ITEM *item, int index, int pass)
 
    if (pass == 2) {
       RUNSCRIPT *script = new_runscript();
+      script->set_job_code_callback(job_code_callback_filesetname);
 
       script->set_command(lc->str);
 
@@ -1872,6 +1873,7 @@ static void store_runscript(LEX *lc, RES_ITEM *item, int index, int pass)
 
       RUNSCRIPT *script = new_runscript();
       memcpy(script, &res_runscript, sizeof(RUNSCRIPT));
+      script->set_job_code_callback(job_code_callback_filesetname);
       
       if (*runscripts == NULL) {
         *runscripts = New(alist(10, not_owned_by_alist));
@@ -1883,4 +1885,14 @@ static void store_runscript(LEX *lc, RES_ITEM *item, int index, int pass)
 
    scan_to_eol(lc);
    set_bit(index, res_all.hdr.item_present);
+}
+
+/* callback function for edit_job_codes */
+char *job_code_callback_filesetname(JCR *jcr, const char* param)
+{
+   if (param[0] == 'f') {
+      return jcr->fileset->name();
+   } else {
+      return NULL;
+   }
 }
