@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# Run a simple backup of the Bacula build directory but 
+#   create three volumes and do six backups causing the
+#   volumes to be recycled, and cycling through the volumes
+#   twice. Tests maxvoljobs and volretention.
+#
+TestName="recycle-test"
+JobName=Recycle
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+change_jobname NightlySave $JobName
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+label storage=File1 volume=TestVolume002
+label storage=File1 volume=TestVolume003
+update Volume=TestVolume001 volretention=10s
+update Volume=TestVolume001 maxvolbytes=200000000
+update Volume=TestVolume002 volretention=10s
+update Volume=TestVolume002 maxvolbytes=200000000
+update Volume=TestVolume003 volretention=10s
+update Volume=TestVolume003 maxvolbytes=200000000
+list volumes
+@#setdebug level=100 storage=File1
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+wait
+messages
+list volumes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+wait
+messages
+list volumes
+@sleep 10
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+wait
+messages
+list volumes
+@sleep 10
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+wait
+messages
+list volumes
+@sleep 10
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+run job=$JobName storage=File1 level=full yes
+wait
+messages
+list volumes
+@# 
+@# now do a restore
+@#
+@$out ${cwd}/tmp/log2.out
+restore where=${cwd}/tmp/bacula-restores select storage=File1
+unmark *
+mark *
+done
+yes
+wait
+messages
+@output
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+check_two_logs
+check_restore_diff
+end_test

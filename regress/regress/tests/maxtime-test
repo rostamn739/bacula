@@ -1,0 +1,80 @@
+#!/bin/sh
+#
+#  Test RunScript
+#
+
+TestName="maxtime-test"
+JobName=backup
+
+. scripts/functions
+
+copy_test_confs
+
+rm -f bin/bacula-dir.conf
+rm -f ${cwd}/tmp/RUN*log
+/bin/cp -f scripts/bacula-dir.conf.maxtime bin/bacula-dir.conf
+WHEN=$(date '+%Y-%m-%d %H:%M:%S')
+
+echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+label volume=TestVolume001 pool=PoolA
+@$out ${cwd}/tmp/RUN_MAXTIME.log
+@# no media => have to wait
+run job=RUN_MAXWAITTIME pool=Default yes
+@sleep 2
+@# storage is used by RUN_MAXWAITTIME => have to wait
+run job=RUN_MAXSTARTDELAY pool=PoolA when="$WHEN" yes
+wait
+messages
+run job=RUN_MAXRUNTIME pool=PoolA yes
+wait
+messages
+st dir
+quit
+END_OF_DATA
+
+(mkfifo ${cwd}/tmp/fifo 
+ mkfifo ${cwd}/tmp/fifo2
+ mkfifo ${cwd}/tmp/fifo3) 2> /dev/null
+
+bin/bacula start
+cat ${cwd}/tmp/bconcmds | bin/bconsole -c bin/bconsole.conf > /dev/null
+stop_bacula
+
+rm ${cwd}/tmp/fifo ${cwd}/tmp/fifo2 ${cwd}/tmp/fifo3
+
+export dstat=0
+export bstat=0
+export rstat=0
+
+if grep -e 'RUN_MAXWAITTIME.* Fatal error: Max wait time exceeded. Job canceled.' ${cwd}/tmp/RUN_MAXTIME.log >/dev/null 2>&1
+then
+    [ "$debug" = 1 ] && echo MAXWAITTIME ok
+else
+   echo "MAXWAITTIME in error"
+   rstat=1
+fi
+
+if grep -e 'RUN_MAXSTARTDELAY.* Fatal error: Job canceled because max start delay time exceeded.' ${cwd}/tmp/RUN_MAXTIME.log &&
+  ! grep -e 'NEVER start this' ${cwd}/tmp/RUN_MAXTIME.log >/dev/null 2>&1
+then
+    [ "$debug" = 1 ] && echo MAXSTARTDELAY ok
+else
+   echo "MAXSTARTDELAY in error"
+   rstat=1
+fi
+
+if grep -e 'RUN_MAXRUNTIME.* Fatal error: Max run time exceeded. Job canceled.' ${cwd}/tmp/RUN_MAXTIME.log >/dev/null 2>&1
+then
+    [ "$debug" = 1 ] && echo MAXRUNTIME ok
+else
+   echo "MAXRUNTIME in error"
+   rstat=1
+fi
+
+end_test
