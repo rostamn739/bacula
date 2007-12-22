@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-# Run all tests
-#
-./all-non-root-tests
-./all-root-tests
