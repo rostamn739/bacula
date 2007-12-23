@@ -77,7 +77,7 @@ static int32_t fmtfp(char *buffer, int32_t currlen, int32_t maxlen,
 #define fmtfp(b, c, m, f, min, max, fl) currlen
 #endif
 
-#define outch(c) {int len=currlen; if (currlen++ < maxlen) { buffer[len] = (c);}}
+#define outch(c) {if (currlen < maxlen) { buffer[currlen++] = (c);}}
 
 
 /* format read states */
@@ -152,9 +152,9 @@ int bvsnprintf(char *buffer, int32_t maxlen, const char *format, va_list args)
    *buffer = 0;
 
    while (state != DP_S_DONE) {
-      if ((ch == '\0') || (currlen >= maxlen))
+      if ((ch == '\0') || (currlen >= maxlen)) {
          state = DP_S_DONE;
-
+      }
       switch (state) {
       case DP_S_DEFAULT:
          if (ch == '%') {
@@ -444,11 +444,12 @@ static int32_t fmtint(char *buffer, int32_t currlen, int32_t maxlen,
 {
    int signvalue = 0;
    uint64_t uvalue;
-   char convert[20];
+   char convert[25];
    int place = 0;
    int spadlen = 0;                /* amount to space pad */
    int zpadlen = 0;                /* amount to zero pad */
    int caps = 0;
+   const char *cvt_string;
 
    if (max < 0) {
       max = 0;
@@ -471,12 +472,12 @@ static int32_t fmtint(char *buffer, int32_t currlen, int32_t maxlen,
       caps = 1;                    /* Should characters be upper case? */
    }
 
+   cvt_string = caps ? "0123456789ABCDEF" : "0123456789abcdef";
    do {
-      convert[place++] = (caps ? "0123456789ABCDEF" : "0123456789abcdef")
-         [uvalue % (unsigned)base];
+      convert[place++] = cvt_string[uvalue % (unsigned)base];
       uvalue = (uvalue / (unsigned)base);
-   } while (uvalue && (place < 20));
-   if (place == 20) {
+   } while (uvalue && (place < (int)sizeof(convert)));
+   if (place == (int)sizeof(convert)) {
       place--;
    }
    convert[place] = 0;
