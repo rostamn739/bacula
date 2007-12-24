@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-22 15:03+0100\n"
+"POT-Creation-Date: 2007-12-24 12:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4326,36 +4326,36 @@ msgstr ""
 msgid "  --> WriteBootstrap=%s\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:646 src/lib/runscript.c:262
+#: src/dird/dird_conf.c:646 src/lib/runscript.c:263
 msgid " --> RunScript\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:647 src/lib/runscript.c:263
+#: src/dird/dird_conf.c:647 src/lib/runscript.c:264
 #, c-format
 msgid "  --> Command=%s\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:648 src/lib/runscript.c:264
+#: src/dird/dird_conf.c:648 src/lib/runscript.c:265
 #, c-format
 msgid "  --> Target=%s\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:649 src/lib/runscript.c:265
+#: src/dird/dird_conf.c:649 src/lib/runscript.c:266
 #, c-format
 msgid "  --> RunOnSuccess=%u\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:650 src/lib/runscript.c:266
+#: src/dird/dird_conf.c:650 src/lib/runscript.c:267
 #, c-format
 msgid "  --> RunOnFailure=%u\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:651 src/lib/runscript.c:267
+#: src/dird/dird_conf.c:651 src/lib/runscript.c:268
 #, c-format
 msgid "  --> FailJobOnError=%u\n"
 msgstr ""
 
-#: src/dird/dird_conf.c:652 src/lib/runscript.c:268
+#: src/dird/dird_conf.c:652 src/lib/runscript.c:269
 #, c-format
 msgid "  --> RunWhen=%u\n"
 msgstr ""
@@ -5978,9 +5978,9 @@ msgstr ""
 msgid "Zlib version error"
 msgstr ""
 
-#: src/filed/restore.c:773 src/lib/util.c:597 src/lib/util.c:607
-#: src/lib/util.c:615 src/lib/util.c:622 src/lib/util.c:629 src/lib/util.c:643
-#: src/lib/util.c:653 src/lib/util.c:660 src/lib/util.c:671
+#: src/filed/restore.c:773 src/lib/util.c:598 src/lib/util.c:608
+#: src/lib/util.c:616 src/lib/util.c:623 src/lib/util.c:630 src/lib/util.c:644
+#: src/lib/util.c:654 src/lib/util.c:661 src/lib/util.c:672
 msgid "*none*"
 msgstr ""
 
@@ -12983,16 +12983,16 @@ msgstr ""
 msgid "Verify Data"
 msgstr ""
 
-#: src/lib/util.c:705
+#: src/lib/util.c:706
 msgid "Working directory not defined. Cannot continue.\n"
 msgstr ""
 
-#: src/lib/util.c:708
+#: src/lib/util.c:709
 #, c-format
 msgid "Working Directory: \"%s\" not found. Cannot continue.\n"
 msgstr ""
 
-#: src/lib/util.c:712
+#: src/lib/util.c:713
 #, c-format
 msgid "Working Directory: \"%s\" is not a directory. Cannot continue.\n"
 msgstr ""
@@ -14728,22 +14728,22 @@ msgstr ""
 msgid "unknown error"
 msgstr ""
 
-#: src/lib/runscript.c:213
+#: src/lib/runscript.c:214
 #, c-format
 msgid "%s: run command \"%s\"\n"
 msgstr ""
 
-#: src/lib/runscript.c:219
+#: src/lib/runscript.c:220
 #, c-format
 msgid "Runscript: %s could not execute. ERR=%s\n"
 msgstr ""
 
-#: src/lib/runscript.c:228
+#: src/lib/runscript.c:229
 #, c-format
 msgid "%s: %s\n"
 msgstr ""
 
-#: src/lib/runscript.c:233
+#: src/lib/runscript.c:234
 #, c-format
 msgid "Runscript: %s returned non-zero status=%d. ERR=%s\n"
 msgstr ""
