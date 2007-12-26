@@ -10,8 +10,8 @@ use some of the new features that affect the FD.  In other words, you should
 not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
-Version 2.2.7 has several new features and a number of bug fixes
-to version 2.2.6:
+Version 2.2.7 has several new features and several importatn bug fixes
+  since version 2.2.6:
 - It fixes bugs: 1009, 1022, 1024, 1019, 1012, 1021, 1020
   1007, 1008.  For more details, please see the technotes-2.1 file.
 - Fixed a seg fault reported by Frank Sweetser that depended on
