@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -54,6 +54,7 @@ const char *working_directory = NULL;       /* working directory path stored her
 int verbose = 0;                      /* increase User messages */
 /* Keep debug level set to zero by default */
 int debug_level = 0;                  /* debug level */
+bool dbg_timestamp = false;           /* print timestamp in debug output */
 time_t daemon_start_time = 0;         /* Daemon start time */
 const char *version = VERSION " (" BDATE ")";
 char my_name[30];                     /* daemon name is stored here */
