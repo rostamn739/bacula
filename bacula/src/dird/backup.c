@@ -466,7 +466,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
 "  Rate:                   %.1f KB/s\n"
 "  Software Compression:   %s\n"
 "  VSS:                    %s\n"
-"  Encryption:             %s\n"
+"  Storage Encryption:     %s\n"
 "  Volume name(s):         %s\n"
 "  Volume Session Id:      %d\n"
 "  Volume Session Time:    %d\n"
