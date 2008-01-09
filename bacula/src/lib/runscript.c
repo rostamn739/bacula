@@ -208,7 +208,7 @@ bool RUNSCRIPT::run(JCR *jcr, const char *name)
    BPIPE *bpipe;
    char line[MAXSTRING];
 
-// ecmd = edit_job_codes(jcr, ecmd, this->command, "", this->job_code_callback);
+   ecmd = edit_job_codes(jcr, ecmd, this->command, "", this->job_code_callback);
    ecmd = edit_job_codes(jcr, ecmd, this->command, "");
    Dmsg1(100, "runscript: running '%s'...\n", ecmd);
    Jmsg(jcr, M_INFO, 0, _("%s: run command \"%s\"\n"), name, ecmd);
