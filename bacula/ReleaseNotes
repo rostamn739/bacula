@@ -11,7 +11,8 @@ not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
 Version 2.2.8 is a bug fix to version 2.2.7:
-- It fixes bugs: 1036, 1033(doc), 1018, and 1028.
+- It fixes bugs: 1036, 1033(doc), 1028, and possibly 1018 and 1032.
+  Bugs 1018 and 1032 involve problems with multiple-drive autochangers.
 
 Version 2.2.7 has several new features and several important bug fixes
   since version 2.2.6:
