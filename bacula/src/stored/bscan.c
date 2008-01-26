@@ -972,7 +972,16 @@ static int create_pool_record(B_DB *db, POOL_DBR *pr)
  */
 static int create_client_record(B_DB *db, CLIENT_DBR *cr)
 {
+   /*
+    * Note, update_db can temporarily be set false while 
+    * updating the database, so we must ensure that ClientId is non-zero.
+    */
    if (!update_db) {
+      cr->ClientId = 0;
+      if (!db_get_client_record(bjcr, db, cr)) {
+        Pmsg1(0, _("Could not get Client record. ERR=%s\n"), db_strerror(db));
+        return 0;
+      }
       return 1;
    }
    if (!db_create_client_record(bjcr, db, cr)) {

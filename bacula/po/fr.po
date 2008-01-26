@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-01-17 15:27+0100\n"
-"PO-Revision-Date: 2007-05-05 20:09+0200\n"
+"POT-Creation-Date: 2008-01-26 09:48+0100\n"
+"PO-Revision-Date: 2008-01-24 22:54+0100\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -479,15 +479,15 @@ msgstr ""
 msgid "Backup OK -- with warnings"
 msgstr "Backup OK -- avec des erreurs"
 
-#: src/dird/backup.c:383 src/stored/bscan.c:1131
+#: src/dird/backup.c:383 src/stored/bscan.c:1140
 msgid "Backup OK"
 msgstr "Backup OK"
 
-#: src/dird/backup.c:388 src/stored/bscan.c:1135
+#: src/dird/backup.c:388 src/stored/bscan.c:1144
 msgid "*** Backup Error ***"
 msgstr "*** Backup en erreur ***"
 
-#: src/dird/backup.c:398 src/stored/bscan.c:1138
+#: src/dird/backup.c:398 src/stored/bscan.c:1147
 msgid "Backup Canceled"
 msgstr "Backup annulé"
 
@@ -497,7 +497,7 @@ msgid "Inappropriate term code: %c\n"
 msgstr ""
 
 #: src/dird/backup.c:448
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Bacula %s %s (%s): %s\n"
 "  Build OS:               %s %s %s\n"
@@ -553,7 +553,7 @@ msgstr ""
 "  Débit :                  %.1f Ko/s\n"
 "  Compression logicielle : %s\n"
 "  VSS :                    %s\n"
-"  Cryptage :               %s\n"
+"  Cryptage des médias :    %s\n"
 "  Nom des Volumes :        %s\n"
 "  Volume Session Id :      %d\n"
 "  Volume Session date :    %d\n"
@@ -728,7 +728,7 @@ msgid "Error updating media record Enabled: ERR=%s"
 msgstr "Impossible de mettre à jour les informations du Volume : ERR=%s"
 
 #: src/dird/ua_update.c:414
-#, fuzzy, c-format
+#, c-format
 msgid "New Enabled is: %d\n"
 msgstr "Le nouveau flag Enabled est : %d\n"
 
@@ -895,9 +895,9 @@ msgid "Current InChanger flag is: %d\n"
 msgstr "Le flag InChanger courant est : %d\n"
 
 #: src/dird/ua_update.c:626
-#, fuzzy, c-format
+#, c-format
 msgid "Set InChanger flag for Volume \"%s\": yes/no: "
-msgstr "Positionner le flag InChanger ? oui/non : "
+msgstr "Positionner le flag InChanger du volume « %s » ? oui/non : "
 
 #: src/dird/ua_update.c:639
 #, c-format
@@ -929,9 +929,8 @@ msgstr ""
 "Logiquement, vous devez augmenter le nombre de fichier du Volume d'un !\n"
 
 #: src/dird/ua_update.c:655
-#, fuzzy
 msgid "Increase Volume Files? (yes/no): "
-msgstr "Le nouveau nombre de fichier du Volume est : %u\n"
+msgstr "Augmenter le nombre de fichier du Volume ? (oui/non) : \n"
 
 #: src/dird/ua_update.c:665
 #, c-format
@@ -1258,7 +1257,7 @@ msgid ""
 msgstr ""
 
 #: src/dird/msgchan.c:305
-#, fuzzy, c-format
+#, c-format
 msgid "Using Device \"%s\"\n"
 msgstr "Using Device \"%s\"\n"
 
@@ -2938,13 +2937,12 @@ msgid "is waiting for higher priority jobs to finish"
 msgstr "attend qu'un job plus prioritaire se termine"
 
 #: src/dird/ua_status.c:640 src/dird/ua_status.c:685 src/lib/util.c:234
-#, fuzzy
 msgid "SD despooling Attributes"
-msgstr "Spooling des données...\n"
+msgstr "SD envoie les attributs...\n"
 
 #: src/dird/ua_status.c:643 src/dird/ua_status.c:688 src/lib/util.c:237
 msgid "Dir inserting Attributes"
-msgstr ""
+msgstr "Dir insert les attributs"
 
 #: src/dird/ua_status.c:648
 #, c-format
@@ -3023,7 +3021,7 @@ msgstr "Autre"
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr "%6d  %-6s %8s %10s %-7s  %-8s %s\n"
 
-#: src/dird/ua_status.c:789 src/stored/btape.c:195
+#: src/dird/ua_status.c:789
 msgid "\n"
 msgstr "\n"
 
@@ -3127,7 +3125,7 @@ msgstr ""
 msgid "Job DiffPool override"
 msgstr ""
 
-#: src/dird/job.c:657 src/stored/bscan.c:979
+#: src/dird/job.c:657 src/stored/bscan.c:988
 #, c-format
 msgid "Could not create Client record. ERR=%s\n"
 msgstr ""
@@ -3679,7 +3677,7 @@ msgid "Expecting keyword, got: %s\n"
 msgstr "Attendait un mot clef, eu : %s\n"
 
 #: src/dird/inc_conf.c:368 src/dird/inc_conf.c:666 src/dird/dird_conf.c:1848
-#: src/lib/parse_conf.c:874
+#: src/lib/parse_conf.c:887
 #, c-format
 msgid "expected an equals, got: %s"
 msgstr "attendait un égale, eu : %s"
@@ -4804,7 +4802,7 @@ msgid "%s item is required in %s resource, but not found.\n"
 msgstr ""
 
 #: src/dird/dird_conf.c:1259 src/tray-monitor/tray_conf.c:294
-#: src/lib/parse_conf.c:234
+#: src/lib/parse_conf.c:233
 #, c-format
 msgid "Too many items in %s resource\n"
 msgstr "Trop d'élément dans la ressource %s\n"
@@ -4925,30 +4923,6 @@ msgstr "Admin Annulé"
 #: src/dird/admin.c:115
 msgid "Bacula "
 msgstr "Bacula "
-
-#: src/dird/admin.c:115 src/console/console.c:114
-#, c-format
-msgid " ("
-msgstr " ("
-
-#: src/dird/admin.c:115
-#, c-format
-msgid ""
-"): %s\n"
-"  JobId:                  %d\n"
-"  Job:                    %s\n"
-"  Start time:             %s\n"
-"  End time:               %s\n"
-"  Termination:            %s\n"
-"\n"
-msgstr ""
-") : %s\n"
-"  JobId :                  %d\n"
-"  Job :                    %s\n"
-"  Début :                  %s\n"
-"  Fin :                    %s\n"
-"  Statut de fin :          %s\n"
-"\n"
 
 #: src/dird/ua_run.c:152 src/dird/ua_run.c:337
 msgid "Invalid time, using current time.\n"
@@ -8368,7 +8342,7 @@ msgid "Unknown"
 msgstr ""
 
 #: src/stored/bcopy.c:355 src/stored/bextract.c:494 src/stored/bls.c:459
-#: src/stored/bscan.c:1291 src/stored/btape.c:2689
+#: src/stored/bscan.c:1300 src/stored/btape.c:2689
 #, c-format
 msgid "Mount Volume \"%s\" on device %s and press return when ready: "
 msgstr ""
@@ -9371,7 +9345,7 @@ msgstr ""
 msgid "SOS_LABEL: PoolId mismatch for JobId=%u. DB=%d Vol=%d\n"
 msgstr ""
 
-#: src/stored/bscan.c:581 src/stored/bscan.c:1084
+#: src/stored/bscan.c:581 src/stored/bscan.c:1093
 #, c-format
 msgid "Could not find SessId=%d SessTime=%d for EOS record.\n"
 msgstr ""
@@ -9474,57 +9448,62 @@ msgstr ""
 msgid "Created Pool record for Pool: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:983
+#: src/stored/bscan.c:982
+#, fuzzy, c-format
+msgid "Could not get Client record. ERR=%s\n"
+msgstr "Impossible d'initialiser la queue cliente : ERR=%s\n"
+
+#: src/stored/bscan.c:992
 #, c-format
 msgid "Created Client record for Client: %s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1000
+#: src/stored/bscan.c:1009
 #, c-format
 msgid "Fileset \"%s\" already exists.\n"
 msgstr ""
 
-#: src/stored/bscan.c:1004
+#: src/stored/bscan.c:1013
 #, c-format
 msgid "Could not create FileSet record \"%s\". ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1009
+#: src/stored/bscan.c:1018
 #, c-format
 msgid "Created FileSet record \"%s\"\n"
 msgstr ""
 
-#: src/stored/bscan.c:1056
+#: src/stored/bscan.c:1065
 #, c-format
 msgid "Could not create JobId record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1062
+#: src/stored/bscan.c:1071
 #, c-format
 msgid "Could not update job start record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1065
+#: src/stored/bscan.c:1074
 #, c-format
 msgid "Created new JobId=%u record for original JobId=%u\n"
 msgstr ""
 
-#: src/stored/bscan.c:1115
+#: src/stored/bscan.c:1124
 #, c-format
 msgid "Could not update JobId=%u record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1120
+#: src/stored/bscan.c:1129
 #, c-format
 msgid "Updated Job termination record for JobId=%u Level=%s TermStat=%c\n"
 msgstr ""
 
-#: src/stored/bscan.c:1142
+#: src/stored/bscan.c:1151
 #, c-format
 msgid "Job Termination code: %d"
 msgstr ""
 
-#: src/stored/bscan.c:1147
+#: src/stored/bscan.c:1156
 #, c-format
 msgid ""
 "%s\n"
@@ -9544,27 +9523,27 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/stored/bscan.c:1205
+#: src/stored/bscan.c:1214
 #, c-format
 msgid "Could not create JobMedia record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1209
+#: src/stored/bscan.c:1218
 #, c-format
 msgid "Created JobMedia record JobId %d, MediaId %d\n"
 msgstr ""
 
-#: src/stored/bscan.c:1225
+#: src/stored/bscan.c:1234
 #, c-format
 msgid "Could not find SessId=%d SessTime=%d for MD5/SHA1 record.\n"
 msgstr ""
 
-#: src/stored/bscan.c:1239
+#: src/stored/bscan.c:1248
 #, c-format
 msgid "Could not add MD5/SHA1 to File record. ERR=%s\n"
 msgstr ""
 
-#: src/stored/bscan.c:1244
+#: src/stored/bscan.c:1253
 msgid "Updated MD5/SHA1 record\n"
 msgstr ""
 
@@ -9596,10 +9575,6 @@ msgstr ""
 
 #: src/stored/btape.c:195
 msgid "64 bit printf/scanf problem. i=%d x64=%"
-msgstr ""
-
-#: src/stored/btape.c:195
-msgid " y64=%"
 msgstr ""
 
 #: src/stored/btape.c:200
@@ -11175,20 +11150,18 @@ msgstr ""
 "car le nombre de fichiers ne correspond pas. Volume=%u Catalogue=%u\n"
 
 #: src/stored/mount.c:424
-#, fuzzy, c-format
+#, c-format
 msgid "Ready to append to end of Volume \"%s\" size=%s\n"
-msgstr ""
-"Prêt à ajouter des données à la fin du volume « %s » part=%d size=%s\n"
-"\n"
+msgstr "Prêt à ajouter des données à la fin du volume « %s » size=%s\n"
 
 #: src/stored/mount.c:428
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Bacula cannot write on disk Volume \"%s\" because: The sizes do not match! "
 "Volume=%s Catalog=%s\n"
 msgstr ""
-"Impossible d'écrire sur le volume « %s » car :\n"
-"Les tailles ne correspondent pas. Volume=%s Catalogue=%s\n"
+"Impossible d'écrire sur le volume « %s » car : Les tailles ne correspondent "
+"pas. Volume=%s Catalogue=%s\n"
 
 #: src/stored/mount.c:458
 #, c-format
@@ -11210,7 +11183,7 @@ msgid "Labeled new Volume \"%s\" on device %s.\n"
 msgstr "Le nouveau volume « %s » a été labélisé sur le device %s.\n"
 
 #: src/stored/mount.c:534
-#, fuzzy, c-format
+#, c-format
 msgid "Device %s not configured to autolabel Volumes.\n"
 msgstr ""
 "Attention, le device %s n'est pas configuré pour labéliser automatiquement "
@@ -11252,9 +11225,9 @@ msgid "3904 Job %s not found.\n"
 msgstr "3904 Job %s non trouvé.\n"
 
 #: src/stored/dircmd.c:324
-#, fuzzy, c-format
+#, c-format
 msgid "Job %s marked to be canceled.\n"
-msgstr "Le job va être marqué annulé.\n"
+msgstr "Le job %s est marqué pour être annulé.\n"
 
 #: src/stored/dircmd.c:325
 #, c-format
@@ -11302,9 +11275,9 @@ msgid "3912 Failed to label Volume: ERR=%s\n"
 msgstr "3912 Impossible de labéliser le Volume : ERR=%s\n"
 
 #: src/stored/dircmd.c:506
-#, fuzzy, c-format
+#, c-format
 msgid "3914 Failed to label Volume (no media): ERR=%s\n"
-msgstr "3912 Impossible de labéliser le Volume : ERR=%s\n"
+msgstr "3914 Impossible de labéliser le Volume (pas de volume): ERR=%s\n"
 
 #: src/stored/dircmd.c:509
 #, c-format
@@ -11607,7 +11580,7 @@ msgstr ""
 "Device « %s ».\n"
 
 #: src/stored/askdir.c:498
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Job %s waiting. Cannot find any appendable volumes.\n"
 "Please use the \"label\"  command to create a new Volume for:\n"
@@ -11618,8 +11591,8 @@ msgstr ""
 "Le Job %s est en attente. Bacula n'a pas pu trouver de media disponible.\n"
 "Merci de créer un nouveau volume via la commande « label » pour :\n"
 "    Storage :       %s\n"
-"    Type du Media : %s\n"
 "    Pool :          %s\n"
+"    Type du Media : %s\n"
 
 #: src/stored/askdir.c:522 src/stored/askdir.c:612
 #, c-format
@@ -11642,7 +11615,7 @@ msgstr ""
 "Device %s.\n"
 
 #: src/stored/askdir.c:585
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Please mount Volume \"%s\" or label a new one for:\n"
 "    Job:          %s\n"
@@ -11650,11 +11623,11 @@ msgid ""
 "    Pool:         %s\n"
 "    Media type:   %s\n"
 msgstr ""
-"Le Job %s est en attente. Bacula n'a pas pu trouver de media disponible.\n"
-"Merci de créer un nouveau volume via la commande « label » pour :\n"
+"Merci de monter ou de créer un nouveau volume pour :\n"
+"    Job :           %s\n"
 "    Storage :       %s\n"
-"    Type du Media : %s\n"
 "    Pool :          %s\n"
+"    Type du Media : %s\n"
 
 #: src/stored/askdir.c:622
 msgid "pthread error in mount_volume\n"
@@ -12054,9 +12027,9 @@ msgid "Acquire read: num_writers=%d not zero. Job %d canceled.\n"
 msgstr ""
 
 #: src/stored/acquire.c:79
-#, fuzzy, c-format
+#, c-format
 msgid "No volumes specified for reading. Job %s canceled.\n"
-msgstr "Pas de volume spécifié. Abandon du job %s.\n"
+msgstr "Pas de volume spécifié pour la lecture. Abandon du job %s.\n"
 
 #: src/stored/acquire.c:88
 #, c-format
@@ -12081,7 +12054,7 @@ msgid "No suitable device found to read Volume \"%s\"\n"
 msgstr ""
 
 #: src/stored/acquire.c:192
-#, fuzzy, c-format
+#, c-format
 msgid "Job %s canceled.\n"
 msgstr "Le job %s est annulé.\n"
 
@@ -13050,29 +13023,6 @@ msgstr ""
 "\n"
 "Version : "
 
-#: src/console/console.c:114
-#, fuzzy, c-format
-msgid ""
-") %s %s %s\n"
-"\n"
-"Usage: bconsole [-s] [-c config_file] [-d debug_level]\n"
-"       -c <file>   set configuration file to file\n"
-"       -dnn        set debug level to nn\n"
-"       -n          no conio\n"
-"       -s          no signals\n"
-"       -t          test - read configuration and exit\n"
-"       -?          print this message.\n"
-"\n"
-msgstr ""
-") %s %s %s\n"
-"\n"
-"Usage : bconsole [-s] [-c config_file] [-d niveau_debug]\n"
-"       -c <file>   set configuration file to file\n"
-"       -dnn        set debug level to nn\n"
-"       -s          no signals\n"
-"       -t          test - lecture de la configuration et sortie\n"
-"\n"
-
 #: src/console/console.c:162
 msgid "input from file"
 msgstr ""
@@ -13123,9 +13073,9 @@ msgid "Select Director by entering a number: "
 msgstr ""
 
 #: src/console/console.c:475
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not a number. You must enter a number between 1 and %d\n"
-msgstr "Vous devez saisir un nombre entre 1 et %d\n"
+msgstr "%s n'est pas un nombre. Vous devez saisir un nombre entre 1 et %d\n"
 
 #: src/console/console.c:481
 #, c-format
@@ -13860,19 +13810,19 @@ msgid "%s ERROR TERMINATION\n"
 msgstr ""
 
 #: src/lib/message.c:1128
-#, fuzzy, c-format
+#, c-format
 msgid "%s JobId %u: Fatal error: "
-msgstr "%s : %s Erreur fatale : "
+msgstr "%s JobId %u: Erreur fatale : "
 
 #: src/lib/message.c:1134
-#, fuzzy, c-format
+#, c-format
 msgid "%s JobId %u: Error: "
-msgstr "%s : %s Erreur : "
+msgstr "%s JobId %u : Erreur : "
 
 #: src/lib/message.c:1140
-#, fuzzy, c-format
+#, c-format
 msgid "%s JobId %u: Warning: "
-msgstr "%s : Attention : "
+msgstr "%s JobId %u : Attention : "
 
 #: src/lib/message.c:1143
 #, c-format
@@ -13906,7 +13856,7 @@ msgstr ""
 msgid "Attr spool write error. ERR=%s\n"
 msgstr "Erreur pendant l'écriture des attributs dans le spool. ERR=%s\n"
 
-#: src/lib/bnet.c:244 src/lib/bnet.c:283
+#: src/lib/bnet.c:244 src/lib/bnet.c:284
 msgid "TLS connection initialization failed.\n"
 msgstr "Initialisation de la connexion TLS échouée.\n"
 
@@ -13914,52 +13864,52 @@ msgstr "Initialisation de la connexion TLS échouée.\n"
 msgid "TLS Negotiation failed.\n"
 msgstr "Négociation TLS échouée.\n"
 
-#: src/lib/bnet.c:258 src/lib/bnet.c:298
+#: src/lib/bnet.c:258 src/lib/bnet.c:299
 msgid ""
 "TLS certificate verification failed. Peer certificate did not match a "
 "required commonName\n"
 msgstr ""
 
-#: src/lib/bnet.c:305
+#: src/lib/bnet.c:306
 #, c-format
 msgid ""
 "TLS host certificate verification failed. Host %s did not match presented "
 "certificate\n"
 msgstr ""
 
-#: src/lib/bnet.c:322
+#: src/lib/bnet.c:323
 msgid "TLS enabled but not configured.\n"
 msgstr "TLS activé mais non configuré.\n"
 
-#: src/lib/bnet.c:328
+#: src/lib/bnet.c:329
 msgid "TLS enable but not configured.\n"
 msgstr "TLS actif mais non configuré.\n"
 
-#: src/lib/bnet.c:386
+#: src/lib/bnet.c:387
 msgid "No problem."
 msgstr "Pas de problème."
 
-#: src/lib/bnet.c:389
+#: src/lib/bnet.c:390
 msgid "Authoritative answer for host not found."
 msgstr ""
 
-#: src/lib/bnet.c:392
+#: src/lib/bnet.c:393
 msgid "Non-authoritative for host not found, or ServerFail."
 msgstr ""
 
-#: src/lib/bnet.c:395
+#: src/lib/bnet.c:396
 msgid "Non-recoverable errors, FORMERR, REFUSED, or NOTIMP."
 msgstr ""
 
-#: src/lib/bnet.c:398
+#: src/lib/bnet.c:399
 msgid "Valid name, no data record of resquested type."
 msgstr ""
 
-#: src/lib/bnet.c:401
+#: src/lib/bnet.c:402
 msgid "Unknown error."
 msgstr "Erreur inconnue."
 
-#: src/lib/bnet.c:655
+#: src/lib/bnet.c:656
 #, c-format
 msgid "Unknown sig %d"
 msgstr "sig inconnu %d"
@@ -14239,16 +14189,11 @@ msgstr ""
 "Le watchdog a envoyé un signal après %d secs au thread bloqué en écoute du "
 "Director.\n"
 
-#: src/lib/parse_conf.c:180
+#: src/lib/parse_conf.c:188
 msgid "***UNKNOWN***"
 msgstr ""
 
-#: src/lib/parse_conf.c:200
-#, c-format
-msgid "Unable to initialize resource lock. ERR=%s\n"
-msgstr ""
-
-#: src/lib/parse_conf.c:287 src/lib/parse_conf.c:306
+#: src/lib/parse_conf.c:286 src/lib/parse_conf.c:306
 #, c-format
 msgid "expected an =, got: %s"
 msgstr "attendait un =, eu : %s"
@@ -14308,54 +14253,59 @@ msgstr ""
 msgid "Expected a Tape Label keyword, got: %s"
 msgstr "Attendait un Label de lecteur, a pas : %s"
 
-#: src/lib/parse_conf.c:819
+#: src/lib/parse_conf.c:798
+#, c-format
+msgid "Unable to initialize resource lock. ERR=%s\n"
+msgstr ""
+
+#: src/lib/parse_conf.c:828
 #, c-format
 msgid "Cannot open config file \"%s\": %s\n"
 msgstr "Impossible d'ouvrir le fichier de configuration « %s » : %s\n"
 
-#: src/lib/parse_conf.c:835
+#: src/lib/parse_conf.c:845
 msgid ""
 "Currently we cannot handle UTF-16 source files. Please convert the conf file "
 "to UTF-8\n"
 msgstr ""
 
-#: src/lib/parse_conf.c:839
+#: src/lib/parse_conf.c:849
 #, c-format
 msgid "Expected a Resource name identifier, got: %s"
 msgstr "Attendait un identifiant de Ressource, a pas : %s"
 
-#: src/lib/parse_conf.c:852
+#: src/lib/parse_conf.c:865
 #, c-format
 msgid "expected resource name, got: %s"
 msgstr "attendait un nom de ressource, eu : %s"
 
-#: src/lib/parse_conf.c:863
+#: src/lib/parse_conf.c:876
 #, c-format
 msgid "not in resource definition: %s"
 msgstr ""
 
-#: src/lib/parse_conf.c:888
+#: src/lib/parse_conf.c:901
 #, c-format
 msgid ""
 "Keyword \"%s\" not permitted in this resource.\n"
 "Perhaps you left the trailing brace off of the previous resource."
 msgstr ""
 
-#: src/lib/parse_conf.c:899
+#: src/lib/parse_conf.c:912
 msgid "Name not specified for resource"
 msgstr ""
 
-#: src/lib/parse_conf.c:908
+#: src/lib/parse_conf.c:921
 #, c-format
 msgid "unexpected token %d %s in resource definition"
 msgstr "mot clés inattendu %d %s dans la définition de la ressource"
 
-#: src/lib/parse_conf.c:914
+#: src/lib/parse_conf.c:927
 #, c-format
 msgid "Unknown parser state %d\n"
 msgstr ""
 
-#: src/lib/parse_conf.c:919
+#: src/lib/parse_conf.c:932
 msgid "End of conf file reached with unclosed resource."
 msgstr ""
 
@@ -16916,11 +16866,6 @@ msgstr ""
 msgid "The Bacula service: "
 msgstr "Bacula Storage : Dernier Job annulé"
 
-#: src/win32/libwin32/service.cpp:290 src/win32/libwin32/service.cpp:319
-#, fuzzy
-msgid " could not be installed"
-msgstr "Bacula Storage : Dernier Job en erreur"
-
 #: src/win32/libwin32/service.cpp:297
 msgid ""
 "Provides file backup and restore services. Bacula -- the network backup "
@@ -16945,34 +16890,8 @@ msgstr ""
 msgid "The "
 msgstr ""
 
-#: src/win32/libwin32/service.cpp:329
-msgid ""
-"was successfully installed.\n"
-"The service may be started by double clicking on the\n"
-"Bacula \"Start\" icon and will be automatically\n"
-"be run the next time this machine is rebooted. "
-msgstr ""
-
-#: src/win32/libwin32/service.cpp:366
-msgid " could not be stopped"
-msgstr ""
-
-#: src/win32/libwin32/service.cpp:373
-#, fuzzy
-msgid " has been removed"
-msgstr "a été annulé"
-
-#: src/win32/libwin32/service.cpp:377
-#, fuzzy
-msgid " could not be removed"
-msgstr "Impossible d'ouvrir le device %s\n"
-
 #: src/win32/libwin32/service.cpp:384
 msgid "A existing Bacula service: "
-msgstr ""
-
-#: src/win32/libwin32/service.cpp:384
-msgid " could not be found for removal. This is not normally an error."
 msgstr ""
 
 #: src/win32/libwin32/service.cpp:392
@@ -16992,13 +16911,6 @@ msgstr ""
 #, fuzzy
 msgid "Could not delete Registry key for "
 msgstr "Impossible de détruire la mémoire partagée : %s\n"
-
-#: src/win32/libwin32/service.cpp:410
-#, fuzzy
-msgid ""
-".\n"
-"The Bacula service could not be removed"
-msgstr "Ressource %s introuvable\n"
 
 #: src/win32/libwin32/service.cpp:420
 msgid "Bacula could not be contacted, probably not running"
@@ -17038,6 +16950,66 @@ msgstr "Impossible d'ouvrir la base de données « %s ».\n"
 #: src/win32/libwin32/main.cpp:237
 msgid "Bad Command Line Option"
 msgstr ""
+
+#~ msgid " ("
+#~ msgstr " ("
+
+#~ msgid ""
+#~ "): %s\n"
+#~ "  JobId:                  %d\n"
+#~ "  Job:                    %s\n"
+#~ "  Start time:             %s\n"
+#~ "  End time:               %s\n"
+#~ "  Termination:            %s\n"
+#~ "\n"
+#~ msgstr ""
+#~ ") : %s\n"
+#~ "  JobId :                  %d\n"
+#~ "  Job :                    %s\n"
+#~ "  Début :                  %s\n"
+#~ "  Fin :                    %s\n"
+#~ "  Statut de fin :          %s\n"
+#~ "\n"
+
+#~ msgid ""
+#~ ") %s %s %s\n"
+#~ "\n"
+#~ "Usage: bconsole [-s] [-c config_file] [-d debug_level]\n"
+#~ "       -c <file>   set configuration file to file\n"
+#~ "       -dnn        set debug level to nn\n"
+#~ "       -n          no conio\n"
+#~ "       -s          no signals\n"
+#~ "       -t          test - read configuration and exit\n"
+#~ "       -?          print this message.\n"
+#~ "\n"
+#~ msgstr ""
+#~ ") %s %s %s\n"
+#~ "\n"
+#~ "Usage : bconsole [-s] [-c config_file] [-d niveau_debug]\n"
+#~ "       -c <file>   utilise le fichier de configuration file\n"
+#~ "       -dnn        positionne le niveau de debug a nn\n"
+#~ "       -n          n'utilise pas conio\n"
+#~ "       -s          no signals\n"
+#~ "       -t          test - lecture de la configuration et sortie\n"
+#~ "       -?          affiche ce message\n"
+
+#, fuzzy
+#~ msgid " could not be installed"
+#~ msgstr "Bacula Storage : Dernier Job en erreur"
+
+#, fuzzy
+#~ msgid " has been removed"
+#~ msgstr "a été annulé"
+
+#, fuzzy
+#~ msgid " could not be removed"
+#~ msgstr "Impossible d'ouvrir le device %s\n"
+
+#, fuzzy
+#~ msgid ""
+#~ ".\n"
+#~ "The Bacula service could not be removed"
+#~ msgstr "Ressource %s introuvable\n"
 
 #, fuzzy
 #~ msgid ""
