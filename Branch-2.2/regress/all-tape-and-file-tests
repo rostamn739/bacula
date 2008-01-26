@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Run all tests
+#
+./all-non-root-tests
+./all-non-root-tape-tests

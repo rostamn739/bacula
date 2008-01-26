@@ -1,0 +1,148 @@
+# $Id$
+@MCOMMON@
+
+python = @PYTHON_INCDIR@
+
+srcdir =	.
+VPATH = 	.
+.PATH:		.
+
+# one up
+basedir = ..
+# top dir
+topdir = ../..
+# this dir relative to top dir
+thisdir = src/lib
+
+DEBUG=@DEBUG@
+
+first_rule: all
+dummy:
+
+LIBSRCS = attr.c base64.c berrno.c bsys.c bget_msg.c \
+	  bnet.c bnet_server.c runscript.c \
+	  bsock.c bpipe.c bsnprintf.c btime.c \
+	  cram-md5.c crc32.c crypto.c daemon.c edit.c \
+	  enh_fnmatch.c fnmatch.c \
+	  guid_to_name.c hmac.c jcr.c lex.c alist.c dlist.c \
+	  md5.c message.c mem_pool.c openssl.c parse_conf.c \
+	  queue.c bregex.c \
+	  res.c rwlock.c scan.c serial.c sha1.c \
+	  signal.c smartall.c rblist.c tls.c tree.c \
+	  util.c var.c watchdog.c workq.c btimers.c \
+	  address_conf.c pythonlib.c breg.c
+
+
+LIBOBJS = attr.o base64.o berrno.o bsys.o bget_msg.o \
+	  bnet.o bnet_server.o runscript.o \
+	  bsock.o bpipe.o bsnprintf.o btime.o \
+	  cram-md5.o crc32.o crypto.o daemon.o edit.o \
+	  enh_fnmatch.o fnmatch.o \
+	  guid_to_name.o hmac.o jcr.o lex.o alist.o dlist.o \
+	  md5.o message.o mem_pool.o openssl.o parse_conf.o \
+	  queue.o bregex.o \
+	  res.o rwlock.o scan.o serial.o sha1.o \
+	  signal.o smartall.o rblist.o tls.o tree.o \
+	  util.o var.o watchdog.o workq.o btimers.o \
+	  address_conf.o pythonlib.o breg.o
+
+
+EXTRAOBJS = @OBJLIST@
+
+
+.SUFFIXES:	.c .o .ch .dvi .pdf .tex .view .w .1
+.PHONY:
+.DONTCARE:
+
+# inference rules
+.c.o:
+	@echo "Compiling $<"
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(PYTHON_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+
+.cc.o:
+	@echo "Compiling $<"
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(PYTHON_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+
+#-------------------------------------------------------------------------
+all: Makefile libbac.a
+	@echo "==== Make of lib is good ===="
+	@echo " "
+
+libbac.a: $(LIBOBJS)
+	@echo "Making $@ ..."
+	$(AR) rc  $@ $(LIBOBJS)
+	$(RANLIB) $@
+
+
+Makefile: $(srcdir)/Makefile.in $(topdir)/config.status
+	cd $(topdir) \
+	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+pythonlib.o: pythonlib.c
+	@echo "Compiling $<"
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(python) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+
+rwlock_test:
+	rm -f rwlock.o
+	$(CXX) -DTEST_RWLOCK $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) rwlock.c
+	$(CXX) $(LDFLAGS) -L. -o $@ rwlock.o $(LIBS) $(DLIB) -lbac -lm
+	rm -f rwlock.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) rwlock.c
+
+md5sum: md5.o	
+	rm -f md5.o
+	$(CXX) -DMD5_SUM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) md5.c
+	$(CXX) $(LDFLAGS) -L. -o $@ md5.o $(LIBS) $(DLIB) -lbac $(OPENSSL_LIBS) -lm
+	rm -f md5.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) md5.c
+
+
+sha1sum: sha1.o
+	rm -f sha1.o
+	$(CXX) -DSHA1_SUM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)	$(CFLAGS) sha1.c
+	$(CXX) $(LDFLAGS) -L. -o $@ sha1.o $(LIBS) $(DLIB) -lbac $(OPENSSL_LIBS) -lm
+	rm -f sha1.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) sha1.c
+
+bsnprintf: bsnprintf.o
+	rm -f bsnprintf.o
+	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) bsnprintf.c
+	$(CXX) $(LDFLAGS) -L. -o $@ bsnprintf.o $(LIBS) $(DLIB) -lbac $(OPENSSL_LIBS) -lm
+	rm -f bsnprintf.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) bsnprintf.c
+	
+	 
+install:
+
+uninstall:
+
+clean:
+	$(RMF) *.a core a.out *.o *.bak *.tex *.pdf *~ *.intpro *.extpro 1 2 3
+	$(RMF) rwlock_test md5sum sha1sum
+
+realclean: clean
+	$(RMF) tags
+
+distclean: realclean
+	if test $(srcdir) = .; then $(MAKE) realclean; fi
+	(cd $(srcdir); $(RMF) Makefile)
+
+# Semi-automatic generation of dependencies:
+# Use gcc -MM because X11 `makedepend' doesn't work on all systems
+# and it also includes system headers.
+# `semi'-automatic since dependencies are generated at distribution time.
+
+depend:
+	@$(MV) Makefile Makefile.bak
+	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
+	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile
+	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(PYTHON_INC) -I$(srcdir) -I$(basedir) $(SQL_INC) *.c >>Makefile
+	@if test -f Makefile ; then \
+	    $(RMF) Makefile.bak; \
+	else \
+	   $(MV) Makefile.bak Makefile; \
+	   echo " ===== Something went wrong in make depend ====="; \
+	fi
+
+# -----------------------------------------------------------------------
+# DO NOT DELETE: nice dependency list follows

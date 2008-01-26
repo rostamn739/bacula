@@ -1,0 +1,125 @@
+bweb (2.2.6-1) stable; urgency=low
+  * Replace VolStatus by Enabled in volume location
+  * Add Enabled in volume update and zoom
+  * Add Prev/Next on job log output
+  * Add a error filter to Job zoom view
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Sat,  10 Nov 2007 19:33:47 +0000
+
+bweb (2.2.1-1) stable; urgency=low
+  
+  * WARNING: 2.2.1-1 version don't support bacula 2.0.X anymore
+    we use update recyclepool= instead of SQL query in media update
+
+  * cleanup brestore
+  * update brestore_xxx only when job is in (T, f, A)
+  * fix Media.LocationId update during label barcodes 
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Mon,  20 Aug 2007 15:15:47 +0000
+
+bweb (2.2.0-1) stable; urgency=low
+
+  * Make search case insensitive with postgresql
+  * Fix Kb, Gb, Tb unit
+  * brestore -b console mode can now create brestore table
+  * fix #836
+  * add relocation options to brestore
+  * add group management to bweb (see INSTALL to enable it)
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Thu,  30 May 2007 15:15:47 +0000
+
+bweb (2.0.3-4) stable; urgency=low
+
+   * fix a important bug about directory displayed 2 times
+   => YOU MUST RESET YOUR brestore_xxx tables
+
+   *	DROP TABLES brestore_missing_path;
+   *	DROP TABLES brestore_pathvisibility;
+   *	DROP TABLES brestore_pathhierarchy;
+   *	DROP TABLES brestore_knownjobid;
+
+   => DONT USE dbcheck to cleanup Path
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Thu,  29 March 2007 01:10:47 +0000
+
+bweb (2.0.3-3) stable; urgency=low
+
+  * Fix a quote in bweb.js
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Thu,  01 Feb 2007 01:10:47 +0000
+
+bweb (2.0.3-2) stable; urgency=low
+
+  * Add a re-run option in display_job_zoom
+  * Fix fileset option when running a job
+  * Add display_log_time option to view timestamp in display_log
+  * Add db_size information (for mysql5 and postgresql users)
+  * Fix fileset option when running a job
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Thu,  01 Feb 2007 01:10:47 +0000
+
+bweb (2.0.3-1) stable; urgency=low
+
+  * Add limit and offset options to log view (for big log)
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Wed,  28 Feb 2007 21:10:47 +0000
+
+bweb (2.0.2-3) stable; urgency=low
+
+  * Add new stat_job_table option
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Sun,  25 Feb 2007 11:10:47 +0000
+
+bweb (2.0.2-2) stable; urgency=low
+
+  * fix brestore batch mode
+  * add EndTime to display_job in bweb
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Wed,  14 Feb 2007 11:10:47 +0000
+
+bweb (2.0.2-1) stable; urgency=low
+
+  * fix utf8 bug in brestore
+  * fix dependency
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Tue,  06 Feb 2007 21:10:47 +0000
+	
+bweb (2.0.1-2) stable; urgency=low
+
+  * fv_write_path is optionnal now
+  * fix /etc/bacula permissions
+  * fix label_barcodes drive bug 
+  * add spanish translation
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Fri,  19 Jan 2007 21:10:47 +0000
+
+bweb (2.0.1-1) stable; urgency=low
+
+  * Do nothing if destination string is empty
+  * Fix warning message when using with bweb http connector
+  * Add CVS version number to UA brestore
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Fri,  12 Jan 2007 22:54:47 +0000
+
+bweb (2.0.0-2) stable; urgency=low
+
+  * Depends: DBD-Pg or DBD-Mysql 
+  * Add french tpl in /usr/share/bweb/fr/tpl
+  * Add favicon.ico
+  * Change /etc/bacula/bweb.conf initialisation
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Mon,  01 Jan 2007 09:22:47 +0000
+	
+bweb (2.0.0-1) stable; urgency=low
+
+  * Change revision.
+  * move /etc/bweb/config to /etc/bacula/bweb.conf
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Sun,  31 Dec 2006 09:22:47 +0000
+	
+bweb (1.40-1) stable; urgency=low
+
+  * Initial Release.
+
+ -- Eric Bollengier <eric@eb.homelinux.org>  Sam,  18 Nov 2006 23:22:47 +0000
+

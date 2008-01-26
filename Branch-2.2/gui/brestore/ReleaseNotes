@@ -1,0 +1,60 @@
+          Release Notes for brestore 2.2.0
+
+Version 2.2.5-2:
+ - Use 2 transactions in brestore.pl -b
+   (you can use Ctrl-C in cleanup)
+
+Version 2.2.5-1:
+ - Fix warning, thanks to Tuomas Jormola
+
+Version 2.2.0-2:
+ - cleanup brestore
+ - update brestore_xxx only when job is in (T, f, A)
+
+Version 2.2.0:
+ - -b now clean brestore internal tables
+
+Version 2.0.3-4:
+ - -b console mode can now create brestore table
+ - fix #836
+ - add relocation options
+ - fix a important bug about directory displayed 2 times
+   => YOU MUST RESET YOUR brestore_xxx tables
+
+DROP TABLES brestore_missing_path;
+DROP TABLES brestore_pathvisibility;
+DROP TABLES brestore_pathhierarchy;
+DROP TABLES brestore_knownjobid;
+
+   => DONT USE dbcheck to cleanup Path
+
+Version 2.0.3-2:
+ - fix mysql stuff
+
+Version 2.0.2-2:
+ - fix cache create bug
+
+Version 2.0.2-1:
+ - Fix bug with accent, use filenameid/pathid instead of filename
+
+Version 2.0.1-1:
+ - Do nothing if destination string is empty
+ - Fix warning message when using with bweb http connector
+ - Add CVS version number to UA brestore
+
+Version 2.0.0:
+ - Add debian package
+ - Add BwebConsole package to keep bconsole installation and
+   scp usage on admin workstation. It permit to use brestore on
+   win32 system.
+ - Add brestore.pl -b option to batch cache creation
+ - Add brestore tables to bacula's database for
+   speedup charging
+ - BugFix : perl << operator works only with 32bytes value
+   => using *64 instead
+
+Version 1.39:
+ - Add Gen BSR function
+ - Add new option "see all version"
+ - Add Estimate function
+

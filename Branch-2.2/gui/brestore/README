@@ -1,0 +1,40 @@
+################################################################
+#             brestore -- a bacula perl interface              #
+################################################################
+
+As we felt a need for a restoration GUI for bacula, we developed a simple
+Perl/GTK GUI.  
+It has the following features :
+
+    * Direct SQL access to the database for good performance
+
+    * Fast Time Navigation (switches almost instantaneously between the different
+      versions of a directory, by changing the date from a list)
+
+    * Possibility to choose a selected file, then browse all its available
+      versions, and see directly if these versions are online in a library or
+      not
+
+    * Simple restoration by the generation of a BSR file
+
+    * Works with either PostgreSQL or MySQL
+
+We have a working (if a bit unpolished) version ready, and think it is time for
+us to publish it and have user and Kern's feedback.  
+
+What's missing :
+
+    * We want to add some other features such as : the user has selected a FD
+      and a date, we want to display the list of media requested and their
+      availability.
+
+    * Plenty of features. As we don't have lots of imagination. Don't hesitate
+      to suggest us your ideas ...
+
+    * We want use Bacula to generate bsr files, at this time, you can't restore
+      files across different Storage (Full on tape, Incr on Disk for example)
+
+For the moment, we want to concentrate on having a restoration interface. We
+don't care about seeing the restoration progress, or anything else.
+
+brestore is also available within Bweb.
