@@ -1,6 +1,9 @@
               Technical notes on version 2.2
 
 General:
+14Feb08
+kes  Fix creating first JobMedia record during Migration to include
+     proper index. This caused slow restores of migrated jobs.
 10Feb08
 kes  Fix bug #1047, which had a heap overrun when stripping certain paths,
      and do not strip paths on symbolic links.
