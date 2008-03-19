@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -511,8 +511,11 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
       } else {
          ff_pkt->type = FT_DIRBEGIN;
       }
-      /* We have set st_rdev to 1 if it is a reparse point, otherwise 0 */
-      if (have_win32_api() && ff_pkt->statp.st_rdev) {
+      /*
+       * We have set st_rdev to 1 if it is a reparse point, otherwise 0,
+       *  if st_rdev is 2, it is a mount point 
+       */
+      if (have_win32_api() && ff_pkt->statp.st_rdev == 1) {
          ff_pkt->type = FT_REPARSE;
       }
       /*

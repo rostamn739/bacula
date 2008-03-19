@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2004-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2004-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -584,12 +584,13 @@ statDir(const char *file, struct stat *sb)
    WIN32_FIND_DATAA info_a;       // window's file info
 
    // cache some common vars to make code more transparent
-   DWORD* pdwFileAttributes;
-   DWORD* pnFileSizeHigh;
-   DWORD* pnFileSizeLow;
-   FILETIME* pftLastAccessTime;
-   FILETIME* pftLastWriteTime;
-   FILETIME* pftCreationTime;
+   DWORD *pdwFileAttributes;
+   DWORD *pnFileSizeHigh;
+   DWORD *pnFileSizeLow;
+   DWORD *pdwReserved0;
+   FILETIME *pftLastAccessTime;
+   FILETIME *pftLastWriteTime;
+   FILETIME *pftCreationTime;
 
    if (file[1] == ':' && file[2] == 0) {
         Dmsg1(99, "faking ROOT attrs(%s).\n", file);
@@ -612,6 +613,7 @@ statDir(const char *file, struct stat *sb)
       free_pool_memory(pwszBuf);
 
       pdwFileAttributes = &info_w.dwFileAttributes;
+      pdwReserved0      = &info_w.dwReserved0;
       pnFileSizeHigh    = &info_w.nFileSizeHigh;
       pnFileSizeLow     = &info_w.nFileSizeLow;
       pftLastAccessTime = &info_w.ftLastAccessTime;
@@ -623,6 +625,7 @@ statDir(const char *file, struct stat *sb)
       h = p_FindFirstFileA(file, &info_a);
 
       pdwFileAttributes = &info_a.dwFileAttributes;
+      pdwReserved0      = &info_a.dwReserved0;
       pnFileSizeHigh    = &info_a.nFileSizeHigh;
       pnFileSizeLow     = &info_a.nFileSizeLow;
       pftLastAccessTime = &info_a.ftLastAccessTime;
@@ -649,7 +652,9 @@ statDir(const char *file, struct stat *sb)
 
    /* Use st_rdev to store reparse attribute */
    sb->st_rdev = (*pdwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ? 1 : 0; 
-
+   if (sb->st_rdev == 1 && *pdwReserved0 & IO_REPARSE_TAG_MOUNT_POINT) {
+      sb->st_rdev = 2;                /* mount point */
+   }
 
    sb->st_size = *pnFileSizeHigh;
    sb->st_size <<= 32;
@@ -740,9 +745,6 @@ stat2(const char *file, struct stat *sb)
       return -1;
    }
 
-   if (attr & FILE_ATTRIBUTE_DIRECTORY) {
-      return statDir(tmpbuf, sb);
-   }
 
    h = CreateFileA(tmpbuf, GENERIC_READ,
                   FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -757,6 +759,10 @@ stat2(const char *file, struct stat *sb)
 
    rval = fstat((int)h, sb);
    CloseHandle(h);
+
+   if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+      return statDir(tmpbuf, sb);
+   }
 
    return rval;
 }
@@ -824,6 +830,9 @@ stat(const char *file, struct stat *sb)
    sb->st_atime = cvt_ftime_to_utime(data.ftLastAccessTime);
    sb->st_mtime = cvt_ftime_to_utime(data.ftLastWriteTime);
    sb->st_ctime = cvt_ftime_to_utime(data.ftCreationTime);
+   if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      return statDir(file, sb);
+   }
    return 0;
 }
 

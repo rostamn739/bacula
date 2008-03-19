@@ -478,7 +478,7 @@ void *jobq_server(void *arg)
           */
          if (jcr->acquired_resource_locks) {
             if (jcr->rstore) {
-               jcr->rstore->NumConcurrentJobs = 0;
+               jcr->rstore->NumConcurrentJobs--;
                Dmsg1(200, "Dec rncj=%d\n", jcr->rstore->NumConcurrentJobs);
             }
             if (jcr->wstore) {

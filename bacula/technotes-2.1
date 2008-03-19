@@ -1,6 +1,18 @@
               Technical notes on version 2.2
 
 General:
+19Mar08
+kes  Massive commit of all fixes and back ports to create 2.2.9
+18Mar08
+kes  Apply doc fix from bug #1062.
+kes  Resolve crash and improper restore wx-console Win32 restore
+     GUI. Fixes bug #1065.
+kes  Update Win32 wxWidgets to latest version.
+kes  Attempt to do correct handling of Win32 mount points. Should
+     fix bug #1046.
+kes  Fix Win32 FD backup/restore memory leak due to improper termination
+     of BackupRead/Write. This fixes bug# 1038.
+kes  Add const to AIX prototype for initgroups()
 27Feb08
 kes  Undo bug #1047 heap overrun fix as it is not correct.
 14Feb08

@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -1855,6 +1855,10 @@ void DEVICE::close()
 
    /* Clean up device packet so it can be reused */
    clear_opened();
+   /*
+    * Be careful not to clear items needed by the DVD driver
+    *    when it is closing a single part.
+    */
    state &= ~(ST_LABEL|ST_READ|ST_APPEND|ST_EOT|ST_WEOT|ST_EOF|
               ST_MOUNTED|ST_MEDIA|ST_SHORT);
    label_type = B_BACULA_LABEL;
@@ -2381,7 +2385,7 @@ void set_os_device_parameters(DCR *dcr)
    }
 #endif
 #if defined(MTSETDRVBUFFER)
-   if (getpid() == 0) {          /* Only root can do this */
+   if (getuid() == 0) {          /* Only root can do this */
       mt_com.mt_op = MTSETDRVBUFFER;
       mt_com.mt_count = MT_ST_CLEARBOOLEANS;
       if (!dev->has_cap(CAP_TWOEOF)) {

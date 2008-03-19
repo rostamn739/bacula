@@ -257,6 +257,7 @@ int read_dev_volume_label(DCR *dcr)
    return VOL_OK;
 
 bail_out:
+   volume_unused(dcr);                /* mark volume "released" */
    empty_block(block);
    dev->rewind(dcr);
    Dmsg1(150, "return %d\n", stat);
@@ -315,13 +316,15 @@ bool write_new_volume_label_to_dev(DCR *dcr, const char *VolName,
    Dmsg0(150, "write_volume_label()\n");
    empty_block(dcr->block);
 
-   /* If relabeling, truncate the device */
-   if (relabel && !dev->truncate(dcr)) {
-      goto bail_out;
-   }
-
-   if (relabel && !dev->is_tape()) {
-      dev->close_part(dcr);              /* make sure DVD/file closed for rename */
+   if (relabel) {
+      volume_unused(dcr);             /* mark current volume unused */
+      /* Truncate device */
+      if (!dev->truncate(dcr)) {
+         goto bail_out;
+      }
+      if (!dev->is_tape()) {
+         dev->close_part(dcr);        /* make sure DVD/file closed for rename */
+      }
    }
 
    /* Set the new filename for open, ... */
@@ -408,6 +411,7 @@ bool write_new_volume_label_to_dev(DCR *dcr, const char *VolName,
    return true;
 
 bail_out:
+   volume_unused(dcr);
    dev->clear_volhdr();
    dev->clear_append();               /* remove append since this is PRE_LABEL */
    return false;
@@ -451,6 +455,7 @@ bool rewrite_volume_label(DCR *dcr, bool recycle)
          return false;
       }
       if (recycle) {
+         volume_unused(dcr);             /* mark volume unused */
          if (!dev->truncate(dcr)) {
             Jmsg2(jcr, M_FATAL, 0, _("Truncate error on device %s: ERR=%s\n"),
                   dev->print_name(), dev->print_errmsg());
@@ -698,13 +703,7 @@ bool write_session_label(DCR *dcr, int label)
    Dmsg1(130, "session_label record=%x\n", rec);
    switch (label) {
    case SOS_LABEL:
-      if (dev->is_tape()) {
-         dcr->StartBlock = dev->block_num;
-         dcr->StartFile  = dev->file;
-      } else {
-         dcr->StartBlock = (uint32_t)dev->file_addr;
-         dcr->StartFile = (uint32_t)(dev->file_addr >> 32);
-      }
+      set_start_vol_position(dcr);
       break;
    case EOS_LABEL:
       if (dev->is_tape()) {

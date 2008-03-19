@@ -86,7 +86,7 @@ mount_next_vol:
    if (!dev->poll && retry++ > 4) {
       /* Last ditch effort before giving up, force operator to respond */
       dcr->VolCatInfo.Slot = 0;
-      if (!dir_ask_sysop_to_mount_volume(dcr)) {
+      if (!dir_ask_sysop_to_mount_volume(dcr, ST_APPEND)) {
          Jmsg(jcr, M_FATAL, 0, _("Too many errors trying to mount device %s.\n"),
               dev->print_name());
          return false;
@@ -162,14 +162,14 @@ mount_next_vol:
    Dmsg2(150, "Ask=%d autochanger=%d\n", ask, autochanger);
    release = true;                /* release next time if we "recurse" */
 
-   if (ask && !dir_ask_sysop_to_mount_volume(dcr)) {
+   if (ask && !dir_ask_sysop_to_mount_volume(dcr, ST_APPEND)) {
       Dmsg0(150, "Error return ask_sysop ...\n");
       return false;          /* error return */
    }
    if (job_canceled(jcr)) {
       return false;
    }
-   Dmsg1(150, "want vol=%s\n", dcr->VolumeName);
+   Dmsg2(150, "want vol=%s dev=%s\n", dcr->VolumeName, dev->VolHdr.VolumeName);
 
    if (dev->poll && dev->has_cap(CAP_CLOSEONPOLL)) {
       dev->close();
@@ -596,14 +596,14 @@ void release_volume(DCR *dcr)
    dev->block_num = dev->file = 0;
    dev->EndBlock = dev->EndFile = 0;
    memset(&dev->VolCatInfo, 0, sizeof(dev->VolCatInfo));
-   memset(&dcr->VolCatInfo, 0, sizeof(dcr->VolCatInfo));
+// memset(&dcr->VolCatInfo, 0, sizeof(dcr->VolCatInfo));
    dev->clear_volhdr();
    /* Force re-read of label */
    dev->clear_labeled();
    dev->clear_read();
    dev->clear_append();
    dev->label_type = B_BACULA_LABEL;
-   dcr->VolumeName[0] = 0;
+// dcr->VolumeName[0] = 0;
 
    if (dev->is_open() && (!dev->is_tape() || !dev->has_cap(CAP_ALWAYSOPEN))) {
       dev->close();
@@ -625,6 +625,8 @@ bool mount_next_read_volume(DCR *dcr)
    DEVICE *dev = dcr->dev;
    JCR *jcr = dcr->jcr;
    Dmsg2(90, "NumReadVolumes=%d CurReadVolume=%d\n", jcr->NumReadVolumes, jcr->CurReadVolume);
+
+   volume_unused(dcr);                /* release current volume */
    /*
     * End Of Tape -- mount next Volume (if another specified)
     */

@@ -324,17 +324,26 @@ VOLRES *reserve_volume(DCR *dcr, const char *VolumeName)
     */
    if (dev->vol) {
       vol = dev->vol;
+      Dmsg5(dbglvl, "jid=%u Vol attached=%s, newvol=%s release=%d on %s\n",
+         jid(), vol->vol_name, VolumeName, vol->released, dev->print_name());
       /*
        * Make sure we don't remove the current volume we are inserting
-       *  because it was probably inserted by another job.
+       *  because it was probably inserted by another job, or it
+       *  is not being used and is marked as released.
        */
       if (strcmp(vol->vol_name, VolumeName) == 0) {
-         Dmsg1(dbglvl, "OK, vol=%s on device.\n", VolumeName);
+         Dmsg2(dbglvl, "jid=%u === OK, vol=%s on device. set not released.\n", jid(), VolumeName);
+         vol->released = false;         /* retake vol if released previously */
          goto get_out;                  /* Volume already on this device */
       } else {
-         Dmsg3(dbglvl, "jid=%u reserve_vol free vol=%s at %p\n",
-               (int)dcr->jcr->JobId, vol->vol_name, vol->vol_name);
-         unload_autochanger(dcr, -1);    /* unload the volume */       
+         /* Don't release a volume if it is in use */
+         if (!vol->released) {
+            Dmsg2(dbglvl, "jid=%u Cannot free vol=%s. It is not released.\n", jid(), vol->vol_name);
+            vol = NULL;                  /* vol in use */
+            goto get_out;
+         }
+         Dmsg3(dbglvl, "jid=%u reserve_vol free vol=%s at %p\n", jid(), vol->vol_name, vol->vol_name);
+         unload_autochanger(dcr, -1);   /* unload the volume */
          free_volume(dev);
          debug_list_volumes("reserve_vol free");
       }
@@ -387,11 +396,42 @@ VOLRES *reserve_volume(DCR *dcr, const char *VolumeName)
 
 get_out:
    if (vol) {
+      Dmsg2(dbglvl, "jid=%u === set not released. vol=%s\n", jid(), vol->vol_name);
       vol->released = false;
    }
    debug_list_volumes("end new volume");
    unlock_volumes();
    return vol;
+}
+
+/* 
+ * Switch from current device to given device  
+ *   (not yet used) 
+ */
+void switch_device(DCR *dcr, DEVICE *dev)
+{
+   // lock_reservations();
+   DCR save_dcr;
+
+   dev->dlock();
+   memcpy(&save_dcr, dcr, sizeof(save_dcr));
+   clean_device(dcr);                  /* clean up the dcr */
+
+   dcr->dev = dev;                     /* get new device pointer */
+   Jmsg(dcr->jcr, M_INFO, 0, _("Device switch. New device %s chosen.\n"),
+      dcr->dev->print_name());
+
+   bstrncpy(dcr->VolumeName, save_dcr.VolumeName, sizeof(dcr->VolumeName));
+   bstrncpy(dcr->media_type, save_dcr.media_type, sizeof(dcr->media_type));
+   dcr->VolCatInfo.Slot = save_dcr.VolCatInfo.Slot;
+   bstrncpy(dcr->pool_name, save_dcr.pool_name, sizeof(dcr->pool_name));
+   bstrncpy(dcr->pool_type, save_dcr.pool_type, sizeof(dcr->pool_type));
+   bstrncpy(dcr->dev_name, dev->dev_name, sizeof(dcr->dev_name));
+
+   dev->reserved_device++;
+   dcr->reserved_device = true;
+
+   dev->dunlock();
 }
 
 /*
@@ -434,15 +474,20 @@ void unreserve_device(DCR *dcr)
          Jmsg1(dcr->jcr, M_ERROR, 0, _("Hey! num_writers=%d!!!!\n"), dev->num_writers);
          dev->num_writers = 0;
       }
+      if (dev->reserved_device == 0 && dev->num_writers == 0) {
+         volume_unused(dcr);
+      }
    }
-
-   volume_unused(dcr);
 }
 
 /*  
  * Free a Volume from the Volume list if it is no longer used
+ *   Note, for tape drives we want to remember where the Volume
+ *   was when last used, so rather than free the volume entry,
+ *   we simply mark it "released" so when the drive is really
+ *   needed for another volume, we can reuse it.
  *
- *  Returns: true if the Volume found and removed from the list
+ *  Returns: true if the Volume found and "removed" from the list
  *           false if the Volume is not in the list or is in use
  */
 bool volume_unused(DCR *dcr)
@@ -455,11 +500,18 @@ bool volume_unused(DCR *dcr)
       return false;
    }
 
+#ifdef xxx
    if (dev->is_busy()) {
       Dmsg2(dbglvl, "jid=%u vol_unused: no vol on %s\n", (int)dcr->jcr->JobId, dev->print_name());
       debug_list_volumes("dev busy cannot unreserve_volume");
       return false;
    }
+#endif
+#ifdef xxx
+   if (dev->num_writers > 0 || dev->reserved_device > 0) {
+      ASSERT(0);
+   }
+#endif
 
    /*  
     * If this is a tape, we do not free the volume, rather we wait
@@ -468,15 +520,19 @@ bool volume_unused(DCR *dcr)
     *  where the tapes are or last were.
     */
    dev->vol->released = true;
-   if (dev->is_tape() || dev->is_autochanger()) {
+   if (dev->is_tape()) { // || dev->is_autochanger()) {
       return true;
    } else {
+      /*
+       * Note, this frees the volume reservation entry, but the
+       *   file descriptor remains open with the OS.
+       */
       return free_volume(dev);
    }
 }
 
 /*
- * Unconditionally release the volume
+ * Unconditionally release the volume entry
  */
 bool free_volume(DEVICE *dev)
 {
@@ -925,6 +981,7 @@ bool find_suitable_device_for_job(JCR *jcr, RCTX &rctx)
                   Dmsg1(dbglvl, "jid=%u No suitable device found.\n", (int)rctx.jcr->JobId);
                }
                rctx.have_volume = false;
+               rctx.VolumeName[0] = 0;
             }
             if (ok) {
                break;
@@ -935,12 +992,14 @@ bool find_suitable_device_for_job(JCR *jcr, RCTX &rctx)
          }
       } /* end for loop over reserved volumes */
 
+      Dmsg1(dbglvl, "%u lock volumes\n", jid());
       lock_volumes();
       save_vol_list = vol_list;
       vol_list = temp_vol_list;
       free_volume_list();                  /* release temp_vol_list */
       vol_list = save_vol_list;
       Dmsg1(dbglvl, "jid=%u deleted temp vol list\n", (int)rctx.jcr->JobId);
+      Dmsg1(dbglvl, "jid=%u unlock volumes\n", (int)rctx.jcr->JobId);
       unlock_volumes();
    }
    if (ok) {
@@ -1110,7 +1169,14 @@ static int reserve_device(RCTX &rctx)
                (int)rctx.jcr->JobId,
                dcr->dev->reserved_device,
                dcr->dev_name, dcr->media_type, dcr->pool_name, ok);
-      if (!rctx.have_volume) {
+      if (rctx.have_volume) {
+         if (reserve_volume(dcr, rctx.VolumeName)) {
+            Dmsg2(dbglvl, "jid=%u Reserved vol=%s\n", jid(), rctx.VolumeName);
+         } else {
+            Dmsg2(dbglvl, "jid=%u Could not reserve vol=%s\n", jid(), rctx.VolumeName);
+            goto bail_out;
+         }
+      } else {
          dcr->any_volume = true;
          if (dir_find_next_appendable_volume(dcr)) {
             bstrncpy(rctx.VolumeName, dcr->VolumeName, sizeof(rctx.VolumeName));
@@ -1130,13 +1196,13 @@ static int reserve_device(RCTX &rctx)
             if (dcr->volume_in_use && !rctx.PreferMountedVols) {
                rctx.PreferMountedVols = true;
                if (dcr->VolumeName[0]) {
-                  volume_unused(dcr);
+                  unreserve_device(dcr);
                }
                goto bail_out;
             }
             /*
              * Note. Under some circumstances, the Director can hand us
-             *  a Volume name that is no the same as the one on the current
+             *  a Volume name that is not the same as the one on the current
              *  drive, and in that case, the call above to find the next
              *  volume will fail because in attempting to reserve the Volume
              *  the code will realize that we already have a tape mounted,
@@ -1147,7 +1213,7 @@ static int reserve_device(RCTX &rctx)
              */
             if (dcr->dev->num_writers != 0) {
                if (dcr->VolumeName[0]) {
-                  volume_unused(dcr);
+                  unreserve_device(dcr);
                }
                goto bail_out;
             }
@@ -1166,6 +1232,7 @@ static int reserve_device(RCTX &rctx)
    if (!ok) {
       goto bail_out;
    }
+
    if (rctx.notify_dir) {
       POOL_MEM dev_name;
       BSOCK *dir = rctx.jcr->dir_bsock;
@@ -1180,8 +1247,8 @@ static int reserve_device(RCTX &rctx)
 
 bail_out:
    rctx.have_volume = false;
-// free_dcr(dcr);
    Dmsg1(dbglvl, "jid=%u Not OK.\n", (int)rctx.jcr->JobId);
+   rctx.VolumeName[0] = 0;
    return 0;
 }
 
