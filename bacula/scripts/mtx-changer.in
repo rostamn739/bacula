@@ -52,6 +52,10 @@ MTX=@MTX@
 # SunOS     No Additional Sense
 # FreeBSD   Current Driver State: at rest.
 # Linux     ONLINE
+#  Note Debian has messed up their mt. When no tape is in the
+#    drive it waits 2 minutes.	When a tape is in the drive, it
+#    prints user unfriendly output.
+#
 
 OS=`uname`
 case ${OS} in
@@ -61,8 +65,12 @@ case ${OS} in
   FreeBSD)
     ready="Current Driver State: at rest."
     ;;
-  *)
-    ready="ONLINE"
+  Linux)
+    if test -e /etc/debian_version ; then
+       ready="drive status"
+    else
+       ready="ONLINE"
+    fi
   ;;
 esac
 
