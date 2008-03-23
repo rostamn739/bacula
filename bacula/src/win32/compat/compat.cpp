@@ -765,8 +765,9 @@ stat2(const char *file, struct stat *sb)
    rval = fstat((int)h, sb);
    CloseHandle(h);
 
-   if (attr & FILE_ATTRIBUTE_DIRECTORY) {
-      return statDir(file, sb);
+   if (attr & FILE_ATTRIBUTE_DIRECTORY &&
+        file[1] == ':' && file[2] != 0) {
+      statDir(file, sb);
    }
 
    return rval;
@@ -839,7 +840,7 @@ stat(const char *file, struct stat *sb)
     */
    if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
         file[1] == ':' && file[2] != 0) {
-      return statDir(file, sb);
+      statDir(file, sb);
    }
    return 0;
 }
