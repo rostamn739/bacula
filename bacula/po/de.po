@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-25 10:09+0100\n"
+"POT-Creation-Date: 2008-03-25 14:31+0100\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -7734,7 +7734,7 @@ msgstr ""
 msgid "Could not open device %s\n"
 msgstr ""
 
-#: src/stored/stored.c:510
+#: src/stored/stored.c:511
 #, c-format
 msgid "Could not mount device %s\n"
 msgstr ""
@@ -10599,7 +10599,7 @@ msgstr ""
 msgid "Read block=%u, VolBytes=%s rate=%.1f KB/s\n"
 msgstr ""
 
-#: src/stored/btape.c:2757 src/stored/mount.c:636
+#: src/stored/btape.c:2757 src/stored/mount.c:637
 #, c-format
 msgid "Cannot open Dev=%s, Vol=%s\n"
 msgstr ""
@@ -10885,14 +10885,14 @@ msgstr "TLS benötigt aber nicht konfiguriert in Bacula.\n"
 msgid "Marking Volume \"%s\" in Error in Catalog.\n"
 msgstr ""
 
-#: src/stored/mount.c:570
+#: src/stored/mount.c:571
 #, c-format
 msgid ""
 "Autochanger Volume \"%s\" not found in slot %d.\n"
 "    Setting InChanger to zero in catalog.\n"
 msgstr ""
 
-#: src/stored/mount.c:589
+#: src/stored/mount.c:590
 msgid "Hey!!!!! WroteVol non-zero !!!!!\n"
 msgstr ""
 

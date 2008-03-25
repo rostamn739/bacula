@@ -1,6 +1,41 @@
               Technical notes on version 2.2.x
 
 General:
+Beta Release Version 2.2.9-b1
+22Mar08
+kes  Fix to JobMedia fix.
+kes  Fix bug pointed out by Peter Much that causes the StorageId to
+     be updated when reading a tape (during migration, it could have
+     been incorrectly set to the write StorageId).
+21Mar08
+kes  Implement autostart scripts for Debian 
+20Mar08
+kes  Fix mtx-changer.in for broken Debian mt program.
+19Mar08
+kes  Massive commit of all fixes and back ports to create 2.2.9
+18Mar08
+kes  Apply doc fix from bug #1062.
+kes  Resolve crash and improper restore wx-console Win32 restore
+     GUI. Fixes bug #1065.
+kes  Update Win32 wxWidgets to latest version.
+kes  Attempt to do correct handling of Win32 mount points. Should
+     fix bug #1046.
+kes  Fix Win32 FD backup/restore memory leak due to improper termination
+     of BackupRead/Write. This fixes bug# 1038.
+kes  Add const to AIX prototype for initgroups()
+27Feb08
+kes  Undo bug #1047 heap overrun fix as it is not correct.
+14Feb08
+kes  Fix creating first JobMedia record during Migration to include
+     proper index. This caused slow restores of migrated jobs.
+10Feb08
+kes  Fix bug #1047, which had a heap overrun when stripping certain paths,
+     and do not strip paths on symbolic links.
+kes  Set catalog backup database and user name from values specified on 
+     the ./configure line.
+ebl  Apply patch to correct bug #1031, about wrong pool source information
+     in job report.
+
 Release Version 2.2.8
 25Jan08
 kes  Apply patch from Martin to correct bug #1040, bscan sets existing

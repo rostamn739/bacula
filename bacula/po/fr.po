@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-25 10:09+0100\n"
+"POT-Creation-Date: 2008-03-25 14:31+0100\n"
 "PO-Revision-Date: 2008-01-24 22:54+0100\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
@@ -7962,7 +7962,7 @@ msgstr "Impossible d'initialiser %s\n"
 msgid "Could not open device %s\n"
 msgstr "Impossible d'ouvrir le device %s\n"
 
-#: src/stored/stored.c:510
+#: src/stored/stored.c:511
 #, c-format
 msgid "Could not mount device %s\n"
 msgstr "Impossible de monter le device %s\n"
@@ -10896,7 +10896,7 @@ msgstr "Le volume « %s » existe déjà en base.\n"
 msgid "Read block=%u, VolBytes=%s rate=%.1f KB/s\n"
 msgstr ""
 
-#: src/stored/btape.c:2757 src/stored/mount.c:636
+#: src/stored/btape.c:2757 src/stored/mount.c:637
 #, c-format
 msgid "Cannot open Dev=%s, Vol=%s\n"
 msgstr ""
@@ -11205,14 +11205,14 @@ msgstr ""
 msgid "Marking Volume \"%s\" in Error in Catalog.\n"
 msgstr "Le volume « %s » est marqué en Erreur dans le catalogue.\n"
 
-#: src/stored/mount.c:570
+#: src/stored/mount.c:571
 #, c-format
 msgid ""
 "Autochanger Volume \"%s\" not found in slot %d.\n"
 "    Setting InChanger to zero in catalog.\n"
 msgstr ""
 
-#: src/stored/mount.c:589
+#: src/stored/mount.c:590
 msgid "Hey!!!!! WroteVol non-zero !!!!!\n"
 msgstr ""
 

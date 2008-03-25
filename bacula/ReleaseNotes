@@ -1,5 +1,5 @@
 
-          Release Notes for Bacula 2.2.8 
+          Release Notes for Bacula 2.2.9 
 
   Bacula code: Total files = 498 Total lines = 167,596 (*.h *.c *.in)
   82 new files, 41,221 new lines of code, 208,380 lines of change from 2.0.3
@@ -9,6 +9,32 @@ but they should be compatible with all 2.0.x File daemons, unless you
 use some of the new features that affect the FD.  In other words, you should
 not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
+
+Version 2.2.9 is a bug fix to version 2.2.8:
+- *Massive* commit of all fixes and back ports to create 2.2.9
+  Mostly SD reservations enhancements.
+- Fix Win32 FD backup/restore memory leak due to improper termination
+  of BackupRead/Write. This fixes bug# 1038.
+- Fixes a StorageId problem with volumes after migration.
+- Implements autostart scripts for Debian 
+- Fix mtx-changer.in for broken Debian mt program.
+- Apply doc fix from bug #1062.
+- Resolve crash and improper restore wx-console Win32 restore
+  GUI. Fixes bug #1065.
+- Update Win32 wxWidgets to latest version.
+- Attempt to do correct handling of Win32 mount points. Should
+  fix bug #1046.
+- Add const to AIX prototype for initgroups()
+- Undo bug #1047 heap overrun fix as it is not correct.
+- Fix to the JobMedia patch, which introduced a new problem.
+- Fix creating first JobMedia record during Migration to include
+  proper index. This caused slow restores of migrated jobs.
+- Fix bug #1047, do not strip paths on symbolic links.
+- Set catalog backup database and user name from values specified on 
+  the ./configure line.
+- Apply patch to correct bug #1031, about wrong pool source information
+  in job report.
+
 
 Version 2.2.8 is a bug fix to version 2.2.7:
 - It fixes bugs: 1036, 1033(doc), 1028, 1040, 1045(doc), 1030,
