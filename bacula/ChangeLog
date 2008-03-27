@@ -1,6 +1,18 @@
               Technical notes on version 2.2.x
 
 General:
+Beta releae version 2.2.9-b3
+27Mar08
+kes  Rework certain SD locking based on gdb tracebacks of deadlocks
+     sent by Eric. This code now uses only the volume_lock() rather
+     than the reservations lock when at EOM and acquiring a new
+     volume. 
+kes  Ensure only one exit point in several subroutines.
+
+Beta release version 2.2.9-b2
+24Mar08
+kes  Fix to initial tape drive open to release the volume name
+
 Beta Release Version 2.2.9-b1
 22Mar08
 kes  Fix to JobMedia fix.
