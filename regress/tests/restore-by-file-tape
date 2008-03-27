@@ -9,7 +9,11 @@
 TestName="restore-by-file-tape"
 JobName=restorebyfile
 . scripts/functions
-copy_tape_confs
+
+require_tape_drive
+
+scripts/copy-tape-confs
+scripts/cleanup-tape
 
 echo "${cwd}/build" >${cwd}/tmp/file-list
 sed s%\^%${cwd}% ${cwd}/scripts/flist | sort | uniq >${cwd}/tmp/restore2-list

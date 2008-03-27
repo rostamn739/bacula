@@ -7,7 +7,10 @@ TestName="small-file-size-tape"
 JobName=smallfilesize
 . scripts/functions
 
-copy_tape_confs
+require_tape_drive
+
+scripts/copy-tape-confs
+scripts/cleanup-tape
 
 echo "${cwd}/build" >${cwd}/tmp/file-list
 cp ${cwd}/bin/bacula-sd.conf ${cwd}/tmp/1

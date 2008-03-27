@@ -30,11 +30,18 @@ run job=$JobName storage=File yes
 list pools
 list volumes
 wait
+sql
+SELECT StartTime, JobFiles, JobId, Level, count(*) AS nb_jobmedia  
+FROM JobMedia join Job using (JobId) join Client using (ClientId) 
+where Client.Name = 'localhost-fd' group by JobId, Level, StartTime, 
+JobFiles order by JobId desc ;
+
 messages
 @# 
 @# now do a restore
 @#
 @$out ${cwd}/tmp/log2.out
+@#setdebug level=400 storage=File
 restore where=${cwd}/tmp/bacula-restores select storage=File
 unmark *
 mark *

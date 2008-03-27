@@ -8,6 +8,8 @@ TestName="fixed-block-size-tape"
 JobName=fixedblocksize
 . scripts/functions
 
+require_tape_drive
+
 copy_tape_confs
 
 echo "${cwd}/build" >${cwd}/tmp/file-list

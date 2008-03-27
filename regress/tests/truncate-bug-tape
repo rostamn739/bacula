@@ -6,7 +6,10 @@ TestName="truncate-bug-tape"
 JobName=truncatebug
 . scripts/functions
 
-copy_tape_confs
+require_tape_drive
+
+scripts/copy-tape-confs
+scripts/cleanup-tape
 
 echo "${cwd}/build" >${cwd}/tmp/file-list
 

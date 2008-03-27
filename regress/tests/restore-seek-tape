@@ -10,7 +10,11 @@ TestName="restore-seek-tape"
 JobName=restore-tape-seek
 . scripts/functions
 
-copy_tape_confs
+require_tape_drive
+
+scripts/copy-tape-confs
+scripts/cleanup-tape
+
 echo "${cwd}/tmp/build" >${cwd}/tmp/file-list
 rm -rf ${cwd}/tmp/build
 mkdir ${cwd}/tmp/build
