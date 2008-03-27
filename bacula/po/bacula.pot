@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-25 14:31+0100\n"
+"POT-Creation-Date: 2008-03-27 15:41+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7628,26 +7628,26 @@ msgstr ""
 msgid "Unable to initialize volume list lock. ERR=%s\n"
 msgstr ""
 
-#: src/stored/reserve.c:421
+#: src/stored/reserve.c:420
 #, c-format
 msgid "Device switch. New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/reserve.c:474
+#: src/stored/reserve.c:473
 #, c-format
 msgid "Hey! num_writers=%d!!!!\n"
 msgstr ""
 
-#: src/stored/reserve.c:705
+#: src/stored/reserve.c:712
 msgid "3939 Could not get dcr\n"
 msgstr ""
 
-#: src/stored/reserve.c:828 src/stored/reserve.c:839
+#: src/stored/reserve.c:835 src/stored/reserve.c:846
 #, c-format
 msgid "Failed command: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:829
+#: src/stored/reserve.c:836
 #, c-format
 msgid ""
 "\n"
@@ -7655,7 +7655,7 @@ msgid ""
 "Device resources.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1135 src/stored/dircmd.c:598
+#: src/stored/reserve.c:1142 src/stored/dircmd.c:598
 #, c-format
 msgid ""
 "\n"
@@ -7663,80 +7663,80 @@ msgid ""
 "does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1139 src/stored/dircmd.c:576
+#: src/stored/reserve.c:1146 src/stored/dircmd.c:576
 #, c-format
 msgid ""
 "\n"
 "     Device \"%s\" requested by DIR could not be opened or does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1151
+#: src/stored/reserve.c:1158
 #, c-format
 msgid "3926 Could not get dcr for device: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:1274
+#: src/stored/reserve.c:1281
 #, c-format
 msgid "3601 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1284
+#: src/stored/reserve.c:1291
 #, c-format
 msgid "3602 JobId=%u device %s is busy (already reading/writing).\n"
 msgstr ""
 
-#: src/stored/reserve.c:1331
+#: src/stored/reserve.c:1338
 #, c-format
 msgid "3603 JobId=%u device %s is busy reading.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1340
+#: src/stored/reserve.c:1347
 #, c-format
 msgid "3604 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1381
+#: src/stored/reserve.c:1388
 #, c-format
 msgid ""
 "3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
 "s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1403
+#: src/stored/reserve.c:1410
 #, c-format
 msgid "3610 JobId=%u Volume max jobs exceeded on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1458
+#: src/stored/reserve.c:1465
 #, c-format
 msgid "3605 JobId=%u wants free drive but device %s is busy.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1466
+#: src/stored/reserve.c:1473
 #, c-format
 msgid "3606 JobId=%u prefers mounted drives, but drive %s has no Volume.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1489
+#: src/stored/reserve.c:1496
 #, c-format
 msgid "3607 JobId=%u wants Vol=\"%s\" drive has Vol=\"%s\" on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1546
+#: src/stored/reserve.c:1553
 #, c-format
 msgid "Logic error!!!! JobId=%u Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1547
+#: src/stored/reserve.c:1554
 #, c-format
 msgid "3910 JobId=%u Logic error!!!! drive %s Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1550
+#: src/stored/reserve.c:1557
 msgid "Logic error!!!! Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1553
+#: src/stored/reserve.c:1560
 #, c-format
 msgid "3911 JobId=%u failed reserve drive %s.\n"
 msgstr ""
@@ -10842,8 +10842,8 @@ msgid "Unable to set network buffer size.\n"
 msgstr ""
 
 #: src/stored/append.c:94 src/stored/append.c:103 src/stored/append.c:115
-#: src/stored/append.c:298 src/stored/append.c:309 src/stored/askdir.c:326
-#: src/stored/askdir.c:327
+#: src/stored/append.c:298 src/stored/append.c:309 src/stored/askdir.c:327
+#: src/stored/askdir.c:328
 msgid "NULL Volume name. This shouldn't happen!!!\n"
 msgstr ""
 
@@ -10904,27 +10904,27 @@ msgstr ""
 msgid "Error getting Volume info: %s"
 msgstr ""
 
-#: src/stored/askdir.c:361
+#: src/stored/askdir.c:362
 #, c-format
 msgid "Didn't get vol info vol=%s: ERR=%s"
 msgstr ""
 
-#: src/stored/askdir.c:403
+#: src/stored/askdir.c:404
 #, c-format
 msgid "Error creating JobMedia record: ERR=%s\n"
 msgstr ""
 
-#: src/stored/askdir.c:410
+#: src/stored/askdir.c:411
 #, c-format
 msgid "Error creating JobMedia record: %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:477
+#: src/stored/askdir.c:478
 #, c-format
 msgid "Job %s canceled while waiting for mount on Storage Device \"%s\".\n"
 msgstr ""
 
-#: src/stored/askdir.c:490
+#: src/stored/askdir.c:491
 #, c-format
 msgid ""
 "Job %s waiting. Cannot find any appendable volumes.\n"
@@ -10934,25 +10934,25 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:514 src/stored/askdir.c:614
+#: src/stored/askdir.c:515 src/stored/askdir.c:615
 #, c-format
 msgid "Max time exceeded waiting to mount Storage Device %s for Job %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:524
+#: src/stored/askdir.c:525
 msgid "pthread error in mount_next_volume.\n"
 msgstr ""
 
-#: src/stored/askdir.c:556
+#: src/stored/askdir.c:557
 msgid "Cannot request another volume: no volume name given.\n"
 msgstr ""
 
-#: src/stored/askdir.c:562
+#: src/stored/askdir.c:563
 #, c-format
 msgid "Job %s canceled while waiting for mount on Storage Device %s.\n"
 msgstr ""
 
-#: src/stored/askdir.c:579
+#: src/stored/askdir.c:580
 #, c-format
 msgid ""
 "Please mount Volume \"%s\" or label a new one for:\n"
@@ -10962,7 +10962,7 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:585
+#: src/stored/askdir.c:586
 #, c-format
 msgid ""
 "Please mount Volume \"%s\" for:\n"
@@ -10972,7 +10972,7 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:624
+#: src/stored/askdir.c:625
 msgid "pthread error in mount_volume\n"
 msgstr ""
 
