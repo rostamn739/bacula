@@ -252,6 +252,7 @@ bool dir_find_next_appendable_volume(DCR *dcr)
 {
     JCR *jcr = dcr->jcr;
     BSOCK *dir = jcr->dir_bsock;
+    bool rtn;
 
     Dmsg2(200, "dir_find_next_appendable_volume: reserved=%d Vol=%s\n", 
        dcr->reserved_device, dcr->VolumeName);
@@ -261,7 +262,7 @@ bool dir_find_next_appendable_volume(DCR *dcr)
      *   the most available could already be mounted on another
      *   drive, so we continue looking for a not in use Volume.
      */
-    lock_reservations();
+    lock_volumes();
     P(vol_info_mutex);
     dcr->volume_in_use = false;
     for (int vol_index=1;  vol_index < 40; vol_index++) {
@@ -271,8 +272,7 @@ bool dir_find_next_appendable_volume(DCR *dcr)
        unbash_spaces(dcr->media_type);
        unbash_spaces(dcr->pool_name);
        Dmsg1(100, ">dird %s", dir->msg);
-       bool ok = do_get_volume_info(dcr);
-       if (ok) {
+       if (do_get_volume_info(dcr)) {
           if (!is_volume_in_use(dcr)) {
              Dmsg0(400, "dir_find_next_appendable_volume return true\n");
              if (reserve_volume(dcr, dcr->VolumeName) == 0) {
@@ -280,9 +280,8 @@ bool dir_find_next_appendable_volume(DCR *dcr)
                     dcr->dev->print_name());
                 continue;
              }
-             V(vol_info_mutex);
-             unlock_reservations();
-             return true;
+             rtn = true;
+             goto get_out;
           } else {
              Dmsg1(100, "Volume %s is in use.\n", dcr->VolumeName);
              dcr->volume_in_use = true;
@@ -293,11 +292,13 @@ bool dir_find_next_appendable_volume(DCR *dcr)
           dcr->dev->print_name());
        break;
     }
-
+    rtn = false;
     dcr->VolumeName[0] = 0;
+
+get_out:
     V(vol_info_mutex);
-    unlock_reservations();
-    return false;
+    unlock_volumes();
+    return rtn;
 }
 
 

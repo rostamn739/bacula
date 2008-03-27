@@ -1,6 +1,14 @@
               Technical notes on version 2.2
 
 General:
+Beta release Version 2.2.9-b3
+27Mar08
+kes  Rework certain SD locking based on gdb tracebacks of deadlocks
+     sent by Eric. This code now uses only the volume_lock() rather
+     than the reservations lock when at EOM and acquiring a new
+     volume. 
+kes  Ensure only one exit point in several subroutines.
+
 22Mar08
 kes  Fix to JobMedia fix.
 kes  Fix bug pointed out by Peter Much that causes the StorageId to
