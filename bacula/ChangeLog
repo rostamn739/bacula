@@ -1,6 +1,16 @@
               Technical notes on version 2.2.x
 
 General:
+Beta Release Version 2.2.9-b4
+01Apr08
+kes  Re-enable code to remember last volume mounted on a non-tape
+     Autochanger.
+kes  Add patch supplied in bug #1068 that fixes a SD crash when using
+     a Virtual autochanger.
+kes  Generate correct JobMedia records during spooling/despooling when
+     running concurrent jobs.  Thanks to Tom Ivar Helbekkmo
+     <tih@hamartun.priv.no> for excellent analysis and testing.
+
 Beta releae version 2.2.9-b3
 27Mar08
 kes  Rework certain SD locking based on gdb tracebacks of deadlocks

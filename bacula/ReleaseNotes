@@ -11,6 +11,10 @@ not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
 Version 2.2.9 is a bug fix to version 2.2.8:
+- Fix bug #1068 fixes a SD crash when using Virtual autochanger.
+- Generate correct JobMedia records during spooling/despooling when
+  running concurrent jobs.  Thanks to Tom Ivar Helbekkmo
+  <tih@hamartun.priv.no> for excellent analysis and testing.
 - *Massive* commit of all fixes and back ports to create 2.2.9
   Mostly SD reservations enhancements.
 - Fix Win32 FD backup/restore memory leak due to improper termination
