@@ -519,7 +519,7 @@ bool volume_unused(DCR *dcr)
     *  where the tapes are or last were.
     */
    dev->vol->released = true;
-   if (dev->is_tape()) { // || dev->is_autochanger()) {
+   if (dev->is_tape() || dev->is_autochanger()) {
       return true;
    } else {
       /*

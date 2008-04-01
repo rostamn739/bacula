@@ -333,6 +333,11 @@ bool unload_autochanger(DCR *dcr, int loaded)
       return false;
    }
 
+   /* Virtual disk autochanger */
+   if (dcr->device->changer_command[0] == 0) {
+      return true;
+   }
+
    if (loaded < 0) {
       loaded = get_autochanger_loaded_slot(dcr);
    }

@@ -230,6 +230,10 @@ process_openssl()
                        --with-zlib-include=${DEPPKG_DIR}/include \
                        mingw32 > make.log 2>&1
    fi
+# 
+# add the following to the above for 3.0.0
+#                      no-idea no-mdc2 no-rc5 \
+#
    echo Building openssl
    perl util/mkdef.pl 32 libeay no-static-engine >ms/libeay32.def
    perl util/mkdef.pl 32 ssleay >ms/ssleay32.def
