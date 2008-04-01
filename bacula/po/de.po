@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-27 15:41+0100\n"
+"POT-Creation-Date: 2008-04-01 19:18+0200\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -7596,43 +7596,43 @@ msgid ""
 "Results=%s\n"
 msgstr ""
 
-#: src/stored/autochanger.c:345 src/stored/autochanger.c:436
+#: src/stored/autochanger.c:350 src/stored/autochanger.c:441
 #, c-format
 msgid "3307 Issuing autochanger \"unload slot %d, drive %d\" command.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:359
+#: src/stored/autochanger.c:364
 #, c-format
 msgid ""
 "3995 Bad autochanger \"unload slot %d, drive %d\": ERR=%s\n"
 "Results=%s\n"
 msgstr ""
 
-#: src/stored/autochanger.c:423
+#: src/stored/autochanger.c:428
 #, c-format
 msgid "Volume \"%s\" is in use by device %s\n"
 msgstr ""
 
-#: src/stored/autochanger.c:458
+#: src/stored/autochanger.c:463
 #, c-format
 msgid "3995 Bad autochanger \"unload slot %d, drive %d\": ERR=%s.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:498
+#: src/stored/autochanger.c:503
 #, c-format
 msgid "3993 Device %s not an autochanger device.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:519
+#: src/stored/autochanger.c:524
 #, c-format
 msgid "3306 Issuing autochanger \"%s\" command.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:522
+#: src/stored/autochanger.c:527
 msgid "3996 Open bpipe failed.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:549 src/console/console.c:945
+#: src/stored/autochanger.c:554 src/console/console.c:945
 #, c-format
 msgid "Autochanger error: ERR=%s\n"
 msgstr ""
@@ -10643,93 +10643,99 @@ msgstr ""
 msgid "Writing spooled data to Volume. Despooling %s bytes ...\n"
 msgstr ""
 
-#: src/stored/spool.c:293 src/stored/mac.c:125 src/stored/mac.c:221
+#: src/stored/spool.c:295 src/stored/mac.c:125 src/stored/mac.c:221
 #: src/stored/append.c:303
 #, c-format
 msgid "Fatal append error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:306
+#: src/stored/spool.c:302 src/stored/acquire.c:519 src/stored/block.c:368
+#: src/stored/block.c:722 src/stored/block.c:798
+#, c-format
+msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
+msgstr ""
+
+#: src/stored/spool.c:315
 #, c-format
 msgid ""
 "Despooling elapsed time = %02d:%02d:%02d, Transfer rate = %s bytes/second\n"
 msgstr ""
 
-#: src/stored/spool.c:315 src/stored/spool.c:504 src/stored/spool.c:546
+#: src/stored/spool.c:324 src/stored/spool.c:513 src/stored/spool.c:555
 #, c-format
 msgid "Ftruncate spool file failed: ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:376
+#: src/stored/spool.c:385
 #, c-format
 msgid "Spool header read error. ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:379
+#: src/stored/spool.c:388
 #, c-format
 msgid "Spool read error. Wanted %u bytes, got %d\n"
 msgstr ""
 
-#: src/stored/spool.c:380
+#: src/stored/spool.c:389
 #, c-format
 msgid "Spool header read error. Wanted %u bytes, got %d\n"
 msgstr ""
 
-#: src/stored/spool.c:386 src/stored/spool.c:387
+#: src/stored/spool.c:395 src/stored/spool.c:396
 #, c-format
 msgid "Spool block too big. Max %u bytes, got %u\n"
 msgstr ""
 
-#: src/stored/spool.c:392 src/stored/spool.c:393
+#: src/stored/spool.c:401 src/stored/spool.c:402
 #, c-format
 msgid "Spool data read error. Wanted %u bytes, got %d\n"
 msgstr ""
 
-#: src/stored/spool.c:450
+#: src/stored/spool.c:459
 msgid "User specified spool size reached.\n"
 msgstr ""
 
-#: src/stored/spool.c:452
+#: src/stored/spool.c:461
 msgid "Bad return from despool in write_block.\n"
 msgstr ""
 
-#: src/stored/spool.c:460
+#: src/stored/spool.c:469
 msgid "Spooling data again ...\n"
 msgstr ""
 
-#: src/stored/spool.c:491
+#: src/stored/spool.c:500
 #, c-format
 msgid "Error writing header to spool file. ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:510 src/stored/spool.c:552
+#: src/stored/spool.c:519 src/stored/spool.c:561
 msgid "Fatal despooling error."
 msgstr ""
 
-#: src/stored/spool.c:517
+#: src/stored/spool.c:526
 msgid "Retrying after header spooling error failed.\n"
 msgstr ""
 
-#: src/stored/spool.c:531
+#: src/stored/spool.c:540
 #, c-format
 msgid "Error writing data to spool file. ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:562
+#: src/stored/spool.c:571
 msgid "Retrying after data spooling error failed.\n"
 msgstr ""
 
-#: src/stored/spool.c:617 src/stored/spool.c:624
+#: src/stored/spool.c:626 src/stored/spool.c:633
 #, c-format
 msgid "Fseek on attributes file failed: ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:636
+#: src/stored/spool.c:645
 #, c-format
 msgid "Sending spooled attrs to the Director. Despooling %s bytes ...\n"
 msgstr ""
 
-#: src/stored/spool.c:663
+#: src/stored/spool.c:672
 #, c-format
 msgid "fopen attr spool file %s failed: ERR=%s\n"
 msgstr ""
@@ -11763,12 +11769,6 @@ msgstr ""
 #: src/stored/acquire.c:420
 #, c-format
 msgid "Could not ready device %s for append.\n"
-msgstr ""
-
-#: src/stored/acquire.c:519 src/stored/block.c:368 src/stored/block.c:722
-#: src/stored/block.c:798
-#, c-format
-msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
 msgstr ""
 
 #: src/stored/acquire.c:562
