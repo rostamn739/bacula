@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -68,6 +68,7 @@ bool     init_autochangers();
 int      autoload_device(DCR *dcr, int writing, BSOCK *dir);
 bool     autochanger_cmd(DCR *dcr, BSOCK *dir, const char *cmd);
 bool     unload_autochanger(DCR *dcr, int loaded);
+bool     unload_dev(DCR *dcr, DEVICE *dev);
 char    *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd);
 int      get_autochanger_loaded_slot(DCR *dcr);
 

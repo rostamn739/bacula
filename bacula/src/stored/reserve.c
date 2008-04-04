@@ -241,13 +241,17 @@ static VOLRES *new_vol_item(DCR *dcr, const char *VolumeName)
 
 static void free_vol_item(VOLRES *vol)
 {
+   DEVICE *dev = NULL;
+
    free(vol->vol_name);
    if (vol->dev) {
-      vol->dev->vol = NULL;
+      dev = vol->dev;
    }
    free(vol);
+   if (dev) {
+      dev->vol = NULL;
+   }
 }
-
 
 /*
  * Put a new Volume entry in the Volume list. This
