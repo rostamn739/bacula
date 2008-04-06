@@ -967,7 +967,7 @@ bail_out:
 static int db_create_file_record(JCR *jcr, B_DB *mdb, ATTR_DBR *ar)
 {
    int stat;
-   static char *no_digest = "0";
+   static const char *no_digest = "0";
    char *digest;
 
    ASSERT(ar->JobId);

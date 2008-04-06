@@ -1,6 +1,17 @@
               Technical notes on version 2.2
 
 General:
+06Apr08
+kes  Eliminate ./configure warning on po directory 
+kes  Fix bug #1063, reuse of freed ptr in list nextvol.
+kes  Release regex compile buffer in filed/job.c
+kes  Add proper type of const char in sql_create.c
+kes  Turn off debug in daemon termination routines
+kes  Move free_volume_list() before devices are freed in stored.c
+kes  Fix reference to uninitalized stack variables in bregex.c. 
+     This should correct bug #1067.
+04Apr08
+kes  Fix possible seg fault in SD when freeing a volume entry.
 02Apr08
 kes  Apply patch from bug #1069 that corrects spurious error messages
      when ACLs enabled on SGI but no ACL exists.
