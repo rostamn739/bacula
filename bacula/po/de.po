@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-04-01 19:18+0200\n"
+"POT-Creation-Date: 2008-04-06 15:46+0200\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -167,7 +167,7 @@ msgstr ""
 msgid "Unimplemented backup level %d %c\n"
 msgstr "Nicht implementierter backup level %d %c\n"
 
-#: src/dird/fd_cmds.c:358 src/filed/job.c:640
+#: src/dird/fd_cmds.c:358 src/filed/job.c:646
 #, c-format
 msgid "Cannot run program: %s. ERR=%s\n"
 msgstr "Kann Programm: %s nicht starten. ERR=%s\n"
@@ -186,7 +186,7 @@ msgstr "Fehler beim Start des Programms: %s. ERR=%s\n"
 msgid "Cannot open included file: %s. ERR=%s\n"
 msgstr "Kann inkludierte Datei nicht öffnen: %s. ERR=%s\n"
 
-#: src/dird/fd_cmds.c:479 src/filed/job.c:1831
+#: src/dird/fd_cmds.c:479 src/filed/job.c:1837
 #, c-format
 msgid "Could not open bootstrap file %s: ERR=%s\n"
 msgstr "Kann  bootstrap Datei nicht öffnen: %s: ERR=%s\n"
@@ -1221,7 +1221,7 @@ msgstr ""
 msgid "Catalog error updating file digest. %s"
 msgstr "Catalog Fehler beim Aktualisieren des file digest. %s"
 
-#: src/dird/msgchan.c:106 src/filed/job.c:1301
+#: src/dird/msgchan.c:106 src/filed/job.c:1307
 #: src/tray-monitor/tray-monitor.c:936
 msgid "Storage daemon"
 msgstr "Storage daemon"
@@ -1338,47 +1338,47 @@ msgstr ""
 msgid "%s is not a job name.\n"
 msgstr ""
 
-#: src/dird/ua_output.c:477
+#: src/dird/ua_output.c:480
 #, fuzzy, c-format
-msgid "Could not Pool Job %s\n"
+msgid "Could not find Pool for Job %s\n"
 msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
-#: src/dird/ua_output.c:489
+#: src/dird/ua_output.c:492
 #, c-format
 msgid "Could not find next Volume for Job %s (Pool=%s, Level=%s).\n"
 msgstr ""
 
-#: src/dird/ua_output.c:493
+#: src/dird/ua_output.c:496
 #, c-format
 msgid ""
 "The next Volume to be used by Job \"%s\" (Pool=%s, Level=%s) will be %s\n"
 msgstr ""
 
-#: src/dird/ua_output.c:503
+#: src/dird/ua_output.c:507
 #, c-format
 msgid "Could not find next Volume for Job %s.\n"
 msgstr ""
 
-#: src/dird/ua_output.c:628 src/dird/job.c:131
+#: src/dird/ua_output.c:632 src/dird/job.c:131
 #, c-format
 msgid "Could not open database \"%s\".\n"
 msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
-#: src/dird/ua_output.c:641 src/dird/job.c:587
+#: src/dird/ua_output.c:645 src/dird/job.c:587
 #, c-format
 msgid "Pool %s not in database. %s"
 msgstr "Pool %s nicht in der Datenbank. %s"
 
-#: src/dird/ua_output.c:649 src/dird/job.c:591
+#: src/dird/ua_output.c:653 src/dird/job.c:591
 #, c-format
 msgid "Pool %s created in database.\n"
 msgstr "Pool %s in der Datenbank angelegt.\n"
 
-#: src/dird/ua_output.c:702
+#: src/dird/ua_output.c:706
 msgid "You have no messages.\n"
 msgstr ""
 
-#: src/dird/ua_output.c:782
+#: src/dird/ua_output.c:786
 msgid "Message too long to display.\n"
 msgstr ""
 
@@ -3962,27 +3962,27 @@ msgstr ""
 msgid "Cryptography library initialization failed.\n"
 msgstr "Initialisierung der Verschlüsselungsbibliothek fehlgeschlagen.\n"
 
-#: src/dird/dird.c:229 src/dird/dird.c:246 src/dird/dird.c:477
-#: src/dird/dird.c:480 src/filed/filed.c:187 src/gnome2-console/console.c:290
+#: src/dird/dird.c:229 src/dird/dird.c:246 src/dird/dird.c:478
+#: src/dird/dird.c:481 src/filed/filed.c:187 src/gnome2-console/console.c:290
 #: src/stored/stored.c:214 src/console/console.c:430
 #: src/qt-console/main.cpp:136
 #, c-format
 msgid "Please correct configuration file: %s\n"
 msgstr "Bitte die Konfigurationsdatei korrigieren: %s\n"
 
-#: src/dird/dird.c:463
+#: src/dird/dird.c:464
 msgid "Too many open reload requests. Request ignored.\n"
 msgstr "zu viele offene reload Anforderungen, Anforderung ignoriert.\n"
 
-#: src/dird/dird.c:478
+#: src/dird/dird.c:479
 msgid "Out of reload table entries. Giving up.\n"
 msgstr "Keine reload table Einträge übrig. Gebe auf.\n"
 
-#: src/dird/dird.c:481
+#: src/dird/dird.c:482
 msgid "Resetting previous configuration.\n"
 msgstr "Vorherige Konfiguration zurückgesetzt.\n"
 
-#: src/dird/dird.c:544
+#: src/dird/dird.c:545
 #, c-format
 msgid ""
 "No Director resource defined in %s\n"
@@ -3991,18 +3991,18 @@ msgstr ""
 "Keine Director resource definiert in %s\n"
 "Ohne dies weiss ich nicht wer ich bin :-(\n"
 
-#: src/dird/dird.c:552 src/filed/filed.c:290
+#: src/dird/dird.c:553 src/filed/filed.c:291
 #, c-format
 msgid "No Messages resource defined in %s\n"
 msgstr "Keine Messages resource definiert in %s\n"
 
-#: src/dird/dird.c:557
+#: src/dird/dird.c:558
 #, c-format
 msgid "Only one Director resource permitted in %s\n"
 msgstr "Nur eine Director resource erlaubt in %s\n"
 
-#: src/dird/dird.c:566 src/dird/dird.c:768 src/dird/dird.c:820
-#: src/dird/dird.c:924 src/filed/filed.c:297 src/filed/filed.c:455
+#: src/dird/dird.c:567 src/dird/dird.c:769 src/dird/dird.c:821
+#: src/dird/dird.c:925 src/filed/filed.c:298 src/filed/filed.c:456
 #: src/gnome2-console/console.c:153 src/gnome2-console/console.c:182
 #: src/stored/stored.c:333 src/console/console.c:657 src/console/console.c:686
 #: src/qt-console/main.cpp:209 src/qt-console/main.cpp:238
@@ -4010,17 +4010,17 @@ msgstr "Nur eine Director resource erlaubt in %s\n"
 msgid "TLS required but not configured in Bacula.\n"
 msgstr "TLS benötigt aber nicht konfiguriert in Bacula.\n"
 
-#: src/dird/dird.c:572 src/filed/filed.c:464 src/stored/stored.c:385
+#: src/dird/dird.c:573 src/filed/filed.c:465 src/stored/stored.c:385
 #, c-format
 msgid "\"TLS Certificate\" file not defined for Director \"%s\" in %s.\n"
 msgstr "\"TLS Certificate\" Datei nicht für Director definiert \"%s\" in %s.\n"
 
-#: src/dird/dird.c:578 src/filed/filed.c:470 src/stored/stored.c:391
+#: src/dird/dird.c:579 src/filed/filed.c:471 src/stored/stored.c:391
 #, c-format
 msgid "\"TLS Key\" file not defined for Director \"%s\" in %s.\n"
 msgstr "\"TLS Key\" Datei nicht für Director definiert \"%s\" in %s.\n"
 
-#: src/dird/dird.c:584 src/filed/filed.c:476 src/stored/stored.c:397
+#: src/dird/dird.c:585 src/filed/filed.c:477 src/stored/stored.c:397
 #, c-format
 msgid ""
 "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
@@ -4031,48 +4031,48 @@ msgstr ""
 "Director \"%s\" in %s definert. Mindestens ein CA certificate store wird "
 "benötigt wenn \"TLS Verify Peer\" eingesetzt wird.\n"
 
-#: src/dird/dird.c:603 src/filed/filed.c:495 src/stored/stored.c:416
+#: src/dird/dird.c:604 src/filed/filed.c:496 src/stored/stored.c:416
 #, c-format
 msgid "Failed to initialize TLS context for Director \"%s\" in %s.\n"
 msgstr "Konnte TLS context für Director nicht initialisieren \"%s\" in %s.\n"
 
-#: src/dird/dird.c:611
+#: src/dird/dird.c:612
 #, c-format
 msgid "No Job records defined in %s\n"
 msgstr "Keine Job records definiert in %s\n"
 
-#: src/dird/dird.c:669 src/dird/dird.c:682
+#: src/dird/dird.c:670 src/dird/dird.c:683
 #, c-format
 msgid "Hey something is wrong. p=0x%lu\n"
 msgstr "Hey etwas läuft schief. p=0x%lu\n"
 
-#: src/dird/dird.c:742
+#: src/dird/dird.c:743
 #, c-format
 msgid "\"%s\" directive in Job \"%s\" resource is required, but not found.\n"
 msgstr ""
 "\"%s\" Directive in Job \"%s\" resource wird benötigt, wurde aber nicht "
 "gefunden.\n"
 
-#: src/dird/dird.c:749
+#: src/dird/dird.c:750
 msgid "Too many items in Job resource\n"
 msgstr "zu viele items in Job resource\n"
 
-#: src/dird/dird.c:753
+#: src/dird/dird.c:754
 #, c-format
 msgid "No storage specified in Job \"%s\" nor in Pool.\n"
 msgstr "Weder storage noch Pool in Job \"%s\" definiert.\n"
 
-#: src/dird/dird.c:775
+#: src/dird/dird.c:776
 #, c-format
 msgid "\"TLS Certificate\" file not defined for Console \"%s\" in %s.\n"
 msgstr "\"TLS Certificate\" Datei nicht definiert für Console \"%s\" in %s.\n"
 
-#: src/dird/dird.c:781
+#: src/dird/dird.c:782
 #, c-format
 msgid "\"TLS Key\" file not defined for Console \"%s\" in %s.\n"
 msgstr "\"TLS Key\" Datei nicht definiert für Console \"%s\" in %s.\n"
 
-#: src/dird/dird.c:787
+#: src/dird/dird.c:788
 #, c-format
 msgid ""
 "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
@@ -4083,13 +4083,13 @@ msgstr ""
 "fürConsole \"%s\" in %s. Mindestens ein CA certificate store wird benötigt "
 "beiEinsatz von \"TLS Verify Peer\".\n"
 
-#: src/dird/dird.c:804 src/dird/dird.c:844 src/filed/filed.c:321
+#: src/dird/dird.c:805 src/dird/dird.c:845 src/filed/filed.c:322
 #, c-format
 msgid "Failed to initialize TLS context for File daemon \"%s\" in %s.\n"
 msgstr ""
 "Konnte TLS context für File daemon \"%s\" in %s nicht initialisieren.\n"
 
-#: src/dird/dird.c:827
+#: src/dird/dird.c:828
 #, c-format
 msgid ""
 "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
@@ -4098,17 +4098,17 @@ msgstr ""
 "Weder \"TLS CA Certificate\" noch \"TLS CA Certificate Dir\" sind definiert "
 "für File daemon \"%s\" in %s.\n"
 
-#: src/dird/dird.c:876 src/dird/dird.c:878
+#: src/dird/dird.c:877 src/dird/dird.c:879
 #, c-format
 msgid "Could not open Catalog \"%s\", database \"%s\".\n"
 msgstr "Konnte Catalog \"%s\", database \"%s\" nicht öffnen.\n"
 
-#: src/dird/dird.c:881
+#: src/dird/dird.c:882
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: src/dird/dird.c:930
+#: src/dird/dird.c:931
 #, c-format
 msgid ""
 "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
@@ -4117,7 +4117,7 @@ msgstr ""
 "Weder \"TLS CA Certificate\" noch \"TLS CA Certificate Dir\" sind definiert "
 "fürStorage \"%s\" in %s.\n"
 
-#: src/dird/dird.c:946 src/stored/stored.c:371
+#: src/dird/dird.c:947 src/stored/stored.c:371
 #, c-format
 msgid "Failed to initialize TLS context for Storage \"%s\" in %s.\n"
 msgstr "Konnte TLS context für Storage \"%s\" in %s nicht initialisieren.\n"
@@ -5503,57 +5503,57 @@ msgstr ""
 msgid "ACL support not configured for your machine.\n"
 msgstr ""
 
-#: src/filed/acl.c:186
+#: src/filed/acl.c:204
 #, c-format
 msgid "acl_to_text error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:215
+#: src/filed/acl.c:233
 #, c-format
 msgid "acl_delete_def_file error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:223
+#: src/filed/acl.c:241
 #, c-format
 msgid "acl_from_text error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:237
+#: src/filed/acl.c:255
 #, c-format
 msgid "ac_valid error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:252
+#: src/filed/acl.c:270
 #, c-format
 msgid "acl_set_file error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:286
+#: src/filed/acl.c:304
 #, c-format
 msgid "acltostr error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:303 src/filed/acl.c:311
+#: src/filed/acl.c:321 src/filed/acl.c:329
 #, c-format
 msgid "strtoacl error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:323
+#: src/filed/acl.c:341
 #, c-format
 msgid "setacl error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:359
+#: src/filed/acl.c:377
 #, c-format
 msgid "acltotext error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:376
+#: src/filed/acl.c:394
 #, c-format
 msgid "aclfromtext error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/acl.c:388
+#: src/filed/acl.c:406
 #, c-format
 msgid "acl(SETACL) error on file \"%s\": ERR=%s\n"
 msgstr ""
@@ -5749,231 +5749,231 @@ msgstr ""
 msgid "Invalid file flags, no supported data stream type.\n"
 msgstr ""
 
-#: src/filed/job.c:373
+#: src/filed/job.c:379
 #, c-format
 msgid "2901 Job %s not found.\n"
 msgstr ""
 
-#: src/filed/job.c:382
+#: src/filed/job.c:388
 #, c-format
 msgid "2001 Job %s marked to be canceled.\n"
 msgstr ""
 
-#: src/filed/job.c:385
+#: src/filed/job.c:391
 msgid "2902 Error scanning cancel command.\n"
 msgstr ""
 
-#: src/filed/job.c:404
+#: src/filed/job.c:410
 #, c-format
 msgid "2991 Bad setdebug command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:420
+#: src/filed/job.c:426
 #, c-format
 msgid "Bad estimate command: %s"
 msgstr ""
 
-#: src/filed/job.c:421
+#: src/filed/job.c:427
 msgid "2992 Bad estimate command.\n"
 msgstr ""
 
-#: src/filed/job.c:444
+#: src/filed/job.c:450
 #, c-format
 msgid "Bad Job Command: %s"
 msgstr ""
 
-#: src/filed/job.c:465
+#: src/filed/job.c:471
 #, c-format
 msgid "Bad RunBeforeJob command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:466 src/filed/job.c:484
+#: src/filed/job.c:472 src/filed/job.c:490
 msgid "2905 Bad RunBeforeJob command.\n"
 msgstr ""
 
-#: src/filed/job.c:495
+#: src/filed/job.c:501
 msgid "2905 Bad RunBeforeNow command.\n"
 msgstr ""
 
-#: src/filed/job.c:514
+#: src/filed/job.c:520
 #, c-format
 msgid "Bad RunAfter command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:515
+#: src/filed/job.c:521
 msgid "2905 Bad RunAfterJob command.\n"
 msgstr ""
 
-#: src/filed/job.c:549
+#: src/filed/job.c:555
 #, c-format
 msgid "Bad RunScript command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:550
+#: src/filed/job.c:556
 msgid "2905 Bad RunScript command.\n"
 msgstr ""
 
-#: src/filed/job.c:652
+#: src/filed/job.c:658
 #, c-format
 msgid "Error running program: %s. stat=%d: ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:662
+#: src/filed/job.c:668
 #, c-format
 msgid "Cannot open FileSet input file: %s. ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:758
+#: src/filed/job.c:764
 #, c-format
 msgid "REGEX %s compile error. ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:820
+#: src/filed/job.c:826
 #, c-format
 msgid "Invalid FileSet command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1054 src/tools/testfind.c:635 src/findlib/match.c:199
+#: src/filed/job.c:1060 src/tools/testfind.c:635 src/findlib/match.c:199
 #, c-format
 msgid "Unknown include/exclude option: %c\n"
 msgstr ""
 
-#: src/filed/job.c:1123 src/stored/fd_cmds.c:356
+#: src/filed/job.c:1129 src/stored/fd_cmds.c:356
 #, c-format
 msgid "Could not create bootstrap file %s: ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:1232
+#: src/filed/job.c:1238
 #, c-format
 msgid ""
 "DIR and FD clocks differ by %d seconds, FD automatically compensating.\n"
 msgstr ""
 
-#: src/filed/job.c:1240
+#: src/filed/job.c:1246
 #, c-format
 msgid "Unknown backup level: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1252
+#: src/filed/job.c:1258
 #, c-format
 msgid "Bad level command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1273
+#: src/filed/job.c:1279
 #, c-format
 msgid "Bad session command: %s"
 msgstr ""
 
-#: src/filed/job.c:1294
+#: src/filed/job.c:1300
 #, c-format
 msgid "Bad storage command: %s"
 msgstr ""
 
-#: src/filed/job.c:1303
+#: src/filed/job.c:1309
 #, c-format
 msgid "Failed to connect to Storage daemon: %s:%d\n"
 msgstr ""
 
-#: src/filed/job.c:1315
+#: src/filed/job.c:1321
 msgid "Failed to authenticate Storage daemon.\n"
 msgstr ""
 
-#: src/filed/job.c:1353
+#: src/filed/job.c:1359
 msgid "Cannot contact Storage daemon\n"
 msgstr ""
 
-#: src/filed/job.c:1371
+#: src/filed/job.c:1377
 #, c-format
 msgid "Bad response to append open: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1376
+#: src/filed/job.c:1382
 msgid "Bad response from stored to open command\n"
 msgstr ""
 
-#: src/filed/job.c:1403
+#: src/filed/job.c:1409
 #, c-format
 msgid "Generate VSS snapshots. Driver=\"%s\", Drive(s)=\"%s\"\n"
 msgstr ""
 
-#: src/filed/job.c:1405
+#: src/filed/job.c:1411
 msgid "Generate VSS snapshots failed.\n"
 msgstr ""
 
-#: src/filed/job.c:1412
+#: src/filed/job.c:1418
 #, c-format
 msgid ""
 "Generate VSS snapshot of drive \"%c:\\\" failed. VSS support is disabled on "
 "this drive.\n"
 msgstr ""
 
-#: src/filed/job.c:1419
+#: src/filed/job.c:1425
 #, c-format
 msgid "VSS Writer (PrepareForBackup): %s\n"
 msgstr ""
 
-#: src/filed/job.c:1424
+#: src/filed/job.c:1430
 msgid "No drive letters found for generating VSS snapshots.\n"
 msgstr ""
 
-#: src/filed/job.c:1428
+#: src/filed/job.c:1434
 #, c-format
 msgid "VSS was not initialized properly. VSS support is disabled. ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:1478
+#: src/filed/job.c:1484
 msgid "Append Close with SD failed.\n"
 msgstr ""
 
-#: src/filed/job.c:1482
+#: src/filed/job.c:1488
 #, c-format
 msgid "Bad status %d returned from Storage Daemon.\n"
 msgstr ""
 
-#: src/filed/job.c:1500
+#: src/filed/job.c:1506
 #, c-format
 msgid "VSS Writer (BackupComplete): %s\n"
 msgstr ""
 
-#: src/filed/job.c:1528
+#: src/filed/job.c:1534
 #, c-format
 msgid "2994 Bad verify command: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1543 src/filed/job.c:1582
+#: src/filed/job.c:1549 src/filed/job.c:1588
 #, c-format
 msgid "2994 Bad verify level: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1626
+#: src/filed/job.c:1632
 #, c-format
 msgid "Bad replace command. CMD=%s\n"
 msgstr ""
 
-#: src/filed/job.c:1644
+#: src/filed/job.c:1650
 #, c-format
 msgid "Bad where regexp. where=%s\n"
 msgstr ""
 
-#: src/filed/job.c:1718
+#: src/filed/job.c:1724
 msgid "Improper calling sequence.\n"
 msgstr ""
 
-#: src/filed/job.c:1738
+#: src/filed/job.c:1744
 #, c-format
 msgid "Bad response to SD read open: %s\n"
 msgstr ""
 
-#: src/filed/job.c:1743
+#: src/filed/job.c:1749
 msgid "Bad response from stored to read open command\n"
 msgstr ""
 
-#: src/filed/job.c:1807
+#: src/filed/job.c:1813
 #, c-format
 msgid "Comm error with SD. bad response to %s. ERR=%s\n"
 msgstr ""
 
-#: src/filed/job.c:1810
+#: src/filed/job.c:1816
 #, c-format
 msgid "Bad response to %s command. Wanted %s, got %s\n"
 msgstr ""
@@ -6299,70 +6299,70 @@ msgstr ""
 "        -?          diese Meldung ausgeben.\n"
 "\n"
 
-#: src/filed/filed.c:277
+#: src/filed/filed.c:278
 #, c-format
 msgid ""
 "No File daemon resource defined in %s\n"
 "Without that I don't know who I am :-(\n"
 msgstr ""
 
-#: src/filed/filed.c:282
+#: src/filed/filed.c:283
 #, c-format
 msgid "Only one Client resource permitted in %s\n"
 msgstr ""
 
-#: src/filed/filed.c:305
+#: src/filed/filed.c:306
 #, c-format
 msgid ""
 "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
 "File daemon in %s.\n"
 msgstr ""
 
-#: src/filed/filed.c:329
+#: src/filed/filed.c:330
 msgid "PKI encryption/signing enabled but not compiled into Bacula.\n"
 msgstr ""
 
-#: src/filed/filed.c:340
+#: src/filed/filed.c:341
 #, c-format
 msgid ""
 "\"PKI Key Pair\" must be defined for File daemon \"%s\" in %s if either "
 "\"PKI Sign\" or \"PKI Encrypt\" are enabled.\n"
 msgstr ""
 
-#: src/filed/filed.c:352 src/filed/filed.c:383 src/filed/filed.c:424
+#: src/filed/filed.c:353 src/filed/filed.c:384 src/filed/filed.c:425
 msgid "Failed to allocate a new keypair object.\n"
 msgstr ""
 
-#: src/filed/filed.c:356
+#: src/filed/filed.c:357
 #, c-format
 msgid "Failed to load public certificate for File daemon \"%s\" in %s.\n"
 msgstr ""
 
-#: src/filed/filed.c:362
+#: src/filed/filed.c:363
 #, c-format
 msgid "Failed to load private key for File daemon \"%s\" in %s.\n"
 msgstr ""
 
-#: src/filed/filed.c:392
+#: src/filed/filed.c:393
 #, c-format
 msgid "Failed to load private key from file %s for File daemon \"%s\" in %s.\n"
 msgstr ""
 
-#: src/filed/filed.c:399
+#: src/filed/filed.c:400
 #, c-format
 msgid ""
 "Failed to load trusted signer certificate from file %s for File daemon \"%s"
 "\" in %s.\n"
 msgstr ""
 
-#: src/filed/filed.c:430
+#: src/filed/filed.c:431
 #, c-format
 msgid ""
 "Failed to load master key certificate from file %s for File daemon \"%s\" in "
 "%s.\n"
 msgstr ""
 
-#: src/filed/filed.c:446
+#: src/filed/filed.c:447
 #, c-format
 msgid "No Director resource defined in %s\n"
 msgstr ""
@@ -7904,26 +7904,26 @@ msgstr ""
 msgid "Unable to initialize volume list lock. ERR=%s\n"
 msgstr "Kann DB lock nicht initialisieren. ERR=%s\n"
 
-#: src/stored/reserve.c:420
+#: src/stored/reserve.c:424
 #, c-format
 msgid "Device switch. New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/reserve.c:473
+#: src/stored/reserve.c:477
 #, c-format
 msgid "Hey! num_writers=%d!!!!\n"
 msgstr ""
 
-#: src/stored/reserve.c:712
+#: src/stored/reserve.c:716
 msgid "3939 Could not get dcr\n"
 msgstr ""
 
-#: src/stored/reserve.c:835 src/stored/reserve.c:846
+#: src/stored/reserve.c:839 src/stored/reserve.c:850
 #, c-format
 msgid "Failed command: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:836
+#: src/stored/reserve.c:840
 #, c-format
 msgid ""
 "\n"
@@ -7931,7 +7931,7 @@ msgid ""
 "Device resources.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1142 src/stored/dircmd.c:598
+#: src/stored/reserve.c:1146 src/stored/dircmd.c:598
 #, c-format
 msgid ""
 "\n"
@@ -7939,80 +7939,80 @@ msgid ""
 "does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1146 src/stored/dircmd.c:576
+#: src/stored/reserve.c:1150 src/stored/dircmd.c:576
 #, c-format
 msgid ""
 "\n"
 "     Device \"%s\" requested by DIR could not be opened or does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1158
+#: src/stored/reserve.c:1162
 #, c-format
 msgid "3926 Could not get dcr for device: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:1281
+#: src/stored/reserve.c:1285
 #, c-format
 msgid "3601 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1291
+#: src/stored/reserve.c:1295
 #, c-format
 msgid "3602 JobId=%u device %s is busy (already reading/writing).\n"
 msgstr ""
 
-#: src/stored/reserve.c:1338
+#: src/stored/reserve.c:1342
 #, c-format
 msgid "3603 JobId=%u device %s is busy reading.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1347
+#: src/stored/reserve.c:1351
 #, c-format
 msgid "3604 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1388
+#: src/stored/reserve.c:1392
 #, c-format
 msgid ""
 "3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
 "s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1410
+#: src/stored/reserve.c:1414
 #, c-format
 msgid "3610 JobId=%u Volume max jobs exceeded on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1465
+#: src/stored/reserve.c:1469
 #, c-format
 msgid "3605 JobId=%u wants free drive but device %s is busy.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1473
+#: src/stored/reserve.c:1477
 #, c-format
 msgid "3606 JobId=%u prefers mounted drives, but drive %s has no Volume.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1496
+#: src/stored/reserve.c:1500
 #, c-format
 msgid "3607 JobId=%u wants Vol=\"%s\" drive has Vol=\"%s\" on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1553
+#: src/stored/reserve.c:1557
 #, c-format
 msgid "Logic error!!!! JobId=%u Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1554
+#: src/stored/reserve.c:1558
 #, c-format
 msgid "3910 JobId=%u Logic error!!!! drive %s Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1557
+#: src/stored/reserve.c:1561
 msgid "Logic error!!!! Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1560
+#: src/stored/reserve.c:1564
 #, c-format
 msgid "3911 JobId=%u failed reserve drive %s.\n"
 msgstr ""
