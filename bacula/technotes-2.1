@@ -1,6 +1,22 @@
               Technical notes on version 2.2
 
 General:
+14Apr08
+kes  Close bat console windows first to eliminate error message
+     from the notifier.
+kes  Remove useless code in Scheduler that causes seg fault on
+     termination.
+kes  Correct some SD catalog request error messages.
+kes  Don't allow pruning of any running job.
+kes  Turn off code in read_record that causes a seg fault in the SD
+     when reading past an EOS_LABEL.
+kes  Turn off unloading the autochanger in reserve.c as it just
+     causes problems.
+kes  Lock volumes when unreserving a device.
+kes  Do not mark volume unused when recycling.
+kes  When acquiring, don't mark volume unused if it is reserved (busy).
+
+Beta Release Version 2.2.9-b6
 06Apr08
 kes  Eliminate ./configure warning on po directory 
 kes  Fix bug #1063, reuse of freed ptr in list nextvol.

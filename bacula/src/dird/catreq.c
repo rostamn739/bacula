@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2001-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2001-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -328,7 +328,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       if (!db_create_jobmedia_record(jcr, jcr->db, &jm)) {
          Jmsg(jcr, M_FATAL, 0, _("Catalog error creating JobMedia record. %s"),
             db_strerror(jcr->db));
-         bs->fsend(_("1991 Update JobMedia error\n"));
+         bs->fsend(_("1992 Create JobMedia error\n"));
       } else {
          Dmsg0(400, "JobMedia record created\n");
          bs->fsend(OK_create);
@@ -373,7 +373,7 @@ void catalog_update(JCR *jcr, BSOCK *bs)
    if (!jcr->db) {
       omsg = get_memory(bs->msglen+1);
       pm_strcpy(omsg, bs->msg);
-      bs->fsend(_("1991 Invalid Catalog Update: %s"), omsg);    
+      bs->fsend(_("1994 Invalid Catalog Update: %s"), omsg);    
       Jmsg1(jcr, M_FATAL, 0, _("Invalid Catalog Update; DB not open: %s"), omsg);
       free_memory(omsg);
       goto bail_out;

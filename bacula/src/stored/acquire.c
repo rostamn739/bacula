@@ -524,7 +524,7 @@ bool release_device(DCR *dcr)
             dev->weof(1);
             write_ansi_ibm_labels(dcr, ANSI_EOF_LABEL, dev->VolHdr.VolumeName);
          }
-         if (!dev->num_writers) {             /* if no more writers */
+         if (!dev->is_busy()) {               /* if no more writers */
             volume_unused(dcr);               /*  we obviously are not using the volume */
          }
          if (!dev->at_weot()) {

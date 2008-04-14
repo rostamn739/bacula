@@ -347,7 +347,7 @@ VOLRES *reserve_volume(DCR *dcr, const char *VolumeName)
             goto get_out;
          }
          Dmsg3(dbglvl, "jid=%u reserve_vol free vol=%s at %p\n", jid(), vol->vol_name, vol->vol_name);
-         unload_autochanger(dcr, -1);   /* unload the volume */
+//       unload_autochanger(dcr, -1);   /* unload the volume */
          free_volume(dev);
          debug_list_volumes("reserve_vol free");
       }
@@ -464,6 +464,7 @@ VOLRES *find_volume(DCR *dcr)
 void unreserve_device(DCR *dcr)
 {
    DEVICE *dev = dcr->dev;
+   lock_volumes();
    if (dcr->reserved_device) {
       dcr->reserved_device = false;
       dev->reserved_device--;
@@ -481,6 +482,7 @@ void unreserve_device(DCR *dcr)
          volume_unused(dcr);
       }
    }
+   unlock_volumes();
 }
 
 /*  
@@ -1404,10 +1406,14 @@ static bool is_max_jobs_ok(DCR *dcr)
    DEVICE *dev = dcr->dev;
    JCR *jcr = dcr->jcr;
 
-   Dmsg4(dbglvl, "MaxJobs=%d Jobs=%d reserves=%d Vol=%s\n",
+   Dmsg5(dbglvl, "MaxJobs=%d Jobs=%d reserves=%d Status=%s Vol=%s\n",
          dcr->VolCatInfo.VolCatMaxJobs,
          dcr->VolCatInfo.VolCatJobs, dev->reserved_device,
+         dcr->VolCatInfo.VolCatStatus,
          dcr->VolumeName);
+   if (strcmp(dcr->VolCatInfo.VolCatStatus, "Recycle") == 0) {
+      return true;
+   }
    if (dcr->VolCatInfo.VolCatMaxJobs > 0 && dcr->VolCatInfo.VolCatMaxJobs <=
         (dcr->VolCatInfo.VolCatJobs + dev->reserved_device)) {
       /* Max Job Vols depassed or already reserved */

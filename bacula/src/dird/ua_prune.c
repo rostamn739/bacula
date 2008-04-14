@@ -455,10 +455,18 @@ int get_prune_list_for_volume(UAContext *ua, MEDIA_DBR *mr, del_ctx *del)
       goto bail_out;
    }
 
+   /* Do not prune any job currently running */
    for (i=0; i < del->num_ids; i++) {
-      if (ua->jcr->JobId == del->JobId[i]) {
-         Dmsg2(150, "skip same job JobId[%d]=%d\n", i, (int)del->JobId[i]);
-         del->JobId[i] = 0;
+      skip = false;
+      foreach_jcr(jcr) {
+         if (jcr->JobId == del->JobId[i]) {
+            Dmsg2(150, "skip same job JobId[%d]=%d\n", i, (int)del->JobId[i]);
+            del->JobId[i] = 0;
+            skip = true;
+            break;
+         }
+      }
+      if (skip) {
          continue;
       }
       Dmsg2(150, "accept JobId[%d]=%d\n", i, (int)del->JobId[i]);
