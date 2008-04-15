@@ -1,6 +1,41 @@
               Technical notes on version 2.2.x
 
 General:
+Beta Release Version 2.2.9-b7
+14Apr08
+kes  Close bat console windows first to eliminate error message
+     from the notifier.
+kes  Remove useless code in Scheduler that causes seg fault on
+     termination.
+kes  Correct some SD catalog request error messages.
+kes  Don't allow pruning of any running job.
+kes  Turn off code in read_record that causes a seg fault in the SD
+     when reading past an EOS_LABEL.
+kes  Turn off unloading the autochanger in reserve.c as it just
+     causes problems.
+kes  Lock volumes when unreserving a device.
+kes  Do not mark volume unused when recycling.
+kes  When acquiring, don't mark volume unused if it is reserved (busy).
+
+Beta Release Version 2.2.9-b6
+06Apr08
+kes  Eliminate ./configure warning on po directory
+kes  Fix bug #1063, reuse of freed ptr in list nextvol.
+kes  Release regex compile buffer in filed/job.c
+kes  Add proper type of const char in sql_create.c
+kes  Turn off debug in daemon termination routines
+kes  Move free_volume_list() before devices are freed in stored.c
+kes  Fix reference to uninitalized stack variables in bregex.c.
+     This should correct bug #1067.
+04Apr08
+kes  Fix possible seg fault in SD when freeing a volume entry.
+02Apr08
+kes  Apply patch from bug #1069 that corrects spurious error messages
+     when ACLs enabled on SGI but no ACL exists.
+ebl  Fix a storage deamon segfault at debug level 500.
+
+Beta Release Version 2.2.9-b5 -- not released
+
 Beta Release Version 2.2.9-b4
 01Apr08
 kes  Re-enable code to remember last volume mounted on a non-tape

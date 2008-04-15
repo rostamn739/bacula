@@ -11,6 +11,18 @@ not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
 Version 2.2.9 is a bug fix to version 2.2.8:
+- Close bat console windows first to eliminate error message
+  from the notifier.
+- Remove useless code in Scheduler that causes seg fault on
+  termination.
+- Correct some SD catalog request error messages.
+- Don't allow pruning of any running job.
+- Turn off code in read_record that causes a seg fault in the SD
+  when reading past an EOS_LABEL.
+- Turn off unloading the autochanger in reserve.c as it just
+   causes problems.
+- Lock volumes when unreserving a device.
+- Do not mark volume unused when recycling.
 - Fix bug #1068 fixes a SD crash when using Virtual autochanger.
 - Generate correct JobMedia records during spooling/despooling when
   running concurrent jobs.  Thanks to Tom Ivar Helbekkmo
@@ -38,7 +50,6 @@ Version 2.2.9 is a bug fix to version 2.2.8:
   the ./configure line.
 - Apply patch to correct bug #1031, about wrong pool source information
   in job report.
-
 
 Version 2.2.8 is a bug fix to version 2.2.7:
 - It fixes bugs: 1036, 1033(doc), 1028, 1040, 1045(doc), 1030,
