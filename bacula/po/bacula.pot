@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-04-06 15:46+0200\n"
+"POT-Creation-Date: 2008-04-15 17:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1052,15 +1052,15 @@ msgstr ""
 msgid "run override"
 msgstr ""
 
-#: src/dird/scheduler.c:420
+#: src/dird/scheduler.c:415
 msgid "Inserted job"
 msgstr ""
 
-#: src/dird/scheduler.c:428
+#: src/dird/scheduler.c:423
 msgid "Appended job"
 msgstr ""
 
-#: src/dird/scheduler.c:432
+#: src/dird/scheduler.c:427
 msgid "Run queue"
 msgstr ""
 
@@ -1136,7 +1136,7 @@ msgid "Catalog error creating JobMedia record. %s"
 msgstr ""
 
 #: src/dird/catreq.c:331
-msgid "1991 Update JobMedia error\n"
+msgid "1992 Create JobMedia error\n"
 msgstr ""
 
 #: src/dird/catreq.c:341
@@ -1146,7 +1146,7 @@ msgstr ""
 
 #: src/dird/catreq.c:376
 #, c-format
-msgid "1991 Invalid Catalog Update: %s"
+msgid "1994 Invalid Catalog Update: %s"
 msgstr ""
 
 #: src/dird/catreq.c:377
@@ -7559,42 +7559,42 @@ msgstr ""
 msgid "Did fsr in attemp to skip bad record.\n"
 msgstr ""
 
-#: src/stored/read_record.c:343
+#: src/stored/read_record.c:347
 #, c-format
 msgid "Reposition from (file:block) %u:%u to %u:%u\n"
 msgstr ""
 
-#: src/stored/read_record.c:371
+#: src/stored/read_record.c:375
 #, c-format
 msgid "Forward spacing Volume \"%s\" to file:block %u:%u.\n"
 msgstr ""
 
-#: src/stored/read_record.c:389 src/stored/bcopy.c:312 src/stored/bls.c:416
+#: src/stored/read_record.c:393 src/stored/bcopy.c:312 src/stored/bls.c:416
 msgid "Fresh Volume Label"
 msgstr ""
 
-#: src/stored/read_record.c:392 src/stored/bcopy.c:315 src/stored/bls.c:419
+#: src/stored/read_record.c:396 src/stored/bcopy.c:315 src/stored/bls.c:419
 msgid "Volume Label"
 msgstr ""
 
-#: src/stored/read_record.c:396
+#: src/stored/read_record.c:400
 msgid "Begin Session"
 msgstr ""
 
-#: src/stored/read_record.c:400
+#: src/stored/read_record.c:404
 msgid "End Session"
 msgstr ""
 
-#: src/stored/read_record.c:403 src/stored/label.c:1031
+#: src/stored/read_record.c:407 src/stored/label.c:1030
 msgid "End of Media"
 msgstr ""
 
-#: src/stored/read_record.c:406
+#: src/stored/read_record.c:410
 #, c-format
 msgid "Unknown code %d\n"
 msgstr ""
 
-#: src/stored/read_record.c:410 src/stored/bcopy.c:337 src/stored/bls.c:440
+#: src/stored/read_record.c:414 src/stored/bcopy.c:337 src/stored/bls.c:440
 #, c-format
 msgid "%s Record: VolSessionId=%d VolSessionTime=%d JobId=%d DataLen=%d\n"
 msgstr ""
@@ -7633,21 +7633,21 @@ msgstr ""
 msgid "Device switch. New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/reserve.c:477
+#: src/stored/reserve.c:478
 #, c-format
 msgid "Hey! num_writers=%d!!!!\n"
 msgstr ""
 
-#: src/stored/reserve.c:716
+#: src/stored/reserve.c:718
 msgid "3939 Could not get dcr\n"
 msgstr ""
 
-#: src/stored/reserve.c:839 src/stored/reserve.c:850
+#: src/stored/reserve.c:841 src/stored/reserve.c:852
 #, c-format
 msgid "Failed command: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:840
+#: src/stored/reserve.c:842
 #, c-format
 msgid ""
 "\n"
@@ -7655,7 +7655,7 @@ msgid ""
 "Device resources.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1146 src/stored/dircmd.c:598
+#: src/stored/reserve.c:1148 src/stored/dircmd.c:598
 #, c-format
 msgid ""
 "\n"
@@ -7663,80 +7663,80 @@ msgid ""
 "does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1150 src/stored/dircmd.c:576
+#: src/stored/reserve.c:1152 src/stored/dircmd.c:576
 #, c-format
 msgid ""
 "\n"
 "     Device \"%s\" requested by DIR could not be opened or does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1162
+#: src/stored/reserve.c:1164
 #, c-format
 msgid "3926 Could not get dcr for device: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:1285
+#: src/stored/reserve.c:1287
 #, c-format
 msgid "3601 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1295
+#: src/stored/reserve.c:1297
 #, c-format
 msgid "3602 JobId=%u device %s is busy (already reading/writing).\n"
 msgstr ""
 
-#: src/stored/reserve.c:1342
+#: src/stored/reserve.c:1344
 #, c-format
 msgid "3603 JobId=%u device %s is busy reading.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1351
+#: src/stored/reserve.c:1353
 #, c-format
 msgid "3604 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1392
+#: src/stored/reserve.c:1394
 #, c-format
 msgid ""
 "3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
 "s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1414
+#: src/stored/reserve.c:1420
 #, c-format
 msgid "3610 JobId=%u Volume max jobs exceeded on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1469
+#: src/stored/reserve.c:1475
 #, c-format
 msgid "3605 JobId=%u wants free drive but device %s is busy.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1477
+#: src/stored/reserve.c:1483
 #, c-format
 msgid "3606 JobId=%u prefers mounted drives, but drive %s has no Volume.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1500
+#: src/stored/reserve.c:1506
 #, c-format
 msgid "3607 JobId=%u wants Vol=\"%s\" drive has Vol=\"%s\" on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1557
+#: src/stored/reserve.c:1563
 #, c-format
 msgid "Logic error!!!! JobId=%u Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1558
+#: src/stored/reserve.c:1564
 #, c-format
 msgid "3910 JobId=%u Logic error!!!! drive %s Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1561
+#: src/stored/reserve.c:1567
 msgid "Logic error!!!! Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1564
+#: src/stored/reserve.c:1570
 #, c-format
 msgid "3911 JobId=%u failed reserve drive %s.\n"
 msgstr ""
@@ -7806,11 +7806,11 @@ msgstr ""
 msgid "EOT label not copied.\n"
 msgstr ""
 
-#: src/stored/bcopy.c:319 src/stored/label.c:1025 src/stored/bls.c:423
+#: src/stored/bcopy.c:319 src/stored/label.c:1024 src/stored/bls.c:423
 msgid "Begin Job Session"
 msgstr ""
 
-#: src/stored/bcopy.c:323 src/stored/label.c:1028 src/stored/bls.c:427
+#: src/stored/bcopy.c:323 src/stored/label.c:1027 src/stored/bls.c:427
 msgid "End Job Session"
 msgstr ""
 
@@ -7818,7 +7818,7 @@ msgstr ""
 msgid "End of Medium"
 msgstr ""
 
-#: src/stored/bcopy.c:331 src/stored/label.c:1037 src/stored/bls.c:434
+#: src/stored/bcopy.c:331 src/stored/label.c:1036 src/stored/bls.c:434
 msgid "Unknown"
 msgstr ""
 
@@ -8020,47 +8020,47 @@ msgstr ""
 msgid "Rewind error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:460
+#: src/stored/label.c:459
 #, c-format
 msgid "Truncate error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:466
+#: src/stored/label.c:465
 #, c-format
 msgid "Failed to re-open DVD after truncate on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:489
+#: src/stored/label.c:488
 #, c-format
 msgid "Unable to write device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:517
+#: src/stored/label.c:516
 #, c-format
 msgid "Recycled volume \"%s\" on device %s, all previous data lost.\n"
 msgstr ""
 
-#: src/stored/label.c:520
+#: src/stored/label.c:519
 #, c-format
 msgid "Wrote label to prelabeled Volume \"%s\" on device %s\n"
 msgstr ""
 
-#: src/stored/label.c:718
+#: src/stored/label.c:717
 #, c-format
 msgid "Bad Volume session label = %d\n"
 msgstr ""
 
-#: src/stored/label.c:773
+#: src/stored/label.c:772
 #, c-format
 msgid "Expecting Volume Label, got FI=%s Stream=%s len=%d\n"
 msgstr ""
 
-#: src/stored/label.c:900
+#: src/stored/label.c:899
 #, c-format
 msgid "Unknown %d"
 msgstr ""
 
-#: src/stored/label.c:904
+#: src/stored/label.c:903
 #, c-format
 msgid ""
 "\n"
@@ -8077,17 +8077,17 @@ msgid ""
 "HostName          : %s\n"
 msgstr ""
 
-#: src/stored/label.c:926
+#: src/stored/label.c:925
 #, c-format
 msgid "Date label written: %s\n"
 msgstr ""
 
-#: src/stored/label.c:932
+#: src/stored/label.c:931
 #, c-format
 msgid "Date label written: %04d-%02d-%02d at %02d:%02d\n"
 msgstr ""
 
-#: src/stored/label.c:952
+#: src/stored/label.c:951
 #, c-format
 msgid ""
 "\n"
@@ -8100,7 +8100,7 @@ msgid ""
 "ClientName        : %s\n"
 msgstr ""
 
-#: src/stored/label.c:965
+#: src/stored/label.c:964
 #, c-format
 msgid ""
 "Job (unique name) : %s\n"
@@ -8109,7 +8109,7 @@ msgid ""
 "JobLevel          : %c\n"
 msgstr ""
 
-#: src/stored/label.c:974
+#: src/stored/label.c:973
 #, c-format
 msgid ""
 "JobFiles          : %s\n"
@@ -8122,48 +8122,48 @@ msgid ""
 "JobStatus         : %c\n"
 msgstr ""
 
-#: src/stored/label.c:995
+#: src/stored/label.c:994
 #, c-format
 msgid "Date written      : %s\n"
 msgstr ""
 
-#: src/stored/label.c:1000
+#: src/stored/label.c:999
 #, c-format
 msgid "Date written      : %04d-%02d-%02d at %02d:%02d\n"
 msgstr ""
 
-#: src/stored/label.c:1019
+#: src/stored/label.c:1018
 msgid "Fresh Volume"
 msgstr ""
 
-#: src/stored/label.c:1022
+#: src/stored/label.c:1021
 msgid "Volume"
 msgstr ""
 
-#: src/stored/label.c:1034
+#: src/stored/label.c:1033
 msgid "End of Tape"
 msgstr ""
 
-#: src/stored/label.c:1054 src/stored/label.c:1062 src/stored/label.c:1095
+#: src/stored/label.c:1053 src/stored/label.c:1061 src/stored/label.c:1094
 #, c-format
 msgid "%s Record: File:blk=%u:%u SessId=%d SessTime=%d JobId=%d DataLen=%d\n"
 msgstr ""
 
-#: src/stored/label.c:1059
+#: src/stored/label.c:1058
 msgid "End of physical tape.\n"
 msgstr ""
 
-#: src/stored/label.c:1074 src/stored/label.c:1083
+#: src/stored/label.c:1073 src/stored/label.c:1082
 #, c-format
 msgid "%s Record: File:blk=%u:%u SessId=%d SessTime=%d JobId=%d\n"
 msgstr ""
 
-#: src/stored/label.c:1076
+#: src/stored/label.c:1075
 #, c-format
 msgid "   Job=%s Date=%s Level=%c Type=%c\n"
 msgstr ""
 
-#: src/stored/label.c:1085
+#: src/stored/label.c:1084
 #, c-format
 msgid "   Date=%s Level=%c Type=%c Files=%s Bytes=%s Errors=%d Status=%c\n"
 msgstr ""
@@ -11436,12 +11436,12 @@ msgstr ""
 msgid "Could not ready device %s for append.\n"
 msgstr ""
 
-#: src/stored/acquire.c:562
+#: src/stored/acquire.c:564
 #, c-format
 msgid "Alert: %s"
 msgstr ""
 
-#: src/stored/acquire.c:570
+#: src/stored/acquire.c:572
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""
@@ -13311,13 +13311,13 @@ msgstr ""
 msgid "fcntl F_SETFL error. ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsock.c:873 src/qt-console/bcomm/dircomm_auth.cpp:106
+#: src/lib/bsock.c:874 src/qt-console/bcomm/dircomm_auth.cpp:106
 #: src/qt-console/console/authenticate.cpp:105
 #, c-format
 msgid "Director authorization problem at \"%s:%d\"\n"
 msgstr ""
 
-#: src/lib/bsock.c:880 src/qt-console/bcomm/dircomm_auth.cpp:113
+#: src/lib/bsock.c:881 src/qt-console/bcomm/dircomm_auth.cpp:113
 #: src/qt-console/console/authenticate.cpp:112
 #, c-format
 msgid ""
@@ -13325,7 +13325,7 @@ msgid ""
 "TLS support.\n"
 msgstr ""
 
-#: src/lib/bsock.c:888 src/qt-console/bcomm/dircomm_auth.cpp:121
+#: src/lib/bsock.c:889 src/qt-console/bcomm/dircomm_auth.cpp:121
 #: src/qt-console/console/authenticate.cpp:120
 #, c-format
 msgid ""
@@ -13333,13 +13333,13 @@ msgid ""
 "TLS.\n"
 msgstr ""
 
-#: src/lib/bsock.c:900 src/qt-console/bcomm/dircomm_auth.cpp:133
+#: src/lib/bsock.c:901 src/qt-console/bcomm/dircomm_auth.cpp:133
 #: src/qt-console/console/authenticate.cpp:132
 #, c-format
 msgid "TLS negotiation failed with Director at \"%s:%d\"\n"
 msgstr ""
 
-#: src/lib/bsock.c:910 src/qt-console/bcomm/dircomm_auth.cpp:143
+#: src/lib/bsock.c:911 src/qt-console/bcomm/dircomm_auth.cpp:143
 #: src/qt-console/console/authenticate.cpp:142
 #, c-format
 msgid ""
@@ -13347,13 +13347,13 @@ msgid ""
 "The Director at \"%s:%d\" is probably not running.\n"
 msgstr ""
 
-#: src/lib/bsock.c:919 src/qt-console/bcomm/dircomm_auth.cpp:152
+#: src/lib/bsock.c:920 src/qt-console/bcomm/dircomm_auth.cpp:152
 #: src/qt-console/console/authenticate.cpp:151
 #, c-format
 msgid "Director at \"%s:%d\" rejected Hello command\n"
 msgstr ""
 
-#: src/lib/bsock.c:929 src/qt-console/bcomm/dircomm_auth.cpp:162
+#: src/lib/bsock.c:930 src/qt-console/bcomm/dircomm_auth.cpp:162
 #: src/qt-console/console/authenticate.cpp:161
 #, c-format
 msgid ""
