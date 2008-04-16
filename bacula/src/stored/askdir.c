@@ -242,7 +242,7 @@ bool dir_get_volume_info(DCR *dcr, enum get_vol_info_rw writing)
  * Returns: true  on success dcr->VolumeName is volume
  *                reserve_volume() called on Volume name
  *          false on failure dcr->VolumeName[0] == 0
- *                also sets dcr->volume_in_use if at least one 
+ *                also sets dcr->found_in_use if at least one 
  *                in use volume was found.
  *
  *          Volume information returned in dcr
@@ -253,19 +253,21 @@ bool dir_find_next_appendable_volume(DCR *dcr)
     JCR *jcr = dcr->jcr;
     BSOCK *dir = jcr->dir_bsock;
     bool rtn;
+    char lastVolume[MAX_NAME_LENGTH];
 
     Dmsg2(200, "dir_find_next_appendable_volume: reserved=%d Vol=%s\n", 
-       dcr->reserved_device, dcr->VolumeName);
+       dcr->is_reserved(), dcr->VolumeName);
 
     /*
-     * Try the fourty oldest or most available volumes.  Note,
+     * Try the twenty oldest or most available volumes.  Note,
      *   the most available could already be mounted on another
      *   drive, so we continue looking for a not in use Volume.
      */
     lock_volumes();
     P(vol_info_mutex);
-    dcr->volume_in_use = false;
-    for (int vol_index=1;  vol_index < 40; vol_index++) {
+    dcr->clear_found_in_use();
+    lastVolume[0] = 0;
+    for (int vol_index=1;  vol_index < 20; vol_index++) {
        bash_spaces(dcr->media_type);
        bash_spaces(dcr->pool_name);
        dir->fsend(Find_media, jcr->Job, vol_index, dcr->pool_name, dcr->media_type);
@@ -273,18 +275,27 @@ bool dir_find_next_appendable_volume(DCR *dcr)
        unbash_spaces(dcr->pool_name);
        Dmsg1(100, ">dird %s", dir->msg);
        if (do_get_volume_info(dcr)) {
-          if (!is_volume_in_use(dcr)) {
-             Dmsg0(400, "dir_find_next_appendable_volume return true\n");
+          /* Give up if we get the same volume name twice */
+          if (lastVolume[0] && strcmp(lastVolume, dcr->VolumeName) == 0) {
+             Dmsg1(100, "Got same vol = %s\n", lastVolume);
+             break;
+          }
+          bstrncpy(lastVolume, dcr->VolumeName, sizeof(lastVolume));
+          if (dcr->can_i_use_volume()) {
+             Dmsg1(100, "Call reserve_volume. Vol=%s\n", dcr->VolumeName);
              if (reserve_volume(dcr, dcr->VolumeName) == 0) {
                 Dmsg2(100, "Could not reserve volume %s on %s\n", dcr->VolumeName,
                     dcr->dev->print_name());
                 continue;
              }
+             Dmsg1(100, "dir_find_next_appendable_volume return true. vol=%s\n",
+                dcr->VolumeName);
              rtn = true;
              goto get_out;
           } else {
              Dmsg1(100, "Volume %s is in use.\n", dcr->VolumeName);
-             dcr->volume_in_use = true;
+             /* If volume is not usable, it is in use by someone else */
+             dcr->set_found_in_use();
              continue;
           }
        }
@@ -399,7 +410,7 @@ bool dir_create_jobmedia_record(DCR *dcr)
       dcr->Copy, dcr->Stripe, 
       edit_uint64(dcr->VolMediaId, ed1));
     Dmsg1(100, ">dird %s", dir->msg);
-   if (bnet_recv(dir) <= 0) {
+   if (dir->recv() <= 0) {
       Dmsg0(190, "create_jobmedia error bnet_recv\n");
       Jmsg(jcr, M_FATAL, 0, _("Error creating JobMedia record: ERR=%s\n"),
            dir->bstrerror());

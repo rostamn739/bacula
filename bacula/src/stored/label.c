@@ -67,7 +67,7 @@ static void create_volume_label_record(DCR *dcr, DEV_RECORD *rec);
 int read_dev_volume_label(DCR *dcr)
 {
    JCR *jcr = dcr->jcr;
-   DEVICE *dev = dcr->dev;
+   DEVICE * volatile dev = dcr->dev;
    char *VolName = dcr->VolumeName;
    DEV_RECORD *record;
    bool ok = false;
@@ -77,7 +77,7 @@ int read_dev_volume_label(DCR *dcr)
    bool have_ansi_label = false;
 
    Dmsg4(100, "Enter read_volume_label res=%d device=%s vol=%s dev_Vol=%s\n",
-      dev->reserved_device, dev->print_name(), VolName, 
+      dev->num_reserved(), dev->print_name(), VolName, 
       dev->VolHdr.VolumeName[0]?dev->VolHdr.VolumeName:"*NULL*");
 
    if (!dev->is_open()) {
@@ -212,12 +212,16 @@ int read_dev_volume_label(DCR *dcr)
    }
 
    dev->set_labeled();               /* set has Bacula label */
+   Dmsg1(100, "Call reserve_volume=%s\n", dev->VolHdr.VolumeName);
+   Dmsg2(100, "=== dcr->dev=%p dev=%p\n", dcr->dev, dev);
    if (reserve_volume(dcr, dev->VolHdr.VolumeName) == NULL) {
       Mmsg2(jcr->errmsg, _("Could not reserve volume %s on %s\n"),
            dev->VolHdr.VolumeName, dev->print_name());
       stat = VOL_NAME_ERROR;
       goto bail_out;
    }
+   Dmsg2(100, "=== dcr->dev=%p dev=%p\n", dcr->dev, dev);
+// dev = dcr->dev;                    /* may have changed in reserve volume */
 
    /* Compare Volume Names */
    Dmsg2(130, "Compare Vol names: VolName=%s hdr=%s\n", VolName?VolName:"*", dev->VolHdr.VolumeName);
@@ -234,6 +238,7 @@ int read_dev_volume_label(DCR *dcr)
       }
       Dmsg0(150, "return VOL_NAME_ERROR\n");
       stat = VOL_NAME_ERROR;
+      volume_unused(dcr);             /* mark volume "released" */
       goto bail_out;
    }
    Dmsg1(130, "Copy vol_name=%s\n", dev->VolHdr.VolumeName);
@@ -249,6 +254,7 @@ int read_dev_volume_label(DCR *dcr)
          stat = read_ansi_ibm_label(dcr);            
          /* If we want a label and didn't find it, return error */
          if (stat != VOL_OK) {
+            volume_unused(dcr);       /* mark volume "released" */
             goto bail_out;
          }
       }
@@ -257,7 +263,6 @@ int read_dev_volume_label(DCR *dcr)
    return VOL_OK;
 
 bail_out:
-   volume_unused(dcr);                /* mark volume "released" */
    empty_block(block);
    dev->rewind(dcr);
    Dmsg1(150, "return %d\n", stat);
@@ -310,7 +315,7 @@ bool write_volume_label_to_block(DCR *dcr)
 bool write_new_volume_label_to_dev(DCR *dcr, const char *VolName, 
                                    const char *PoolName, bool relabel, bool dvdnow)
 {
-   DEVICE *dev = dcr->dev;
+   DEVICE * volatile dev = dcr->dev;
 
 
    Dmsg0(150, "write_volume_label()\n");
@@ -339,7 +344,6 @@ bool write_new_volume_label_to_dev(DCR *dcr, const char *VolName,
    }
    Dmsg1(150, "Label type=%d\n", dev->label_type);
    if (!dev->rewind(dcr)) {
-      dev->clear_volhdr();
       Dmsg2(130, "Bad status on %s from rewind: ERR=%s\n", dev->print_name(), dev->print_errmsg());
       if (!forge_on) {
          goto bail_out;
@@ -401,11 +405,13 @@ bool write_new_volume_label_to_dev(DCR *dcr, const char *VolName,
    if (debug_level >= 20)  {
       dump_volume_label(dev);
    }
+   Dmsg0(100, "Call reserve_volume\n");
    if (reserve_volume(dcr, VolName) == NULL) {
       Mmsg2(dcr->jcr->errmsg, _("Could not reserve volume %s on %s\n"),
            dev->VolHdr.VolumeName, dev->print_name());
       goto bail_out;
    }
+   dev = dcr->dev;                    /* may have changed in reserve_volume */
 
    dev->clear_append();               /* remove append since this is PRE_LABEL */
    return true;
@@ -455,6 +461,7 @@ bool rewrite_volume_label(DCR *dcr, bool recycle)
          return false;
       }
       if (recycle) {
+//       volume_unused(dcr);             /* mark volume unused */
          if (!dev->truncate(dcr)) {
             Jmsg2(jcr, M_FATAL, 0, _("Truncate error on device %s: ERR=%s\n"),
                   dev->print_name(), dev->print_errmsg());
@@ -601,7 +608,7 @@ void create_volume_label(DEVICE *dev, const char *VolName,
 
    ASSERT(dev != NULL);
 
-   dev->clear_volhdr();          /* release any old volume */
+   dev->clear_volhdr();          /* clear any old volume info */
 
    bstrncpy(dev->VolHdr.Id, BaculaId, sizeof(dev->VolHdr.Id));
    dev->VolHdr.VerNum = BaculaTapeVersion;

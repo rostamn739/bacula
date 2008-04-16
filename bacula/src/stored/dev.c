@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -711,7 +711,7 @@ bool DEVICE::rewind(DCR *dcr)
    unsigned int i;
    bool first = true;
 
-   Dmsg3(400, "rewind res=%d fd=%d %s\n", reserved_device, m_fd, print_name());
+   Dmsg3(400, "rewind res=%d fd=%d %s\n", num_reserved(), m_fd, print_name());
    state &= ~(ST_EOT|ST_EOF|ST_WEOT);  /* remove EOF/EOT flags */
    block_num = file = 0;
    file_size = 0;
@@ -843,7 +843,7 @@ bool DEVICE::eod(DCR *dcr)
    block_num = file = 0;
    file_size = 0;
    file_addr = 0;
-   if (is_fifo() || is_prog()) {
+   if (is_fifo()) {
       return true;
    }
    if (!is_tape()) {
@@ -1917,23 +1917,73 @@ boffset_t DEVICE::lseek(DCR *dcr, boffset_t offset, int whence)
 
 bool DEVICE::truncate(DCR *dcr) /* We need the DCR for DVD-writing */
 {
+   struct stat st;
+
    Dmsg1(100, "truncate %s\n", print_name());
    switch (dev_type) {
+   case B_VTL_DEV:
    case B_TAPE_DEV:
       /* maybe we should rewind and write and eof ???? */
       return true;                    /* we don't really truncate tapes */
    case B_DVD_DEV:
       return truncate_dvd(dcr);
    case B_FILE_DEV:
-      /* ***FIXME*** we really need to unlink() the file so that
-       *  its name can be changed for a relabel.
-       */
       if (ftruncate(m_fd, 0) != 0) {
          berrno be;
          Mmsg2(errmsg, _("Unable to truncate device %s. ERR=%s\n"), 
                print_name(), be.bstrerror());
          return false;
       }
+          
+      /*
+       * Check for a successful ftruncate() and issue a work-around for devices 
+       * (mostly cheap NAS) that don't support truncation. 
+       * Workaround supplied by Martin Schmid as a solution to bug #1011.
+       * 1. close file
+       * 2. delete file
+       * 3. open new file with same mode
+       * 4. change ownership to original
+       */
+
+      if (fstat(m_fd, &st) != 0) {
+         berrno be;
+         Mmsg2(errmsg, _("Unable to stat device %s. ERR=%s\n"), 
+               print_name(), be.bstrerror());
+         return false;
+      }
+          
+      if (st.st_size != 0) {             /* ftruncate() didn't work */
+         POOL_MEM archive_name(PM_FNAME);
+                
+         pm_strcpy(archive_name, dev_name);
+         if (!IsPathSeparator(archive_name.c_str()[strlen(archive_name.c_str())-1])) {
+            pm_strcat(archive_name, "/");
+         }
+         pm_strcat(archive_name, dcr->VolumeName);
+                   
+         Mmsg2(errmsg, _("Device %s doesn't support ftruncate(). Recreating file %s.\n"), 
+               print_name(), archive_name.c_str());
+
+         /* Close file and blow it away */
+         ::close(m_fd);
+         ::unlink(archive_name.c_str());
+                   
+         /* Recreate the file -- of course, empty */
+         set_mode(CREATE_READ_WRITE);
+         if ((m_fd = ::open(archive_name.c_str(), mode, st.st_mode)) < 0) {
+            berrno be;
+            dev_errno = errno;
+            Mmsg2(errmsg, _("Could not reopen: %s, ERR=%s\n"), archive_name.c_str(), 
+                  be.bstrerror());
+            Dmsg1(100, "reopen failed: %s", errmsg);
+            Emsg0(M_FATAL, 0, errmsg);
+            return false;
+         }
+                   
+         /* Reset proper owner */
+         chown(archive_name.c_str(), st.st_uid, st.st_gid);  
+      }
+          
       return true;
    }
    return false;
@@ -2002,7 +2052,6 @@ bool DEVICE::do_mount(int mount, int dotimeout)
       timeout = 0;
    }
    results = get_memory(4000);
-   results[0] = 0;
 
    /* If busy retry each second */
    Dmsg1(100, "do_mount run_prog=%s\n", ocmd.c_str());
@@ -2184,12 +2233,15 @@ void DEVICE::edit_mount_codes(POOL_MEM &omsg, const char *imsg)
    }
 }
 
-/* return the last timer interval (ms) */
+/* return the last timer interval (ms) 
+ * or 0 if something goes wrong
+ */
 btime_t DEVICE::get_timer_count()
 {
-   btime_t old = last_timer;
+   btime_t temp = last_timer;
    last_timer = get_current_btime();
-   return last_timer - old;
+   temp = last_timer - temp;   /* get elapsed time */
+   return (temp>0)?temp:0;     /* take care of skewed clock */
 }
 
 /* read from fd */

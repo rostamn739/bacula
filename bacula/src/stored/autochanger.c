@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2002-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2002-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -111,7 +111,7 @@ bool init_autochangers()
 int autoload_device(DCR *dcr, int writing, BSOCK *dir)
 {
    JCR *jcr = dcr->jcr;
-   DEVICE *dev = dcr->dev;
+   DEVICE * volatile dev = dcr->dev;
    int slot;
    int drive = dev->drive_index;
    int rtn_stat = -1;                 /* error status */
@@ -136,6 +136,7 @@ int autoload_device(DCR *dcr, int writing, BSOCK *dir)
       if (dir) {
          return 0;                    /* For user, bail out right now */
       }
+      /* ***FIXME*** this really should not be here */
       if (dir_find_next_appendable_volume(dcr)) {
          slot = dcr->VolCatInfo.InChanger ? dcr->VolCatInfo.Slot : 0;
       } else {
@@ -265,7 +266,6 @@ int get_autochanger_loaded_slot(DCR *dcr)
    Jmsg(jcr, M_INFO, 0, _("3301 Issuing autochanger \"loaded? drive %d\" command.\n"),
         drive);
    changer = edit_device_codes(dcr, changer, dcr->device->changer_command, "loaded");
-   *results.c_str() = 0;
    Dmsg1(100, "Run program=%s\n", changer);
    status = run_program_full_output(changer, timeout, results.c_str());
    Dmsg3(100, "run_prog: %s stat=%d result=%s", changer, status, results.c_str());
@@ -355,7 +355,6 @@ bool unload_autochanger(DCR *dcr, int loaded)
                    dcr->device->changer_command, "unload");
       dev->close();
       Dmsg1(100, "Run program=%s\n", changer);
-      *results.c_str() = 0;
       int stat = run_program_full_output(changer, timeout, results.c_str());
       dcr->VolCatInfo.Slot = slot;
       if (stat != 0) {
@@ -369,6 +368,7 @@ bool unload_autochanger(DCR *dcr, int loaded)
       } else {
          dev->Slot = 0;            /* nothing loaded */
       }
+      dev->clear_unload();
       free_volume(dev);            /* Free any volume associated with this drive */
       free_pool_memory(changer);
       unlock_changer(dcr);
@@ -382,14 +382,9 @@ bool unload_autochanger(DCR *dcr, int loaded)
 static bool unload_other_drive(DCR *dcr, int slot)
 {
    DEVICE *dev = NULL;
-   DEVICE *save_dev;
-   JCR *jcr = dcr->jcr;
-   int save_slot;
-   uint32_t timeout = dcr->device->max_changer_wait;
-   bool ok = true;
+   bool found = false;
    AUTOCHANGER *changer = dcr->dev->device->changer_res;
    DEVRES *device;
-   bool found = false;
    int retries = 0;                /* wait for device retries */
 
    if (!changer) {
@@ -423,36 +418,50 @@ static bool unload_other_drive(DCR *dcr, int slot)
       }
       break;
    }
-   dev->dlock();
    if (dev->is_busy()) {
-      Jmsg(jcr, M_WARNING, 0, _("Volume \"%s\" is in use by device %s\n"),
+      Jmsg(dcr->jcr, M_WARNING, 0, _("Volume \"%s\" is in use by device %s\n"),
            dcr->VolumeName, dev->print_name());
       Dmsg4(100, "Vol %s for dev=%s is busy dev=%s slot=%d\n",
-           dcr->VolumeName, dcr->dev->print_name(), dev->print_name(), slot);
-      Dmsg2(100, "num_writ=%d reserv=%d\n", dev->num_writers, dev->reserved_device);
-      dev->dunlock();
+           dcr->VolumeName, dcr->dev->print_name(), dev->print_name(), dev->Slot);
+      Dmsg2(100, "num_writ=%d reserv=%d\n", dev->num_writers, dev->num_reserved());
       return false;
    }
+   return unload_dev(dcr, dev);
+}
+
+bool unload_dev(DCR *dcr, DEVICE *dev)
+{
+   JCR *jcr = dcr->jcr;
+   bool ok = true;
+   uint32_t timeout = dcr->device->max_changer_wait;
+   AUTOCHANGER *changer = dcr->dev->device->changer_res;
+   DEVICE *save_dev;
+   int save_slot;
+
+   if (!changer || dev->Slot <= 0) {
+      return false;
+   }
+   dev->dlock();
 
    POOLMEM *changer_cmd = get_pool_memory(PM_FNAME);
    POOL_MEM results(PM_MESSAGE);
    lock_changer(dcr);
    Jmsg(jcr, M_INFO, 0,
         _("3307 Issuing autochanger \"unload slot %d, drive %d\" command.\n"),
-        slot, dev->drive_index);
+        dev->Slot, dev->drive_index);
 
    Dmsg2(100, "Issuing autochanger \"unload slot %d, drive %d\" command.\n",
-        slot, dev->drive_index);
+        dev->Slot, dev->drive_index);
 
    save_dev = dcr->dev;
    dcr->dev = dev;
    save_slot = dcr->VolCatInfo.Slot;
-   dcr->VolCatInfo.Slot = slot;
+   dcr->VolCatInfo.Slot = dev->Slot;
    changer_cmd = edit_device_codes(dcr, changer_cmd, 
                 dcr->device->changer_command, "unload");
    dev->close();
    Dmsg2(200, "close dev=%s reserve=%d\n", dev->print_name(), 
-      dev->reserved_device);
+      dev->num_reserved());
    Dmsg1(100, "Run program=%s\n", changer_cmd);
    int stat = run_program_full_output(changer_cmd, timeout, results.c_str());
    dcr->VolCatInfo.Slot = save_slot;
@@ -461,10 +470,10 @@ static bool unload_other_drive(DCR *dcr, int slot)
       berrno be;
       be.set_errno(stat);
       Jmsg(jcr, M_INFO, 0, _("3995 Bad autochanger \"unload slot %d, drive %d\": ERR=%s.\n"),
-              slot, dev->drive_index, be.bstrerror());
+              dev->Slot, dev->drive_index, be.bstrerror());
 
       Dmsg3(100, "Bad autochanger \"unload slot %d, drive %d\": ERR=%s.\n",
-              slot, dev->drive_index, be.bstrerror());
+              dev->Slot, dev->drive_index, be.bstrerror());
       ok = false;
       dev->Slot = -1;          /* unknown */
    } else {
@@ -472,6 +481,7 @@ static bool unload_other_drive(DCR *dcr, int slot)
       Dmsg0(100, "Slot unloaded\n");
    }
    free_volume(dev);               /* Free any volume associated with this drive */
+   dev->clear_unload();
    unlock_changer(dcr);
    dev->dunlock();
    free_pool_memory(changer_cmd);

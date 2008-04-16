@@ -1,6 +1,58 @@
               Technical notes on version 2.2
 
 General:
+16Apr08
+kes  Permit multiple simultaneous restores -- experiment.
+15Apr08
+kes  Backport development stream SD reservation system changes.
+     See below:
+===
+16Apr08
+kes  Move final volume swapping code to DCR method and
+     call it from acquire_for_read().
+kes  When wrong volume is mounted during read, unload_autochanger.
+14Apr08
+kes  Stop searching for Volumes in SD askdir if DIR returns the
+     same volume name twice in a row.
+13Apr08
+kes  Tweak the swap Volume from one drive to another code so that
+     it now seems to work.
+kes  Resolve several problems with recycling that broke the new
+     code (these problems are in 2.2.9 as well).
+kes  Remove the volume lock when calling the sysop code.   
+kes  Don't mark a reserved volume with no writers as unused otherwise
+     jobs fail.
+12Apr08
+kes  Rework class structures for VOLRES, DCR, and DEVICE to make
+     the method names a bit more logical, and for more logically
+     handling the responsibilities.
+11Apr08
+kes  Remove redundant code in terminating the scheduler that just
+     causes a seg fault in many cases.
+kes  Cleanup releasing a volume and make it a DCR method.
+kes  Improve algorithm for detecting pre-reserved volume and
+     swapping volumes.
+10Apr08
+kes  Tweak volume swapping code so it works.
+kes  Correct name overloading in mount.c
+kes  Replace released flag in VOLRES with reserved and add access
+     methods for the VOLRES class.
+kes  Prevent volume from being released while being swapped.
+kes  Refactor parts of stored/mount.c
+09Apr08
+ebl  Add sanity checks for VolWriteTime and VolReadTime
+ebl  Take care of bad clock changes while computing VolWriteTime
+     and VolReadTime. This should fix or limit #1066
+kes  Correct error string numbers in dird/catreq.c
+kes  Restructure reserving, acquiring, and mounting volumes. Calls to
+     autochanger are deferred for mount.c -- simplifes the code.
+08Apr08
+kes  Do not prune any running job. It just fails the job.
+kes  Lock the volumes when changing dev->reserved_device and marking
+     the volume unused otherwise the device can get reserved by
+     another job before the volume is released, thus blocking it.
+===                                        
+
 Beta Release Version 2.2.9-b7
 14Apr08
 kes  Close bat console windows first to eliminate error message

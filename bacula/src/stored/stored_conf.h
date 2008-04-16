@@ -57,10 +57,11 @@ public:
 
    char *password;                    /* Director password */
    char *address;                     /* Director IP address or zero */
-   int monitor;                       /* Have only access to status and .status functions */
-   int tls_enable;                    /* Enable TLS */
-   int tls_require;                   /* Require TLS */
-   int tls_verify_peer;              /* TLS Verify Client Certificate */
+   bool monitor;                      /* Have only access to status and .status functions */
+   bool tls_authenticate;             /* Authenticate with TLS */
+   bool tls_enable;                   /* Enable TLS */
+   bool tls_require;                  /* Require TLS */
+   bool tls_verify_peer;              /* TLS Verify Client Certificate */
    char *tls_ca_certfile;             /* TLS CA Certificate File */
    char *tls_ca_certdir;              /* TLS CA Certificate Directory */
    char *tls_certfile;                /* TLS Server Certificate File */
@@ -82,14 +83,16 @@ public:
    char *working_directory;           /* working directory for checkpoints */
    char *pid_directory;
    char *subsys_directory;
+   char *plugin_directory;            /* Plugin directory */
    char *scripts_directory;
    uint32_t max_concurrent_jobs;      /* maximum concurrent jobs to run */
    MSGS *messages;                    /* Daemon message handler */
    utime_t heartbeat_interval;        /* Interval to send hb to FD */
    utime_t client_wait;               /* Time to wait for FD to connect */
-   int tls_enable;                    /* Enable TLS */
-   int tls_require;                   /* Require TLS */
-   int tls_verify_peer;               /* TLS Verify Client Certificate */
+   bool tls_authenticate;             /* Authenticate with TLS */
+   bool tls_enable;                   /* Enable TLS */
+   bool tls_require;                  /* Require TLS */
+   bool tls_verify_peer;              /* TLS Verify Client Certificate */
    char *tls_ca_certfile;             /* TLS CA Certificate File */
    char *tls_ca_certdir;              /* TLS CA Certificate Directory */
    char *tls_certfile;                /* TLS Server Certificate File */

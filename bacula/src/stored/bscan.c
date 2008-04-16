@@ -149,7 +149,7 @@ int main (int argc, char *argv[])
 
    OSDependentInit();
 
-   while ((ch = getopt(argc, argv, "b:c:d:h:mn:pP:rsSu:vV:w:?")) != -1) {
+   while ((ch = getopt(argc, argv, "b:c:dD:h:p:mn:pP:rsSt:u:vV:w:?")) != -1) {
       switch (ch) {
       case 'S' :
          showProgress = true;
