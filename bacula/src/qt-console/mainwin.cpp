@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2007-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2007-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -36,6 +36,7 @@
  */ 
 
 #include "bat.h"
+#include "version.h"
 #include "joblist/joblist.h"
 #include "storage/storage.h"
 #include "fileset/fileset.h"
@@ -468,8 +469,8 @@ void MainWin::input_line()
 void MainWin::about()
 {
    QMessageBox::about(this, tr("About bat"),
-      tr("<br><h2>bat 1.0, by Dirk H Bartley and Kern Sibbald</h2>"
-         "<p>Copyright &copy; " BYEAR " Free Software Foundation Europe e.V."
+      tr("<br><h2>bat " VERSION "(" BDATE "), by Dirk H Bartley and Kern Sibbald</h2>"
+         "<p>Copyright &copy; 2007-" BYEAR " Free Software Foundation Europe e.V."
          "<p>The <b>bat</b> is an administrative console"
          " interface to the Director."));
 }
