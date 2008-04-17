@@ -103,6 +103,11 @@ void Console::poll_messages()
 void Console::terminate()
 {
    if (m_sock) {
+      if (m_notifier) {
+         m_notifier->setEnabled(false);
+         delete m_notifier;
+         m_notifier = NULL;
+      }
       stopTimer();
       m_sock->close();
       m_sock = NULL;
