@@ -293,7 +293,7 @@ make_path(
                   ) {
                  /* Note, if we are restoring as NON-root, this may not be fatal */
                  berrno be;
-                 Jmsg(jcr, M_ERROR, 0, _("Cannot change owner and/or group of %s: ERR=%s\n"),
+                 Jmsg(jcr, M_WARNING, 0, _("Cannot change owner and/or group of %s: ERR=%s\n"),
                       quote(dirpath), be.bstrerror());
               }
               Dmsg0(300, "Chown done.\n");

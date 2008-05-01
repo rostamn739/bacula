@@ -1,6 +1,11 @@
               Technical notes on version 2.2
 
 General:
+01May08
+kes  Fix strippath so that it does not get a buffer overrun and crash FD.
+     This fixes bug #1078.
+kes  Make inability to change owner/group when creating a dir only a
+     warning rather than an error.
 28Apr08
 ebl  Fix SQL query in migration code
 19Apr08

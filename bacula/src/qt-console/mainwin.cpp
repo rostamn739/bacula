@@ -260,11 +260,6 @@ void MainWin::closeEvent(QCloseEvent *event)
          }
       }
    }
-   /*
-    * Close the console pages before non-console pages so that
-    *  the notifier is turned off. Otherwise it prints an error when
-    *  the page it is using gets destroyed.
-    */
    foreach(Console *console, m_consoleHash){
       console->writeSettings();
       console->terminate();
