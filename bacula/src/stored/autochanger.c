@@ -201,8 +201,8 @@ int autoload_device(DCR *dcr, int writing, BSOCK *dir)
          } else {
             berrno be;
             be.set_errno(status);
-            Dmsg3(100, "load slot %d, drive %d, bad stats=%s.\n", slot, drive,
-               be.bstrerror());
+            Dmsg4(100, "load slot %d, drive %d, ERR=%s Result=%s\n", slot, drive,
+               be.bstrerror(), results.c_str());
             Jmsg(jcr, M_FATAL, 0, _("3992 Bad autochanger \"load slot %d, drive %d\": "
                  "ERR=%s.\nResults=%s\n"),
                     slot, drive, be.bstrerror(), results.c_str());
