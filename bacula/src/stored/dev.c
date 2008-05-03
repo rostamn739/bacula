@@ -1885,7 +1885,7 @@ void DEVICE::close()
  *  the Volume parts multiple times without losing track of what the    
  *  main Volume parameters are.
  */
-void DEVICE::close_part(DCR *dcr)
+void DEVICE::close_part(DCR * /*dcr*/)
 {
    VOLUME_LABEL saveVolHdr;
    VOLUME_CAT_INFO saveVolCatInfo;     /* Volume Catalog Information */
@@ -1896,7 +1896,6 @@ void DEVICE::close_part(DCR *dcr)
    close();                           /* close current part */
    VolHdr = saveVolHdr;               /* structure assignment */
    VolCatInfo = saveVolCatInfo;       /* structure assignment */
-   dcr->VolCatInfo = saveVolCatInfo;  /* structure assignment */
 }
 
 boffset_t DEVICE::lseek(DCR *dcr, boffset_t offset, int whence)
