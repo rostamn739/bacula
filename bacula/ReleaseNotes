@@ -1,5 +1,5 @@
 
-          Release Notes for Bacula 2.2.9 
+          Release Notes for Bacula 2.2.10
 
   Bacula code: Total files = 498 Total lines = 167,596 (*.h *.c *.in)
   82 new files, 41,221 new lines of code, 208,380 lines of change from 2.0.3
@@ -10,7 +10,33 @@ use some of the new features that affect the FD.  In other words, you should
 not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
-Version 2.2.10 is primarily a Storage daemon reservations system
+Beta Release Version 2.2.10-b2
+03May08
+kes  Rework SD acquire for read to handle autochanger Volume
+     swapping.
+kes  Implement regression that explicitly tests swapping a Volume
+     from one drive to another.
+kes  Enhance disk-changer to detect most error conditions.
+kes  Fix SD code so that it properly swaps a Volume between drives.
+     This fixes bug #1083.
+01May08
+kes  Prevent a Volume that is being swapped from being freed from
+     the volume list. This will most likely fix, at least partially,
+     bug #1083.
+kes  Fix strippath so that it does not get a buffer overrun and crash FD.
+     This fixes bug #1078.
+kes  Make inability to change owner/group when creating a dir only a
+     warning rather than an error.
+28Apr08
+ebl  Fix SQL query in migration code
+19Apr08
+kes  Force unload of volume when wrong volume mounted in SD.
+17Apr08
+kes  Fix bat seg fault at termination.
+kes  Add Bacula generated version to bat about box.
+
+
+Version 2.2.10-b1 is primarily a Storage daemon reservations system
   enhancement to 2.2.9-beta
 16Apr08
 kes  Permit multiple simultaneous restores -- experiment.
