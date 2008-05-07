@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-04-16 19:05+0200\n"
+"POT-Creation-Date: 2008-05-07 14:33+0200\n"
 "PO-Revision-Date: 2008-01-24 22:54+0100\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
@@ -6976,7 +6976,7 @@ msgid " Connecting to Director %s:%d"
 msgstr "Connexion au Director %s:%d\n"
 
 #: src/gnome2-console/console.c:501 src/qt-console/bcomm/dircomm.cpp:121
-#: src/qt-console/console/console.cpp:138
+#: src/qt-console/console/console.cpp:143
 #, fuzzy, c-format
 msgid ""
 "Connecting to Director %s:%d\n"
@@ -6989,7 +6989,7 @@ msgid "Passphrase for Console \"%s\" TLS private key: "
 msgstr ""
 
 #: src/gnome2-console/console.c:526 src/console/console.c:538
-#: src/qt-console/bcomm/dircomm.cpp:141 src/qt-console/console/console.cpp:163
+#: src/qt-console/bcomm/dircomm.cpp:141 src/qt-console/console/console.cpp:168
 #: src/wx-console/console_thread.cpp:391
 #, c-format
 msgid "Failed to initialize TLS context for Console \"%s\".\n"
@@ -7001,14 +7001,14 @@ msgid "Passphrase for Director \"%s\" TLS private key: "
 msgstr ""
 
 #: src/gnome2-console/console.c:548 src/console/console.c:558
-#: src/qt-console/bcomm/dircomm.cpp:161 src/qt-console/console/console.cpp:183
+#: src/qt-console/bcomm/dircomm.cpp:161 src/qt-console/console/console.cpp:188
 #: src/wx-console/console_thread.cpp:412
 #, c-format
 msgid "Failed to initialize TLS context for Director \"%s\".\n"
 msgstr "Impossible d'initialiser le contexte TLS pour le Director « %s ».\n"
 
 #: src/gnome2-console/console.c:557 src/tray-monitor/tray-monitor.c:922
-#: src/qt-console/bcomm/dircomm.cpp:177 src/qt-console/console/console.cpp:199
+#: src/qt-console/bcomm/dircomm.cpp:177 src/qt-console/console/console.cpp:204
 #: src/wx-console/console_thread.cpp:420
 #, fuzzy
 msgid "Director daemon"
@@ -7740,35 +7740,35 @@ msgid ""
 "Media Type not the same for all devices in changer %s. Cannot continue.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:150
+#: src/stored/autochanger.c:152
 #, c-format
 msgid ""
 "Invalid slot=%d defined in catalog for Volume \"%s\" on %s. Manual load may "
 "be required.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:155
+#: src/stored/autochanger.c:157
 #, c-format
 msgid "No \"Changer Device\" for %s. Manual load of Volume may be required.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:159
+#: src/stored/autochanger.c:161
 #, c-format
 msgid "No \"Changer Command\" for %s. Manual load of Volume may be requird.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:189
+#: src/stored/autochanger.c:191
 #, c-format
 msgid "3304 Issuing autochanger \"load slot %d, drive %d\" command.\n"
 msgstr ""
 "3304 Envoi de la commande « load slot %d, drive %d » à l'autochangeur.\n"
 
-#: src/stored/autochanger.c:197
+#: src/stored/autochanger.c:199
 #, c-format
 msgid "3305 Autochanger \"load slot %d, drive %d\", status is OK.\n"
 msgstr "3305 Autochangeur « load slot %d, drive %d », le résultat est OK.\n"
 
-#: src/stored/autochanger.c:206
+#: src/stored/autochanger.c:208
 #, c-format
 msgid ""
 "3992 Bad autochanger \"load slot %d, drive %d\": ERR=%s.\n"
@@ -7777,26 +7777,22 @@ msgstr ""
 "3992 Erreur sur l'autochangeur « load slot %d, drive %d » : ERR=%s.\n"
 "Resultat=%s\n"
 
-#: src/stored/autochanger.c:252
-msgid "3992 Missing Changer command.\n"
-msgstr ""
-
-#: src/stored/autochanger.c:266
+#: src/stored/autochanger.c:268
 #, c-format
 msgid "3301 Issuing autochanger \"loaded? drive %d\" command.\n"
 msgstr "3301 Envoi de la commande « loaded? drive %d » à l'autochangeur.\n"
 
-#: src/stored/autochanger.c:275
+#: src/stored/autochanger.c:277
 #, c-format
 msgid "3302 Autochanger \"loaded? drive %d\", result is Slot %d.\n"
 msgstr "3302 Autochangeur « loaded drive %d », le resultat est Slot %d.\n"
 
-#: src/stored/autochanger.c:279
+#: src/stored/autochanger.c:281
 #, c-format
 msgid "3302 Autochanger \"loaded? drive %d\", result: nothing loaded.\n"
 msgstr "3302 Autochangeur « loaded drive %d », résultat : lecteur vide.\n"
 
-#: src/stored/autochanger.c:286
+#: src/stored/autochanger.c:288
 #, c-format
 msgid ""
 "3991 Bad autochanger \"loaded? drive %d\" command: ERR=%s.\n"
@@ -7805,13 +7801,13 @@ msgstr ""
 "3991 Erreur sur l'autochangeur « loaded drive %d » : ERR=%s.\n"
 "Resultat=%s\n"
 
-#: src/stored/autochanger.c:350 src/stored/autochanger.c:450
+#: src/stored/autochanger.c:352 src/stored/autochanger.c:452
 #, c-format
 msgid "3307 Issuing autochanger \"unload slot %d, drive %d\" command.\n"
 msgstr ""
 "3307 Envoi de la commande « unload slot %d, drive %d » à l'autochangeur.\n"
 
-#: src/stored/autochanger.c:363
+#: src/stored/autochanger.c:365
 #, c-format
 msgid ""
 "3995 Bad autochanger \"unload slot %d, drive %d\": ERR=%s\n"
@@ -7820,32 +7816,32 @@ msgstr ""
 "3995 Erreur sur l'autochangeur « unload slot %d, drive %d » : ERR=%s.\n"
 "Resultat=%s\n"
 
-#: src/stored/autochanger.c:422
+#: src/stored/autochanger.c:424
 #, c-format
 msgid "Volume \"%s\" is in use by device %s\n"
 msgstr "Le volume « %s » est utilisé par le device %s\n"
 
-#: src/stored/autochanger.c:472
+#: src/stored/autochanger.c:474
 #, c-format
 msgid "3995 Bad autochanger \"unload slot %d, drive %d\": ERR=%s.\n"
 msgstr ""
 "3995 Erreur sur l'autochangeur « unload slot %d, drive %d » : ERR=%s.\n"
 
-#: src/stored/autochanger.c:513
+#: src/stored/autochanger.c:515
 #, c-format
 msgid "3993 Device %s not an autochanger device.\n"
 msgstr "3993 Le Device %s n'est pas un autochangeur.\n"
 
-#: src/stored/autochanger.c:534
+#: src/stored/autochanger.c:536
 #, c-format
 msgid "3306 Issuing autochanger \"%s\" command.\n"
 msgstr "3306 Envoi de la commande « %s » à l'autochangeur.\n"
 
-#: src/stored/autochanger.c:537
+#: src/stored/autochanger.c:539
 msgid "3996 Open bpipe failed.\n"
 msgstr ""
 
-#: src/stored/autochanger.c:564 src/console/console.c:945
+#: src/stored/autochanger.c:566 src/console/console.c:945
 #, c-format
 msgid "Autochanger error: ERR=%s\n"
 msgstr "Erreur sur l'autochangeur : ERR=%s\n"
@@ -8133,27 +8129,27 @@ msgstr "Impossible d'initialiser le verrou sur la base. ERR=%s\n"
 msgid "Unable to initialize volume list lock. ERR=%s\n"
 msgstr "Impossible d'initialiser le verrou sur la base. ERR=%s\n"
 
-#: src/stored/reserve.c:446
+#: src/stored/reserve.c:453
 #, c-format
 msgid "Device switch. New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/reserve.c:513
+#: src/stored/reserve.c:520
 #, c-format
 msgid "Hey! num_writers=%d!!!!\n"
 msgstr ""
 
-#: src/stored/reserve.c:762
+#: src/stored/reserve.c:772
 #, fuzzy
 msgid "3939 Could not get dcr\n"
 msgstr "Impossible de créer la structure BSOCK cliente.\n"
 
-#: src/stored/reserve.c:865 src/stored/reserve.c:876
+#: src/stored/reserve.c:875 src/stored/reserve.c:886
 #, c-format
 msgid "Failed command: %s\n"
 msgstr "Erreur sur la commande : %s\n"
 
-#: src/stored/reserve.c:866
+#: src/stored/reserve.c:876
 #, c-format
 msgid ""
 "\n"
@@ -8161,7 +8157,7 @@ msgid ""
 "Device resources.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1177 src/stored/dircmd.c:598
+#: src/stored/reserve.c:1187 src/stored/dircmd.c:598
 #, c-format
 msgid ""
 "\n"
@@ -8169,42 +8165,42 @@ msgid ""
 "does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1181 src/stored/dircmd.c:576
+#: src/stored/reserve.c:1191 src/stored/dircmd.c:576
 #, c-format
 msgid ""
 "\n"
 "     Device \"%s\" requested by DIR could not be opened or does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1193
+#: src/stored/reserve.c:1203
 #, c-format
 msgid "3926 Could not get dcr for device: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:1316
+#: src/stored/reserve.c:1326
 #, c-format
 msgid "3601 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 "3601 JobId=%u device %s est BLOQUÉ car il a été demonté par l'utilisateur.\n"
 
-#: src/stored/reserve.c:1326
+#: src/stored/reserve.c:1336
 #, c-format
 msgid "3602 JobId=%u device %s is busy (already reading/writing).\n"
 msgstr "3602 JobId=%u device %s est occupé (à lire ou écrire).\n"
 
-#: src/stored/reserve.c:1370
+#: src/stored/reserve.c:1380
 #, c-format
 msgid "3603 JobId=%u device %s is busy reading.\n"
 msgstr "3603 JobId=%u device %s est occupé en lecture.\n"
 
-#: src/stored/reserve.c:1379
+#: src/stored/reserve.c:1389
 #, c-format
 msgid "3604 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 "3604 JobId=%u device %s est bloqué car il a été démonté par l'utilisateur "
 "(unmount).\n"
 
-#: src/stored/reserve.c:1416
+#: src/stored/reserve.c:1426
 #, fuzzy, c-format
 msgid ""
 "3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
@@ -8213,46 +8209,46 @@ msgstr ""
 "3608 JobId=%u voulait le Pool=« %s », mais c'est le Pool=« %s » qui est dans "
 "le drive %s.\n"
 
-#: src/stored/reserve.c:1442
+#: src/stored/reserve.c:1452
 #, fuzzy, c-format
 msgid "3610 JobId=%u Volume max jobs exceeded on drive %s.\n"
 msgstr ""
 "3607 JobId=%u voulait Vol=« %s », c'est le Vol=« %s » qui est dans le drive %"
 "s.\n"
 
-#: src/stored/reserve.c:1497
+#: src/stored/reserve.c:1507
 #, c-format
 msgid "3605 JobId=%u wants free drive but device %s is busy.\n"
 msgstr ""
 "3605 JobId=%u voulait libérer le lecteur, mais le device %s est occupé.\n"
 
-#: src/stored/reserve.c:1505
+#: src/stored/reserve.c:1515
 #, c-format
 msgid "3606 JobId=%u prefers mounted drives, but drive %s has no Volume.\n"
 msgstr "3606 JobId=%u voulait un lecteur monté, mais le lecteur %s est vide.\n"
 
-#: src/stored/reserve.c:1528
+#: src/stored/reserve.c:1538
 #, c-format
 msgid "3607 JobId=%u wants Vol=\"%s\" drive has Vol=\"%s\" on drive %s.\n"
 msgstr ""
 "3607 JobId=%u voulait Vol=« %s », c'est le Vol=« %s » qui est dans le drive %"
 "s.\n"
 
-#: src/stored/reserve.c:1584
+#: src/stored/reserve.c:1594
 #, c-format
 msgid "Logic error!!!! JobId=%u Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1585
+#: src/stored/reserve.c:1595
 #, c-format
 msgid "3910 JobId=%u Logic error!!!! drive %s Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1588
+#: src/stored/reserve.c:1598
 msgid "Logic error!!!! Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1591
+#: src/stored/reserve.c:1601
 #, c-format
 msgid "3911 JobId=%u failed reserve drive %s.\n"
 msgstr ""
@@ -8552,7 +8548,7 @@ msgstr ""
 msgid "Volume on %s has bad Bacula label type: %x\n"
 msgstr "Le volume sur %s possède un mauvais label Bacula : %x\n"
 
-#: src/stored/label.c:218 src/stored/label.c:410
+#: src/stored/label.c:218 src/stored/label.c:410 src/stored/acquire.c:104
 #, fuzzy, c-format
 msgid "Could not reserve volume %s on %s\n"
 msgstr "Impossible de trouver le prochain volume pour le Job %s.\n"
@@ -10897,7 +10893,7 @@ msgstr "Le volume « %s » existe déjà en base.\n"
 msgid "Read block=%u, VolBytes=%s rate=%.1f KB/s\n"
 msgstr ""
 
-#: src/stored/btape.c:2757 src/stored/mount.c:713
+#: src/stored/btape.c:2757 src/stored/mount.c:722
 #, c-format
 msgid "Cannot open Dev=%s, Vol=%s\n"
 msgstr ""
@@ -10951,7 +10947,7 @@ msgstr ""
 msgid "Fatal append error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:302 src/stored/acquire.c:455 src/stored/block.c:368
+#: src/stored/spool.c:302 src/stored/acquire.c:480 src/stored/block.c:368
 #: src/stored/block.c:722 src/stored/block.c:798
 #, c-format
 msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
@@ -11121,7 +11117,7 @@ msgid "Unable to position to end of data on device %s: ERR=%s\n"
 msgstr ""
 "Impossible de se positionner à la fin du média sur le device %s : ERR=%s\n"
 
-#: src/stored/mount.c:352 src/stored/mount.c:620
+#: src/stored/mount.c:352 src/stored/mount.c:627
 #, c-format
 msgid "Volume \"%s\" not on device %s.\n"
 msgstr "Le volume « %s » n'est pas dans le device %s.\n"
@@ -11137,14 +11133,14 @@ msgstr ""
 "    Le volume courant « %s » n'est pas utilisable car :\n"
 "    %s"
 
-#: src/stored/mount.c:514
+#: src/stored/mount.c:521
 #, c-format
 msgid "Ready to append to end of Volume \"%s\" part=%d size=%s\n"
 msgstr ""
 "Prêt à ajouter des données à la fin du volume « %s » part=%d size=%s\n"
 "\n"
 
-#: src/stored/mount.c:518
+#: src/stored/mount.c:525
 #, fuzzy, c-format
 msgid ""
 "Bacula cannot write on DVD Volume \"%s\" because: The sizes do not match! "
@@ -11153,12 +11149,12 @@ msgstr ""
 "Impossible d'écrire sur le volume « %s » car :\n"
 "Les tailles ne correspondent pas. Volume=%s Catalogue=%s\n"
 
-#: src/stored/mount.c:532
+#: src/stored/mount.c:539
 #, c-format
 msgid "Ready to append to end of Volume \"%s\" at file=%d.\n"
 msgstr "Prêt à ajouter des données à la fin du volume « %s » file=%d.\n"
 
-#: src/stored/mount.c:535
+#: src/stored/mount.c:542
 #, fuzzy, c-format
 msgid ""
 "Bacula cannot write on tape Volume \"%s\" because:\n"
@@ -11167,12 +11163,12 @@ msgstr ""
 "Impossible d'écrire sur le volume « %s » \n"
 "car le nombre de fichiers ne correspond pas. Volume=%u Catalogue=%u\n"
 
-#: src/stored/mount.c:546
+#: src/stored/mount.c:553
 #, c-format
 msgid "Ready to append to end of Volume \"%s\" size=%s\n"
 msgstr "Prêt à ajouter des données à la fin du volume « %s » size=%s\n"
 
-#: src/stored/mount.c:550
+#: src/stored/mount.c:557
 #, c-format
 msgid ""
 "Bacula cannot write on disk Volume \"%s\" because: The sizes do not match! "
@@ -11181,31 +11177,31 @@ msgstr ""
 "Impossible d'écrire sur le volume « %s » car : Les tailles ne correspondent "
 "pas. Volume=%s Catalogue=%s\n"
 
-#: src/stored/mount.c:610
+#: src/stored/mount.c:617
 #, c-format
 msgid "Labeled new Volume \"%s\" on device %s.\n"
 msgstr "Le nouveau volume « %s » a été labélisé sur le device %s.\n"
 
-#: src/stored/mount.c:615
+#: src/stored/mount.c:622
 #, c-format
 msgid "Device %s not configured to autolabel Volumes.\n"
 msgstr ""
 "Attention, le device %s n'est pas configuré pour labéliser automatiquement "
 "les volumes.\n"
 
-#: src/stored/mount.c:634
+#: src/stored/mount.c:641
 #, c-format
 msgid "Marking Volume \"%s\" in Error in Catalog.\n"
 msgstr "Le volume « %s » est marqué en Erreur dans le catalogue.\n"
 
-#: src/stored/mount.c:649
+#: src/stored/mount.c:657
 #, c-format
 msgid ""
 "Autochanger Volume \"%s\" not found in slot %d.\n"
 "    Setting InChanger to zero in catalog.\n"
 msgstr ""
 
-#: src/stored/mount.c:666
+#: src/stored/mount.c:674
 msgid "Hey!!!!! WroteVol non-zero !!!!!\n"
 msgstr ""
 
@@ -11904,32 +11900,32 @@ msgstr ""
 msgid "I/O function \"%s\" not supported on this device.\n"
 msgstr ""
 
-#: src/stored/dev.c:1933
+#: src/stored/dev.c:1932
 #, c-format
 msgid "Unable to truncate device %s. ERR=%s\n"
 msgstr ""
 
-#: src/stored/dev.c:1950
+#: src/stored/dev.c:1949
 #, fuzzy, c-format
 msgid "Unable to stat device %s. ERR=%s\n"
 msgstr "3910 Impossible d'ouvrir le device %s : ERR=%s\n"
 
-#: src/stored/dev.c:1964
+#: src/stored/dev.c:1963
 #, c-format
 msgid "Device %s doesn't support ftruncate(). Recreating file %s.\n"
 msgstr ""
 
-#: src/stored/dev.c:1976
+#: src/stored/dev.c:1975
 #, fuzzy, c-format
 msgid "Could not reopen: %s, ERR=%s\n"
 msgstr "Impossible d'ouvrir %s : ERR=%s\n"
 
-#: src/stored/dev.c:2081 src/stored/dev.c:2086
+#: src/stored/dev.c:2080 src/stored/dev.c:2085
 #, c-format
 msgid "Device %s cannot be %smounted. ERR=%s\n"
 msgstr "Le Device %s ne peut pas être %smounted. ERR=%s\n"
 
-#: src/stored/dev.c:2497
+#: src/stored/dev.c:2496
 #, fuzzy, c-format
 msgid "Unable to set eotmodel on device %s: ERR=%s\n"
 msgstr "3910 Impossible d'ouvrir le device %s : ERR=%s\n"
@@ -12070,54 +12066,54 @@ msgstr "Pas de volume spécifié pour la lecture. Abandon du job %s.\n"
 msgid "Logic error: no next volume to read. Numvol=%d Curvol=%d\n"
 msgstr ""
 
-#: src/stored/acquire.c:114
+#: src/stored/acquire.c:132
 #, c-format
 msgid ""
 "Changing device. Want Media Type=\"%s\" have=\"%s\"\n"
 "  device=%s\n"
 msgstr ""
 
-#: src/stored/acquire.c:150
+#: src/stored/acquire.c:168
 #, c-format
 msgid "Media Type change.  New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/acquire.c:161
+#: src/stored/acquire.c:179
 #, c-format
 msgid "No suitable device found to read Volume \"%s\"\n"
 msgstr ""
 
-#: src/stored/acquire.c:190
+#: src/stored/acquire.c:208
 #, c-format
 msgid "Job %s canceled.\n"
 msgstr "Le job %s est annulé.\n"
 
-#: src/stored/acquire.c:206
+#: src/stored/acquire.c:222
 #, c-format
 msgid "Read open device %s Volume \"%s\" failed: ERR=%s\n"
 msgstr ""
 
-#: src/stored/acquire.c:278
+#: src/stored/acquire.c:303
 #, c-format
 msgid "Too many errors trying to mount device %s for reading.\n"
 msgstr ""
 
-#: src/stored/acquire.c:287
+#: src/stored/acquire.c:312
 #, c-format
 msgid "Ready to read from volume \"%s\" on device %s.\n"
 msgstr "Prêt à lire les données du volume « %s » depuis le device %s.\n"
 
-#: src/stored/acquire.c:331
+#: src/stored/acquire.c:356
 #, fuzzy, c-format
 msgid "Want to append, but device %s is busy reading.\n"
 msgstr "3603 JobId=%u device %s est occupé en lecture.\n"
 
-#: src/stored/acquire.c:359
+#: src/stored/acquire.c:384
 #, c-format
 msgid "Could not ready device %s for append.\n"
 msgstr ""
 
-#: src/stored/acquire.c:402
+#: src/stored/acquire.c:427
 #, fuzzy, c-format
 msgid ""
 "Invalid tape position on volume \"%s\" on device %s. Expected %d, got %d\n"
@@ -12125,12 +12121,12 @@ msgstr ""
 "Fin du volume « %s » à %u:%u sur le device %s. Ecriture de %u octets, eu %"
 "d.\n"
 
-#: src/stored/acquire.c:502
+#: src/stored/acquire.c:527
 #, c-format
 msgid "Alert: %s"
 msgstr "Alert: %s"
 
-#: src/stored/acquire.c:510
+#: src/stored/acquire.c:535
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""
@@ -13452,7 +13448,7 @@ msgid "Bad scan : '%s' %d\n"
 msgstr ""
 
 #: src/tray-monitor/tray-monitor.c:921 src/qt-console/bcomm/dircomm.cpp:120
-#: src/qt-console/console/console.cpp:137
+#: src/qt-console/console/console.cpp:142
 #, fuzzy, c-format
 msgid "Connecting to Director %s:%d"
 msgstr "Connexion au Director %s:%d\n"
@@ -15954,40 +15950,40 @@ msgstr ""
 msgid "*None*"
 msgstr ""
 
-#: src/qt-console/bcomm/dircomm.cpp:203 src/qt-console/console/console.cpp:226
+#: src/qt-console/bcomm/dircomm.cpp:203 src/qt-console/console/console.cpp:231
 msgid "Initializing ..."
 msgstr ""
 
-#: src/qt-console/bcomm/dircomm.cpp:209 src/qt-console/console/console.cpp:254
+#: src/qt-console/bcomm/dircomm.cpp:209 src/qt-console/console/console.cpp:259
 #, fuzzy
 msgid "Connected"
 msgstr "Connexion...\n"
 
 #: src/qt-console/bcomm/dircomm.cpp:288 src/qt-console/bcomm/dircomm.cpp:410
-#: src/qt-console/console/console.cpp:528
-#: src/qt-console/console/console.cpp:650
+#: src/qt-console/console/console.cpp:533
+#: src/qt-console/console/console.cpp:655
 msgid "Processing command ..."
 msgstr ""
 
-#: src/qt-console/bcomm/dircomm.cpp:404 src/qt-console/console/console.cpp:644
+#: src/qt-console/bcomm/dircomm.cpp:404 src/qt-console/console/console.cpp:649
 #, fuzzy
 msgid "Command completed ..."
 msgstr "Commande annulée.\n"
 
-#: src/qt-console/bcomm/dircomm.cpp:416 src/qt-console/console/console.cpp:656
+#: src/qt-console/bcomm/dircomm.cpp:416 src/qt-console/console/console.cpp:661
 msgid "At main prompt waiting for input ..."
 msgstr ""
 
-#: src/qt-console/bcomm/dircomm.cpp:423 src/qt-console/console/console.cpp:663
+#: src/qt-console/bcomm/dircomm.cpp:423 src/qt-console/console/console.cpp:668
 msgid "At prompt waiting for input ..."
 msgstr ""
 
-#: src/qt-console/bcomm/dircomm.cpp:428 src/qt-console/console/console.cpp:668
+#: src/qt-console/bcomm/dircomm.cpp:428 src/qt-console/console/console.cpp:673
 #, fuzzy
 msgid "Command failed."
 msgstr "Commande annulée.\n"
 
-#: src/qt-console/bcomm/dircomm.cpp:483 src/qt-console/console/console.cpp:730
+#: src/qt-console/bcomm/dircomm.cpp:483 src/qt-console/console/console.cpp:735
 #, fuzzy
 msgid "Director disconnected."
 msgstr "Connexion du director le %s\n"
