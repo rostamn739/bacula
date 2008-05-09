@@ -498,7 +498,7 @@ bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr)
          return true;
       } else {
          if (stat == W_TIMEOUT || stat == W_MOUNT) {
-            Jmsg(jcr, M_MOUNT, 0, _(
+            Mmsg(dev->errmsg, _(
 "Job %s waiting. Cannot find any appendable volumes.\n"
 "Please use the \"label\"  command to create a new Volume for:\n"
 "    Storage:      %s\n"
@@ -508,6 +508,8 @@ bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr)
                dev->print_name(),
                dcr->pool_name,
                dcr->media_type);
+            Jmsg(jcr, M_MOUNT, 0, "%s", dev->errmsg);
+            Dmsg1(100, "%s", dev->errmsg);
          }
       }
 
