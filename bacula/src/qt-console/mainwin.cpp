@@ -50,7 +50,9 @@
 #include "restore/restoretree.h"
 #include "help/help.h"
 #include "jobs/jobs.h"
+#ifdef HAVE_QWT
 #include "jobgraphs/jobplot.h"
+#endif
 
 /* 
  * Daemon message callback
@@ -144,9 +146,12 @@ void MainWin::createPages()
       new FileSet();
       new Jobs();
       createPageJobList("", "", "", "", NULL);
+
+#ifdef HAVE_QWT
       JobPlotPass pass;
       pass.use = false;
       new JobPlot(NULL, pass);
+#endif
       new MediaList();
       new Storage();
       new restoreTree();
@@ -233,7 +238,9 @@ void MainWin::createConnections()
    connect(actionRun, SIGNAL(triggered()), this,  SLOT(runButtonClicked()));
    connect(actionEstimate, SIGNAL(triggered()), this,  SLOT(estimateButtonClicked()));
    connect(actionBrowse, SIGNAL(triggered()), this,  SLOT(browseButtonClicked()));
+#ifdef HAVE_QWT
    connect(actionJobPlot, SIGNAL(triggered()), this,  SLOT(jobPlotButtonClicked()));
+#endif
    connect(actionRestore, SIGNAL(triggered()), this,  SLOT(restoreButtonClicked()));
    connect(actionUndock, SIGNAL(triggered()), this,  SLOT(undockWindowButton()));
    connect(actionToggleDock, SIGNAL(triggered()), this,  SLOT(toggleDockContextWindow()));
@@ -434,12 +441,14 @@ void MainWin::restoreButtonClicked()
    new prerestorePage();
 }
 
+#ifdef HAVE_QWT
 void MainWin::jobPlotButtonClicked()
 {
    JobPlotPass pass;
    pass.use = false;
    new JobPlot(NULL, pass);
 }
+#endif
 
 /*
  * The user just finished typing a line in the command line edit box

@@ -272,6 +272,8 @@ fi
 got_qwt=no
 QWT_INC=
 QWT_LDFLAGS=
+QWT_LIB=
+QWT=
 if test x$support_bat = xyes; then
    AC_MSG_CHECKING(for qwt support)
    AC_ARG_WITH(qwt,
@@ -284,6 +286,8 @@ if test x$support_bat = xyes; then
 	  if test -f ${with_qwt}/include/qwt.h; then
 	     QWT_INC="${with_qwt}/include"
 	     QWT_LDFLAGS="-L${with_qwt}/lib"
+	     QWT_LIB="-lqwt"
+	     QWT="qwt"
 	  fi
 	  ;;
 	esac
@@ -302,6 +306,8 @@ if test x$support_bat = xyes; then
 	       else
 		  QWT_LDFLAGS="-L${root}/lib"
 	       fi
+	       QWT_LIB="-lqwt"
+	       QWT="qwt"
 	       got_qwt=yes
 	       break;
 	    fi
@@ -310,10 +316,8 @@ if test x$support_bat = xyes; then
    fi
    if test x$QWT_INC = x; then
       AC_MSG_RESULT(no)
-      AC_MSG_ERROR(Unable to find qwt package needed by bat)
-      BAT_DIR=
-      support_bat=no
    else
+      AC_DEFINE(HAVE_QWT, 1, [Set if bat QWT library found])
       AC_MSG_RESULT(yes)
    fi
 fi
@@ -321,6 +325,8 @@ fi
 AC_SUBST(BAT_DIR)
 AC_SUBST(QWT_INC)
 AC_SUBST(QWT_LDFLAGS)
+AC_SUBST(QWT_LIB)
+AC_SUBST(QWT)
 
 
 # -------------------------------------------
