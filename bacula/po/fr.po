@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-05-07 14:33+0200\n"
+"POT-Creation-Date: 2008-05-13 16:59+0200\n"
 "PO-Revision-Date: 2008-01-24 22:54+0100\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
@@ -11594,27 +11594,27 @@ msgstr ""
 "    Pool :          %s\n"
 "    Type du Media : %s\n"
 
-#: src/stored/askdir.c:526 src/stored/askdir.c:626
+#: src/stored/askdir.c:528 src/stored/askdir.c:628
 #, c-format
 msgid "Max time exceeded waiting to mount Storage Device %s for Job %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:536
+#: src/stored/askdir.c:538
 msgid "pthread error in mount_next_volume.\n"
 msgstr ""
 
-#: src/stored/askdir.c:568
+#: src/stored/askdir.c:570
 msgid "Cannot request another volume: no volume name given.\n"
 msgstr ""
 
-#: src/stored/askdir.c:574
+#: src/stored/askdir.c:576
 #, c-format
 msgid "Job %s canceled while waiting for mount on Storage Device %s.\n"
 msgstr ""
 "Le Job %s a été annulé pendant qu'il attendait le montage sur le Storage "
 "Device %s.\n"
 
-#: src/stored/askdir.c:591
+#: src/stored/askdir.c:593
 #, c-format
 msgid ""
 "Please mount Volume \"%s\" or label a new one for:\n"
@@ -11629,7 +11629,7 @@ msgstr ""
 "    Pool :          %s\n"
 "    Type du Media : %s\n"
 
-#: src/stored/askdir.c:597
+#: src/stored/askdir.c:599
 #, fuzzy, c-format
 msgid ""
 "Please mount Volume \"%s\" for:\n"
@@ -11644,7 +11644,7 @@ msgstr ""
 "    Pool :          %s\n"
 "    Type du Media : %s\n"
 
-#: src/stored/askdir.c:636
+#: src/stored/askdir.c:638
 msgid "pthread error in mount_volume\n"
 msgstr ""
 
@@ -12121,12 +12121,12 @@ msgstr ""
 "Fin du volume « %s » à %u:%u sur le device %s. Ecriture de %u octets, eu %"
 "d.\n"
 
-#: src/stored/acquire.c:527
+#: src/stored/acquire.c:530
 #, c-format
 msgid "Alert: %s"
 msgstr "Alert: %s"
 
-#: src/stored/acquire.c:535
+#: src/stored/acquire.c:538
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""

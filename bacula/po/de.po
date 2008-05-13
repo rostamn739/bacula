@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-05-07 14:33+0200\n"
+"POT-Creation-Date: 2008-05-13 16:59+0200\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -11258,25 +11258,25 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:526 src/stored/askdir.c:626
+#: src/stored/askdir.c:528 src/stored/askdir.c:628
 #, c-format
 msgid "Max time exceeded waiting to mount Storage Device %s for Job %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:536
+#: src/stored/askdir.c:538
 msgid "pthread error in mount_next_volume.\n"
 msgstr ""
 
-#: src/stored/askdir.c:568
+#: src/stored/askdir.c:570
 msgid "Cannot request another volume: no volume name given.\n"
 msgstr ""
 
-#: src/stored/askdir.c:574
+#: src/stored/askdir.c:576
 #, c-format
 msgid "Job %s canceled while waiting for mount on Storage Device %s.\n"
 msgstr ""
 
-#: src/stored/askdir.c:591
+#: src/stored/askdir.c:593
 #, c-format
 msgid ""
 "Please mount Volume \"%s\" or label a new one for:\n"
@@ -11286,7 +11286,7 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:597
+#: src/stored/askdir.c:599
 #, c-format
 msgid ""
 "Please mount Volume \"%s\" for:\n"
@@ -11296,7 +11296,7 @@ msgid ""
 "    Media type:   %s\n"
 msgstr ""
 
-#: src/stored/askdir.c:636
+#: src/stored/askdir.c:638
 msgid "pthread error in mount_volume\n"
 msgstr ""
 
@@ -11769,12 +11769,12 @@ msgid ""
 "Invalid tape position on volume \"%s\" on device %s. Expected %d, got %d\n"
 msgstr ""
 
-#: src/stored/acquire.c:527
+#: src/stored/acquire.c:530
 #, c-format
 msgid "Alert: %s"
 msgstr ""
 
-#: src/stored/acquire.c:535
+#: src/stored/acquire.c:538
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""
