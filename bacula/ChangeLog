@@ -1,6 +1,19 @@
               Technical notes on version 2.2.x
 
 General:
+Beta Release Version 2.2.10-b3
+12May08
+kes  Implement --without-qwt
+kes  Fix layout of restore tree dialog
+kes  Add configure bat QWT libraries, so that bat can be built
+     with or without the QWT libaries.
+11May08
+kes  Apply batfix bat cleanup patch from Riccardo.
+kes  Make sure we unload the right slot when swapping.
+08May08
+kes  Improve SD reserve debug code.
+kes  Testing an improvement to free up volumes no longer in use.
+
 Beta Release Version 2.2.10-b2
 03May08
 kes  Rework SD acquire for read to handle autochanger Volume
