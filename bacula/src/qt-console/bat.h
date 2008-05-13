@@ -35,6 +35,7 @@
  */
 
 #include "config.h"
+
 #include <QtGui>
 #include <QtCore>
 #include "mainwin.h"

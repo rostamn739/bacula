@@ -33,6 +33,8 @@
  *   Dirk Bartley, March 2007
  */
 
+#include "bat.h"
+#ifdef HAVE_QWT
 #include <QtGui>
 #include "pages.h"
 #include "ui_jobplotcontrols.h"
@@ -147,5 +149,7 @@ private:
    QSplitter *m_splitter;
    QwtPlot *m_jobPlot;
 };
+
+#endif /* HAVE_QWT */
 
 #endif /* _JOBPLOT_H_ */
