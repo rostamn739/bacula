@@ -217,7 +217,7 @@ kes  Fix existing switch drive SD code to call autochanger to release
 kes  Apply big backport of current SVN SD code that corrects a number
      of race conditions. This is a first step in fixing bug #1018.
 29Dec07
-ebl  Fixes bug #1028 where "Selection Type" option was not usable 
+ebl  Fixes bug #1028 where 'Selection Type' option was not usable 
      with JobDefs.
 
 
@@ -436,10 +436,10 @@ kes  Note, you need GTK >= 2.10 to be able to link the Tray Monitor
      program.
 kes  Move patches into patches directory.
 11Sep07 
-ebl  Fix bug #946 about "bacula-dir -t" which doesn't works
+ebl  Fix bug #946 about 'bacula-dir -t' which doesn't works
      as expected.
 09Sep07 
-ebl  Using "m" in bconsole will show messages like before,
+ebl  Using 'm' in bconsole will show messages like before,
      and not memory usage.
 
 Release Version 2.2.3

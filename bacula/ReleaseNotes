@@ -200,9 +200,9 @@ Version 2.2.4 is a minor bug fix release to version 2.2.3
   by skipping |.  Fixes bug #936.
 - Implement patch supplied by Landon to fix bug #944 where using
   TLS with bconsole uses 99+% of the CPU.
-- Fix bug #946 about "bacula-dir -t" which doesn't works
+- Fix bug #946 about 'bacula-dir -t' which doesn't works
   as expected.
-- Using "m" in bconsole will show messages as in prior versions
+- Using 'm' in bconsole will show messages as in prior versions
   and not memory usage.
 
 - Note, you need GTK >= 2.10 to be able to link the Tray Monitor
