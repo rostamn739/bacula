@@ -515,9 +515,11 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        * We have set st_rdev to 1 if it is a reparse point, otherwise 0,
        *  if st_rdev is 2, it is a mount point 
        */
-      if (have_win32_api() && ff_pkt->statp.st_rdev == 1) {
-         ff_pkt->type = FT_REPARSE;
+#if defined(HAVE_WIN32)
+      if (ff_pkt->statp.st_rdev == WIN32_REPARSE_POINT) {
+          ff_pkt->type = FT_REPARSE;
       }
+#endif
       /*
        * Note, we return the directory to the calling program (handle_file)
        * when we first see the directory (FT_DIRBEGIN.
@@ -555,11 +557,16 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        * to cross, or we may be restricted by a list of permitted
        * file systems.
        */
+      bool is_win32_mount_point = false;
+#if defined(HAVE_WIN32)
+      is_win32_mount_point = ff_pkt->statp.st_rdev == WIN32_MOUNT_POINT;
+#endif
       if (!top_level && ff_pkt->flags & FO_NO_RECURSION) {
          ff_pkt->type = FT_NORECURSE;
          recurse = false;
-      } else if (!top_level && parent_device != ff_pkt->statp.st_dev) {
-         if(!(ff_pkt->flags & FO_MULTIFS)) {
+      } else if (!top_level && (parent_device != ff_pkt->statp.st_dev ||
+                 is_win32_mount_point)) {
+         if (!(ff_pkt->flags & FO_MULTIFS)) {
             ff_pkt->type = FT_NOFSCHG;
             recurse = false;
          } else if (!accept_fstype(ff_pkt, NULL)) {
