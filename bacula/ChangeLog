@@ -1,6 +1,31 @@
               Technical notes on version 2.2.x
 
 General:
+Beta Release Version 2.2.10-b4
+24May08
+kes  Enhance a couple of SD debug messages.
+kes  Tweak unload flag setting and ensure it is set during swap.
+23May08
+ebl  Fix #1091 about bad output in estimate command.
+21May08
+kes  Modify autochanger locking to attempt to avoid race
+     conditions.
+kes  Make sure device not busy before doing label command.
+kes  Display open() errors except when polling. Previously too 
+     many were suppressed.  This should fix bug #1070.
+kes  Fix Win32 reparse points. Bacula will not recurse into any
+     reparse point directory, including mount points, unless the
+     directory is explicitly mentioned at the top level (same as
+     with Unix).  A file that is linked to another file will be
+     backed up -- much as Unix does for hardlinked files.
+     This fixes bug #1041.
+20May08
+kes  Remove double quotes from ChangeLog and ReleaseNotes
+kes  Remove StorageId test when pruning and recycling (Eric's changes).
+kes  Remove old form of locking when getting volumes -- causes deadlock.
+17May08
+kes  Fix buffer overruns detected by Coverity.
+
 Beta Release Version 2.2.10-b3
 12May08
 kes  Implement --without-qwt
