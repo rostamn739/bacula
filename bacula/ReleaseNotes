@@ -10,7 +10,7 @@ use some of the new features that affect the FD.  In other words, you should
 not have to upgrade all your File daemons when you upgrade. There is
 no database upgrade needed from version 2.0.x to 2.2.0.
 
-================   Warning !!!!!! ==========================
+==================   Warning !!!!!! ==========================
 As of Version 2.2.10-b4, the Win32 FD should not descend into 
 any reparse point directory or reparse mount points unless the  
 specified directory is explicitly mentioned at the top level of      
@@ -18,6 +18,7 @@ FileSet (as with Unix). A file that is linked to another file will
 be backed up, much like Unix hardlinked files.  If you want 
 reparse directories backed up, you must explicitly include them
 in your FileSet.
+==============================================================
 
 Beta Release Version 2.2.10-b4
 24May08
