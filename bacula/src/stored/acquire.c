@@ -38,7 +38,6 @@
 
 /* Forward referenced functions */
 static void attach_dcr_to_dev(DCR *dcr);
-static bool is_tape_position_ok(JCR *jcr, DEVICE *dev);
 
 
 /*********************************************************************
@@ -196,6 +195,7 @@ bool acquire_device_for_read(DCR *dcr)
    if (!dir_get_volume_info(dcr, GET_VOL_INFO_FOR_READ)) {
       Jmsg1(jcr, M_WARNING, 0, "%s", jcr->errmsg);
    }
+   dev->set_load();                /* set to load volume */
    
    for ( ;; ) {
       /* If not polling limit retries */
@@ -348,6 +348,7 @@ DCR *acquire_device_for_append(DCR *dcr)
    DEVICE *dev = dcr->dev;
    JCR *jcr = dcr->jcr;
    bool ok = false;
+   bool have_vol = false;
 
    init_device_wait_timers(dcr);
 
@@ -379,10 +380,10 @@ DCR *acquire_device_for_append(DCR *dcr)
        if (dev->num_writers == 0) {
           memcpy(&dev->VolCatInfo, &dcr->VolCatInfo, sizeof(dev->VolCatInfo));
        }
-       if (!is_tape_position_ok(jcr, dev)) {
-          goto get_out;
-       }
-   } else {
+       have_vol = dcr->is_tape_position_ok();
+   }
+
+   if (!have_vol) {
       Dmsg1(190, "jid=%u Do mount_next_write_vol\n", (uint32_t)jcr->JobId);
       if (!dcr->mount_next_write_volume()) {
          if (!job_canceled(jcr)) {
@@ -413,34 +414,6 @@ get_out:
 }
 
 /*
- *      Insanity check 
- *
- * Check to see if the tape position as defined by the OS is
- *  the same as our concept.  If it is not, we bail out, because
- *  it means the user has probably manually rewound the tape.
- * Note, we check only if num_writers == 0, but this code will
- *  also work fine for any number of writers. If num_writers > 0,
- *  we probably should cancel all jobs using this device, or 
- *  perhaps even abort the SD, or at a minimum, mark the tape
- *  in error.  Another strategy with num_writers == 0, would be
- *  to rewind the tape and do a new eod() request.
- */
-static bool is_tape_position_ok(JCR *jcr, DEVICE *dev)
-{
-   if (dev->is_tape() && dev->num_writers == 0) {
-      int32_t file = dev->get_os_tape_file();
-      if (file >= 0 && file != (int32_t)dev->get_file()) {
-         Jmsg(jcr, M_FATAL, 0, _("Invalid tape position on volume \"%s\"" 
-              " on device %s. Expected %d, got %d\n"), 
-              dev->VolHdr.VolumeName, dev->print_name(), dev->get_file(), file);
-         return false;
-      }
-   }
-   return true;
-}
-
-
-/*
  * This job is done, so release the device. From a Unix standpoint,
  *  the device remains open.
  *
@@ -453,6 +426,7 @@ bool release_device(DCR *dcr)
    JCR *jcr = dcr->jcr;
    DEVICE *dev = dcr->dev;
    bool ok = true;
+   char tbuf[100];
 
    /* lock only if not already locked by this thread */
    if (!dcr->is_dev_locked()) {
@@ -516,6 +490,7 @@ bool release_device(DCR *dcr)
          dev->print_name());
    debug_list_volumes("acquire:release_device()");
 
+
    /* If no writers, close if file or !CAP_ALWAYS_OPEN */
    if (dev->num_writers == 0 && (!dev->is_tape() || !dev->has_cap(CAP_ALWAYSOPEN))) {
       dvd_remove_empty_part(dcr);        /* get rid of any empty spool part */
@@ -549,7 +524,8 @@ bool release_device(DCR *dcr)
       free_pool_memory(alert);
    }
    pthread_cond_broadcast(&dev->wait_next_vol);
-   Dmsg1(100, "JobId=%u broadcast wait_device_release\n", (uint32_t)jcr->JobId);
+   Dmsg2(100, "JobId=%u broadcast wait_device_release at %s\n", 
+         (uint32_t)jcr->JobId, bstrftimes(tbuf, sizeof(tbuf), (utime_t)time(NULL)));
    pthread_cond_broadcast(&wait_device_release);
    dev->dunlock();
    if (dcr->keep_dcr) {
