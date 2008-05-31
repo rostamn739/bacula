@@ -257,6 +257,7 @@ int get_autochanger_loaded_slot(DCR *dcr)
    if (dev->get_slot() > 0) {
       return dev->get_slot();
    }
+
    /* Virtual disk autochanger */
    if (dcr->device->changer_command[0] == 0) {
       return 1;
@@ -433,6 +434,9 @@ static bool unload_other_drive(DCR *dcr, int slot)
    return unload_dev(dcr, dev);
 }
 
+/*
+ * Unconditionally unload a specified drive
+ */
 bool unload_dev(DCR *dcr, DEVICE *dev)
 {
    JCR *jcr = dcr->jcr;
@@ -442,9 +446,21 @@ bool unload_dev(DCR *dcr, DEVICE *dev)
    DEVICE *save_dev;
    int save_slot;
 
-   if (!changer || dev->get_slot() <= 0) {
+   if (!changer) {
       return false;
    }
+
+   save_dev = dcr->dev;               /* save dcr device */
+   dcr->dev = dev;                    /* temporarily point dcr at other device */
+
+   if (dev->get_slot() <= 0 && get_autochanger_loaded_slot(dcr) <= 0) {
+      dcr->VolCatInfo.Slot = save_slot;
+      dcr->dev = save_dev;
+      return false;
+   }
+   save_slot = dcr->VolCatInfo.Slot;
+   dcr->VolCatInfo.Slot = dev->get_slot();
+
    dev->dlock();
 
    POOLMEM *changer_cmd = get_pool_memory(PM_FNAME);
@@ -457,10 +473,6 @@ bool unload_dev(DCR *dcr, DEVICE *dev)
    Dmsg2(100, "Issuing autochanger \"unload slot %d, drive %d\" command.\n",
         dev->get_slot(), dev->drive_index);
 
-   save_dev = dcr->dev;
-   dcr->dev = dev;
-   save_slot = dcr->VolCatInfo.Slot;
-   dcr->VolCatInfo.Slot = dev->get_slot();
    changer_cmd = edit_device_codes(dcr, changer_cmd, 
                 dcr->device->changer_command, "unload");
    dev->close();
