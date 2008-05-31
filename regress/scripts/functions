@@ -55,6 +55,13 @@ if test x${AUTOCHANGER} = x/dev/null ; then
 fi
 }
 
+require_faketape()
+{
+if test x${USE_FAKETAPE} = x ; then
+   echo "$TestName test needs the faketape driver."
+   exit 1
+fi
+}
 
 skip_if_no_autochanger()
 {
@@ -234,6 +241,16 @@ debug_wait()
   if test "x${REGRESS_WAIT}" = "x1"; then
      echo "Start Bacula under debugger and enter anything when ready ..."
      read a
+  fi
+}
+
+init_drive()
+{
+  if test a$USE_FAKETAPE = a; then
+    mt -f $1 rewind
+    mt -f $1 weof
+  else
+    cp /dev/null $1
   fi
 }
 
