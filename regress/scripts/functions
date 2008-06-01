@@ -2,6 +2,7 @@
 # A set of useful functions to be sourced in each test
 #
 
+
 start_test()
 {
    # Turn off email
@@ -55,7 +56,7 @@ if test x${AUTOCHANGER} = x/dev/null ; then
 fi
 }
 
-require_faketape()
+require_faketape() 
 {
 if test x${USE_FAKETAPE} = x ; then
    echo "$TestName test needs the faketape driver."
@@ -130,6 +131,21 @@ run_bscan()
    fi
 }
 
+bscan_libdbi()
+{   
+   B=`echo $LIBDBI | sed 's/;//' | sed 's/;//g'`
+   B_D=`echo $B | awk '{print $3}'`
+   B_t=`echo $B | awk '{print $6}'`
+   B_p=`echo $B | awk '{print $9}'`
+
+   BSCANLIBDBI="${LIBDBI:+1}"
+                
+   if test "$BSCANLIBDBI" = "1" ; then
+      BSCANLIBDBI="-D $B_D -h $B_t -t $B_p"
+   else
+      BSCANLIBDBI=" "
+   fi
+}
 
 stop_bacula()
 {
@@ -264,3 +280,6 @@ fi
 
 # Source the configuration variables
 . ${cwd}/config
+
+CLIENT=${HOST}-fd
+AUTOCHANGER_SCRIPT=${AUTOCHANGER_SCRIPT:-mtx-changer}
