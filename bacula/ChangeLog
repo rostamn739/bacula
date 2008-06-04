@@ -1,6 +1,35 @@
-              Technical notes on version 2.2.x
+              Technical notes on version 2.4.x
 
 General:
+Release Version 2.4.0
+04Jun08
+kes  Update version to reflect the magnitude of the SD changes.
+03Jun08
+kes  Make sure to clear JS_WaitMedia when operator mounts a Volume.
+     This fixes bug #1095.
+31May08
+kes  Add create_postgresql_database.sql to Win32 installer. Should 
+     fix problem reported by Juilio Monteiro.
+kes  Get correct slot when auto unloading a device. This fixes bug
+     #1086.
+30May08
+kes  Fix multiple media restore.
+kes  Make DEVICE Slot private and access it via a method.
+     Allows better control over when it is set and cleared.
+kes  Fix possible seg fault if SQL error.
+28May08
+kes  Add debug code to SD.
+kes  Fix renaming a Volume, which used the wrong Volume name. 
+26May08
+kes  If operator has rewind tape, print warning, release tape and
+     try once more. If tape is positioned somewhere, something went
+     wrong, so mark the tape in error and try once more. Previously
+     this error was fatal, now it produces an error message.
+kes  Ensure correct volume name displayed during restore
+kes  Ensure that Volume is mounted for restore.
+25May08
+kes  Fix a few more Coverity reported problems.
+
 Beta Release Version 2.2.10-b4
 24May08
 kes  Enhance a couple of SD debug messages.
