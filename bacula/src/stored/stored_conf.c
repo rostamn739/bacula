@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -77,9 +77,9 @@ static RES_ITEM store_items[] = {
    {"scriptsdirectory",      store_dir,  ITEM(res_store.scripts_directory), 0, 0, 0},
    {"maximumconcurrentjobs", store_pint, ITEM(res_store.max_concurrent_jobs), 0, ITEM_DEFAULT, 20},
    {"heartbeatinterval",     store_time, ITEM(res_store.heartbeat_interval), 0, ITEM_DEFAULT, 0},
-   {"tlsenable",             store_bit,     ITEM(res_store.tls_enable), 1, 0, 0},
-   {"tlsrequire",            store_bit,     ITEM(res_store.tls_require), 1, 0, 0},
-   {"tlsverifypeer",         store_bit,     ITEM(res_store.tls_verify_peer), 1, ITEM_DEFAULT, 1},
+   {"tlsenable",             store_bool,    ITEM(res_store.tls_enable), 1, 0, 0},
+   {"tlsrequire",            store_bool,    ITEM(res_store.tls_require), 1, 0, 0},
+   {"tlsverifypeer",         store_bool,    ITEM(res_store.tls_verify_peer), 1, ITEM_DEFAULT, 1},
    {"tlscacertificatefile",  store_dir,       ITEM(res_store.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",   store_dir,       ITEM(res_store.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",        store_dir,       ITEM(res_store.tls_certfile), 0, 0, 0},
@@ -96,10 +96,10 @@ static RES_ITEM dir_items[] = {
    {"name",        store_name,     ITEM(res_dir.hdr.name),   0, ITEM_REQUIRED, 0},
    {"description", store_str,      ITEM(res_dir.hdr.desc),   0, 0, 0},
    {"password",    store_password, ITEM(res_dir.password),   0, ITEM_REQUIRED, 0},
-   {"monitor",     store_bit,    ITEM(res_dir.monitor),   1, ITEM_DEFAULT, 0},
-   {"tlsenable",            store_bit,     ITEM(res_dir.tls_enable), 1, 0, 0},
-   {"tlsrequire",           store_bit,     ITEM(res_dir.tls_require), 1, 0, 0},
-   {"tlsverifypeer",        store_bit,     ITEM(res_dir.tls_verify_peer), 1, ITEM_DEFAULT, 1},
+   {"monitor",     store_bool,     ITEM(res_dir.monitor),   1, ITEM_DEFAULT, 0},
+   {"tlsenable",            store_bool,    ITEM(res_dir.tls_enable), 1, 0, 0},
+   {"tlsrequire",           store_bool,    ITEM(res_dir.tls_require), 1, 0, 0},
+   {"tlsverifypeer",        store_bool,    ITEM(res_dir.tls_verify_peer), 1, ITEM_DEFAULT, 1},
    {"tlscacertificatefile", store_dir,       ITEM(res_dir.tls_ca_certfile), 0, 0, 0},
    {"tlscacertificatedir",  store_dir,       ITEM(res_dir.tls_ca_certdir), 0, 0, 0},
    {"tlscertificate",       store_dir,       ITEM(res_dir.tls_certfile), 0, 0, 0},
@@ -137,7 +137,7 @@ static RES_ITEM dev_items[] = {
    {"checklabels",           store_bit,  ITEM(res_dev.cap_bits), CAP_CHECKLABELS, ITEM_DEFAULT, 0},
    {"requiresmount",         store_bit,  ITEM(res_dev.cap_bits), CAP_REQMOUNT, ITEM_DEFAULT, 0},
    {"offlineonunmount",      store_bit,  ITEM(res_dev.cap_bits), CAP_OFFLINEUNMOUNT, ITEM_DEFAULT, 0},
-   {"autoselect",            store_bit,  ITEM(res_dev.autoselect), 1, ITEM_DEFAULT, 1},
+   {"autoselect",            store_bool, ITEM(res_dev.autoselect), 1, ITEM_DEFAULT, 1},
    {"changerdevice",         store_strname,ITEM(res_dev.changer_name), 0, 0, 0},
    {"changercommand",        store_strname,ITEM(res_dev.changer_command), 0, 0, 0},
    {"alertcommand",          store_strname,ITEM(res_dev.alert_command), 0, 0, 0},
@@ -175,9 +175,6 @@ static RES_ITEM changer_items[] = {
    {"changercommand",    store_strname,   ITEM(res_changer.changer_command), 0, ITEM_REQUIRED, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
-
-
-// {"mountanonymousvolumes", store_bit,  ITEM(res_dev.cap_bits), CAP_ANONVOLS,   ITEM_DEFAULT, 0},
 
 
 /* Message resource */

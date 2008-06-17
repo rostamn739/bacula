@@ -64,16 +64,15 @@ struct CONRES {
    char *rc_file;                     /* startup file */
    char *hist_file;                   /* command history file */
    char *password;                    /* UA server password */
-   int tls_enable;                    /* Enable TLS on all connections */
-   int tls_require;                   /* Require TLS on all connections */
    char *tls_ca_certfile;             /* TLS CA Certificate File */
    char *tls_ca_certdir;              /* TLS CA Certificate Directory */
    char *tls_certfile;                /* TLS Client Certificate File */
    char *tls_keyfile;                 /* TLS Client Key File */
    char *director;                    /* bind to director */
    utime_t heartbeat_interval;        /* Interval to send heartbeats to Dir */
-
    TLS_CONTEXT *tls_ctx;              /* Shared TLS Context */
+   bool tls_enable;                   /* Enable TLS on all connections */
+   bool tls_require;                  /* Require TLS on all connections */
 };
 
 /* Director */
@@ -82,15 +81,14 @@ struct DIRRES {
    int   DIRport;                     /* UA server port */
    char *address;                     /* UA server address */
    char *password;                    /* UA server password */
-   int tls_enable;                    /* Enable TLS */
-   int tls_require;                   /* Require TLS */
    char *tls_ca_certfile;             /* TLS CA Certificate File */
    char *tls_ca_certdir;              /* TLS CA Certificate Directory */
    char *tls_certfile;                /* TLS Client Certificate File */
    char *tls_keyfile;                 /* TLS Client Key File */
    utime_t heartbeat_interval;        /* Interval to send heartbeats to Dir */
-
    TLS_CONTEXT *tls_ctx;              /* Shared TLS Context */
+   bool tls_enable;                   /* Enable TLS */
+   bool tls_require;                  /* Require TLS */
 };
 
 

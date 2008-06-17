@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -126,9 +126,9 @@ public:
    char *spool_directory;             /* Spool file directory */
    int   dev_type;                    /* device type */
    int   label_type;                  /* label type */
-   int   autoselect;                  /* Automatically select from AutoChanger */
+   bool autoselect;                   /* Automatically select from AutoChanger */
    uint32_t drive_index;              /* Autochanger drive index */
-   uint32_t cap_bits;                 /* Capabilities of this device */
+   int cap_bits;                      /* Capabilities of this device */
    utime_t max_changer_wait;          /* Changer timeout */
    utime_t max_rewind_wait;           /* maximum secs to wait for rewind */
    utime_t max_open_wait;             /* maximum secs to wait for open */

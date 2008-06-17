@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2004-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2004-2008 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -67,7 +67,7 @@ struct DIRRES {
    RES   hdr;
    int   DIRport;                     /* UA server port */
    char *address;                     /* UA server address */
-   int enable_ssl;                    /* Use SSL */
+   bool enable_ssl;                   /* Use SSL */
 };
 
 /*
@@ -95,7 +95,7 @@ struct CLIENT {
    int   FDport;                      /* Where File daemon listens */
    char *address;
    char *password;
-   int enable_ssl;                    /* Use SSL */
+   bool enable_ssl;                   /* Use SSL */
 };
 
 /*
@@ -108,7 +108,7 @@ struct STORE {
    int   SDport;                      /* port where Directors connect */
    char *address;
    char *password;
-   int enable_ssl;                    /* Use SSL */
+   bool enable_ssl;                   /* Use SSL */
 };
 
 struct CONFONTRES {
