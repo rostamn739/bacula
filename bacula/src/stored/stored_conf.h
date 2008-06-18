@@ -124,11 +124,11 @@ public:
    char *changer_command;             /* Changer command  -- external program */
    char *alert_command;               /* Alert command -- external program */
    char *spool_directory;             /* Spool file directory */
-   int   dev_type;                    /* device type */
-   int   label_type;                  /* label type */
+   uint32_t dev_type;                 /* device type */
+   uint32_t label_type;               /* label type */
    bool autoselect;                   /* Automatically select from AutoChanger */
    uint32_t drive_index;              /* Autochanger drive index */
-   int cap_bits;                      /* Capabilities of this device */
+   uint32_t cap_bits;                 /* Capabilities of this device */
    utime_t max_changer_wait;          /* Changer timeout */
    utime_t max_rewind_wait;           /* maximum secs to wait for rewind */
    utime_t max_open_wait;             /* maximum secs to wait for open */

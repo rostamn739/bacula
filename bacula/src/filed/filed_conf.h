@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2007 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-20087 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -80,7 +80,7 @@ struct CLIENT {
    char *subsys_directory;
    char *scripts_directory;
    MSGS *messages;                    /* daemon message handler */
-   int MaxConcurrentJobs;
+   uint32_t MaxConcurrentJobs;
    utime_t SDConnectTimeout;          /* timeout in seconds */
    utime_t heartbeat_interval;        /* Interval to send heartbeats */
    uint32_t max_network_buffer_size;  /* max network buf size */

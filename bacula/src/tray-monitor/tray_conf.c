@@ -94,7 +94,7 @@ static RES_ITEM mon_items[] = {
 static RES_ITEM dir_items[] = {
    {"name",        store_name,     ITEM(res_dir.hdr.name), 0, ITEM_REQUIRED, 0},
    {"description", store_str,      ITEM(res_dir.hdr.desc), 0, 0, 0},
-   {"dirport",     store_int,      ITEM(res_dir.DIRport),  0, ITEM_DEFAULT, 9101},
+   {"dirport",     store_pint32,   ITEM(res_dir.DIRport),  0, ITEM_DEFAULT, 9101},
    {"address",     store_str,      ITEM(res_dir.address),  0, 0, 0},
    {"enablessl",   store_bool,     ITEM(res_dir.enable_ssl), 1, ITEM_DEFAULT, 0},
    {NULL, NULL, {0}, 0, 0, 0}
@@ -110,7 +110,7 @@ static RES_ITEM cli_items[] = {
    {"name",     store_name,       ITEM(res_client.hdr.name), 0, ITEM_REQUIRED, 0},
    {"description", store_str,     ITEM(res_client.hdr.desc), 0, 0, 0},
    {"address",  store_str,        ITEM(res_client.address),  0, ITEM_REQUIRED, 0},
-   {"fdport",   store_pint,       ITEM(res_client.FDport),   0, ITEM_DEFAULT, 9102},
+   {"fdport",   store_pint32,     ITEM(res_client.FDport),   0, ITEM_DEFAULT, 9102},
    {"password", store_password,   ITEM(res_client.password), 0, ITEM_REQUIRED, 0},
    {"enablessl", store_bool,      ITEM(res_client.enable_ssl), 1, ITEM_DEFAULT, 0},
    {NULL, NULL, {0}, 0, 0, 0}
@@ -123,7 +123,7 @@ static RES_ITEM cli_items[] = {
 static RES_ITEM store_items[] = {
    {"name",        store_name,     ITEM(res_store.hdr.name),   0, ITEM_REQUIRED, 0},
    {"description", store_str,      ITEM(res_store.hdr.desc),   0, 0, 0},
-   {"sdport",      store_pint,     ITEM(res_store.SDport),     0, ITEM_DEFAULT, 9103},
+   {"sdport",      store_pint32,   ITEM(res_store.SDport),     0, ITEM_DEFAULT, 9103},
    {"address",     store_str,      ITEM(res_store.address),    0, ITEM_REQUIRED, 0},
    {"sdaddress",   store_str,      ITEM(res_store.address),    0, 0, 0},
    {"password",    store_password, ITEM(res_store.password),   0, ITEM_REQUIRED, 0},

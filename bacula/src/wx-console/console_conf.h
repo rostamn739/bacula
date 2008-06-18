@@ -1,7 +1,4 @@
 /*
- * Version $Id$
- */
-/*
    Bacula® - The Network Backup Solution
 
    Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
@@ -28,6 +25,9 @@
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
 */
+/*
+ * Version $Id$
+ */
 
 #ifndef CONSOLECONF_H
 #define CONSOLECONF_H
@@ -75,7 +75,7 @@ struct CONRES {
 /* Director */
 struct DIRRES {
    RES   hdr;
-   int   DIRport;                     /* UA server port */
+   uint32_t DIRport;                  /* UA server port */
    char *address;                     /* UA server address */
    char *password;                    /* UA server password */
    char *tls_ca_certfile;             /* TLS CA Certificate File */

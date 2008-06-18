@@ -1,27 +1,4 @@
 /*
- *   Main configuration file parser for Bacula User Agent
- *    some parts may be split into separate files such as
- *    the schedule configuration (sch_config.c).
- *
- *   Note, the configuration file parser consists of three parts
- *
- *   1. The generic lexical scanner in lib/lex.c and lib/lex.h
- *
- *   2. The generic config  scanner in lib/parse_config.c and
- *      lib/parse_config.h.
- *      These files contain the parser code, some utility
- *      routines, and the common store routines (name, int,
- *      string).
- *
- *   3. The daemon specific file, which contains the Resource
- *      definitions as well as any specific store routines
- *      for the resource records.
- *
- *     Kern Sibbald, January MM, September MM
- *
- *     Version $Id$
- */
-/*
    Bacula® - The Network Backup Solution
 
    Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
@@ -48,6 +25,29 @@
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
 */
+/*
+ *   Main configuration file parser for Bacula User Agent
+ *    some parts may be split into separate files such as
+ *    the schedule configuration (sch_config.c).
+ *
+ *   Note, the configuration file parser consists of three parts
+ *
+ *   1. The generic lexical scanner in lib/lex.c and lib/lex.h
+ *
+ *   2. The generic config  scanner in lib/parse_config.c and
+ *      lib/parse_config.h.
+ *      These files contain the parser code, some utility
+ *      routines, and the common store routines (name, int,
+ *      string).
+ *
+ *   3. The daemon specific file, which contains the Resource
+ *      definitions as well as any specific store routines
+ *      for the resource records.
+ *
+ *     Kern Sibbald, January MM, September MM
+ *
+ *     Version $Id$
+ */
 
 #include "bacula.h"
 #include "console_conf.h"
@@ -79,7 +79,7 @@ int  res_all_size = sizeof(res_all);
 static RES_ITEM dir_items[] = {
    {"name",        store_name,     ITEM(dir_res.hdr.name), 0, ITEM_REQUIRED, 0},
    {"description", store_str,      ITEM(dir_res.hdr.desc), 0, 0, 0},
-   {"dirport",     store_int,      ITEM(dir_res.DIRport),  0, ITEM_DEFAULT, 9101},
+   {"dirport",     store_pint32,   ITEM(dir_res.DIRport),  0, ITEM_DEFAULT, 9101},
    {"address",     store_str,      ITEM(dir_res.address),  0, ITEM_REQUIRED, 0},
    {"password",    store_password, ITEM(dir_res.password), 0, 0, 0},
    {"tlsenable",      store_bool,    ITEM(dir_res.tls_enable), 1, 0, 0},
