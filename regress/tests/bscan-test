@@ -57,10 +57,17 @@ stop_bacula
 echo "volume=TestVolume001" >tmp/bscan.bsr
 echo "volume=TestVolume002" >>tmp/bscan.bsr
 
-if test "$debug" -eq 1 ; then
-  bin/bscan -w working -u regress -n regress -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp                   
+# If the database has a password pass it to bscan
+if test "x${db_passwd}" = "x"; then
+  PASSWD=
 else
-  bin/bscan -w working -u regress -n regress -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp 2>&1 >tmp/log3.out
+  PASSWD="-P ${db_passwd}"
+fi
+
+if test "$debug" -eq 1 ; then
+  bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp                   
+else
+  bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp 2>&1 >tmp/log3.out
 fi
 
 cat <<END_OF_DATA >tmp/bconcmds
