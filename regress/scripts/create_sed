@@ -8,13 +8,18 @@ mkdir -p ${cwd}/bin
 mkdir -p ${cwd}/tmp
 out="${cwd}/tmp/sed_tmp"
 
-# set the ports used by these tests
+# set ports and other default parameters
 BASEPORT=${BASEPORT:-8101}
 AUTOCHANGER_SCRIPT=${AUTOCHANGER_SCRIPT:-mtx-changer}
+LIBDBI=${LIBDBI:-}
+libdbi=${LIBDBI}
 srcdir=${BACULA_SOURCE}
 dirport=${BASEPORT}
 fdport=`expr ${BASEPORT} '+' 1`
 sdport=`expr ${BASEPORT} '+' 2`
+db_name=${db_name:-"regress"}
+db_user=${db_user:-"regress"}
+db_password=${db_password:-""}
 os=`uname -s`-`./scripts/get-os`
 dbengine=`echo ${WHICHDB} | sed -e 's/--with-//' -e 's/=.*//'`
 bversion=`sed -n -e 's/^.*VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
@@ -57,3 +62,12 @@ echo "s%@sitename@%${SITE_NAME}%g" >>${out}
 echo "s%@os@%${os}%g" >>${out}
 echo "s%@bversion@%${bversion}%g" >>${out}
 echo "s%@bdate@%${bdate}%g" >>${out}
+echo "s%@libdbi@%${libdbi}%g" >>${out}
+echo "s%@win32_client@%${WIN32_CLIENT}%g" >>${out}
+echo "s%@win32_addr@%${WIN32_ADDR}%g" >>${out}
+echo "s%@win32_file@%${WIN32_FILE}%g" >>${out}
+echo "s%@win32_port@%${WIN32_PORT}%g" >>${out}
+echo "s%@win32_password@%${WIN32_PASSWORD}%g" >>${out}
+echo "s%@db_name@%${db_name}%g" >>${out}
+echo "s%@db_user@%${db_user}%g" >>${out}
+echo "s%@db_password@%${db_password}%g" >>${out}
