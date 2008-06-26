@@ -179,9 +179,13 @@ mount_next_vol:
    }
    Dmsg2(150, "Ask=%d autochanger=%d\n", ask, autochanger);
 
-   if (ask && !dir_ask_sysop_to_mount_volume(dcr, ST_APPEND)) {
-      Dmsg0(150, "Error return ask_sysop ...\n");
-      goto bail_out;          /* error return */
+   if (ask) {
+      unlock_volumes();
+      if (!dir_ask_sysop_to_mount_volume(dcr, ST_APPEND)) {
+         Dmsg0(150, "Error return ask_sysop ...\n");
+         goto no_lock_bail_out;  /* error return */
+      }
+      lock_volumes();
    }
    if (job_canceled(jcr)) {
       goto bail_out;
