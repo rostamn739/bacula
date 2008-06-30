@@ -1829,6 +1829,16 @@ void DEVICE::clrerror(int func)
 #endif
 }
 
+/*
+ * Set to unload the current volume in the drive
+ */
+void DEVICE::set_unload()
+{
+   if (!m_unload && VolHdr.VolumeName[0] != 0) {
+       m_unload = true;
+       memcpy(UnloadVolName, VolHdr.VolumeName, sizeof(UnloadVolName));
+   }
+}
 
 /*
  * Clear volume header
@@ -2379,7 +2389,6 @@ void init_device_wait_timers(DCR *dcr)
    dev->rem_wait_sec = dev->wait_sec;
    dev->num_wait = 0;
    dev->poll = false;
-   dev->BadVolName[0] = 0;
 
    jcr->min_wait = 60 * 60;
    jcr->max_wait = 24 * 60 * 60;

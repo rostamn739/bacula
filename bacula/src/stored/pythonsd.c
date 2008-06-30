@@ -59,7 +59,7 @@ PyMethodDef JobMethods[] = {
 
 struct s_vars {
    const char *name;
-   char *fmt;
+   const char *fmt;
 };
 
 static struct s_vars getvars[] = {

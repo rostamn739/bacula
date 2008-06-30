@@ -72,7 +72,7 @@ ssize_t my_python_read(BFILE *bfd, void *buf, size_t count);
 
 struct s_vars {
    const char *name;
-   char *fmt;
+   const char *fmt;
 };
 
 /* Read-only variables */
