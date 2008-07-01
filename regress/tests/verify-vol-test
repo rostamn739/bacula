@@ -19,7 +19,7 @@ cat <<END_OF_DATA >tmp/bconcmds
 @$out /dev/null
 messages
 @$out tmp/log1.out
-setdebug level=1 storage=File sd
+setdebug level=100 storage=File sd
 label storage=File volume=TestVolume001
 run job=$JobName yes
 wait

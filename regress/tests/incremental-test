@@ -29,6 +29,8 @@ label storage=File volume=TestVolume001
 label storage=File volume=TestVolume002
 run job=$JobName yes
 wait
+status dir
+list volume
 messages
 quit
 END_OF_DATA
