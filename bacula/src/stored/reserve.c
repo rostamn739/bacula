@@ -1100,6 +1100,11 @@ int search_res_for_device(RCTX &rctx)
       if (strcmp(rctx.device_name, changer->hdr.name) == 0) {
          /* Try each device in this AutoChanger */
          foreach_alist(rctx.device, changer->device) {
+            if (!rctx.device->autoselect) {
+               Dmsg1(100, "Device %s not autoselect skipped.\n",
+                  rctx.device->hdr.name);
+               continue;              /* device is not available */
+            }
             Dmsg2(dbglvl, "jid=%u Try changer device %s\n", (int)rctx.jcr->JobId, 
                   rctx.device->hdr.name);
             stat = reserve_device(rctx);

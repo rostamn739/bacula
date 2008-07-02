@@ -220,10 +220,14 @@ void handle_filed_connection(BSOCK *fd, char *job_name)
 {
    JCR *jcr;
 
-   bmicrosleep(0, 50000);             /* wait 50 millisecs */
+/*
+ * With the following bmicrosleep on, running the
+ * SD under the debugger fails.
+ */
+// bmicrosleep(0, 50000);             /* wait 50 millisecs */
    if (!(jcr=get_jcr_by_full_name(job_name))) {
       Jmsg1(NULL, M_FATAL, 0, _("FD connect failed: Job name not found: %s\n"), job_name);
-      Dmsg1(3, "**** Job \"%s\" not found", job_name);
+      Dmsg1(3, "**** Job \"%s\" not found\n", job_name);
       return;
    }
 

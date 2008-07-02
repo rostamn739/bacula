@@ -118,7 +118,7 @@ int autoload_device(DCR *dcr, int writing, BSOCK *dir)
    POOLMEM *changer;
 
    if (!dev->is_autochanger()) {
-      Dmsg0(100, "ChangerCommand=0, virtual disk changer\n");
+      Dmsg1(100, "Device %s is not an autochanger\n", dev->print_name());
       return 0;
    }
 
