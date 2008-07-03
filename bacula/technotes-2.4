@@ -1,6 +1,10 @@
               Technical notes on version 2.4
 
 General:
+03Jul08
+kes  Remove const char that causes problems with Python, which has
+     older 'incorrect' headers.
+kes  Add const char in dbd.c to avoid compiler warnings.
 02Jul08
 kes  Fix mtx-changer to detect both versions of Ubuntu (Debian)
      mt. This fixes bug #1116.
