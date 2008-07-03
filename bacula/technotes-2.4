@@ -2,6 +2,8 @@
 
 General:
 03Jul08
+kes  Make watchdog connect timeout queue messages rather than sending
+     directly to avoid lock conflicts with the real thread.
 kes  Remove const char that causes problems with Python, which has
      older 'incorrect' headers.
 kes  Add const char in dbd.c to avoid compiler warnings.
