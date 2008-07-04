@@ -1,6 +1,22 @@
               Technical notes on version 2.4.x
 
 General:
+Release Beta version 2.4.1-b2
+04Jul08 
+kes  Use Qmsg() in job.c watchdog callback.
+03Jul08
+kes  Release main control rwlock if ABORTing.
+kes  Make watchdog connect timeout queue messages rather than sending
+     directly to avoid lock conflicts with the real thread.
+kes  Remove const char that causes problems with Python, which has
+     older 'incorrect' headers.
+kes  Add const char in dbd.c to avoid compiler warnings.
+02Jul08
+kes  Fix mtx-changer to detect both versions of Ubuntu (Debian)
+     mt. This fixes bug #1116.
+kes  Fix failure of 2drive-concurrent-test. Always read label;
+     clear_unload() only after drive is defined in acquire_for_read().
+
 Release Beta version 2.4.1-b1
 01Jul08
 kes  Back out bad src/lib/base64.c change.
