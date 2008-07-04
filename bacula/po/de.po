@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-07-01 18:19+0200\n"
+"POT-Creation-Date: 2008-07-04 16:22+0200\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -3874,8 +3874,8 @@ msgstr "Kann Ausdruck\"%s\"nicht auflösen: ERR=%s\n"
 msgid "Cannot destroy var context: ERR=%s\n"
 msgstr "kann Variable context nicht zerstören: ERR=%s\n"
 
-#: src/dird/pythondir.c:126 src/filed/pythonfd.c:109 src/filed/pythonfd.c:163
-#: src/filed/pythonfd.c:227 src/stored/pythonsd.c:103
+#: src/dird/pythondir.c:126 src/filed/pythonfd.c:97 src/filed/pythonfd.c:151
+#: src/filed/pythonfd.c:215 src/stored/pythonsd.c:103
 #: src/stored/pythonsd.c:168
 msgid "Job pointer not found."
 msgstr ""
@@ -3884,12 +3884,12 @@ msgstr ""
 msgid "Pool record not found."
 msgstr ""
 
-#: src/dird/pythondir.c:214 src/filed/pythonfd.c:140 src/stored/pythonsd.c:145
+#: src/dird/pythondir.c:214 src/filed/pythonfd.c:128 src/stored/pythonsd.c:145
 #, c-format
 msgid "Attribute %s not found."
 msgstr ""
 
-#: src/dird/pythondir.c:257 src/dird/pythondir.c:263 src/filed/pythonfd.c:182
+#: src/dird/pythondir.c:257 src/dird/pythondir.c:263 src/filed/pythonfd.c:170
 #: src/stored/pythonsd.c:185
 msgid "Read-only attribute"
 msgstr ""
@@ -6495,12 +6495,12 @@ msgstr ""
 msgid "Unknown resource type %d\n"
 msgstr ""
 
-#: src/filed/pythonfd.c:157 src/stored/pythonsd.c:162
+#: src/filed/pythonfd.c:145 src/stored/pythonsd.c:162
 #, c-format
 msgid "Cannot delete attribute %s"
 msgstr ""
 
-#: src/filed/pythonfd.c:175 src/filed/pythonfd.c:191 src/stored/pythonsd.c:195
+#: src/filed/pythonfd.c:163 src/filed/pythonfd.c:179 src/stored/pythonsd.c:195
 #, c-format
 msgid "Cannot find attribute %s"
 msgstr ""
@@ -7858,7 +7858,7 @@ msgstr ""
 msgid "End Session"
 msgstr ""
 
-#: src/stored/read_record.c:407 src/stored/label.c:1047
+#: src/stored/read_record.c:407 src/stored/label.c:1049
 msgid "End of Media"
 msgstr ""
 
@@ -7928,7 +7928,7 @@ msgid ""
 "Device resources.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1178 src/stored/dircmd.c:601
+#: src/stored/reserve.c:1183 src/stored/dircmd.c:601
 #, c-format
 msgid ""
 "\n"
@@ -7936,80 +7936,80 @@ msgid ""
 "does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1182 src/stored/dircmd.c:579
+#: src/stored/reserve.c:1187 src/stored/dircmd.c:579
 #, c-format
 msgid ""
 "\n"
 "     Device \"%s\" requested by DIR could not be opened or does not exist.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1194
+#: src/stored/reserve.c:1199
 #, c-format
 msgid "3926 Could not get dcr for device: %s\n"
 msgstr ""
 
-#: src/stored/reserve.c:1317
+#: src/stored/reserve.c:1322
 #, c-format
 msgid "3601 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1327
+#: src/stored/reserve.c:1332
 #, c-format
 msgid "3602 JobId=%u device %s is busy (already reading/writing).\n"
 msgstr ""
 
-#: src/stored/reserve.c:1371
+#: src/stored/reserve.c:1376
 #, c-format
 msgid "3603 JobId=%u device %s is busy reading.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1380
+#: src/stored/reserve.c:1385
 #, c-format
 msgid "3604 JobId=%u device %s is BLOCKED due to user unmount.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1417
+#: src/stored/reserve.c:1422
 #, c-format
 msgid ""
 "3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
 "s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1443
+#: src/stored/reserve.c:1448
 #, c-format
 msgid "3610 JobId=%u Volume max jobs exceeded on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1498
+#: src/stored/reserve.c:1503
 #, c-format
 msgid "3605 JobId=%u wants free drive but device %s is busy.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1506
+#: src/stored/reserve.c:1511
 #, c-format
 msgid "3606 JobId=%u prefers mounted drives, but drive %s has no Volume.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1529
+#: src/stored/reserve.c:1534
 #, c-format
 msgid "3607 JobId=%u wants Vol=\"%s\" drive has Vol=\"%s\" on drive %s.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1585
+#: src/stored/reserve.c:1590
 #, c-format
 msgid "Logic error!!!! JobId=%u Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1586
+#: src/stored/reserve.c:1591
 #, c-format
 msgid "3910 JobId=%u Logic error!!!! drive %s Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1589
+#: src/stored/reserve.c:1594
 msgid "Logic error!!!! Should not get here.\n"
 msgstr ""
 
-#: src/stored/reserve.c:1592
+#: src/stored/reserve.c:1597
 #, c-format
 msgid "3911 JobId=%u failed reserve drive %s.\n"
 msgstr ""
@@ -8093,11 +8093,11 @@ msgstr ""
 msgid "EOT label not copied.\n"
 msgstr ""
 
-#: src/stored/bcopy.c:319 src/stored/label.c:1041 src/stored/bls.c:423
+#: src/stored/bcopy.c:319 src/stored/label.c:1043 src/stored/bls.c:423
 msgid "Begin Job Session"
 msgstr ""
 
-#: src/stored/bcopy.c:323 src/stored/label.c:1044 src/stored/bls.c:427
+#: src/stored/bcopy.c:323 src/stored/label.c:1046 src/stored/bls.c:427
 msgid "End Job Session"
 msgstr ""
 
@@ -8105,7 +8105,7 @@ msgstr ""
 msgid "End of Medium"
 msgstr ""
 
-#: src/stored/bcopy.c:331 src/stored/label.c:1053 src/stored/bls.c:434
+#: src/stored/bcopy.c:331 src/stored/label.c:1055 src/stored/bls.c:434
 msgid "Unknown"
 msgstr ""
 
@@ -8261,113 +8261,113 @@ msgstr ""
 msgid "Unable to write last on %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:91 src/stored/label.c:131 src/stored/label.c:223
+#: src/stored/label.c:92 src/stored/label.c:133 src/stored/label.c:225
 #, c-format
 msgid "Wrong Volume mounted on device %s: Wanted %s have %s\n"
 msgstr ""
 
-#: src/stored/label.c:98 src/stored/label.c:134 src/stored/label.c:211
+#: src/stored/label.c:99 src/stored/label.c:136 src/stored/label.c:213
 #, c-format
 msgid "Too many tries: %s"
 msgstr ""
 
-#: src/stored/label.c:114
+#: src/stored/label.c:116
 #, c-format
 msgid "Couldn't rewind device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:151
+#: src/stored/label.c:153
 #, c-format
 msgid ""
 "Requested Volume \"%s\" on %s is not a Bacula labeled Volume, because: ERR=%s"
 msgstr ""
 
-#: src/stored/label.c:156
+#: src/stored/label.c:158
 msgid "Could not read Volume label from block.\n"
 msgstr ""
 
-#: src/stored/label.c:159
+#: src/stored/label.c:161
 #, c-format
 msgid "Could not unserialize Volume label: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:164
+#: src/stored/label.c:166
 #, c-format
 msgid "Volume Header Id bad: %s\n"
 msgstr ""
 
-#: src/stored/label.c:196
+#: src/stored/label.c:198
 #, c-format
 msgid "Volume on %s has wrong Bacula version. Wanted %d got %d\n"
 msgstr ""
 
-#: src/stored/label.c:207
+#: src/stored/label.c:209
 #, c-format
 msgid "Volume on %s has bad Bacula label type: %x\n"
 msgstr ""
 
-#: src/stored/label.c:257 src/stored/label.c:414 src/stored/mount.c:429
-#: src/stored/acquire.c:179
+#: src/stored/label.c:259 src/stored/label.c:416 src/stored/mount.c:429
+#: src/stored/acquire.c:180
 #, fuzzy, c-format
 msgid "Could not reserve volume %s on %s\n"
 msgstr "Konnte FileSet \"%s\" Eintrag nicht erzeugen. ERR=%s\n"
 
-#: src/stored/label.c:296
+#: src/stored/label.c:298
 #, c-format
 msgid "Cannot write Volume label to block for device %s\n"
 msgstr ""
 
-#: src/stored/label.c:344 src/stored/label.c:442
+#: src/stored/label.c:346 src/stored/label.c:444
 #, fuzzy, c-format
 msgid "Open device %s Volume \"%s\" failed: ERR=%s\n"
 msgstr "Erzeugung von db Device Eintrag %s fehlgeschlagen: ERR=%s\n"
 
-#: src/stored/label.c:466
+#: src/stored/label.c:468
 #, c-format
 msgid "Rewind error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:474
+#: src/stored/label.c:476
 #, c-format
 msgid "Truncate error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:480
+#: src/stored/label.c:482
 #, c-format
 msgid "Failed to re-open DVD after truncate on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:503
+#: src/stored/label.c:505
 #, c-format
 msgid "Unable to write device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/label.c:532
+#: src/stored/label.c:534
 #, c-format
 msgid "Recycled volume \"%s\" on device %s, all previous data lost.\n"
 msgstr ""
 
-#: src/stored/label.c:535
+#: src/stored/label.c:537
 #, c-format
 msgid "Wrote label to prelabeled Volume \"%s\" on device %s\n"
 msgstr ""
 
-#: src/stored/label.c:734
+#: src/stored/label.c:736
 #, c-format
 msgid "Bad Volume session label = %d\n"
 msgstr ""
 
-#: src/stored/label.c:789
+#: src/stored/label.c:791
 #, c-format
 msgid "Expecting Volume Label, got FI=%s Stream=%s len=%d\n"
 msgstr ""
 
-#: src/stored/label.c:916
+#: src/stored/label.c:918
 #, c-format
 msgid "Unknown %d"
 msgstr ""
 
-#: src/stored/label.c:920
+#: src/stored/label.c:922
 #, c-format
 msgid ""
 "\n"
@@ -8384,17 +8384,17 @@ msgid ""
 "HostName          : %s\n"
 msgstr ""
 
-#: src/stored/label.c:942
+#: src/stored/label.c:944
 #, c-format
 msgid "Date label written: %s\n"
 msgstr ""
 
-#: src/stored/label.c:948
+#: src/stored/label.c:950
 #, c-format
 msgid "Date label written: %04d-%02d-%02d at %02d:%02d\n"
 msgstr ""
 
-#: src/stored/label.c:968
+#: src/stored/label.c:970
 #, c-format
 msgid ""
 "\n"
@@ -8407,7 +8407,7 @@ msgid ""
 "ClientName        : %s\n"
 msgstr ""
 
-#: src/stored/label.c:981
+#: src/stored/label.c:983
 #, c-format
 msgid ""
 "Job (unique name) : %s\n"
@@ -8416,7 +8416,7 @@ msgid ""
 "JobLevel          : %c\n"
 msgstr ""
 
-#: src/stored/label.c:990
+#: src/stored/label.c:992
 #, c-format
 msgid ""
 "JobFiles          : %s\n"
@@ -8429,48 +8429,48 @@ msgid ""
 "JobStatus         : %c\n"
 msgstr ""
 
-#: src/stored/label.c:1011
+#: src/stored/label.c:1013
 #, c-format
 msgid "Date written      : %s\n"
 msgstr ""
 
-#: src/stored/label.c:1016
+#: src/stored/label.c:1018
 #, c-format
 msgid "Date written      : %04d-%02d-%02d at %02d:%02d\n"
 msgstr ""
 
-#: src/stored/label.c:1035
+#: src/stored/label.c:1037
 msgid "Fresh Volume"
 msgstr ""
 
-#: src/stored/label.c:1038
+#: src/stored/label.c:1040
 msgid "Volume"
 msgstr ""
 
-#: src/stored/label.c:1050
+#: src/stored/label.c:1052
 msgid "End of Tape"
 msgstr ""
 
-#: src/stored/label.c:1070 src/stored/label.c:1078 src/stored/label.c:1111
+#: src/stored/label.c:1072 src/stored/label.c:1080 src/stored/label.c:1113
 #, c-format
 msgid "%s Record: File:blk=%u:%u SessId=%d SessTime=%d JobId=%d DataLen=%d\n"
 msgstr ""
 
-#: src/stored/label.c:1075
+#: src/stored/label.c:1077
 msgid "End of physical tape.\n"
 msgstr ""
 
-#: src/stored/label.c:1090 src/stored/label.c:1099
+#: src/stored/label.c:1092 src/stored/label.c:1101
 #, c-format
 msgid "%s Record: File:blk=%u:%u SessId=%d SessTime=%d JobId=%d\n"
 msgstr ""
 
-#: src/stored/label.c:1092
+#: src/stored/label.c:1094
 #, c-format
 msgid "   Job=%s Date=%s Level=%c Type=%c\n"
 msgstr ""
 
-#: src/stored/label.c:1101
+#: src/stored/label.c:1103
 #, c-format
 msgid "   Date=%s Level=%c Type=%c Files=%s Bytes=%s Errors=%d Status=%c\n"
 msgstr ""
@@ -10652,7 +10652,7 @@ msgstr ""
 msgid "Fatal append error on device %s: ERR=%s\n"
 msgstr ""
 
-#: src/stored/spool.c:302 src/stored/acquire.c:470 src/stored/block.c:368
+#: src/stored/spool.c:302 src/stored/acquire.c:471 src/stored/block.c:368
 #: src/stored/block.c:722 src/stored/block.c:798
 #, c-format
 msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
@@ -11208,21 +11208,21 @@ msgid ""
 "Job write elapsed time = %02d:%02d:%02d, Transfer rate = %s bytes/second\n"
 msgstr ""
 
-#: src/stored/job.c:225
+#: src/stored/job.c:229
 #, fuzzy, c-format
 msgid "FD connect failed: Job name not found: %s\n"
 msgstr "Job nicht gefunden: %s\n"
 
-#: src/stored/job.c:236
+#: src/stored/job.c:240
 #, c-format
 msgid "Hey!!!! JobId %u Job %s already authenticated.\n"
 msgstr ""
 
-#: src/stored/job.c:247
+#: src/stored/job.c:251
 msgid "Unable to authenticate File daemon\n"
 msgstr ""
 
-#: src/stored/job.c:369
+#: src/stored/job.c:373
 msgid "In free_jcr(), but still attached to device!!!!\n"
 msgstr ""
 
@@ -11713,69 +11713,69 @@ msgstr ""
 msgid "Acquire read: num_writers=%d not zero. Job %d canceled.\n"
 msgstr ""
 
-#: src/stored/acquire.c:79
+#: src/stored/acquire.c:78
 #, fuzzy, c-format
 msgid "No volumes specified for reading. Job %s canceled.\n"
 msgstr "Weder storage noch Pool in Job \"%s\" definiert.\n"
 
-#: src/stored/acquire.c:88
+#: src/stored/acquire.c:87
 #, c-format
 msgid "Logic error: no next volume to read. Numvol=%d Curvol=%d\n"
 msgstr ""
 
-#: src/stored/acquire.c:120
+#: src/stored/acquire.c:119
 #, c-format
 msgid ""
 "Changing device. Want Media Type=\"%s\" have=\"%s\"\n"
 "  device=%s\n"
 msgstr ""
 
-#: src/stored/acquire.c:156
+#: src/stored/acquire.c:155
 #, c-format
 msgid "Media Type change.  New device %s chosen.\n"
 msgstr ""
 
-#: src/stored/acquire.c:169
+#: src/stored/acquire.c:168
 #, c-format
 msgid "No suitable device found to read Volume \"%s\"\n"
 msgstr ""
 
-#: src/stored/acquire.c:214
+#: src/stored/acquire.c:215
 #, c-format
 msgid "Job %s canceled.\n"
 msgstr ""
 
-#: src/stored/acquire.c:229 src/stored/acquire.c:298
+#: src/stored/acquire.c:230 src/stored/acquire.c:299
 #, c-format
 msgid "Read open device %s Volume \"%s\" failed: ERR=%s\n"
 msgstr ""
 
-#: src/stored/acquire.c:315
+#: src/stored/acquire.c:316
 #, c-format
 msgid "Too many errors trying to mount device %s for reading.\n"
 msgstr ""
 
-#: src/stored/acquire.c:324
+#: src/stored/acquire.c:325
 #, c-format
 msgid "Ready to read from volume \"%s\" on device %s.\n"
 msgstr ""
 
-#: src/stored/acquire.c:371
+#: src/stored/acquire.c:372
 #, c-format
 msgid "Want to append, but device %s is busy reading.\n"
 msgstr ""
 
-#: src/stored/acquire.c:401
+#: src/stored/acquire.c:402
 #, c-format
 msgid "Could not ready device %s for append.\n"
 msgstr ""
 
-#: src/stored/acquire.c:521
+#: src/stored/acquire.c:522
 #, c-format
 msgid "Alert: %s"
 msgstr ""
 
-#: src/stored/acquire.c:529
+#: src/stored/acquire.c:530
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""
@@ -13915,91 +13915,91 @@ msgstr ""
 msgid "rwl_writeunlock failure at %s:%d:. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:297
+#: src/lib/rwlock.c:298
 msgid "rwl_writeunlock called too many times.\n"
 msgstr ""
 
-#: src/lib/rwlock.c:301
+#: src/lib/rwlock.c:303
 msgid "rwl_writeunlock by non-owner.\n"
 msgstr ""
 
-#: src/lib/rwlock.c:367
+#: src/lib/rwlock.c:369
 #, c-format
 msgid "Write lock failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:375
+#: src/lib/rwlock.c:377
 #, c-format
 msgid "Write unlock failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:386
+#: src/lib/rwlock.c:388
 #, c-format
 msgid "Read lock failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:394
+#: src/lib/rwlock.c:396
 #, c-format
 msgid "Read unlock failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:403
+#: src/lib/rwlock.c:405
 #, c-format
 msgid "Thread %d found unchanged elements %d times\n"
 msgstr ""
 
-#: src/lib/rwlock.c:436
+#: src/lib/rwlock.c:438
 #, c-format
 msgid "Init rwlock failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:452
+#: src/lib/rwlock.c:454
 #, c-format
 msgid "Create thread failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:464
+#: src/lib/rwlock.c:466
 #, c-format
 msgid "Join thread failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/rwlock.c:467
+#: src/lib/rwlock.c:469
 #, c-format
 msgid "%02d: interval %d, writes %d, reads %d\n"
 msgstr ""
 
-#: src/lib/rwlock.c:477
+#: src/lib/rwlock.c:479
 #, c-format
 msgid "data %02d: value %d, %d writes\n"
 msgstr ""
 
-#: src/lib/rwlock.c:482
+#: src/lib/rwlock.c:484
 #, c-format
 msgid "Total: %d thread writes, %d data writes\n"
 msgstr ""
 
-#: src/lib/rwlock.c:554
+#: src/lib/rwlock.c:556
 msgid "Try write lock"
 msgstr ""
 
-#: src/lib/rwlock.c:560
+#: src/lib/rwlock.c:562
 msgid "Try read lock"
 msgstr ""
 
-#: src/lib/rwlock.c:615
+#: src/lib/rwlock.c:617
 msgid "Create thread"
 msgstr ""
 
-#: src/lib/rwlock.c:625
+#: src/lib/rwlock.c:627
 msgid "Join thread"
 msgstr ""
 
-#: src/lib/rwlock.c:627
+#: src/lib/rwlock.c:629
 #, c-format
 msgid "%02d: interval %d, updates %d, r_collisions %d, w_collisions %d\n"
 msgstr ""
 
-#: src/lib/rwlock.c:639
+#: src/lib/rwlock.c:641
 #, c-format
 msgid "data %02d: value %d, %d updates\n"
 msgstr ""
