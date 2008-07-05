@@ -11,10 +11,8 @@ TestName="two-pool-tape"
 JobName=twopooltape
 . scripts/functions
 
-if test x${AUTOCHANGER} = x/dev/null ; then
-   echo "two-pool-tape test skipped. No autochanger."
-   exit
-fi
+require_tape_drive
+require_autochanger
 
 scripts/cleanup
 scripts/copy-2tape-confs
@@ -22,10 +20,8 @@ echo "Prepare two tapes"
 scripts/prepare-two-tapes
 echo "Done prepare two tapes"
  
-# Make a relatively large backup set 5 x source code directory
+# Make a relatively large backup set 3 x source code directory
 echo "${cwd}/build" >${cwd}/tmp/file-list
-echo "${cwd}/build" >>${cwd}/tmp/file-list
-echo "${cwd}/build" >>${cwd}/tmp/file-list
 echo "${cwd}/build" >>${cwd}/tmp/file-list
 echo "${cwd}/build" >>${cwd}/tmp/file-list
 
