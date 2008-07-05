@@ -500,6 +500,11 @@ void MainWin::set_status_ready()
    set_status(" Ready");
 }
 
+void MainWin::set_status(const QString &str)
+{
+   statusBar()->showMessage(str);
+}
+
 void MainWin::set_status(const char *buf)
 {
    statusBar()->showMessage(buf);

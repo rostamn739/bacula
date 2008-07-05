@@ -52,6 +52,7 @@ public:
    void set_statusf(const char *fmt, ...);
    void set_status_ready();
    void set_status(const char *buf);
+   void set_status(const QString &str);
    void writeSettings();
    void readSettings();
    void resetFocus() { lineEdit->setFocus(); };
