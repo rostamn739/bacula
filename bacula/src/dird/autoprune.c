@@ -184,6 +184,17 @@ bool prune_volumes(JCR *jcr, bool InChanger, MEDIA_DBR *mr)
             prune_list.num_ids = 0;             /* reset count */
          }
          ok = is_volume_purged(ua, &lmr);
+
+         /*
+          * Check if this volume is available (InChanger + StorageId)
+          * If not, just skip this volume and try the next one
+          */
+         if (ok && InChanger) {
+            if (!lmr.InChanger || (lmr.StorageId != mr->StorageId)) {
+               ok = false;             /* skip this volume, ie not loadable */
+            }
+         }
+
          /*
           * If purged and not moved to another Pool, 
           *   then we stop pruning and take this volume.
