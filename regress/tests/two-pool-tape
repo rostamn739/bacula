@@ -39,13 +39,13 @@ list volumes
 @# Start job with Client run before and sleep
 run job=NightlySave1 level=Full pool=Default yes
 run job=NightlySave1 level=Full pool=Default yes
-run job=NightlySave1 level=Full pool=Default yes
+#run job=NightlySave1 level=Full pool=Default yes
 @# wait between starting jobs
 @sleep 60
 list volumes
 run job=NightlySave2 level=Full pool=Full yes
 run job=NightlySave2 level=Full pool=Full yes
-run job=NightlySave2 level=Full pool=Full yes
+#run job=NightlySave2 level=Full pool=Full yes
 @sleep 10
 list volumes
 messages
