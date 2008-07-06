@@ -2,6 +2,11 @@
 
 General:
 
+06Jul08
+kes  Remove sleep at end of ./bacula
+kes  Clear hash packet for hardlinked files correctly. This corrects
+     a long standing bug where hardlinked files selected individually
+     would occasionally not be restored.
 05Jul08
 kes  Apply Eric's patch to ensure that autoprune does not return
      a Volume not in the autochanger unless requested to do so.
