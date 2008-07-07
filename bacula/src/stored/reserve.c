@@ -532,13 +532,13 @@ bool volume_unused(DCR *dcr)
 
    if (!dev->vol) {
       Dmsg2(dbglvl, "jid=%u vol_unused: no vol on %s\n", (int)dcr->jcr->JobId, dev->print_name());
-      Dmsg1(dbglvl, "=== clear in_use vol=%s\n", dev->vol->vol_name);
-      dev->vol->clear_in_use();
       debug_list_volumes("null vol cannot unreserve_volume");
       return false;
    }
    if (dev->vol->is_swapping()) {
       Dmsg1(dbglvl, "vol_unused: vol being swapped on %s\n", dev->print_name());
+      Dmsg1(dbglvl, "=== clear in_use vol=%s\n", dev->vol->vol_name);
+      dev->vol->clear_in_use();
       debug_list_volumes("swapping vol cannot unreserve_volume");
       return false;
    }
