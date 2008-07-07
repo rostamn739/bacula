@@ -337,8 +337,6 @@ VOLRES *reserve_volume(DCR *dcr, const char *VolumeName)
       if (strcmp(vol->vol_name, VolumeName) == 0) {
          Dmsg3(dbglvl, "jid=%u === set reserved vol=%s dev=%s\n", jid(), VolumeName,
                vol->dev->print_name());
-         vol->set_in_use();             /* retake vol if released previously */
-         dcr->reserved_volume = true;   /* reserved volume */
          goto get_out;                  /* Volume already on this device */
       } else {
          /* Don't release a volume if it was reserved by someone other than us */
@@ -534,6 +532,8 @@ bool volume_unused(DCR *dcr)
 
    if (!dev->vol) {
       Dmsg2(dbglvl, "jid=%u vol_unused: no vol on %s\n", (int)dcr->jcr->JobId, dev->print_name());
+      Dmsg1(dbglvl, "=== clear in_use vol=%s\n", dev->vol->vol_name);
+      dev->vol->clear_in_use();
       debug_list_volumes("null vol cannot unreserve_volume");
       return false;
    }
@@ -543,19 +543,6 @@ bool volume_unused(DCR *dcr)
       return false;
    }
 
-#ifdef xxx
-   if (dev->is_busy()) {
-      Dmsg2(dbglvl, "jid=%u vol_unused: busy on %s\n", (int)dcr->jcr->JobId, dev->print_name());
-      debug_list_volumes("dev busy cannot unreserve_volume");
-      return false;
-   }
-#endif
-#ifdef xxx
-   if (dev->num_writers > 0 || dev->num_reserved() > 0) {
-      ASSERT(0);
-   }
-#endif
-
    /*  
     * If this is a tape, we do not free the volume, rather we wait
     *  until the autoloader unloads it, or until another tape is
@@ -564,6 +551,7 @@ bool volume_unused(DCR *dcr)
     */
    Dmsg5(dbglvl, "jid=%u === set not reserved vol=%s num_writers=%d dev_reserved=%d dev=%s\n",
       jid(), dev->vol->vol_name, dev->num_writers, dev->num_reserved(), dev->print_name());
+   Dmsg1(dbglvl, "=== clear in_use vol=%s\n", dev->vol->vol_name);
    dev->vol->clear_in_use();
    if (dev->is_tape() || dev->is_autochanger()) {
       return true;
@@ -591,6 +579,7 @@ bool free_volume(DEVICE *dev)
    vol = dev->vol;
    /* Don't free a volume while it is being swapped */
    if (!vol->is_swapping()) {
+      Dmsg1(dbglvl, "=== clear in_use vol=%s\n", dev->vol->vol_name);
       dev->vol = NULL;
       vol_list->remove(vol);
       Dmsg3(dbglvl, "jid=%u === remove volume %s dev=%s\n", jid(), vol->vol_name, dev->print_name());
