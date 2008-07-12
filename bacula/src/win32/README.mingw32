@@ -15,6 +15,40 @@ expect that there may be problems on systems other than Linux where you
 are pretty much on your own.  However, we will try to provide responses to
 your questions on the bacula-devel list, but we can't guarantee anything.
 
+Directory Structure
+=====================
+The new directory structure is:
+
+  bacula-top                 Top level directory -- any name
+    bacula                   Top level Bacula source directory -- any name
+      src
+        win32                Main directory where Windows version is built.
+
+    docs                     Top level Bacula documentation directory
+
+    depkgs-mingw32 (MinGW32) 3rd Party Dependencies for MinGW32 build
+or
+    depkgs-msvc (MS VC++)    3rd Party Dependencies for Microsoft VC++ build.
+      bin              --
+      include            |
+      lib                |
+      man                |   Created by script
+      nsis               |-- .../bacula/src/win32/build-depkgs-mingw32
+      scons              |
+      share              |
+      src                |
+      ssl              --
+      vss
+        inc                  A copy of the Windows VSS/inc directory
+
+    cross-tools (MinGW32)    Cross compilation tools (gcc, g++, mingw32, ...)
+      binutils-mingw32 --
+      gcc-mingw32        |   Created by script
+      mingw32            |-- .../bacula/src/win32/build-win32-cross-tools
+      mingw-utils        |
+      source           --
+
+
 One-time Setup
 ==============
 
@@ -36,8 +70,16 @@ make, ...  However a few that you may not have are:
   texinfo
   flex
   bison
+  patch (Debian)
   m4
+  postgresql (at least client)
+  mysql (at least client)
+  SQLite3 (from depkgs or as package)
+  readline (readlineN-dev on Debian)
   ...
+
+NB: On Debian, I had to remove /usr/bin/lorder for
+postresql to build correctly.
 
 Once the source is on your system, change to the win32 directory
         cd .../bacula/src/win32
@@ -99,6 +141,7 @@ following:
         wget
         texinfo
         bison
+        flex
 
 and possibly other packages.
 
@@ -119,7 +162,7 @@ to ensure that you pick up all the new Win32 changes:
 
    cd .../bacula
    make clean
-   cvs -q update -d -P
+   svn update
    cd src/win32
    make
 
@@ -162,7 +205,16 @@ exported.
 New data variables are exported by adding the macro DLL_IMP_EXP to
 the variable declaration in the header file.  All exported variables
 must be declared in a header file and MUST NOT be declared in a
-source file referencing the variable.
+source file referencing the variable. Example, src/lib/runscript.h:
+
+extern DLL_IMP_EXP bool (*console_command)(JCR *jcr, const char *cmd);
+
+or src/jcr.h
+
+extern int DLL_IMP_EXP num_jobs_run;
+extern DLL_IMP_EXP dlist * last_jobs;
+...
+
 
 Exporting functions is now more or less automated.  If you find that
 a function name has been added, changed, or an argument modified,    
@@ -172,7 +224,11 @@ simply do the following:
    make                  (to build the .o files, note the link will fail)
    ./make_def >bacula.def
 
-This should rebuild the bacula.def file.
+This should rebuild the bacula.def file, but it uses relative paths
+and assumes you have the directory structure noted above. If you 
+are using something different, you can set the NM variable at the
+top of the make_def file to use an absolute path to the correct
+directory.
 
 ===== manual changing of bacula.def no longer necessary =====
 If you want to do it manually, please see below:
@@ -248,6 +304,7 @@ which contains the new function.  Replace <symbol> with the name of
 the new function.  Remove the leading underscore and place the result
 in the .../bacula/src/win32/cats/bacula_cats.def file.
 === end manual changing of bacula_cats.def ==========
+
 
 Running gdb on the Win32 files
 ==================================================
