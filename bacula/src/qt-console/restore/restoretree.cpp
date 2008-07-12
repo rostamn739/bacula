@@ -478,7 +478,7 @@ void restoreTree::refreshButtonPushed()
 /*
  * Set the values of non-job combo boxes to the job defaults
  */
-void restoreTree::jobComboChanged(int)
+void restoreTree::jobComboChanged(int index)
 {
    if (jobCombo->currentText() == tr("Any")) {
       fileSetCombo->setCurrentIndex(fileSetCombo->findText(tr("Any"), Qt::MatchExactly));
