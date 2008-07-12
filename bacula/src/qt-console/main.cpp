@@ -122,6 +122,9 @@ int main(int argc, char *argv[])
       usage();
    }
 
+   OSDependentInit();
+   WSA_Init();                        /* Initialize Windows sockets */
+
    if (configfile == NULL) {
       configfile = bstrdup(CONFIG_FILE);
    }
@@ -145,6 +148,7 @@ int main(int argc, char *argv[])
 void terminate_console(int sig)
 {
    (void)sig;                         /* avoid compiler complaints */
+   // WSA_Cleanup();                  /* TODO: check when we have to call it */
    exit(0);
 }
 
