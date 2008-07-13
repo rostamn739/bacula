@@ -238,7 +238,7 @@ _Z9dup_bsockP5BSOCK
  
 ; bnet_server.o
 _Z18bnet_thread_serverP5dlistiP9workq_tagPFPvS3_E
-_Z23bnet_stop_thread_server14ptw32_handle_t
+_Z23bnet_stop_thread_serverP10pthread_t_
  
 ; bpipe.o
 _Z11run_programPciS_
@@ -354,7 +354,7 @@ _Z16stop_child_timerP8btimer_t
 _Z17start_bsock_timerP5BSOCKj
 _Z17start_child_timerij
 _Z17stop_thread_timerP8btimer_t
-_Z18start_thread_timer14ptw32_handle_tj
+_Z18start_thread_timerP10pthread_t_j
 
 ; cram-md5.o
 _Z16cram_md5_respondP5BSOCKPKcPiS3_
@@ -467,10 +467,10 @@ _Z12job_end_pushP3JCRPFvS0_PvES1_
 _Z13get_jcr_by_idj
 _Z13jcr_walk_nextP3JCR
 _Z14jcr_walk_startv
-_Z16get_jcr_from_tid14ptw32_handle_t
+_Z16get_jcr_from_tidP10pthread_t_
 _Z16get_jcr_from_tidv
 _Z18get_jcr_by_sessionjj
-_Z18get_jobid_from_tid14ptw32_handle_t
+_Z18get_jobid_from_tidP10pthread_t_
 _Z18get_jobid_from_tidv
 _Z18init_jcr_subsystemv
 _Z18set_jcr_job_statusP3JCRi
