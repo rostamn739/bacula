@@ -105,8 +105,8 @@ void Console::terminate()
    if (m_sock) {
       if (m_notifier) {
          m_notifier->setEnabled(false);
-         delete m_notifier;
-         m_notifier = NULL;
+//       delete m_notifier;
+//       m_notifier = NULL;
       }
       stopTimer();
       m_sock->close();
@@ -612,11 +612,27 @@ int Console::read()
    int stat = 0;
    while (m_sock) {
       for (;;) {
-         stat = bnet_wait_data_intr(m_sock, 1);
+//       bool enabled;
+//       if (mainWin->m_commDebug) Pmsg0(000, "bnet_wait_data_intr\n");
+         stat = m_sock->wait_data_intr(0, 50000);
          if (stat > 0) {
             break;
          } 
+//       if (mainWin->m_commDebug) Pmsg1(000, "wait status=%d\n", stat);
+#ifdef xxx
+         if (m_notifier) {
+            enabled = m_notifier->isEnabled();
+            if (enabled) {
+               m_notifier->setEnabled(false);
+            }
+         }
+#endif
          app->processEvents();
+#ifdef xxx
+         if (m_notifier && enabled) {
+            m_notifier->setEnabled(true);
+         }
+#endif
          if (m_api_set && m_messages_pending && m_notifier->isEnabled()) {
             write_dir(".messages");
             m_messages_pending = false;
@@ -748,6 +764,7 @@ void Console::read_dir(int /* fd */)
    while (read() >= 0) {
       display_text(msg());
    }
+   if (mainWin->m_commDebug) Pmsg0(000, "exit read_dir\n");
 }
 
 /*
@@ -840,7 +857,6 @@ static int tls_pem_callback(char *buf, int size, const void *userdata)
    (void)size;
    (void)userdata;
 #ifdef HAVE_TLS
-   const char *prompt = (const char *)userdata;
 # if defined(HAVE_WIN32)
 // sendit(prompt);
    if (win32_cgets(buf, size) == NULL) {
@@ -850,6 +866,7 @@ static int tls_pem_callback(char *buf, int size, const void *userdata)
       return strlen(buf);
    }
 # else
+   const char *prompt = (const char *)userdata;
    char *passwd;
 
    passwd = getpass(prompt);

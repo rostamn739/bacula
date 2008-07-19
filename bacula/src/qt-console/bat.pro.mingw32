@@ -7,7 +7,7 @@
 #
 #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #    
-CONFIG += qt debug 
+CONFIG += qt debug
 
 bins.path = ./
 bins.files = ./bat.exe
@@ -21,9 +21,9 @@ INCLUDEPATH += .. . ./console ./restore ./select
 LIBS        += -L../win32/release -lbacula -mwindows
 
 RESOURCES    = main.qrc
-MOC_DIR      = moc
-OBJECTS_DIR  = obj
-UI_DIR       = ui
+MOC_DIR      = win32/moc
+OBJECTS_DIR  = win32/obj
+UI_DIR       = win32/ui
 
 # Main window
 FORMS += main.ui 

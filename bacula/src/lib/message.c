@@ -875,7 +875,11 @@ d_msg(const char *file, int line, int level, const char *fmt,...)
        if (trace) {
           if (!trace_fd) {
              char fn[200];
+#ifdef HAVE_WIN32
              bsnprintf(fn, sizeof(fn), "%s/%s.trace", working_directory ? working_directory : ".", my_name);
+#else
+             bsnprintf(fn, sizeof(fn), "%s.trace", my_name);
+#endif
              trace_fd = fopen(fn, "a+b");
           }
           if (trace_fd) {

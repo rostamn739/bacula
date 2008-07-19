@@ -107,8 +107,8 @@ public:
    int set_nonblocking();
    int set_blocking();
    void restore_blocking(int flags);
-   int wait_data(int sec);
-   int wait_data_intr(int sec);
+   int wait_data(int sec, int usec);
+   int wait_data_intr(int sec, int usec);
    bool authenticate_director(const char *name, const char *password,
                   TLS_CONTEXT *tls_ctx, char *msg, int msglen);
 

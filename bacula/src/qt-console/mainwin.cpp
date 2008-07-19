@@ -54,6 +54,8 @@
 #include "jobgraphs/jobplot.h"
 #endif
 
+extern bool trace;
+
 /* 
  * Daemon message callback
  */
@@ -64,6 +66,10 @@ void message_callback(int /* type */, char *msg)
 
 MainWin::MainWin(QWidget *parent) : QMainWindow(parent)
 {
+#ifdef HAVE_WIN32
+   my_name_is(0, NULL, "bat");
+   set_trace(true);
+#endif
    m_isClosing = false;
    m_dtformat = "yyyy-MM-dd HH:mm:ss";
    mainWin = this;

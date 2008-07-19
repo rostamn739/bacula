@@ -536,7 +536,6 @@ static int tls_pem_callback(char *buf, int size, const void *userdata)
    (void)size;
    (void)userdata;
 #ifdef HAVE_TLS
-   const char *prompt = (const char *)userdata;
 # if defined(HAVE_WIN32)
 // sendit(prompt);
    if (win32_cgets(buf, size) == NULL) {
@@ -546,6 +545,7 @@ static int tls_pem_callback(char *buf, int size, const void *userdata)
       return strlen(buf);
    }
 # else
+   const char *prompt = (const char *)userdata;
    char *passwd;
 
    passwd = getpass(prompt);
