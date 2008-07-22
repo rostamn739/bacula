@@ -612,27 +612,11 @@ int Console::read()
    int stat = 0;
    while (m_sock) {
       for (;;) {
-//       bool enabled;
-//       if (mainWin->m_commDebug) Pmsg0(000, "bnet_wait_data_intr\n");
          stat = m_sock->wait_data_intr(0, 50000);
          if (stat > 0) {
             break;
          } 
-//       if (mainWin->m_commDebug) Pmsg1(000, "wait status=%d\n", stat);
-#ifdef xxx
-         if (m_notifier) {
-            enabled = m_notifier->isEnabled();
-            if (enabled) {
-               m_notifier->setEnabled(false);
-            }
-         }
-#endif
          app->processEvents();
-#ifdef xxx
-         if (m_notifier && enabled) {
-            m_notifier->setEnabled(true);
-         }
-#endif
          if (m_api_set && m_messages_pending && m_notifier->isEnabled()) {
             write_dir(".messages");
             m_messages_pending = false;

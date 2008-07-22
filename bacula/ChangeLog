@@ -1,6 +1,23 @@
               Technical notes on version 2.4.x
 
 General:
+Release Version 2.4.2
+22Jul08
+kes  Minor cleanups.
+kes  Fix bug #1125 which reports a SD crash at the end of a tape
+     during restore. It was a debug statement that should not be
+     in a release.
+20Jul08
+ebl  fix #1034 by setting big timeout on mysql connections
+19Jul08
+kes  Do partial integration of the Win32 bat build created by Eric.
+kes  Fix bat not to block.
+15Jul08
+kes  Ensure that SD tried to mount a volume not in an autochanger
+     at least once before asking for operator intervention.
+kes  Fix a pthreads bug in the Win32 pthreads emulation code.
+
+
 Release Version 2.4.1
 07Jul08
 kes  Clear in-use bit on vol when unused while swapping.
