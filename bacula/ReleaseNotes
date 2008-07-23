@@ -18,9 +18,14 @@ Release 2.4.2
  This is a bug fix for version 2.4.1.
 
 Bugs Fixed:
- 1034, 1125
+ 1034, 1125, 1118, 1124, 1107
 
 Change Summary:
+- Apply patch submitted for bug #1107 with a small modification.
+  This fixes a bug where bcopy copied too many records.
+- Make some tweaks to bsmtp based on patch submitted in bug #1124.
+  This fixes bug #1124.
+- Make the default bat restore Pool be Any. This fixes bug #1118.
 - Fix bug #1125 which reports a SD crash at the end of a tape
   during restore. It was a debug statement that should not be
   in a release.
