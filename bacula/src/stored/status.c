@@ -198,7 +198,7 @@ void output_status(void sendit(const char *msg, int len, void *sarg), void *arg)
       }
    }
    sendit("====\n\n", 6, arg);
-   len = Mmsg(msg, _("In Use Volume status:\n"));
+   len = Mmsg(msg, _("Used Volume status:\n"));
    sendit(msg, len, arg);
    list_volumes(sendit, arg);
    sendit("====\n\n", 6, arg);
