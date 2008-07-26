@@ -2,6 +2,10 @@
 
 General:
 Release Version 2.4.2
+26Jul08
+kes  When a migration job actually runs, re-check the Job record
+     and skip if the job is already migrated. This should
+     significantly reduce the problems with bug #1129.
 24Jul08
 kes  Break the do_swapping into do_unload, do_swapping, and
      do_load.  It is much more logical that way.
