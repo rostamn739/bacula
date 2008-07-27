@@ -1,7 +1,7 @@
 
        Release Notes for Bacula 2.4.2
 
-  Bacula code: Total files = 500 Total lines = 188,654 (*.h *.c *.in)
+  Bacula code: Total files = 500 Total lines = 188,832 (*.h *.c *.in)
 
 
 ==================   Warning !!!!!! ==========================
@@ -15,12 +15,23 @@ in your FileSet.
 ==============================================================
 
 Release 2.4.2
- This is a bug fix for version 2.4.1.
+ This is an important bug fix release since version 2.4.1.
 
 Bugs Fixed:
- 1034, 1125, 1118, 1124, 1107
+ 1034, 1125, 1118, 1124, 1107, 1129, 1126
 
 Change Summary:
+26Jul08
+- When a migration job actually runs, re-check the Job record
+  and skip if the job is already migrated. This should
+  significantly reduce the problems with bug #1129.
+- Break the do_swapping into do_unload, do_swapping, and
+  do_load.  It is much more logical that way.
+- Implement a set_dcr_from_vol subroutine in acquire.c for
+  reading volumes. This allows the dcr to be refreshed after being
+  zapped when the wrong volume is mounted. This should fix bug #1126 -
+- During multiple tape restore, bacula
+  does not ask for physical tape change, but rereads same tape
 - Apply patch submitted for bug #1107 with a small modification.
   This fixes a bug where bcopy copied too many records.
 - Make some tweaks to bsmtp based on patch submitted in bug #1124.
