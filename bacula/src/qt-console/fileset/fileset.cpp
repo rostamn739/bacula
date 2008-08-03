@@ -107,7 +107,7 @@ void FileSet::populateTree()
            " FROM FileSet"
            " WHERE ";
       query += " FileSet='" + filesetName + "'";
-      query += " ORDER BY FileSet";
+      query += " ORDER BY CreateTime DESC LIMIT 1";
 
       QStringList results;
       if (mainWin->m_sqlDebug) {
