@@ -60,6 +60,7 @@ JobList::JobList(const QString &mediaName, const QString &clientName,
 
    m_resultCount = 0;
    m_populated = false;
+   m_populating = false;
    m_closeable = false;
    if ((m_mediaName != "") || (m_clientName != "") || (m_jobName != "") || (m_filesetName != ""))
       m_closeable=true;
@@ -106,6 +107,10 @@ JobList::~JobList()
  */
 void JobList::populateTable()
 {
+   if (m_populating)
+      return;
+   m_populating = true;
+
    QStringList results;
    QString resultline;
    QBrush blackBrush(Qt::black);
@@ -293,6 +298,7 @@ void JobList::populateTable()
           tr("The Jobs query returned no results.\n"
          "Press OK to continue?"), QMessageBox::Ok );
    }
+   m_populating = false;
 }
 
 void JobList::setStatusColor(QTableWidgetItem *item, QString &field)

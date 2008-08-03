@@ -54,6 +54,7 @@ MediaList::MediaList()
 
    /* mp_treeWidget, Storage Tree Tree Widget inherited from ui_medialist.h */
    m_populated = false;
+   m_populating = false;
    m_checkcurwidget = true;
    m_closeable = false;
    /* add context sensitive menu items specific to this classto the page
@@ -73,6 +74,9 @@ MediaList::~MediaList()
 void MediaList::populateTree()
 {
    QTreeWidgetItem *mediatreeitem, *pooltreeitem, *topItem;
+   if (m_populating)
+      return;
+   m_populating = true;
 
    if (!m_console->preventInUseConnect())
        return;
@@ -155,6 +159,7 @@ void MediaList::populateTree()
    for(int cnter=0; cnter<headerlist.count(); cnter++) {
       mp_treeWidget->resizeColumnToContents(cnter);
    }
+   m_populating = false;
 }
 
 void MediaList::setStatusColor(QTreeWidgetItem *item, QString &field, int &index)
