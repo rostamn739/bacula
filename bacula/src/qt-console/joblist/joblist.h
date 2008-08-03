@@ -67,9 +67,7 @@ private slots:
    void preRestoreFromTime();
    void showLogForJob();
    void consoleCancelJob();
-#ifdef HAVE_QWT
    void graphTable();
-#endif
 
 private:
    void createConnections();

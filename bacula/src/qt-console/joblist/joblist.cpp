@@ -580,9 +580,9 @@ void JobList::consoleCancelJob()
 /*
  * Graph this table
  */
-#ifdef HAVE_QWT
 void JobList::graphTable()
 {
+#ifdef HAVE_QWT
    JobPlotPass pass;
    pass.recordLimitCheck = limitCheckBox->checkState();
    pass.daysLimitCheck = daysCheckBox->checkState();
@@ -598,8 +598,8 @@ void JobList::graphTable()
    pass.use = true;
    QTreeWidgetItem* pageSelectorTreeWidgetItem = mainWin->getFromHash(this);
    new JobPlot(pageSelectorTreeWidgetItem, pass);
-}
 #endif
+}
 
 /*
  * Save user settings associated with this page
