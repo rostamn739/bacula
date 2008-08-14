@@ -473,7 +473,7 @@ void MainWin::input_line()
 void MainWin::about()
 {
    QMessageBox::about(this, tr("About bat"),
-      tr("<br><h2>bat " VERSION "(" BDATE "), by Dirk H Bartley and Kern Sibbald</h2>"
+      tr("<br><h2>bat " VERSION " (" BDATE "), by Dirk H Bartley and Kern Sibbald</h2>"
          "<p>Copyright &copy; 2007-" BYEAR " Free Software Foundation Europe e.V."
          "<p>The <b>bat</b> is an administrative console"
          " interface to the Director."));
