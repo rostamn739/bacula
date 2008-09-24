@@ -143,7 +143,7 @@ bool read_last_jobs_list(int fd, uint64_t addr)
    if (num > 4 * max_last_jobs) {  /* sanity check */
       return false;
    }
-   lock_last)jobs_list();
+   lock_last_jobs_list();
    for ( ; num; num--) {
       if (read(fd, &job, sizeof(job)) != sizeof(job)) {
          berrno be;
@@ -173,13 +173,14 @@ uint64_t write_last_jobs_list(int fd, uint64_t addr)
 {
    struct s_last_job *je;
    uint32_t num;
+   ssize_t stat;
 
    Dmsg1(100, "write_last_jobs seek to %d\n", (int)addr);
    if (lseek(fd, (off_t)addr, SEEK_SET) < 0) {
       return 0;
    }
    if (last_jobs) {
-      lock_last)jobs_list();
+      lock_last_jobs_list();
       /* First record is number of entires */
       num = last_jobs->size();
       if (write(fd, &num, sizeof(num)) != sizeof(num)) {
@@ -191,13 +192,13 @@ uint64_t write_last_jobs_list(int fd, uint64_t addr)
          if (write(fd, je, sizeof(struct s_last_job)) != sizeof(struct s_last_job)) {
             berrno be;
             Pmsg1(000, "Error writing job: ERR=%s\n", be.bstrerror());
-            got bail_out;
+            goto bail_out;
          }
       }
       unlock_last_jobs_list();
    }
    /* Return current address */
-   ssize_t stat = lseek(fd, 0, SEEK_CUR);
+   stat = lseek(fd, 0, SEEK_CUR);
    if (stat < 0) {
       stat = 0;
    }

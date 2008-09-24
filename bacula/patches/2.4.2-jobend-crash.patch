@@ -15,7 +15,7 @@
 
 Index: src/lib/jcr.c
 ===================================================================
---- src/lib/jcr.c	(revision 7566)
+--- src/lib/jcr.c	(revision 7627)
 +++ src/lib/jcr.c	(working copy)
 @@ -110,6 +110,7 @@
  void term_last_jobs_list()
@@ -45,7 +45,7 @@ Index: src/lib/jcr.c
     if (num > 4 * max_last_jobs) {  /* sanity check */
        return false;
     }
-+   lock_last)jobs_list();
++   lock_last_jobs_list();
     for ( ; num; num--) {
        if (read(fd, &job, sizeof(job)) != sizeof(job)) {
           berrno be;
@@ -56,7 +56,7 @@ Index: src/lib/jcr.c
        }
        if (job.JobId > 0) {
           je = (struct s_last_job *)malloc(sizeof(struct s_last_job));
-@@ -160,7 +165,8 @@
+@@ -160,41 +165,48 @@
           }
        }
     }
@@ -66,11 +66,17 @@ Index: src/lib/jcr.c
  }
  
  uint64_t write_last_jobs_list(int fd, uint64_t addr)
-@@ -173,20 +179,22 @@
+ {
+    struct s_last_job *je;
+    uint32_t num;
++   ssize_t stat;
+ 
+    Dmsg1(100, "write_last_jobs seek to %d\n", (int)addr);
+    if (lseek(fd, (off_t)addr, SEEK_SET) < 0) {
        return 0;
     }
     if (last_jobs) {
-+      lock_last)jobs_list();
++      lock_last_jobs_list();
        /* First record is number of entires */
        num = last_jobs->size();
        if (write(fd, &num, sizeof(num)) != sizeof(num)) {
@@ -84,14 +90,16 @@ Index: src/lib/jcr.c
              berrno be;
              Pmsg1(000, "Error writing job: ERR=%s\n", be.bstrerror());
 -            return 0;
-+            got bail_out;
++            goto bail_out;
           }
        }
 +      unlock_last_jobs_list();
     }
     /* Return current address */
-    ssize_t stat = lseek(fd, 0, SEEK_CUR);
-@@ -195,6 +203,9 @@
+-   ssize_t stat = lseek(fd, 0, SEEK_CUR);
++   stat = lseek(fd, 0, SEEK_CUR);
+    if (stat < 0) {
+       stat = 0;
     }
     return stat;
  
@@ -101,7 +109,7 @@ Index: src/lib/jcr.c
  }
  
  void lock_last_jobs_list()
-@@ -331,6 +342,7 @@
+@@ -331,6 +343,7 @@
        last_job.end_time = time(NULL);
        /* Keep list of last jobs, but not Console where JobId==0 */
        if (last_job.JobId > 0) {
@@ -109,7 +117,7 @@ Index: src/lib/jcr.c
           je = (struct s_last_job *)malloc(sizeof(struct s_last_job));
           memcpy((char *)je, (char *)&last_job, sizeof(last_job));
           if (!last_jobs) {
-@@ -342,6 +354,7 @@
+@@ -342,6 +355,7 @@
              last_jobs->remove(je);
              free(je);
           }
