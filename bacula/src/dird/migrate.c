@@ -557,13 +557,16 @@ const char *sql_jobids_from_mediaid =
    " AND Job.Type='B'"
    " ORDER by Job.StartTime";
 
-/* Get tne number of bytes in the pool */
+/* Get the number of bytes in the pool */
 const char *sql_pool_bytes =
-   "SELECT SUM(VolBytes) FROM Media,Pool WHERE"
+   "SELECT SUM(JobBytes) FROM Job WHERE JobId IN"
+   " (SELECT DISTINCT Job.JobId from Pool,Job,Media,JobMedia WHERE"
+   " Pool.Name='%s' AND Media.PoolId=Pool.PoolId AND"
    " VolStatus in ('Full','Used','Error','Append') AND Media.Enabled=1 AND"
-   " Media.PoolId=Pool.PoolId AND Pool.Name='%s'";
+   " Job.Type='B' AND"
+   " JobMedia.JobId=Job.JobId AND Job.PoolId=Media.PoolId)";
 
-/* Get tne number of bytes in the Jobs */
+/* Get the number of bytes in the Jobs */
 const char *sql_job_bytes =
    "SELECT SUM(JobBytes) FROM Job WHERE JobId IN (%s)";
 
