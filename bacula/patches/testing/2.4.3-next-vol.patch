@@ -187,3 +187,21 @@ Index: src/cats/sql_find.c
     }
     Dmsg1(050, "fnextvol=%s\n", mdb->cmd);
     if (!QUERY_DB(jcr, mdb, mdb->cmd)) {
+Index: src/dird/autoprune.c
+===================================================================
+--- src/dird/autoprune.c	(revision 7854)
++++ src/dird/autoprune.c	(working copy)
+@@ -204,13 +204,6 @@
+             memcpy(mr, &lmr, sizeof(lmr));
+             break;                        /* got a volume */
+          }
+-         /*
+-          * We purged something but did not get a volume in the current pool.
+-          *  It must be a scratch volume, so try to get it.
+-          */
+-         if (ok && get_scratch_volume(jcr, InChanger, mr)) {
+-            break;                       /* got a volume */
+-         }
+          ok = false;                     /* clear OK, in case we fall out */
+       } else {
+          Dmsg2(050, "Nothing pruned MediaId=%d Volume=%s\n", (int)lmr.MediaId, lmr.VolumeName);
