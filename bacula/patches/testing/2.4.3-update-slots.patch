@@ -14,8 +14,8 @@
 
 Index: src/cats/sql_update.c
 ===================================================================
---- src/cats/sql_update.c	(révision 7854)
-+++ src/cats/sql_update.c	(copie de travail)
+--- src/cats/sql_update.c	(revision 7854)
++++ src/cats/sql_update.c	(working copy)
 @@ -445,14 +445,28 @@
  db_make_inchanger_unique(JCR *jcr, B_DB *mdb, MEDIA_DBR *mr)
  {
@@ -53,3 +53,27 @@ Index: src/cats/sql_update.c
     }
  }
  
+Index: src/cats/sql_create.c
+===================================================================
+--- src/cats/sql_create.c	(revision 7854)
++++ src/cats/sql_create.c	(working copy)
+@@ -459,14 +459,13 @@
+               "WHERE MediaId=%d", dt, mr->MediaId);
+          stat = UPDATE_DB(jcr, mdb, mdb->cmd);
+       }
++      /*
++       * Make sure that if InChanger is non-zero any other identical slot
++       *   has InChanger zero.
++       */
++      db_make_inchanger_unique(jcr, mdb, mr);
+    }
+ 
+-   /*
+-    * Make sure that if InChanger is non-zero any other identical slot
+-    *   has InChanger zero.
+-    */
+-   db_make_inchanger_unique(jcr, mdb, mr);
+-
+    db_unlock(mdb);
+    return stat;
+ }
