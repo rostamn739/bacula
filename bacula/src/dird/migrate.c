@@ -377,7 +377,7 @@ bool do_migration(JCR *jcr)
     * to avoid two threads from using the BSOCK structure at
     * the same time.
     */
-   if (!bnet_fsend(sd, "run")) {
+   if (!sd->fsend("run")) {
       return false;
    }
 
@@ -520,6 +520,7 @@ const char *sql_jobids_from_client =
    "SELECT DISTINCT Job.JobId,Job.StartTime FROM Job,Pool,Client"
    " WHERE Client.Name='%s' AND Pool.Name='%s' AND Job.PoolId=Pool.PoolId"
    " AND Job.ClientId=Client.ClientId AND Job.Type='B'"
+   " AND Job.JobStatus = 'T'"
    " ORDER by Job.StartTime";
 
 /* Get Volume names in Pool */
@@ -533,8 +534,8 @@ const char *sql_jobids_from_vol =
    "SELECT DISTINCT Job.JobId,Job.StartTime FROM Media,JobMedia,Job"
    " WHERE Media.VolumeName='%s' AND Media.MediaId=JobMedia.MediaId"
    " AND JobMedia.JobId=Job.JobId AND Job.Type='B'"
+   " AND Job.JobStatus = 'T' AND Media.Enabled=1"
    " ORDER by Job.StartTime";
-
 
 const char *sql_smallest_vol = 
    "SELECT Media.MediaId FROM Media,Pool,JobMedia WHERE"
@@ -569,7 +570,6 @@ const char *sql_pool_bytes =
 /* Get the number of bytes in the Jobs */
 const char *sql_job_bytes =
    "SELECT SUM(JobBytes) FROM Job WHERE JobId IN (%s)";
-
 
 /* Get Media Ids in Pool */
 const char *sql_mediaids =
