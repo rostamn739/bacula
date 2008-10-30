@@ -378,7 +378,7 @@ static void list_running_jobs(void sendit(const char *msg, int len, void *sarg),
       }
       dcr = jcr->dcr;
       rdcr = jcr->read_dcr;
-      if ((dcr && dcr->device) || rdcr && rdcr->device) {
+      if ((dcr && dcr->device) || (rdcr && rdcr->device)) {
          bstrncpy(JobName, jcr->Job, sizeof(JobName));
          /* There are three periods after the Job name */
          char *p;
