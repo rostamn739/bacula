@@ -1,6 +1,8 @@
               Technical notes on version 2.4
 
 General:
+02Nov08
+kes  Fix orphaned jobs (possible deadlock) while pruning.
 31Oct08
 ebl  Backport of the btraceback script that keeps trace file on working dir
 28Oct08
@@ -8,7 +10,7 @@ kes  Migrate DB Log records too. This fixes last part of bug #1171.
 24Oct08
 kes  Modify SQL so that jobs that failed will not be migrated.
 kes  Correct bug where long retention periods caused immediate
-     prunning.
+     pruning.
 
 Release Version 2.4.3   
 27Oct08
@@ -69,7 +71,7 @@ kes  Break the do_swapping into do_unload, do_swapping, and
 kes  Implement a set_dcr_from_vol subroutine in acquire.c for
      reading volumes. This allows the dcr to be refreshed after being
      zapped when the wrong volume is mounted.
-     This should fix bug #1126 -- During multiple tape restore, bacula
+     This should fix bug #1126 -- During multiple tape restore, Bacula
      does not ask for physical tape change, but rereads same tape
 23Jul08
 kes  Apply patch submitted for bug #1107 with a small modification.
@@ -129,7 +131,7 @@ Release Beta version 2.4.1-b1
 kes  Back out bad src/lib/base64.c change.
 27Jun08
 kes  Generally clean up the manual tape loading code. The main
-     conceptial change is that when a volume is marked to be unloaded,
+     conceptual change is that when a volume is marked to be unloaded,
      its volume name is retained, and it is only marked as unloaded
      when either the autoloader says it is unloaded or another tape
      is read on that drive.
