@@ -318,7 +318,7 @@ int rwl_writeunlock(brwlock_t *rwl)
 
 #ifdef TEST_RWLOCK
 
-#define THREADS     80
+#define THREADS     200
 #define DATASIZE   15
 #define ITERATIONS 1000000
 
@@ -362,7 +362,18 @@ void *thread_routine(void *arg)
        * update operation (write lock instead of read
        * lock).
        */
+      if (self->interval <= 0) {
+         self->interval = 1;
+      }
       if ((iteration % self->interval) == 0) {
+         status = rwl_writelock(&data[element].lock);
+         if (status != 0) {
+            berrno be;
+            Emsg1(M_ABORT, 0, _("Write lock failed. ERR=%s\n"), be.bstrerror(status));
+         }
+         data[element].data = self->thread_num;
+         data[element].writes++;
+         self->writes++;
          status = rwl_writelock(&data[element].lock);
          if (status != 0) {
             berrno be;
@@ -376,6 +387,12 @@ void *thread_routine(void *arg)
             berrno be;
             Emsg1(M_ABORT, 0, _("Write unlock failed. ERR=%s\n"), be.bstrerror(status));
          }
+         status = rwl_writeunlock(&data[element].lock);
+         if (status != 0) {
+            berrno be;
+            Emsg1(M_ABORT, 0, _("Write unlock failed. ERR=%s\n"), be.bstrerror(status));
+         }
+
       } else {
          /*
           * Look at the current data element to see whether
