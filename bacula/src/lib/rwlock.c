@@ -318,9 +318,9 @@ int rwl_writeunlock(brwlock_t *rwl)
 
 #ifdef TEST_RWLOCK
 
-#define THREADS     5
+#define THREADS     80
 #define DATASIZE   15
-#define ITERATIONS 10000
+#define ITERATIONS 1000000
 
 /*
  * Keep statics for each thread.
@@ -342,8 +342,8 @@ typedef struct data_tag {
    int writes;
 } data_t;
 
-thread_t threads[THREADS];
-data_t data[DATASIZE];
+static thread_t threads[THREADS];
+static data_t data[DATASIZE];
 
 /*
  * Thread start routine that uses read/write locks.
