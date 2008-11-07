@@ -6,6 +6,7 @@ Patches Released to Source Forge:
 
 Patches Committed:
 28Oct08
+2.4.3-jobs.patch
 2.4.3-orphaned-jobs.patch
 2.4.3-migrate-log.patch
 2.4.3-migrate.patch
@@ -14,6 +15,12 @@ Patches Committed:
 2.4.3-win32-runscript-unicode-path.patch
 
 Patches being Tested:
+07Nov08
+2.4.3-jobs.patch
+kes If you start more than 60 jobs within a 1 minute period, the unique
+    jobname (critical for the daemons) can be duplicated leading to 
+    authentication failures and orphaned jobs.
+kes FD jobs that fail SD authentication were not properly cleaned up.
 03Nov08
 2.4.3-getmsg.patch
 kes  Patch to use BSOCK jcr rather than searching for it.
