@@ -5,6 +5,9 @@ Patches Released to Source Forge:
 2.4.3-orphaned-jobs.patch
 
 Patches Committed:
+18Nov08
+2.4.3-purge-bug.patch
+2.4.3-getmsg.patch
 28Oct08
 2.4.3-jobs.patch
 2.4.3-orphaned-jobs.patch
@@ -15,6 +18,12 @@ Patches Committed:
 2.4.3-win32-runscript-unicode-path.patch
 
 Patches being Tested:
+18Nov08
+2.4.3-purge-bug.patch
+kes This patch corrects appears to fix bug #1188, where a Volume can
+    be purged while it is being written.
+kes This patch used the jcr stored in the BSOCK packet during callbacks
+    to the Director rather than looking them up in the JCR list.
 07Nov08
 2.4.3-jobs.patch
 kes If you start more than 60 jobs within a 1 minute period, the unique
