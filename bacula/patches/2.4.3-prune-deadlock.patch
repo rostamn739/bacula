@@ -33,3 +33,24 @@ Index: src/lib/jcr.c
     job_end_pop(jcr);                  /* pop and call hooked routines */
  
     Dmsg1(3400, "End job=%d\n", jcr->JobId);
+Index: src/dird/ua_prune.c
+===================================================================
+--- src/dird/ua_prune.c (révision 8100)
++++ src/dird/ua_prune.c (copie de travail)
+@@ -435,8 +435,6 @@
+       return 0;                    /* cannot prune Archived volumes */
+    }
+
+-   db_lock(ua->db);
+-
+    /*
+     * Now add to the  list of JobIds for Jobs written to this Volume
+     */
+@@ -477,6 +475,5 @@
+    }
+
+ bail_out:
+-   db_unlock(ua->db);
+    return count;
+ }
+
