@@ -438,7 +438,6 @@ void free_jcr(JCR *jcr)
 
 #endif
 
-   dequeue_messages(jcr);
    lock_jcr_chain();
    jcr->dec_use_count();              /* decrement use count */
    if (jcr->use_count() < 0) {
@@ -455,6 +454,7 @@ void free_jcr(JCR *jcr)
    remove_jcr(jcr);                   /* remove Jcr from chain */
    unlock_jcr_chain();
 
+   dequeue_messages(jcr);
    job_end_pop(jcr);                  /* pop and call hooked routines */
 
    Dmsg1(3400, "End job=%d\n", jcr->JobId);
