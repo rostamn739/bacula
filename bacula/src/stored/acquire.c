@@ -647,8 +647,8 @@ void detach_dcr_from_dev(DCR *dcr)
 
    /* Detach this dcr only if attached */
    if (dcr->attached_to_dev && dev) {
-      dev->dlock();
       dcr->unreserve_device();
+      dev->dlock();
       dcr->dev->attached_dcrs->remove(dcr);  /* detach dcr from device */
       dcr->attached_to_dev = false;
 //    remove_dcr_from_dcrs(dcr);      /* remove dcr from jcr list */

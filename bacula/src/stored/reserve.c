@@ -498,6 +498,7 @@ void DCR::clear_reserved()
 void DCR::unreserve_device()
 {
    lock_volumes();
+   dev->dlock();
    if (is_reserved()) {
       clear_reserved();
       reserved_volume = false;
@@ -513,6 +514,7 @@ void DCR::unreserve_device()
          volume_unused(this);
       }
    }
+   dev->dunlock();
    unlock_volumes();
 }
 
