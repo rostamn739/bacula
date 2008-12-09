@@ -10,11 +10,11 @@ start_test()
    echo "s%  mail =%# mail = %g" >${outf}
    echo "s%  operator =%# operator =%g" >>${outf}
    cp bin/bacula-dir.conf tmp/1
-   sed -f ${outf} tmp/1 >bin/bacula-dir.conf
+   sed -f ${outf} tmp/1 > bin/bacula-dir.conf
    echo " "
    echo " "
    echo " === Starting $TestName at `date +%R:%S` ==="
-   echo " === Starting $TestName at `date +%R:%S` ===" >>working/log
+   echo " === Starting $TestName at `date +%R:%S` ===" >> working/log
    echo " "
    export zstat
 }
@@ -108,13 +108,13 @@ run_bacula()
      ./bacula-ctl-fd start
      ./bacula-ctl-dir start
      cd ..
-     cat tmp/bconcmds | bin/bconsole -c bin/bconsole.conf
+     cat tmp/bconcmds | $bin/bconsole -c bin/bconsole.conf
      return $?
    else
      cd bin
      ./bacula start 2>&1 >/dev/null
      cd ..
-     cat tmp/bconcmds | bin/bconsole -c bin/bconsole.conf  2>&1 >/dev/null
+     cat tmp/bconcmds | $bin/bconsole -c bin/bconsole.conf  2>&1 >/dev/null
      return $?
    fi
 }
@@ -122,27 +122,27 @@ run_bacula()
 run_bconsole()
 {
    if test "$debug" -eq 1 ; then
-     cat tmp/bconcmds | bin/bconsole -c bin/bconsole.conf
+     cat tmp/bconcmds | $bin/bconsole -c bin/bconsole.conf
    else
-     cat tmp/bconcmds | bin/bconsole -c bin/bconsole.conf  2>&1 >/dev/null
+     cat tmp/bconcmds | $bin/bconsole -c bin/bconsole.conf  2>&1 >/dev/null
    fi
 }
 
 run_btape()
 {
    if test "$debug" -eq 1 ; then
-     cat tmp/bconcmds | bin/btape -c bin/bacula-sd.conf DDS-4 | tee tmp/log1.out
+     cat tmp/bconcmds | $bin/btape -c bin/bacula-sd.conf DDS-4 | tee tmp/log1.out
    else
-     cat tmp/bconcmds | bin/btape -c bin/bacula-sd.conf DDS-4 2>&1 >tmp/log1.out
+     cat tmp/bconcmds | $bin/btape -c bin/bacula-sd.conf DDS-4 >tmp/log1.out 2>&1
    fi
 }
 
 run_bscan()
 {
    if test "$debug" -eq 1 ; then
-      bin/bscan $* | tee tmp/log.out
+      $bin/bscan $* | tee tmp/log.out
    else
-      bin/bscan $* 2>&1 >/dev/null
+      $bin/bscan $* 2>&1 >/dev/null
    fi
 }
 
@@ -307,6 +307,14 @@ fi
 
 # Source the configuration variables
 . ${cwd}/config
+
+working=${working:-"$cwd/working"}
+bin=${bin:-"$cwd/bin"}
+scripts=${scripts:-"$bin"}
+
+export bin
+export working
+export scripts
 
 db_name=${db_name:-"regress"}
 db_user=${db_user:-"regress"}

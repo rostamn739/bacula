@@ -13,10 +13,10 @@ scripts/cleanup
 # optimize so we don't unnecessarily unload and load slots
 #
 if test x@autochanger@ != x/dev/null; then
-   slot=`bin/@changer_script@ @autochanger@ loaded 0 @tape_drive@ $DRIVE1`
+   slot=`$scripts/@changer_script@ @autochanger@ loaded 0 @tape_drive@ $DRIVE1`
    case $slot in
    0)
-      bin/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
       init_drive @tape_drive@
       slot=$SLOT1
       ;;
@@ -29,8 +29,8 @@ if test x@autochanger@ != x/dev/null; then
       slot=$SLOT2
       ;;
    *)
-      bin/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
-      bin/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
       init_drive @tape_drive@
       slot=$SLOT1
       ;;
@@ -39,13 +39,13 @@ if test x@autochanger@ != x/dev/null; then
 # init the other slot
   case $slot in
    $SLOT1)
-      bin/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
-      bin/@changer_script@ @autochanger@ load $SLOT2 @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ load $SLOT2 @tape_drive@ $DRIVE1
       init_drive @tape_drive@
       ;;
    $SLOT2)
-      bin/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
-      bin/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ unload $slot @tape_drive@ $DRIVE1
+      $scripts/@changer_script@ @autochanger@ load $SLOT1 @tape_drive@ $DRIVE1
       init_drive @tape_drive@
       ;;
    esac

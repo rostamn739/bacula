@@ -19,6 +19,7 @@ if [ ! -d ${BACULA_SOURCE} ] ; then
    echo " "
    exit 1
 fi
+# we build and setup binaries to the $cwd/bin directory not $bin
 rm -rf build bin
 # Copy new source
 echo "Copying source from ${BACULA_SOURCE}"
@@ -33,7 +34,7 @@ check_exit_code
 cd src/win32
 make clean
 cd ../..
-make
+make -j4
 check_exit_code
 make install
 check_exit_code

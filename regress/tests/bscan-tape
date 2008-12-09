@@ -104,9 +104,9 @@ else
 fi
 
 if test "$debug" -eq 1 ; then
-  bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf DDS-4                
+  $bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf DDS-4                
 else
-  bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf DDS-4 2>&1 >/dev/null
+  $bin/bscan -w working -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf DDS-4 2>&1 >/dev/null
 fi
 
 cat <<END_OF_DATA >tmp/bconcmds
