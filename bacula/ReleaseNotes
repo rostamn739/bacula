@@ -14,7 +14,7 @@ reparse directories backed up, you must explicitly include them
 in your FileSet.
 ==============================================================
 
-Release 2.4.4
+Beta Release 2.4.4-b1
 This is an important bug fix to version 2.4.3.  All daemones are
 compatible with prior 2.4.x version.
 
@@ -30,7 +30,7 @@ Change Summary:
   about a problem when executing a program with Unicode path.
 - Apply 2.4.3-unique-inchanger.patch fix for #1175 about bad slot
   number if the volume is not in autochanger.
-- Probably fix for bug #1188 where Volume is purged while writing
+- Fix for bug #1188 where Volume is purged while writing
   on it.
 - Get message enhancement to avoid job name lookup.
 - Fix bug with job name duplication if more than 60 jobs created
