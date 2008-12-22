@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-03 15:24+0100\n"
+"POT-Creation-Date: 2008-12-22 23:08+0100\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Philipp Storz <philipp.storz@dass-it.de>\n"
 "Language-Team: \n"
@@ -456,7 +456,7 @@ msgstr "Netzwerkfehler mit FD bei %s: ERR=%s\n"
 msgid "No Job status returned from FD.\n"
 msgstr "FD hat keinen Jobstatus zurückgegeben.\n"
 
-#: src/dird/backup.c:358 src/dird/migrate.c:1105 src/dird/admin.c:89
+#: src/dird/backup.c:358 src/dird/migrate.c:1108 src/dird/admin.c:89
 #, fuzzy, c-format
 msgid "Error getting Job record for Job report: ERR=%s"
 msgstr "Fehler beim Holen des job Eintrags für den job Bericht: %s"
@@ -466,7 +466,7 @@ msgstr "Fehler beim Holen des job Eintrags für den job Bericht: %s"
 msgid "Error getting Client record for Job report: ERR=%s"
 msgstr "Fehler beim holen des Datensatzes für Volume \"%s\": ERR=%s"
 
-#: src/dird/backup.c:371 src/dird/migrate.c:1135
+#: src/dird/backup.c:371 src/dird/migrate.c:1138
 #, c-format
 msgid "Error getting Media record for Volume \"%s\": ERR=%s"
 msgstr "Fehler beim holen des Datensatzes für Volume \"%s\": ERR=%s"
@@ -1413,13 +1413,13 @@ msgstr "Socket Fehler auf %s Kommando: ERR=%s\n"
 msgid "Could not get or create a Pool record.\n"
 msgstr "Konnte keinen Pool Eintrag holen oder erzeugen.\n"
 
-#: src/dird/migrate.c:138 src/dird/migrate.c:154
-msgid "No previous Job found to migrate.\n"
-msgstr "Keinen vorherigen Job zum migrieren gefunden.\n"
-
-#: src/dird/migrate.c:144
+#: src/dird/migrate.c:127
 msgid "Could not get or create the FileSet record.\n"
 msgstr "Konnte FileSet Eintrag weder holen noch erzeugen.\n"
+
+#: src/dird/migrate.c:144 src/dird/migrate.c:154
+msgid "No previous Job found to migrate.\n"
+msgstr "Keinen vorherigen Job zum migrieren gefunden.\n"
 
 #: src/dird/migrate.c:156
 msgid "Previous Job has no data to migrate.\n"
@@ -1559,37 +1559,37 @@ msgstr "Konnte regex pattern \"%s\" nicht kompilieren ERR=%s\n"
 msgid "Regex pattern matched no Jobs to migrate.\n"
 msgstr "Regex pattern hat auf keine Jobs für die Migration zugetroffen.\n"
 
-#: src/dird/migrate.c:1143
+#: src/dird/migrate.c:1146
 #, c-format
 msgid "%s OK -- with warnings"
 msgstr "%s OK -- mit Warnungen"
 
-#: src/dird/migrate.c:1145
+#: src/dird/migrate.c:1148
 #, c-format
 msgid "%s OK"
 msgstr "%s OK"
 
-#: src/dird/migrate.c:1150
+#: src/dird/migrate.c:1153
 #, c-format
 msgid "*** %s Error ***"
 msgstr "*** %s Fehler ***"
 
-#: src/dird/migrate.c:1160
+#: src/dird/migrate.c:1163
 #, c-format
 msgid "%s Canceled"
 msgstr "%s Abgebrochen"
 
-#: src/dird/migrate.c:1169
+#: src/dird/migrate.c:1172
 #, c-format
 msgid "Inappropriate %s term code"
 msgstr "Unzutreffender %s Beendigungskode"
 
-#: src/dird/migrate.c:1179
+#: src/dird/migrate.c:1182
 #, c-format
 msgid "%s -- no files to migrate"
 msgstr "%s -- keine Dateien zur Migration."
 
-#: src/dird/migrate.c:1195
+#: src/dird/migrate.c:1198
 #, fuzzy, c-format
 msgid ""
 "Bacula %s %s (%s): %s\n"
@@ -1649,17 +1649,17 @@ msgstr ""
 "  Beendigungsstatus:      %s\n"
 "\n"
 
-#: src/dird/migrate.c:1302
+#: src/dird/migrate.c:1305
 #, c-format
 msgid "No Next Pool specification found in Pool \"%s\".\n"
 msgstr "Keine \"Next Pool\" Spezifikation in Pool \"%s\" gefunden.\n"
 
-#: src/dird/migrate.c:1308
+#: src/dird/migrate.c:1311
 #, c-format
 msgid "No Storage specification found in Next Pool \"%s\".\n"
 msgstr "Keine \"Storage\" Spezifikation in \"Next Pool\" \"%s\" gefunden.\n"
 
-#: src/dird/migrate.c:1314
+#: src/dird/migrate.c:1317
 msgid "Storage from Pool's NextPool resource"
 msgstr "Storage aus der \"NextPool\" Ressource des Pools."
 

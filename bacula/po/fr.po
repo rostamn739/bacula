@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-03 15:24+0100\n"
+"POT-Creation-Date: 2008-12-22 23:08+0100\n"
 "PO-Revision-Date: 2008-01-24 22:54+0100\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
@@ -459,7 +459,7 @@ msgstr ""
 msgid "No Job status returned from FD.\n"
 msgstr ""
 
-#: src/dird/backup.c:358 src/dird/migrate.c:1105 src/dird/admin.c:89
+#: src/dird/backup.c:358 src/dird/migrate.c:1108 src/dird/admin.c:89
 #, fuzzy, c-format
 msgid "Error getting Job record for Job report: ERR=%s"
 msgstr "Impossible de récupérer le Job du JobId=%s : ERR=%s\n"
@@ -469,7 +469,7 @@ msgstr "Impossible de récupérer le Job du JobId=%s : ERR=%s\n"
 msgid "Error getting Client record for Job report: ERR=%s"
 msgstr "Impossible de mettre à jour les informations du Volume : ERR=%s"
 
-#: src/dird/backup.c:371 src/dird/migrate.c:1135
+#: src/dird/backup.c:371 src/dird/migrate.c:1138
 #, c-format
 msgid "Error getting Media record for Volume \"%s\": ERR=%s"
 msgstr ""
@@ -1413,14 +1413,14 @@ msgstr "Erreur de socket sur la commande %s : ERR=%s\n"
 msgid "Could not get or create a Pool record.\n"
 msgstr "Impossible de récupérer ou de créer un Pool dans le catalogue.\n"
 
-#: src/dird/migrate.c:138 src/dird/migrate.c:154
-msgid "No previous Job found to migrate.\n"
-msgstr "Aucun Job trouvé pour la migration.\n"
-
-#: src/dird/migrate.c:144
+#: src/dird/migrate.c:127
 #, fuzzy
 msgid "Could not get or create the FileSet record.\n"
 msgstr "Impossible de créer la structure BSOCK cliente.\n"
+
+#: src/dird/migrate.c:144 src/dird/migrate.c:154
+msgid "No previous Job found to migrate.\n"
+msgstr "Aucun Job trouvé pour la migration.\n"
 
 #: src/dird/migrate.c:156
 #, fuzzy
@@ -1565,37 +1565,37 @@ msgstr "Impossible d'ouvrir %s : ERR=%s\n"
 msgid "Regex pattern matched no Jobs to migrate.\n"
 msgstr ""
 
-#: src/dird/migrate.c:1143
+#: src/dird/migrate.c:1146
 #, c-format
 msgid "%s OK -- with warnings"
 msgstr ""
 
-#: src/dird/migrate.c:1145
+#: src/dird/migrate.c:1148
 #, c-format
 msgid "%s OK"
 msgstr ""
 
-#: src/dird/migrate.c:1150
+#: src/dird/migrate.c:1153
 #, c-format
 msgid "*** %s Error ***"
 msgstr "*** %s Erreur ***"
 
-#: src/dird/migrate.c:1160
+#: src/dird/migrate.c:1163
 #, c-format
 msgid "%s Canceled"
 msgstr "%s Annulé"
 
-#: src/dird/migrate.c:1169
+#: src/dird/migrate.c:1172
 #, c-format
 msgid "Inappropriate %s term code"
 msgstr ""
 
-#: src/dird/migrate.c:1179
+#: src/dird/migrate.c:1182
 #, fuzzy, c-format
 msgid "%s -- no files to migrate"
 msgstr "Aucun volume trouvé pour la restauration.\n"
 
-#: src/dird/migrate.c:1195
+#: src/dird/migrate.c:1198
 #, fuzzy, c-format
 msgid ""
 "Bacula %s %s (%s): %s\n"
@@ -1657,17 +1657,17 @@ msgstr ""
 "  Statut de fin du SD :    %s\n"
 "  Statut de fin :          %s\n"
 
-#: src/dird/migrate.c:1302
+#: src/dird/migrate.c:1305
 #, c-format
 msgid "No Next Pool specification found in Pool \"%s\".\n"
 msgstr ""
 
-#: src/dird/migrate.c:1308
+#: src/dird/migrate.c:1311
 #, c-format
 msgid "No Storage specification found in Next Pool \"%s\".\n"
 msgstr ""
 
-#: src/dird/migrate.c:1314
+#: src/dird/migrate.c:1317
 #, fuzzy
 msgid "Storage from Pool's NextPool resource"
 msgstr "Sélectionnez le Pool"
