@@ -1,6 +1,10 @@
               Technical notes on version 2.4
 
 General:
+22Dec08
+kes  Modify sql_update.c to edit zeros rather than NULL in unset
+     fields. This should fix bug #1206, where apparently the user
+     has modified the Bacula schema.
 20Dec08
 kes  Backport most recent changes to compat.h and compat.cpp.
 13Dec08
