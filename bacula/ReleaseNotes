@@ -19,7 +19,7 @@ This is an important bug fix to version 2.4.3.  All daemones are
 compatible with prior 2.4.x version.
 
 Bugs Fixed:
-1192, 1110, 1175, 1188, and 1171
+1192, 1110, 1175, 1188, 1171, and 1206.
 
 Change Summary:
 - Apply 2.4.3-sd-deadlock.patch that should fix bug #1192.

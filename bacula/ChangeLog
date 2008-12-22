@@ -1,6 +1,18 @@
               Technical notes on version 2.4.x
 
 General:
+Beta Release Version 2.4.4-b2
+22Dec08
+kes  Modify sql_update.c to edit zeros rather than NULL in unset
+     fields. This should fix bug #1206, where apparently the user
+     has modified the Bacula schema.
+20Dec08
+kes  Backport most recent changes to compat.h and compat.cpp.
+13Dec08
+kes  Create and apply 2.4.3-migrate2.patch, which fixes two bugs
+     - Bug #1206 -- sql error when there are no files to migrate.
+     - Bug #1171 -- Job catalog log is not migrated during migration.
+
 Beta Release Version 2.4.4-b1
 03Dec08
 kes  Apply 2.4.3-sd-deadlock.patch that should fix bug #1192.
