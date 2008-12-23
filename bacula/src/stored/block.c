@@ -365,7 +365,7 @@ bool write_block_to_device(DCR *dcr)
       /* Create a jobmedia record for this job */
       if (!dir_create_jobmedia_record(dcr)) {
          dev->dev_errno = EIO;
-         Jmsg(jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
+         Jmsg2(jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
             dcr->VolCatInfo.VolCatName, jcr->Job);
          set_new_volume_parameters(dcr);
          stat = false;
@@ -719,7 +719,7 @@ static bool terminate_writing_volume(DCR *dcr)
    if (!dir_create_jobmedia_record(dcr)) {
       Dmsg0(190, "Error from create JobMedia\n");
       dev->dev_errno = EIO;
-       Jmsg(dcr->jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
+       Jmsg2(dcr->jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
             dcr->VolCatInfo.VolCatName, dcr->jcr->Job);
        ok = false;
        goto bail_out;
@@ -795,7 +795,7 @@ static bool do_new_file_bookkeeping(DCR *dcr)
    if (!dir_create_jobmedia_record(dcr)) {
       Dmsg0(190, "Error from create_job_media.\n");
       dev->dev_errno = EIO;
-      Jmsg(jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
+      Jmsg2(jcr, M_FATAL, 0, _("Could not create JobMedia record for Volume=\"%s\" Job=%s\n"),
            dcr->VolCatInfo.VolCatName, jcr->Job);
       terminate_writing_volume(dcr);
       dev->dev_errno = EIO;
