@@ -14,14 +14,25 @@ reparse directories backed up, you must explicitly include them
 in your FileSet.
 ==============================================================
 
-Beta Release 2.4.4-b1
+Beta Release 2.4.4-b2
 This is an important bug fix to version 2.4.3.  All daemones are
 compatible with prior 2.4.x version.
 
 Bugs Fixed:
-1192, 1110, 1175, 1188, 1171, and 1206.
+1192, 1110, 1175, 1188, 1171, 1206, and 1208.
 
 Change Summary:
+- Fix bug #1208. Inappropriate Volume purging.
+- Modify sql_update.c to edit zeros rather than NULL in unset
+  fields. This should fix bug #1206, where apparently the user
+  has modified the Bacula schema.
+- Backport most recent changes to compat.h and compat.cpp 
+  attempt to fix restore problem with accents in path. This
+  works in version 2.5.x but is not tested in 2.4.4.
+- Create and apply 2.4.3-migrate2.patch, which fixes two bugs
+  - Bug #1206 -- sql error when there are no files to migrate.
+  - Bug #1171 -- Job catalog log is not migrated during migration.
+Beta Release 2.4.4-b1
 - Apply 2.4.3-sd-deadlock.patch that should fix bug #1192.
 - Remove extra db_lock() in get_prune_list_for_volume()
 - Apply 2.4.3-prune-deadlock.patch that fixes a problem when
