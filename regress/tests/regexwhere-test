@@ -102,6 +102,7 @@ wait
 messages
 @##################################
 @$out tmp/RUN_JobG
+setdebug level=500 trace=1 storage=File
 restore strip_prefix="${cwd}" add_prefix="/tmp/bacula-restore"
 5
 cd ${cwd}/build/po
@@ -111,6 +112,7 @@ done
 yes
 wait
 messages
+setdebug level=0 trace=0 storage=File
 @##################################
 @$out tmp/RUN_JobH
 restore add_suffix=.old
