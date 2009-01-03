@@ -14,7 +14,7 @@ reparse directories backed up, you must explicitly include them
 in your FileSet.
 ==============================================================
 
-Beta Release 2.4.4-b2
+Release 2.4.4
 This is an important bug fix to version 2.4.3.  All daemones are
 compatible with prior 2.4.x version.
 
@@ -22,6 +22,9 @@ Bugs Fixed:
 1192, 1110, 1175, 1188, 1171, 1206, and 1208.
 
 Change Summary:
+- Apply fix suggested by Bruno Friedmann to configure.in to
+  find python2.5
+Beta Release Version 2.4.4-b2
 - Fix bug #1208. Inappropriate Volume purging.
 - Modify sql_update.c to edit zeros rather than NULL in unset
   fields. This should fix bug #1206, where apparently the user
