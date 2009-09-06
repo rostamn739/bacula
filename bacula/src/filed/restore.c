@@ -120,7 +120,7 @@ static void close_previous_stream(r_ctx &rctx);
 
 
 static bool verify_signature(JCR *jcr, r_ctx &rctx);
-int32_t extract_data(JCR *jcr, r_ctx &rctx, POOLMEM *buf, int32_t buflen,
+int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
                      uint64_t *addr, int flags, RESTORE_CIPHER_CTX *cipher_ctx);
 bool flush_cipher(JCR *jcr, BFILE *bfd, uint64_t *addr, int flags, 
                   RESTORE_CIPHER_CTX *cipher_ctx);
@@ -504,8 +504,9 @@ void do_restore(JCR *jcr)
                rctx.flags |= FO_WIN32DECOMP;    /* "decompose" BackupWrite data */
             }
 
-            if (extract_data(jcr, rctx, sd->msg, sd->msglen, &rctx.fileAddr, 
+            if (extract_data(jcr, &rctx.bfd, sd->msg, sd->msglen, &rctx.fileAddr,
                              rctx.flags, &rctx.cipher_ctx) < 0) {
+               rctx.extract = false;
                bclose(&rctx.bfd);
                continue;
             }
@@ -554,8 +555,9 @@ void do_restore(JCR *jcr)
                Dmsg0(130, "Restoring resource fork\n");
             }
 
-            if (extract_data(jcr, rctx, sd->msg, sd->msglen, &rctx.fork_addr, rctx.fork_flags, 
+            if (extract_data(jcr, &rctx.forkbfd, sd->msg, sd->msglen, &rctx.fork_addr, rctx.fork_flags,
                              &rctx.fork_cipher_ctx) < 0) {
+               rctx.extract = false;
                bclose(&rctx.forkbfd);
                continue;
             }
@@ -1010,10 +1012,9 @@ bool store_data(JCR *jcr, BFILE *bfd, char *data, const int32_t length, bool win
  * The flags specify whether to use sparse files or compression.
  * Return value is the number of bytes written, or -1 on errors.
  */
-int32_t extract_data(JCR *jcr, r_ctx &rctx, POOLMEM *buf, int32_t buflen,
-      uint64_t *addr, int flags, RESTORE_CIPHER_CTX *cipher_ctx)
+int32_t extract_data(JCR *jcr, BFILE *bfd, POOLMEM *buf, int32_t buflen,
+                     uint64_t *addr, int flags, RESTORE_CIPHER_CTX *cipher_ctx)
 {
-   BFILE *bfd = &rctx.bfd;
    char *wbuf;                        /* write buffer */
    uint32_t wsize;                    /* write size */
    uint32_t rsize;                    /* read size */
@@ -1113,9 +1114,7 @@ int32_t extract_data(JCR *jcr, r_ctx &rctx, POOLMEM *buf, int32_t buflen,
    return wsize;
 
 bail_out:
-   rctx.extract = false;
    return -1;
-
 }
 
 
