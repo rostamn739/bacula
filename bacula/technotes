@@ -3,15 +3,19 @@
 General:
 
 10Sep09
-ebl  Apply
+ebl  Apply patches
 3.0.2-accurate.patch
+    Fix bug #1355 Director crashes with double free in Accurate SQL query
 3.0.2-bug-1365.patch
 3.0.2-bug-1366.patch
 3.0.2-exclude-dir-containing-fd.patch
 3.0.2-exclude-dir-containing.patch
 3.0.2-exclude-dir-containing-top_level.patch
+    Fix "Exclude Dir Containing" fileset option
 3.0.2-mac-path-len.patch
+    Fixes bug #1368 ASSERT Failure on MacOS.
 3.0.2-zlib-buffer.patch
+    Fix #1364 and #1363 about compression buffer error.
 
 18Jul09
 kes  Fix bat command line input bug
