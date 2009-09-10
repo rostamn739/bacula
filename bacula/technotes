@@ -4,6 +4,10 @@ General:
 
 10Sep09
 ebl  Apply patches
+    Fix seg fault in SD bug #1371
+     3.0.2-Fix-seg-fault-in-SD-bug-1371.patch 
+    Add more info when SD connection refused
+     3.0.2-Add-more-info-when-SD-connection-refused.patch
     Fix bug #1355 Director crashes with double free in Accurate SQL query
      3.0.2-accurate.patch
     Fixes bug #1368 ASSERT Failure on MacOS.
