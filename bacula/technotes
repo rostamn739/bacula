@@ -1,6 +1,17 @@
-              Technical notes for current SVN
+              Technical notes for 3.0.3
           
 General:
+
+10Sep09
+ebl  Apply
+3.0.2-accurate.patch
+3.0.2-bug-1365.patch
+3.0.2-bug-1366.patch
+3.0.2-exclude-dir-containing-fd.patch
+3.0.2-exclude-dir-containing.patch
+3.0.2-exclude-dir-containing-top_level.patch
+3.0.2-mac-path-len.patch
+3.0.2-zlib-buffer.patch
 
 18Jul09
 kes  Fix bat command line input bug
