@@ -4,12 +4,13 @@ General:
 
 Release Version 3.0.3:
 10Sep09
-ebl Fixes bug #1355 Director crashes with double free in Accurate SQL query
-ebl Fixes bug #1365 and #1366 about MacOSX resource forks. 
+kes Add more info when SD-connection refused
+kes Fixes bug #1371 about segfault in SD
+kes Fixes bug #1355 Director crashes with double free in Accurate SQL query
+mvw Fixes bug #1365 and #1366 about MacOSX resource forks. 
 ebl Fixes bug #1369 about "Exclude Dir Containing" fileset option
-ebl Fixes bug #1368 ASSERT Failure on MacOS.
+kes Fixes bug #1368 ASSERT Failure on MacOS.
 ebl Fixes bug #1364 and #1363 about compression buffer error.
-
 	
 Release Version 3.0.2:
 16Jul09
