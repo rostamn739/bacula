@@ -3,15 +3,19 @@
 General:
 
 Release Version 3.0.3:
+18Sep09
+ebl  tweak space on projects file
+kes  Fix seg fault in ignoredir code
+kes  Apply Frank's slash patch
 10Sep09
-kes Add more info when SD-connection refused
-kes Fixes bug #1371 about segfault in SD
-kes Fixes bug #1355 Director crashes with double free in Accurate SQL query
-mvw Fixes bug #1365 and #1366 about MacOSX resource forks. 
-ebl Fixes bug #1369 about "Exclude Dir Containing" fileset option
-kes Fixes bug #1368 ASSERT Failure on MacOS.
-ebl Fixes bug #1364 and #1363 about compression buffer error.
-	
+kes  Add more info when SD-connection refused
+kes  Fixes bug #1371 about segfault in SD
+kes  Fixes bug #1355 Director crashes with double free in Accurate SQL query
+mvw  Fixes bug #1365 and #1366 about MacOSX resource forks. 
+ebl  Fixes bug #1369 about "Exclude Dir Containing" fileset option
+kes  Fixes bug #1368 ASSERT Failure on MacOS.
+ebl  Fixes bug #1364 and #1363 about compression buffer error.
+        
 Release Version 3.0.2:
 16Jul09
 ebl  Fix #1323 about a problem when mounting a requested volume
@@ -58,7 +62,7 @@ mvw  Fix 2 rather big bugs in the xattr and acl code and fix a small
      memory leak on a particular code path for Linux xattr/acl handling.
 ebl  Update FileSetId when initializing job.
 ebl  Add '*' when volume is online when displaying volume list in restore.
-	Should complete project 31.
+        Should complete project 31.
 21Jun09
 kes  Re-fix bug #1311 if MaxDiffInterval exceeded ensure job upgraded
 17Jun09
@@ -111,7 +115,7 @@ kes  Fix Show FileSet command to handle spaces
 kes  Add --with-bsrdir and --with-logdir for placement of Bacula bsr
      files and Bacula log files.
 
-	
+        
 Release Version 3.0.1:
 29Apr09
 kes  Fix bug #1282 Setting job.Priority in python crashes director by

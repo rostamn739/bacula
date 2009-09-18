@@ -4,7 +4,7 @@
   Bacula code: Total files = 1,009 Total lines = 206,204 (Using SLOCCount)
 
 Note, if you are not already running 3.0.x, read the 3.0.x release notes 
-below.  Important!!!
+  below.  Important!!!
 
 Version 3.0.3 is primarily a important bug fix update to version 3.0.2.
 
@@ -13,12 +13,14 @@ Bug fixes:
  1355, 1363, 1364, 1365, 1366, 1368, 1369, 1370, 1371
 
 Compatibility:
-Like always, both the Director and Storage daemon must be upgraded at
-the same time.
+ As always, both the Director and Storage daemon must be upgraded at
+ the same time.
 
-Older 3.0.x and possibly 2.4.x File Daemons are compatible with the 3.0.3
-Director and Storage daemons. It should be no need to upgrade older File
-Daemon.
+ Older 3.0.x and possibly 2.4.x File Daemons are compatible with the 3.0.3
+ Director and Storage daemons. There should be no need to upgrade older File
+ Daemons.
+
+
 
 ============ Documentation improvements needed ==================
 

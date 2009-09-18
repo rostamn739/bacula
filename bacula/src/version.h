@@ -1,11 +1,11 @@
 /*
- *  Version $Id$
+ *
  */
 
 #undef  VERSION
 #define VERSION "3.0.3"
-#define BDATE   "10 September 2009"
-#define LSMDATE "10Sep09"
+#define BDATE   "18 September 2009"
+#define LSMDATE "18Sep09"
 
 #define PROG_COPYRIGHT "Copyright (C) %d-2009 Free Software Foundation Europe e.V.\n"
 #define BYEAR "2009"       /* year for copyright messages in progs */
