@@ -3,6 +3,8 @@
 General:
 
 Release Version 3.0.3:
+ebl  Use old code for selecting file during
+     restore.
 kes  Cherry-pick 3.1.x commits
      tweak space on projects file
      Fix seg fault in ignoredir code

@@ -1088,7 +1088,7 @@ static bool build_directory_tree(UAContext *ua, RESTORE_CTX *rx)
    ua->info_msg(_("\nBuilding directory tree for JobId(s) %s ...  "),
                 rx->JobIds);
 
-#define new_get_file_list
+/* Disable accurate query waiting for using StartTime instead of FileId in file selection */
 #ifdef new_get_file_list
    if (!db_get_file_list(ua->jcr, ua->db, rx->JobIds, insert_tree_handler, (void *)&tree)) {
       ua->error_msg("%s", db_strerror(ua->db));
