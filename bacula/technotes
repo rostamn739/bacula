@@ -3,6 +3,7 @@
 General:
 
 Release Version 3.0.3:
+kes  Fix bug #1382 newly created disk volumes -> file not found warning
 kes  Fix Alpha ifdefing -- should fix bug #1359
 ebl  Use old code for selecting file during
      restore.
