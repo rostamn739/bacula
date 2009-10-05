@@ -3,6 +3,9 @@
 General:
 
 Release Version 3.0.3:
+05Oct09
+kes  Backport part of one possible fix from bug #1346
+03Oct09
 kes  Fix bug #1382 newly created disk volumes -> file not found warning
 kes  Fix Alpha ifdefing -- should fix bug #1359
 ebl  Use old code for selecting file during

@@ -145,6 +145,7 @@ mount_next_vol:
       autochanger = false;
       VolCatInfo.Slot = 0;
       ask = retry >= 2;
+      do_find = true;           /* do find_a_volume if we retry */
    }
    Dmsg1(150, "autoload_dev returns %d\n", autochanger);
    /*
