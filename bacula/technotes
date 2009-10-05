@@ -4,6 +4,7 @@ General:
 
 Release Version 3.0.3:
 05Oct09
+kes  Fix concurrent Job recycle bug #1288
 kes  Backport part of one possible fix from bug #1346
 03Oct09
 kes  Fix bug #1382 newly created disk volumes -> file not found warning
