@@ -3,6 +3,10 @@
 General:
 
 Release Version 3.0.3:
+=======
+11Oct09
+kes  Make fix for VirtualFull changing device based on suggestion by
+     Nicolae Mihalache <mache@abcpages.com>
 05Oct09
 kes  Fix concurrent Job recycle bug #1288
 kes  Backport part of one possible fix from bug #1346
