@@ -5,6 +5,8 @@ General:
 Release Version 3.0.3:
 =======
 11Oct09
+kes  Apply Graham's idea for recovering from disk full by recursing
+     when doing fixup_write_error ...
 kes  Make fix for VirtualFull changing device based on suggestion by
      Nicolae Mihalache <mache@abcpages.com>
 05Oct09
