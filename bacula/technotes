@@ -3,7 +3,8 @@
 General:
 
 Release Version 3.0.3:
-=======
+13Oct09
+ebl  Fix #1352 about double free with regexp and big filenames on windows
 11Oct09
 kes  Apply Graham's idea for recovering from disk full by recursing
      when doing fixup_write_error ...
