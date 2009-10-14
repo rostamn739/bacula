@@ -10,7 +10,8 @@ Version 3.0.3 is primarily a important bug fix update to version 3.0.2.
 
 Changes since 3.0.2:
 Bug fixes:
- 1355, 1363, 1364, 1365, 1366, 1368, 1369, 1370, 1371
+ 1288, 1346, 1352, 1359, 1355, 1363, 1364, 1365, 1366, 1368, 1369,
+ 1370, 1371, 1382
 
 Compatibility:
  As always, both the Director and Storage daemon must be upgraded at
