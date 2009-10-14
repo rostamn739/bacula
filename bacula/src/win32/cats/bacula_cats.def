@@ -24,6 +24,7 @@ _ZN9dbid_listC2Ev
 _ZN9dbid_listD1Ev
 _ZN9dbid_listD2Ev
 _Z13_dbg_print_dbP3JCRP6_iobuf
+_Z15db_list_handlerPviPPc
  
 ; sql_create.o
 _Z20db_create_job_recordP3JCRP4B_DBP7JOB_DBR
