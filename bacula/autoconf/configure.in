@@ -2605,6 +2605,14 @@ darwin)
    PFILES="${PFILES} \
       platforms/darwin/Makefile"
   ;;
+osx)
+   DISTVER=`uname -r`
+   TAPEDRIVE="/dev/nst0"
+   PSCMD="ps -e -o pid,command"
+   MACOSX=macosx
+   PFILES="${PFILES} \
+      platforms/osx/Makefile"
+  ;;
 debian)
    dnl Make sure hostname is resolved
    ping -c 1 $hostname 2>&1 1>/dev/null

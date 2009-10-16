@@ -3,6 +3,7 @@
 General:
 
 Release Version 3.0.3:
+kes  Integrate patch for building dmg on OSX from Lorenz Schori <lo@znerol.ch>
 13Oct09
 ebl  Fix #1352 about double free with regexp and big filenames on windows
 11Oct09
