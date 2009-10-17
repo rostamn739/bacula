@@ -191,6 +191,7 @@ public:
    const char *get_ActionName(bool past); /* in lib/jcr.c */
    void set_JobLevel(int32_t JobLevel); /* in lib/jcr.c */
    void set_JobType(int32_t JobType);  /* in lib/jcr.c */
+   void setJobStatus(int32_t JobStatus); /* in lib/jcr.c */
    bool JobReads();                    /* in lib/jcr.c */
 
    /* Global part of JCR common to all daemons */
