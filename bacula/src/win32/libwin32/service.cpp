@@ -166,7 +166,7 @@ int baculaServiceMain()
    if (have_service_api) {            /* New style service API */
       /* Tell OS where to dispatch service calls to us */
       SERVICE_TABLE_ENTRY dispatchTable[] = {
-         {APP_NAME, (LPSERVICE_MAIN_FUNCTION)serviceStartCallback},
+         {(char *)APP_NAME, (LPSERVICE_MAIN_FUNCTION)serviceStartCallback},
          {NULL, NULL}};
 
       /* Start the service control dispatcher */
