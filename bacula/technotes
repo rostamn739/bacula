@@ -3,7 +3,9 @@
 General:
 
 Release Version 3.0.3:
+16Oct09
 kes  Integrate patch for building dmg on OSX from Lorenz Schori <lo@znerol.ch>
+kes  Fix bug #1391 Job status improperly set due to subtle variable overload problem
 13Oct09
 ebl  Fix #1352 about double free with regexp and big filenames on windows
 11Oct09
