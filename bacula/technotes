@@ -3,6 +3,8 @@
 General:
 
 Release Version 3.0.3:
+18Oct09
+kes  Apply James' fix for some Exchange plugin crashes
 16Oct09
 kes  Integrate patch for building dmg on OSX from Lorenz Schori <lo@znerol.ch>
 kes  Fix bug #1391 Job status improperly set due to subtle variable overload problem
