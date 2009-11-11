@@ -32,10 +32,8 @@
  * they were saved using a filed on the same platform.
  *
  * Currently we support the following OSes:
- *   - FreeBSD (Extended Attributes)
  *   - Darwin (Extended Attributes)
  *   - Linux (Extended Attributes)
- *   - NetBSD (Extended Attributes)
  *   - Solaris (Extended Attributes and Extensible Attributes)
  *
  *   Written by Marco van Wieringen, November MMVIII
@@ -119,9 +117,7 @@ static bool send_xattr_stream(JCR *jcr, int stream)
  * Start with the generic interface used by most OS-es.
  */
 #if defined(HAVE_DARWIN_OS) \
-   || defined(HAVE_FREEBSD_OS) \
-   || defined(HAVE_LINUX_OS) \
-   || defined(HAVE_NETBSD_OS)
+   || defined(HAVE_LINUX_OS)
        
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
@@ -181,7 +177,7 @@ static void xattr_drop_internal_table(xattr_t *xattr_value_list)
 }
 
 /*
- * The xattr stream for OSX, FreeBSD, Linux and NetBSD is a serialized stream of bytes
+ * The xattr stream for OSX, Linux is a serialized stream of bytes
  * which encodes one or more xattr_t structures.
  *
  * The Serialized stream consists of the following elements:
@@ -510,24 +506,6 @@ static bool darwin_parse_xattr_stream(JCR *jcr, int stream)
       return true;                    /* non-fatal error */
    }
 }
-#elif defined(HAVE_FREEBSD_OS)
-static bool freebsd_build_xattr_streams(JCR *jcr, FF_PKT *ff_pkt)
-{
-   return generic_xattr_build_streams(jcr, ff_pkt, STREAM_XATTR_FREEBSD);
-}
-
-static bool freebsd_parse_xattr_stream(JCR *jcr, int stream)
-{
-   switch (stream) {
-   case STREAM_XATTR_FREEBSD:
-      return generic_xattr_parse_streams(jcr);
-   default:
-      Jmsg2(jcr, M_WARNING, 0, 
-         _("Can't restore Extended Attributes of %s - incompatible xattr stream encountered - %d\n"),
-         jcr->last_fname, stream);
-      return true;                    /* non-fatal error */
-   }
-}
 #elif defined(HAVE_LINUX_OS)
 static bool linux_build_xattr_streams(JCR *jcr, FF_PKT *ff_pkt)
 {
@@ -546,25 +524,6 @@ static bool linux_parse_xattr_stream(JCR *jcr, int stream)
       return true;                    /* non-fatal error */
    }
 }
-#elif defined(HAVE_NETBSD_OS)
-static bool netbsd_build_xattr_streams(JCR *jcr, FF_PKT *ff_pkt)
-{
-   return generic_xattr_build_streams(jcr, ff_pkt, STREAM_XATTR_NETBSD);
-}
-
-static bool netbsd_parse_xattr_stream(JCR *jcr, int stream)
-{
-   switch (stream) {
-   case STREAM_XATTR_NETBSD:
-      return generic_xattr_parse_streams(jcr);
-   default:
-      Jmsg2(jcr, M_WARNING, 0, 
-         _("Can't restore Extended Attributes of %s - incompatible xattr stream encountered - %d\n"),
-         jcr->last_fname, stream);
-      return true;                    /* non-fatal error */
-   }
-}
-#endif
 #elif defined(HAVE_SUN_OS)
 /*
  * Solaris extended attributes were introduced in Solaris 9

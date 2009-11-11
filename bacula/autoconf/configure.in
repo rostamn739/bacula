@@ -2409,7 +2409,21 @@ fi
 dnl
 dnl Check for XATTR support
 dnl
-support_xattr=auto
+case $DISTNAME in
+freebsd)
+   #
+   # FreeBSD gives false positives on the xattr function but seems to have problems compiling the code
+   # for now disable the checks on FreeBSD, Bacula 3.1.x has proper support for xattr on *BSD
+   #
+   support_xattr=no
+   ;;
+netbsd)
+   support_xattr=no
+   ;;
+*)
+   support_xattr=auto
+   ;;
+esac
 AC_ARG_ENABLE(xattr,
    AC_HELP_STRING([--disable-xattr], [disable xattr support @<:@default=auto@:>@]),
    [
