@@ -34,6 +34,7 @@ setdebug level=400 trace=1 client=Tibs
 restore where=c:/tmp/xxx select storage=File
 unmark *
 mark *
+lsmark
 done
 yes
 wait
