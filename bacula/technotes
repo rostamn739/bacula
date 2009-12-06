@@ -2,6 +2,9 @@
           
 General:
 
+Release Version 3.0.3a: (Windows only)
+ebl  Fix #1403 about windows directory attributes not well restored
+
 Release Version 3.0.3:
 18Oct09
 kes  Apply James' fix for some Exchange plugin crashes
