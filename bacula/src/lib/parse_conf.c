@@ -896,10 +896,10 @@ bool CONFIG::parse_config()
             } else if (token == T_UTF16_BOM) {
                scan_err0(lc, _("Currently we cannot handle UTF-16 source files. "
                    "Please convert the conf file to UTF-8\n"));
-               return 0;
+               goto bail_out;
             } else if (token != T_IDENTIFIER) {
                scan_err1(lc, _("Expected a Resource name identifier, got: %s"), lc->str);
-               return 0;
+               goto bail_out;
             }
             for (i=0; resources[i].name; i++) {
                if (strcasecmp(resources[i].name, lc->str) == 0) {
@@ -915,7 +915,7 @@ bool CONFIG::parse_config()
             }
             if (state == p_none) {
                scan_err1(lc, _("expected resource name, got: %s"), lc->str);
-               return 0;
+               goto bail_out;
             }
             break;
          case p_resource:
@@ -926,7 +926,7 @@ bool CONFIG::parse_config()
             case T_IDENTIFIER:
                if (level != 1) {
                   scan_err1(lc, _("not in resource definition: %s"), lc->str);
-                  return 0;
+                  goto bail_out;
                }
                for (i=0; items[i].name; i++) {
                   if (strcasecmp(items[i].name, lc->str) == 0) {
@@ -937,7 +937,7 @@ bool CONFIG::parse_config()
                         Dmsg1 (900, "in T_IDENT got token=%s\n", lex_tok_to_str(token));
                         if (token != T_EQUALS) {
                            scan_err1(lc, _("expected an equals, got: %s"), lc->str);
-                           return 0;
+                           goto bail_out;
                         }
                      }
                      Dmsg1(800, "calling handler for %s\n", items[i].name);
@@ -952,7 +952,7 @@ bool CONFIG::parse_config()
                   Dmsg1(900, "Keyword = %s\n", lc->str);
                   scan_err1(lc, _("Keyword \"%s\" not permitted in this resource.\n"
                      "Perhaps you left the trailing brace off of the previous resource."), lc->str);
-                  return 0;
+                  goto bail_out;
                }
                break;
 
@@ -962,7 +962,7 @@ bool CONFIG::parse_config()
                Dmsg0(900, "T_EOB => define new resource\n");
                if (res_all.hdr.name == NULL) {
                   scan_err0(lc, _("Name not specified for resource"));
-                  return 0;
+                  goto bail_out;
                }
                save_resource(res_type, items, pass);  /* save resource */
                break;
@@ -973,17 +973,17 @@ bool CONFIG::parse_config()
             default:
                scan_err2(lc, _("unexpected token %d %s in resource definition"),
                   token, lex_tok_to_str(token));
-               return 0;
+               goto bail_out;
             }
             break;
          default:
             scan_err1(lc, _("Unknown parser state %d\n"), state);
-            return 0;
+            goto bail_out;
          }
       }
       if (state != p_none) {
          scan_err0(lc, _("End of conf file reached with unclosed resource."));
-         return 0;
+         goto bail_out;
       }
       if (debug_level >= 900 && pass == 2) {
          int i;
@@ -995,6 +995,11 @@ bool CONFIG::parse_config()
    }
    Dmsg0(900, "Leave parse_config()\n");
    return 1;
+bail_out:
+   if (lc) {
+      lc = lex_close_file(lc);
+   }
+   return 0;
 }
 
 const char *get_default_configdir()
