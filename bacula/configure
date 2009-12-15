@@ -41218,7 +41218,21 @@ _ACEOF
    fi
 fi
 
-support_xattr=auto
+case $DISTNAME in
+freebsd)
+   #
+   # FreeBSD gives false positives on the xattr function but seems to have problems compiling the code
+   # for now disable the checks on FreeBSD, Bacula 3.1.x has proper support for xattr on *BSD
+   #
+   support_xattr=no
+   ;;
+netbsd)
+   support_xattr=no
+   ;;
+*)
+   support_xattr=auto
+   ;;
+esac
 # Check whether --enable-xattr was given.
 if test "${enable_xattr+set}" = set; then
   enableval=$enable_xattr;
