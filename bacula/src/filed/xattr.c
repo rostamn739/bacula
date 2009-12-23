@@ -524,6 +524,7 @@ static bool linux_parse_xattr_stream(JCR *jcr, int stream)
       return true;                    /* non-fatal error */
    }
 }
+#endif
 #elif defined(HAVE_SUN_OS)
 /*
  * Solaris extended attributes were introduced in Solaris 9
