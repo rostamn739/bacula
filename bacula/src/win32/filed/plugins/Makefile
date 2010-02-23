@@ -42,6 +42,9 @@ EXCHANGE_OBJS = \
 	$(OBJDIR)/dbi_node.o \
 	$(OBJDIR)/file_node.o
 
+SYSTEMSTATE_OBJS = \
+	$(OBJDIR)/systemstate-fd.o
+
 LIBS_DLL = \
 	$(LIBS_SSL) \
 	$(LIBS_CRYPTO) \
@@ -58,13 +61,16 @@ LIBS_DLL = \
 
 .PHONY: all clean
 
-all: $(BINDIR)/exchange-fd.dll
+all: $(BINDIR)/exchange-fd.dll $(BINDIR)/systemstate-fd.dll
 
 clean:
 	@echo "Cleaning `pwd`"
 	$(call clean_obj,$(EXCHANGE_OBJS))
 	$(call clean_exe,$(BINDIR)/exchange-fd.dll)
 	$(ECHO_CMD)rm -f $(OBJDIR)/exchange-fd.a $(LIBDIR)/libexchange-fd.a
+	$(call clean_obj,$(SYSTEMSTATE_OBJS))
+	$(call clean_exe,$(BINDIR)/systemstate-fd.dll)
+	$(ECHO_CMD)rm -f $(OBJDIR)/systemstate-fd.a $(LIBDIR)/libsystemstate-fd.a
 	$(ECHO_CMD)rm -rf $(OBJDIRS)
 
 #
@@ -85,6 +91,14 @@ $(BINDIR)/exchange-fd.dll: $(EXCHANGE_OBJS) exchange-fd.def
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/exchange-fd.a $^ $(LIBS_DLL) -o $@
+
+$(BINDIR)/systemstate-fd.dll: DLL_DEFINE=BUILDING_DLL
+
+$(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def
+	@echo "Linking $@"
+	$(call checkdir,$@)
+	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/systemstate-fd.a $^ $(LIBS_DLL) -o $@
+
 
 include $(BUILDDIR)/Makefile.rules
 
