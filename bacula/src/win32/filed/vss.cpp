@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2005-2008 Free Software Foundation Europe e.V.
+   Copyright (C) 2005-2010 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -74,7 +74,6 @@ void VSSInit()
          return;
       }
    /* Vista or Longhorn or later */
-//       } else if (g_MajorVersion == 6 && g_MinorVersion == 0) {
    } else if (g_MajorVersion >= 6) {
       g_pVSSClient = new VSSClientVista();
       atexit(VSSCleanup);
@@ -121,30 +120,31 @@ VSSClient::~VSSClient()
    }
 
    DestroyWriterInfo();
-   delete (alist*)m_pAlistWriterState;
-   delete (alist*)m_pAlistWriterInfoText;
+   delete m_pAlistWriterState;
+   delete m_pAlistWriterInfoText;
 
    // Call CoUninitialize if the CoInitialize was performed successfully
    if (m_bCoInitializeCalled)
       CoUninitialize();
 }
 
-BOOL VSSClient::InitializeForBackup()
+bool VSSClient::InitializeForBackup(JCR *jcr)
 {
     //return Initialize (VSS_CTX_BACKUP);
+   m_jcr = jcr;
    return Initialize(0);
 }
 
 
 
 
-BOOL VSSClient::GetShadowPath(const char *szFilePath, char *szShadowPath, int nBuflen)
+bool VSSClient::GetShadowPath(const char *szFilePath, char *szShadowPath, int nBuflen)
 {
    if (!m_bBackupIsInitialized)
-      return FALSE;
+      return false;
 
    /* check for valid pathname */
-   BOOL bIsValidName;
+   bool bIsValidName;
    
    bIsValidName = strlen(szFilePath) > 3;
    if (bIsValidName)
@@ -159,23 +159,23 @@ BOOL VSSClient::GetShadowPath(const char *szFilePath, char *szShadowPath, int nB
          if (WideCharToMultiByte(CP_UTF8,0,m_szShadowCopyName[nDriveIndex],-1,szShadowPath,nBuflen-1,NULL,NULL)) {
             nBuflen -= (int)strlen(szShadowPath);
             bstrncat(szShadowPath, szFilePath+2, nBuflen);
-            return TRUE;
+            return true;
          }
       }
    }
    
    bstrncpy(szShadowPath, szFilePath, nBuflen);
    errno = EINVAL;
-   return FALSE;   
+   return false;   
 }
 
-BOOL VSSClient::GetShadowPathW(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen)
+bool VSSClient::GetShadowPathW(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen)
 {
    if (!m_bBackupIsInitialized)
-      return FALSE;
+      return false;
 
    /* check for valid pathname */
-   BOOL bIsValidName;
+   bool bIsValidName;
    
    bIsValidName = wcslen(szFilePath) > 3;
    if (bIsValidName)
@@ -189,39 +189,39 @@ BOOL VSSClient::GetShadowPathW(const wchar_t *szFilePath, wchar_t *szShadowPath,
          wcsncpy(szShadowPath, m_szShadowCopyName[nDriveIndex], nBuflen);
          nBuflen -= (int)wcslen(m_szShadowCopyName[nDriveIndex]);
          wcsncat(szShadowPath, szFilePath+2, nBuflen);
-         return TRUE;
+         return true;
       }
    }
    
    wcsncpy(szShadowPath, szFilePath, nBuflen);
    errno = EINVAL;
-   return FALSE;   
+   return false;   
 }
 
 
 const size_t VSSClient::GetWriterCount()
 {
-   alist* pV = (alist*)m_pAlistWriterInfoText;
+   alist* pV = m_pAlistWriterInfoText;
    return pV->size();
 }
 
 const char* VSSClient::GetWriterInfo(int nIndex)
 {
-   alist* pV = (alist*)m_pAlistWriterInfoText;
+   alist* pV = m_pAlistWriterInfoText;
    return (char*)pV->get(nIndex);
 }
 
 
 const int VSSClient::GetWriterState(int nIndex)
 {
-   alist* pV = (alist*)m_pAlistWriterState;   
-   return (intptr_t)pV->get(nIndex);
+   alist* pV = m_pAlistWriterState;   
+   return (int64_t)pV->get(nIndex);
 }
 
 void VSSClient::AppendWriterInfo(int nState, const char* pszInfo)
 {
-   alist* pT = (alist*) m_pAlistWriterInfoText;
-   alist* pS = (alist*) m_pAlistWriterState;
+   alist* pT = m_pAlistWriterInfoText;
+   alist* pS = m_pAlistWriterState;
 
    pT->push(bstrdup(pszInfo));
    pS->push((void*)nState);   
@@ -229,8 +229,8 @@ void VSSClient::AppendWriterInfo(int nState, const char* pszInfo)
 
 void VSSClient::DestroyWriterInfo()
 {
-   alist* pT = (alist*)m_pAlistWriterInfoText;
-   alist* pS = (alist*)m_pAlistWriterState;
+   alist* pT = m_pAlistWriterInfoText;
+   alist* pS = m_pAlistWriterState;
 
    while (!pT->empty())
       free(pT->pop());
