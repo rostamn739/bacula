@@ -19,7 +19,8 @@ INCLUDES = \
 	$(INCLUDE_ZLIB) \
 	$(INCLUDE_OPENSSL) \
 	-I$(MAINDIR)/src \
-	-I$(MAINDIR)/src/filed
+	-I$(MAINDIR)/src/filed \
+	-I$(MAINDIR)/src/win32/filed
 
 DEFINES = \
 	$(HAVES)
