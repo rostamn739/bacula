@@ -69,6 +69,7 @@ public:
     void DestroyWriterInfo();
     void AppendWriterInfo(int nState, const char* pszInfo);
     const bool  IsInitialized() { return m_bBackupIsInitialized; };
+    IUnknown *GetVssObject() { return m_pVssObject; };
          
 private:
     virtual bool Initialize(DWORD dwContext, bool bDuringRestore = FALSE) = 0;
