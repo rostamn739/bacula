@@ -84,7 +84,6 @@ class IXMLDOMDocument;
 #define uuid(x)
 
 #ifdef B_VSS_XP
-// #pragma message("compile VSS for Windows XP")   
    #define VSSClientGeneric VSSClientXP
    
    #include "inc/WinXP/vss.h"
@@ -94,7 +93,6 @@ class IXMLDOMDocument;
 #endif
 
 #ifdef B_VSS_W2K3
-// #pragma message("compile VSS for Windows 2003")
    #define VSSClientGeneric VSSClient2003
    
    #include "inc/Win2003/vss.h"
@@ -103,7 +101,6 @@ class IXMLDOMDocument;
 #endif
 
 #ifdef B_VSS_VISTA
-// #pragma message("compile VSS for Vista")
    #define VSSClientGeneric VSSClientVista
 
    #include "inc/Win2003/vss.h"
