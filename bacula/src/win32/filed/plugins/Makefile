@@ -46,6 +46,9 @@ EXCHANGE_OBJS = \
 SYSTEMSTATE_OBJS = \
 	$(OBJDIR)/systemstate-fd.o
 
+BPIPE_OBJS = \
+	$(OBJDIR)/bpipe-fd.o
+
 LIBS_DLL = \
 	$(LIBS_SSL) \
 	$(LIBS_CRYPTO) \
@@ -62,7 +65,7 @@ LIBS_DLL = \
 
 .PHONY: all clean
 
-all: $(BINDIR)/exchange-fd.dll $(BINDIR)/systemstate-fd.dll
+all: $(BINDIR)/exchange-fd.dll $(BINDIR)/systemstate-fd.dll  $(BINDIR)/bpipe-fd.dll
 
 clean:
 	@echo "Cleaning `pwd`"
@@ -99,6 +102,14 @@ $(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/systemstate-fd.a $^ $(LIBS_DLL) -o $@
+
+$(BINDIR)/bpipe-fd.dll: DLL_DEFINE=BUILDING_DLL
+
+$(BINDIR)/bpipe-fd.dll: $(BPIPE_OBJS) bpipe-fd.def
+	@echo "Linking $@"
+	$(call checkdir,$@)
+	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/bpipe-fd.a $^ $(LIBS_DLL) -o $@
+
 
 
 include $(BUILDDIR)/Makefile.rules
