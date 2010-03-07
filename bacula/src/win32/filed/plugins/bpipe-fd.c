@@ -301,7 +301,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
    sp->statp.st_ctime = now;
    sp->statp.st_mtime = now;
    sp->statp.st_atime = now;
-   sp->statp.st_size = -1;
+   sp->statp.st_size = 0;
    sp->statp.st_blksize = 4096;
    sp->statp.st_blocks = 1;
    p_ctx->backup = true;
@@ -366,7 +366,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
             return bRC_Error;
          }
       }
-//    bmicrosleep(1,0);         /* let pipe connect */
+      bmicrosleep(1,0);         /* let pipe connect */
       break;
 
    case IO_READ:

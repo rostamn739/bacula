@@ -105,11 +105,10 @@ $(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def
 
 $(BINDIR)/bpipe-fd.dll: DLL_DEFINE=BUILDING_DLL
 
-$(BINDIR)/bpipe-fd.dll: $(BPIPE_OBJS) bpipe-fd.def
+$(BINDIR)/bpipe-fd.dll: $(BPIPE_OBJS) bpipe-fd.def $(LIBS_BACULA)
 	@echo "Linking $@"
 	$(call checkdir,$@)
-	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/bpipe-fd.a $^ $(LIBS_DLL) -o $@
-
+	$(ECHO_CMD)$(CXX) $(CFLAGS) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/bpipe-fd.a $^ $(LIBS_DLL) -o $@
 
 
 include $(BUILDDIR)/Makefile.rules

@@ -5,7 +5,13 @@
 #  Written by Robert Nelson, June 2006
 #
 
-include ../Makefile.inc
+#
+# Change the following depending on where this directory is located
+#  in the Bacula tree.	It should point to the src/win32 directory.
+BUILDDIR = ..
+
+
+include $(BUILDDIR)/Makefile.inc
 
 INCLUDES = \
 	-I. \
@@ -87,9 +93,9 @@ clean:
 $(BINDIR)/bacula-fd.exe: $(FILED_OBJS) $(LIBS_BACULA)
 	$(call link_winapp,$(FILED_LIBS))
 
-$(OBJDIR)/winres.res: ../libwin32/winres.rc
+$(OBJDIR)/winres.res: $(BUILDDIR)/libwin32/winres.rc
 	@echo "Compiling $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(WINDRES) $(INCLUDE_ICONS) -O coff $< -o $@
 
-include ../Makefile.rules
+include $(BUILDDIR)/Makefile.rules
