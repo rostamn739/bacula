@@ -1,10 +1,20 @@
+#
+#  Makefile for Win32/Win64 Bacula File daemon
+#
+#  If called make win64=yes the Win64 version will be built
+#     otherwise the Win32 version will be built.
+#
+#  If called with bat=no, bat will not be built, otherwise it will be
+#     built.
+#
+
 ECHO_CMD=@
 
 WIN32_DIRS=lib filed filed/plugins console scripts
 
 WIN64_DIRS=lib filed filed/plugins console scripts
 
-ifeq ($(WIN64),yes)
+ifeq ($(win64),yes)
 	 DIRS=$(WIN64_DIRS)
 	 INSTALLER=win64_installer
 	 SPECIAL=bsmtp
@@ -13,6 +23,10 @@ else
 	 INSTALLER=win32_installer
 	 SPECIAL=bat bsmtp
 endif
+
+ifeq ($(bat),no)
+	 SPECIAL=bsmtp
+endif	     
 
 .PHONY: $(DIRS) clean all Makefile.inc win32_installer full_win32_installer \
 	 win64_installer bsmtp
@@ -97,7 +111,8 @@ Makefile.inc:
 	BUILDDIR=`(pwd)`; \
 	MAINDIR=`(cd ../..;pwd)`; \
 	sed \
-		-e "s^@WIN64@^$${WIN64}^" \
+		-e "s^@WIN64@^$${win64}^" \
+		-e "s^@BAT@^$${bat}^" \
 		-e "s^@WIN32DEPKGS@^$${DEPKGSDIR}^" \
 		-e "s^@WIN32DEPKGS32@^$${DEPKGSDIR32}^" \
 		-e "s^@WIN32BUILDDIR@^$${BUILDDIR}^" \

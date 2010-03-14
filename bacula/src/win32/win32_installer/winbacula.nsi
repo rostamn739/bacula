@@ -499,6 +499,7 @@ Section "Bat Console" SecBatConsole
 
   SetOutPath "$INSTDIR"
 
+!if "${BUILD_BAT}" == "yes"
   Call InstallCommonFiles
   File "${SRC_DIR}\QtCore4.dll"
   File "${SRC_DIR}\QtGui4.dll"
@@ -518,6 +519,8 @@ Section "Bat Console" SecBatConsole
   ; Create Start Menu entry
   CreateShortCut "$SMPROGRAMS\Bacula\Bat.lnk" "$INSTDIR\bat.exe" '-c "$INSTDIR\bat.conf"' "$INSTDIR\bat.exe" 0
   CreateShortCut "$SMPROGRAMS\Bacula\Configuration\Edit Bat Configuration.lnk" "write.exe" '"$INSTDIR\bat.conf"'
+!endif
+
 SectionEnd
 
 
