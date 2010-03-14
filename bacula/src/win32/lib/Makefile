@@ -149,6 +149,11 @@ $(BINDIR)/bacula.dll: $(DLL_OBJS) bacula$(WIN_VERSION).def
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/bacula.a $^ $(LIBS_DLL) -o $@
 
+#bacula$(WIN_VERSION).def: $(DLL_OBJS)
+#	 ./make_def $(DLL_OBJS) >bacula$(WIN_VERSION).def.new && \
+#	 mv bacula$(WIN_VERSION).def.new bacula$(WIN_VERSION).def
+
+
 include ../Makefile.rules
 
 $(OBJDIR)/%.o: %.c

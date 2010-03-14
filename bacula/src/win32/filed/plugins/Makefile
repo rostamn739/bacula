@@ -44,7 +44,17 @@ EXCHANGE_OBJS = \
 	$(OBJDIR)/dbi_node.o \
 	$(OBJDIR)/file_node.o
 
+VSS_BASE_OBJS = \
+	$(OBJDIR)/vss_plugin_wrapper.o \
+	$(OBJDIR)/vss_base.o \
+	$(OBJDIR)/vss_node.o \
+	$(OBJDIR)/vss_root_node.o \
+	$(OBJDIR)/vss_writer_node.o \
+	$(OBJDIR)/vss_component_node.o \
+	$(OBJDIR)/vss_file_node.o
+
 SYSTEMSTATE_OBJS = \
+	$(VSS_BASE_OBJS) \
 	$(OBJDIR)/systemstate-fd.o
 
 BPIPE_OBJS = \
