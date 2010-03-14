@@ -18,6 +18,7 @@ INCLUDES = \
 	$(INCLUDE_BACULA) \
 	$(INCLUDE_ZLIB) \
 	$(INCLUDE_OPENSSL) \
+	$(INCLUDE_VSS) \
 	-I$(MAINDIR)/src \
 	-I$(MAINDIR)/src/filed \
 	-I$(MAINDIR)/src/win32/filed
