@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2004-2009 Free Software Foundation Europe e.V.
+   Copyright (C) 2004-2010 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -34,7 +34,6 @@
 //
 // Author          : Christopher S. Hull
 // Created On      : Sat Jan 31 15:55:00 2004
-// $Id$
 
 
 #include "bacula.h"
@@ -106,7 +105,7 @@ void Win32ConvCleanupCache()
 extern DWORD   g_platform_id;
 extern DWORD   g_MinorVersion;
 
-// from MicroSoft SDK (KES) is the diff between Jan 1 1601 and Jan 1 1970
+/* From Microsoft SDK (KES) is the diff between Jan 1 1601 and Jan 1 1970 */
 #ifdef HAVE_MINGW
 #define WIN32_FILETIME_ADJUST 0x19DB1DED53E8000ULL 
 #else
@@ -115,7 +114,11 @@ extern DWORD   g_MinorVersion;
 
 #define WIN32_FILETIME_SCALE  10000000             // 100ns/second
 
-void conv_unix_to_win32_path(const char *name, char *win32_name, DWORD dwSize)
+/**
+ * Convert from UTF-8 to VSS Windows path/file 
+ *  Used by compatibility layer for Unix system calls
+ */
+static void conv_unix_to_vss_win32_path(const char *name, char *win32_name, DWORD dwSize)
 {
     const char *fname = name;
     char *tname = win32_name;
@@ -143,7 +146,7 @@ void conv_unix_to_win32_path(const char *name, char *win32_name, DWORD dwSize)
     }
 
     while (*name) {
-        /* Check for Unix separator and convert to Win32 */
+        /** Check for Unix separator and convert to Win32 */
         if (name[0] == '/' && name[1] == '/') {  /* double slash? */
            name++;                               /* yes, skip first one */
         }
@@ -158,15 +161,15 @@ void conv_unix_to_win32_path(const char *name, char *win32_name, DWORD dwSize)
         }
         name++;
     }
-    /* Strip any trailing slash, if we stored something */
-    /* but leave "c:\" with backslash (root directory case */
+    /** Strip any trailing slash, if we stored something */
+    /** but leave "c:\" with backslash (root directory case */
     if (*fname != 0 && win32_name[-1] == '\\' && strlen (fname) != 3) {
         win32_name[-1] = 0;
     } else {
         *win32_name = 0;
     }
 
-    /* here we convert to VSS specific file name which
+    /** here we convert to VSS specific file name which
        can get longer because VSS will make something like
        \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\bacula\\uninstall.exe
        from c:\bacula\uninstall.exe
@@ -183,29 +186,31 @@ void conv_unix_to_win32_path(const char *name, char *win32_name, DWORD dwSize)
     Dmsg1(100, "Leave cvt_u_to_win32_path path=%s\n", tname);
 }
 
-/* Conversion of a Unix filename to a Win32 filename */
+/** Conversion of a Unix filename to a Win32 filename */
 void unix_name_to_win32(POOLMEM **win32_name, char *name)
 {
    /* One extra byte should suffice, but we double it */
    /* add MAX_PATH bytes for VSS shadow copy name */
    DWORD dwSize = 2*strlen(name)+MAX_PATH;
    *win32_name = check_pool_memory_size(*win32_name, dwSize);
-   conv_unix_to_win32_path(name, *win32_name, dwSize);
+   conv_unix_to_vss_win32_path(name, *win32_name, dwSize);
 }
 
-POOLMEM* 
+
+/**
+ * This function expects an UCS-encoded standard wchar_t in pszUCSPath and
+ * will complete the input path to an absolue path of the form \\?\c:\path\file
+ * 
+ * With this trick, it is possible to have 32K characters long paths.
+ *
+ * Optionally one can use pBIsRawPath to determine id pszUCSPath contains a path
+ * to a raw windows partition.  
+ *
+ *        created 02/27/2006 Thorsten Engel
+ */
+static POOLMEM* 
 make_wchar_win32_path(POOLMEM *pszUCSPath, BOOL *pBIsRawPath /*= NULL*/)
 {
-   /* created 02/27/2006 Thorsten Engel
-    * 
-    * This function expects an UCS-encoded standard wchar_t in pszUCSPath and
-    * will complete the input path to an absolue path of the form \\?\c:\path\file
-    * 
-    * With this trick, it is possible to have 32K characters long paths.
-    *
-    * Optionally one can use pBIsRawPath to determine id pszUCSPath contains a path
-    * to a raw windows partition.  
-    */
 
    Dmsg0(100, "Enter wchar_win32_path\n");
    if (pBIsRawPath) {
@@ -398,16 +403,18 @@ make_wchar_win32_path(POOLMEM *pszUCSPath, BOOL *pBIsRawPath /*= NULL*/)
 int
 wchar_2_UTF8(char *pszUTF, const wchar_t *pszUCS, int cchChar)
 {
-   /* the return value is the number of bytes written to the buffer.
-      The number includes the byte for the null terminator. */
+   /**
+    * The return value is the number of bytes written to the buffer.
+    * The number includes the byte for the null terminator.
+    */
 
    if (p_WideCharToMultiByte) {
-         int nRet = p_WideCharToMultiByte(CP_UTF8,0,pszUCS,-1,pszUTF,cchChar,NULL,NULL);
-         ASSERT (nRet > 0);
-         return nRet;
-      }
-   else
+      int nRet = p_WideCharToMultiByte(CP_UTF8,0,pszUCS,-1,pszUTF,cchChar,NULL,NULL);
+      ASSERT (nRet > 0);
+      return nRet;
+   } else {
       return 0;
+   }
 }
 
 int
@@ -424,9 +431,9 @@ UTF8_2_wchar(POOLMEM **ppszUCS, const char *pszUTF)
       int nRet = p_MultiByteToWideChar(CP_UTF8, 0, pszUTF, -1, (LPWSTR) *ppszUCS,cchSize);
       ASSERT (nRet > 0);
       return nRet;
-   }
-   else
+   } else {
       return 0;
+   }
 }
 
 
@@ -802,7 +809,7 @@ stat2(const char *file, struct stat *sb)
    HANDLE h = INVALID_HANDLE_VALUE;
    int rval = 0;
    char tmpbuf[5000];
-   conv_unix_to_win32_path(file, tmpbuf, 5000);
+   conv_unix_to_vss_win32_path(file, tmpbuf, 5000);
 
    DWORD attr = (DWORD)-1;
 
@@ -1180,7 +1187,7 @@ opendir(const char *path)
        goto err;
     }
 
-    conv_unix_to_win32_path(path, tspec, max_len);
+    conv_unix_to_vss_win32_path(path, tspec, max_len);
     Dmsg1(100, "win32 path=%s\n", tspec);
 
     // add backslash only if there is none yet (think of c:\)
@@ -2360,7 +2367,7 @@ utime(const char *fname, struct utimbuf *times)
     FILETIME acc, mod;
     char tmpbuf[5000];
 
-    conv_unix_to_win32_path(fname, tmpbuf, 5000);
+    conv_unix_to_vss_win32_path(fname, tmpbuf, 5000);
 
     cvt_utime_to_ftime(times->actime, acc);
     cvt_utime_to_ftime(times->modtime, mod);
