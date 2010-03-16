@@ -51,6 +51,7 @@ VSS_BASE_OBJS = \
 	$(OBJDIR)/vss_root_node.o \
 	$(OBJDIR)/vss_writer_node.o \
 	$(OBJDIR)/vss_component_node.o \
+	$(OBJDIR)/vss_directory_node.o \
 	$(OBJDIR)/vss_file_node.o
 
 SYSTEMSTATE_OBJS = \
