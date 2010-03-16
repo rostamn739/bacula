@@ -89,7 +89,7 @@ clean:
 
 help:
 	rm -rf release32/help
-	mkdir release32/help
+	mkdir -p release32/help
 	cp -f $(BINDIR)/help/* release32/help/
 
 
