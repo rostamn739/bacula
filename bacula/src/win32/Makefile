@@ -34,6 +34,7 @@ endif
 all: Makefile.inc $(DIRS) $(SPECIAL) $(INSTALLER)
 
 clean: $(DIRS) win32_installer win64_installer
+	$(MAKE) -C tools clean
 	$(ECHO_CMD)-rm -rf release32 release64
 
 bat:
@@ -91,7 +92,7 @@ Makefile.inc:
 	@echo Creating $@
 	$(ECHO_CMD)TOPDIR=`(cd ../../..;pwd)`; \
 	TOPDIR=$${DEPKGS:-$${TOPDIR}}; \
-	if test "$(WIN64)" = yes -a -e $${TOPDIR}/cross-tools/mingw-w64/bin/x86_64-pc-mingw32-gcc; then \
+	if test "$(win64)" = yes -a -e $${TOPDIR}/cross-tools/mingw-w64/bin/x86_64-pc-mingw32-gcc; then \
 		BINDIR=$${TOPDIR}/cross-tools/mingw-w64/bin; \
 		INCDIR=$${TOPDIR}/cross-tools/mingw-w64/x86_64-pc-mingw32/include; \
 		DLLDIR=$${TOPDIR}/cross-tools/mingw-w64/x86_64-pc-mingw32/bin; \
