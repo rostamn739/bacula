@@ -81,6 +81,7 @@ class IXMLDOMDocument;
 #endif
 
 /* Reduce compiler warnings from Windows vss code */
+#undef uuid
 #define uuid(x)
 
 #ifdef B_VSS_XP

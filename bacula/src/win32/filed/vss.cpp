@@ -215,7 +215,13 @@ const char* VSSClient::GetWriterInfo(int nIndex)
 const int VSSClient::GetWriterState(int nIndex)
 {
    alist* pV = m_pAlistWriterState;   
-   return (int64_t)pV->get(nIndex);
+   void *item = pV->get(nIndex);
+/* Eliminate compiler warnings */
+#ifdef HAVE_VSS64
+   return (int64_t)(char *)item;
+#else
+   return (int)(char *)item;
+#endif
 }
 
 void VSSClient::AppendWriterInfo(int nState, const char* pszInfo)

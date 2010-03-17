@@ -146,6 +146,9 @@ private:
 
 extern VSSClient *g_pVSSClient;
 
+BOOL VSSPathConvert(const char *szFilePath, char *szShadowPath, int nBuflen);
+BOOL VSSPathConvertW(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen);
+
 #endif /* WIN32_VSS */
 
 #endif /* __VSS_H_ */

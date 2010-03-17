@@ -45,11 +45,12 @@
 
 #define MAX_PATHLENGTH  1024
 
-/* UTF-8 to UCS2 path conversion is expensive,
+/**
+   UTF-8 to UCS2 path conversion is expensive,
    so we cache the conversion. During backup the
    conversion is called 3 times (lstat, attribs, open),
-   by using the cache this is reduced to 1 time */
-
+   by using the cache this is reduced to 1 time
+ */
 static POOLMEM *g_pWin32ConvUTF8Cache = NULL;
 static POOLMEM *g_pWin32ConvUCS2Cache = NULL;
 static DWORD g_dwWin32ConvUTF8strlen = 0;
@@ -161,8 +162,9 @@ static void conv_unix_to_vss_win32_path(const char *name, char *win32_name, DWOR
         }
         name++;
     }
-    /** Strip any trailing slash, if we stored something */
-    /** but leave "c:\" with backslash (root directory case */
+    /** Strip any trailing slash, if we stored something
+     * but leave "c:\" with backslash (root directory case
+     */
     if (*fname != 0 && win32_name[-1] == '\\' && strlen (fname) != 3) {
         win32_name[-1] = 0;
     } else {
