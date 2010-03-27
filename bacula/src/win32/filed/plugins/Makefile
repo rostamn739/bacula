@@ -110,7 +110,7 @@ $(BINDIR)/exchange-fd.dll: $(EXCHANGE_OBJS) exchange-fd.def
 
 $(BINDIR)/systemstate-fd.dll: DLL_DEFINE=BUILDING_DLL
 
-$(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def
+$(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def $(LIBS_BACULA)
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/systemstate-fd.a $^ $(LIBS_DLL) -o $@

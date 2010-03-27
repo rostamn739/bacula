@@ -29,6 +29,7 @@
  * A simple pipe plugin for the Bacula File Daemon
  *
  *  Kern Sibbald, October 2007
+ *    Copied into Windows plugin environment March, 2010 (KES)
  *
  */
 #include "bacula.h"
@@ -49,9 +50,9 @@ static const int dbglvl = 150;
 
 #define PLUGIN_LICENSE      "Bacula GPLv2"
 #define PLUGIN_AUTHOR       "Kern Sibbald"
-#define PLUGIN_DATE         "January 2008"
+#define PLUGIN_DATE         "January 2010"
 #define PLUGIN_VERSION      "1"
-#define PLUGIN_DESCRIPTION  "Bacula Pipe File Daemon Plugin"
+#define PLUGIN_DESCRIPTION  "Bacula Pipe Windows File Daemon Plugin"
 
 /* Forward referenced functions */
 static bRC newPlugin(bpContext *ctx);
