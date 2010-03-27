@@ -69,6 +69,7 @@ public:
     void DestroyWriterInfo();
     void AppendWriterInfo(int nState, const char* pszInfo);
     const bool  IsInitialized() { return m_bBackupIsInitialized; };
+    HMODULE GetVssDllHandle() { return m_hLib; };
     IUnknown *GetVssObject() { return m_pVssObject; };
          
 private:
