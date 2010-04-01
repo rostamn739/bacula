@@ -481,6 +481,7 @@ _ZN6htableC2EPvS0_i
 _Z10b_free_jcrPKciP3JCR
 _Z11unlock_jobsv
 _Z12jcr_walk_endP3JCR
+_Z9job_countv
 _Z12job_end_pushP3JCRPFvS0_PvES1_
 _Z13get_jcr_by_idj
 _Z13jcr_walk_nextP3JCR
@@ -627,7 +628,7 @@ _ZN9RUNSCRIPT8is_localEv
 ; rwlock.o
 _Z11rwl_destroyP12s_rwlock_tag
 _Z12rwl_readlockP12s_rwlock_tag
-_Z13rwl_writelockP12s_rwlock_tag
+_Z15rwl_writelock_pP12s_rwlock_tagPKci
 _Z14rwl_readunlockP12s_rwlock_tag
 _Z15rwl_readtrylockP12s_rwlock_tag
 _Z15rwl_writeunlockP12s_rwlock_tag
@@ -661,11 +662,11 @@ _Z14serial_float64PPhd
 _Z14unserial_btimePPh
 _Z14unserial_int16PPh
 _Z14unserial_int32PPh
-_Z15unserial_stringPPhPci
 _Z15unserial_uint16PPh
 _Z15unserial_uint32PPh
 _Z15unserial_uint64PPh
 _Z16unserial_float64PPh
+_Z15unserial_stringPPhPci
  
 ; smartall.o
 _Z10sm_reallocPKciPvj
