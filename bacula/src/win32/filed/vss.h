@@ -46,6 +46,9 @@
  
 #ifdef WIN32_VSS
 
+#define VSS_INIT_RESTORE_AFTER_INIT   1
+#define VSS_INIT_RESTORE_AFTER_GATHER 2
+
 // some forward declarations
 struct IVssAsync;
 
@@ -57,8 +60,12 @@ public:
 
     // Backup Process
     bool InitializeForBackup(JCR *jcr);
+    bool InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int) = NULL);
+    //bool GatherForRestore() = 0;
+    //bool PrepareForRestore() = 0;
     virtual bool CreateSnapshots(char* szDriveLetters) = 0;
     virtual bool CloseBackup() = 0;
+    virtual bool CloseRestore() = 0;
     virtual const char* GetDriverName() = 0;
     bool GetShadowPath  (const char* szFilePath, char* szShadowPath, int nBuflen);
     bool GetShadowPathW (const wchar_t* szFilePath, wchar_t* szShadowPath, int nBuflen); /* nBuflen in characters */
@@ -73,7 +80,7 @@ public:
     IUnknown *GetVssObject() { return m_pVssObject; };
          
 private:
-    virtual bool Initialize(DWORD dwContext, bool bDuringRestore = FALSE) = 0;
+    virtual bool Initialize(DWORD dwContext, bool bDuringRestore = FALSE, bool (*VssInitCallback)(JCR *, int) = NULL) = 0;
     virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync) = 0;
     virtual void QuerySnapshotSet(GUID snapshotSetID) = 0;
 
@@ -106,9 +113,10 @@ public:
    virtual ~VSSClientXP();
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();
+   virtual bool CloseRestore();
    virtual const char* GetDriverName() { return "VSS WinXP"; };
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync* pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();   
@@ -121,9 +129,10 @@ public:
    virtual ~VSSClient2003();
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();   
+   virtual bool CloseRestore();
    virtual const char* GetDriverName() { return "VSS Win 2003"; };
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();
@@ -136,9 +145,10 @@ public:
    virtual ~VSSClientVista();
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();   
+   virtual bool CloseRestore();
    virtual const char* GetDriverName() { return "VSS Vista"; };
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();

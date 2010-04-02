@@ -230,8 +230,10 @@ VSSClientGeneric::~VSSClientGeneric()
 }
 
 // Initialize the COM infrastructure and the internal pointers
-bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
+bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int))
 {
+   CComPtr<IVssAsync>  pAsync1;
+
    if (!(p_CreateVssBackupComponents && p_VssFreeSnapshotProperties)) {
       Dmsg2(0, "VSSClientGeneric::Initialize: p_CreateVssBackupComponents = 0x%08X, p_VssFreeSnapshotProperties = 0x%08X\n", p_CreateVssBackupComponents, p_VssFreeSnapshotProperties);
       errno = ENOSYS;
@@ -317,7 +319,6 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
          return false;
       }
 
-      CComPtr<IVssAsync>  pAsync1;
       // 3. GatherWriterMetaData
       hr = ((IVssBackupComponents*) m_pVssObject)->GatherWriterMetadata(&pAsync1.p);
       if (FAILED(hr)) {
@@ -328,6 +329,57 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
       // Waits for the async operation to finish and checks the result
       WaitAndCheckForAsyncOperation(pAsync1.p);
    }
+   else
+   {
+      WCHAR *xml;
+      HRESULT hr;
+      int fd;
+      struct stat stat;
+
+      /* obviously this is just temporary - the xml should come from somewhere like the catalog */
+      fd = open("C:\\james.xml", O_RDONLY);
+      Dmsg1(0, "fd = %d\n", fd);
+      fstat(fd, &stat);
+      Dmsg1(0, "size = %d\n", stat.st_size);
+      xml = new WCHAR[stat.st_size / sizeof(WCHAR) + 1];
+      read(fd, xml, stat.st_size);
+      close(fd);
+      xml[stat.st_size / sizeof(WCHAR)] = 0;
+
+      // 1. InitializeForRestore
+      hr = ((IVssBackupComponents*) m_pVssObject)->InitializeForRestore(xml);
+      if (FAILED(hr)) {
+         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->InitializeForRestore returned 0x%08X\n", hr);
+         errno = b_errno_win32;
+         return false;
+      }
+      VssInitCallback(m_jcr, VSS_INIT_RESTORE_AFTER_INIT);
+
+      // 2. GatherWriterMetaData
+      hr = ((IVssBackupComponents*) m_pVssObject)->GatherWriterMetadata(&pAsync1.p);
+      if (FAILED(hr)) {
+         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->GatherWriterMetadata returned 0x%08X\n", hr);
+         errno = b_errno_win32;
+         return false;
+      }
+      WaitAndCheckForAsyncOperation(pAsync1.p);
+      VssInitCallback(m_jcr, VSS_INIT_RESTORE_AFTER_GATHER);
+
+      // 3. PreRestore
+      hr = ((IVssBackupComponents*) m_pVssObject)->PreRestore(&pAsync1.p);
+      if (FAILED(hr)) {
+         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->PreRestore returned 0x%08X\n", hr);
+         errno = b_errno_win32;
+         return false;
+      }
+      WaitAndCheckForAsyncOperation(pAsync1.p);
+      /* get latest info about writer status */
+      if (!CheckWriterStatus()) {
+         Dmsg0(0, "VSSClientGeneric::InitializePostPlugin: Failed to CheckWriterstatus\n");
+         errno = b_errno_win32;
+         return false;
+      }
+   }
 
    // We are during restore now?
    m_bDuringRestore = bDuringRestore;
@@ -337,7 +389,6 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
 
    return true;
 }
-
 
 bool VSSClientGeneric::WaitAndCheckForAsyncOperation(IVssAsync* pAsync)
 {
@@ -479,6 +530,16 @@ bool VSSClientGeneric::CloseBackup()
 
       m_bBackupIsInitialized = false;
 
+{
+   HRESULT hr;
+   BSTR xml;
+   int fd;
+
+   hr = pVss->SaveAsXML(&xml);
+   fd = open("C:\\james.xml", O_CREAT | O_WRONLY | O_TRUNC, 0777);
+   write(fd, xml, wcslen(xml) * sizeof(WCHAR));
+   close(fd);
+}
       if (SUCCEEDED(pVss->BackupComplete(&pAsync.p))) {
          // Waits for the async operation to finish and checks the result
          WaitAndCheckForAsyncOperation(pAsync.p);
@@ -516,6 +577,32 @@ bool VSSClientGeneric::CloseBackup()
    }
 
    return bRet;
+}
+
+bool VSSClientGeneric::CloseRestore()
+{
+   HRESULT hr;
+   IVssBackupComponents* pVss = (IVssBackupComponents*) m_pVssObject;
+   CComPtr<IVssAsync> pAsync;
+
+   if (!pVss)
+   {
+      errno = ENOSYS;
+      return false;
+   }
+   if (SUCCEEDED(hr = pVss->PostRestore(&pAsync.p))) {
+      // Waits for the async operation to finish and checks the result
+      WaitAndCheckForAsyncOperation(pAsync.p);
+      /* get latest info about writer status */
+      if (!CheckWriterStatus()) {
+         errno = b_errno_win32;
+         return false;
+      }
+   } else {
+      errno = b_errno_win32;
+      return false;
+   }
+   return true;
 }
 
 // Query all the shadow copies in the given set

@@ -136,7 +136,11 @@ bool VSSClient::InitializeForBackup(JCR *jcr)
 }
 
 
-
+bool VSSClient::InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int))
+{
+   m_jcr = jcr;
+   return Initialize(0, TRUE, VssInitCallback);
+}
 
 bool VSSClient::GetShadowPath(const char *szFilePath, char *szShadowPath, int nBuflen)
 {
