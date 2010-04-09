@@ -191,7 +191,7 @@ _ZN5alist9grow_listEv
 ; attr.o
 _Z15print_ls_outputP3JCRP4ATTR
 _Z24build_attr_output_fnamesP3JCRP4ATTR
-_Z24unpack_attributes_recordP3JCRiPcP4ATTR
+_Z24unpack_attributes_recordP3JCRiPciP4ATTR
 _Z8new_attrP3JCR
 _Z9free_attrP4ATTR
  
