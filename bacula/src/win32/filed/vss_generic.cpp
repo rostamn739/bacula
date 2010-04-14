@@ -328,9 +328,12 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
       }
       // Waits for the async operation to finish and checks the result
       WaitAndCheckForAsyncOperation(pAsync1.p);
-   }
-   else
-   {
+   } else {
+ 
+   /*
+    * Initialize for restore
+    */
+
       WCHAR *xml;
       HRESULT hr;
       int fd;
