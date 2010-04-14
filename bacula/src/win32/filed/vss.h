@@ -60,12 +60,11 @@ public:
 
     // Backup Process
     bool InitializeForBackup(JCR *jcr);
-    bool InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int) = NULL);
-    //bool GatherForRestore() = 0;
-    //bool PrepareForRestore() = 0;
+    bool InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int) = NULL, WCHAR *job_metadata = NULL);
     virtual bool CreateSnapshots(char* szDriveLetters) = 0;
     virtual bool CloseBackup() = 0;
     virtual bool CloseRestore() = 0;
+    virtual WCHAR *GetMetadata() = 0;
     virtual const char* GetDriverName() = 0;
     bool GetShadowPath  (const char* szFilePath, char* szShadowPath, int nBuflen);
     bool GetShadowPathW (const wchar_t* szFilePath, wchar_t* szShadowPath, int nBuflen); /* nBuflen in characters */
@@ -104,6 +103,8 @@ protected:
     bool       m_bCoInitializeSecurityCalled;
     bool       m_bDuringRestore;  /* true if we are doing a restore */
     bool       m_bBackupIsInitialized;
+
+    WCHAR     *m_metadata;
 };
 
 class VSSClientXP:public VSSClient
@@ -114,6 +115,7 @@ public:
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();
    virtual bool CloseRestore();
+   virtual WCHAR *GetMetadata();
    virtual const char* GetDriverName() { return "VSS WinXP"; };
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
@@ -130,6 +132,7 @@ public:
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();   
    virtual bool CloseRestore();
+   virtual WCHAR *GetMetadata();
    virtual const char* GetDriverName() { return "VSS Win 2003"; };
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
@@ -146,6 +149,7 @@ public:
    virtual bool CreateSnapshots(char* szDriveLetters);
    virtual bool CloseBackup();   
    virtual bool CloseRestore();
+   virtual WCHAR *GetMetadata();
    virtual const char* GetDriverName() { return "VSS Vista"; };
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);

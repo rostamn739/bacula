@@ -334,11 +334,12 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
     * Initialize for restore
     */
 
-      WCHAR *xml;
       HRESULT hr;
+
+#if 0
+      WCHAR *xml;
       int fd;
       struct stat stat;
-
       /* obviously this is just temporary - the xml should come from somewhere like the catalog */
       fd = open("C:\\james.xml", O_RDONLY);
       Dmsg1(0, "fd = %d\n", fd);
@@ -348,9 +349,10 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
       read(fd, xml, stat.st_size);
       close(fd);
       xml[stat.st_size / sizeof(WCHAR)] = 0;
+#endif
 
       // 1. InitializeForRestore
-      hr = ((IVssBackupComponents*) m_pVssObject)->InitializeForRestore(xml);
+      hr = ((IVssBackupComponents*) m_pVssObject)->InitializeForRestore(m_metadata);
       if (FAILED(hr)) {
          Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->InitializeForRestore returned 0x%08X\n", hr);
          errno = b_errno_win32;
@@ -523,6 +525,9 @@ bool VSSClientGeneric::CreateSnapshots(char* szDriveLetters)
 bool VSSClientGeneric::CloseBackup()
 {
    bool bRet = false;
+   HRESULT hr;
+   BSTR xml;
+
    if (!m_pVssObject)
       errno = ENOSYS;
    else {
@@ -533,6 +538,12 @@ bool VSSClientGeneric::CloseBackup()
 
       m_bBackupIsInitialized = false;
 
+      hr = pVss->SaveAsXML(&xml);
+      if (hr == ERROR_SUCCESS)
+         m_metadata = xml;
+      else
+         m_metadata = NULL;
+#if 0
 {
    HRESULT hr;
    BSTR xml;
@@ -543,6 +554,7 @@ bool VSSClientGeneric::CloseBackup()
    write(fd, xml, wcslen(xml) * sizeof(WCHAR));
    close(fd);
 }
+#endif
       if (SUCCEEDED(pVss->BackupComplete(&pAsync.p))) {
          // Waits for the async operation to finish and checks the result
          WaitAndCheckForAsyncOperation(pAsync.p);
@@ -580,6 +592,11 @@ bool VSSClientGeneric::CloseBackup()
    }
 
    return bRet;
+}
+
+WCHAR *VSSClientGeneric::GetMetadata()
+{
+   return m_metadata;
 }
 
 bool VSSClientGeneric::CloseRestore()

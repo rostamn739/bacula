@@ -136,8 +136,9 @@ bool VSSClient::InitializeForBackup(JCR *jcr)
 }
 
 
-bool VSSClient::InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int))
+bool VSSClient::InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int), WCHAR *job_metadata)
 {
+   m_metadata = job_metadata;
    m_jcr = jcr;
    return Initialize(0, true/*=>Restore*/, VssInitCallback);
 }

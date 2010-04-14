@@ -51,12 +51,15 @@ VSS_BASE_OBJS = \
 	$(OBJDIR)/vss_root_node.o \
 	$(OBJDIR)/vss_writer_node.o \
 	$(OBJDIR)/vss_component_node.o \
-	$(OBJDIR)/vss_directory_node.o \
-	$(OBJDIR)/vss_file_node.o
+	$(OBJDIR)/vss_file_node.o \
+	$(OBJDIR)/find_filespec.o
 
 SYSTEMSTATE_OBJS = \
 	$(VSS_BASE_OBJS) \
-	$(OBJDIR)/systemstate-fd.o
+	$(OBJDIR)/systemstate-fd.o \
+	$(OBJDIR)/systemstate_registry.o \
+	$(OBJDIR)/systemstate_frs.o \
+	$(OBJDIR)/systemstate_complusregdb.o
 
 BPIPE_OBJS = \
 	$(OBJDIR)/bpipe-fd.o
