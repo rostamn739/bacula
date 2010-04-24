@@ -323,6 +323,8 @@ _Z8bstrncatPcPKci
 _Z8bstrncatPcR8POOL_MEMi
 _Z8bstrncpyPcPKci
 _Z8bstrncpyPcR8POOL_MEMi
+_Z8ZdeflatePciS_Ri
+_Z8ZinflatePciS_Ri
  
 ; btime.o
 _Z10bstrftimesPcix
@@ -486,7 +488,7 @@ _Z12job_end_pushP3JCRPFvS0_PvES1_
 _Z13get_jcr_by_idj
 _Z13jcr_walk_nextP3JCR
 _Z14jcr_walk_startv
-_Z14set_jcr_in_tsdP3JCR
+_Z14set_jcr_in_tsdP3JCRb
 _Z16get_jcr_from_tsdv
 _Z18get_jobid_from_tsdv
 _Z18get_jcr_by_sessionjj
@@ -506,6 +508,7 @@ _Z7new_jcriPFvP3JCRE
 _Z9lock_jobsv
 _ZN3JCR14get_ActionNameEb
 _ZN3JCR17get_OperationNameEv
+_ZN3JCR21my_thread_send_signalEi
 _ZN3JCR8JobReadsEv
 _Z16dbg_jcr_add_hookPFvP3JCRP6_iobufE
 timeout_handler
