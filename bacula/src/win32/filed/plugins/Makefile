@@ -59,6 +59,7 @@ SYSTEMSTATE_OBJS = \
 	$(OBJDIR)/systemstate-fd.o \
 	$(OBJDIR)/systemstate_registry.o \
 	$(OBJDIR)/systemstate_frs.o \
+	$(OBJDIR)/systemstate_dfsr.o \
 	$(OBJDIR)/systemstate_complusregdb.o
 
 BPIPE_OBJS = \
