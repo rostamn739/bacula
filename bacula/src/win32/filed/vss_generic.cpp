@@ -38,6 +38,7 @@
 #ifdef WIN32_VSS
 
 #include "bacula.h"
+#include "jcr.h"
 
 #undef setlocale
 
@@ -233,6 +234,7 @@ VSSClientGeneric::~VSSClientGeneric()
 bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int))
 {
    CComPtr<IVssAsync>  pAsync1;
+   VSS_BACKUP_TYPE backup_type;
 
    if (!(p_CreateVssBackupComponents && p_VssFreeSnapshotProperties)) {
       Dmsg2(0, "VSSClientGeneric::Initialize: p_CreateVssBackupComponents = 0x%08X, p_VssFreeSnapshotProperties = 0x%08X\n", p_CreateVssBackupComponents, p_VssFreeSnapshotProperties);
@@ -312,7 +314,23 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
       }
  
       // 2. SetBackupState
-      hr = ((IVssBackupComponents*) m_pVssObject)->SetBackupState(true, true, VSS_BT_FULL, false);
+      switch (m_jcr->getJobLevel())
+      {
+      case L_FULL:
+         backup_type = VSS_BT_FULL;
+         break;
+      case L_DIFFERENTIAL:
+         backup_type = VSS_BT_DIFFERENTIAL;
+         break;
+      case L_INCREMENTAL:
+         backup_type = VSS_BT_INCREMENTAL;
+         break;
+      default:
+         Dmsg1(0, "VSSClientGeneric::Initialize: unknown backup level %d\n", m_jcr->getJobLevel());
+         backup_type = VSS_BT_FULL;
+         break;
+      }
+      hr = ((IVssBackupComponents*) m_pVssObject)->SetBackupState(true, true, backup_type, false);
       if (FAILED(hr)) {
          Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->SetBackupState returned 0x%08X\n", hr);
          errno = b_errno_win32;
