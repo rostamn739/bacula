@@ -48,14 +48,14 @@ STAB2CV := $(DEPKGS32)/tools/bin/stab2cv
 WIN64=@WIN64@
 
 ifeq ($(WIN64),yes)
-   CFLAGS := -g -Wall -mno-cygwin -mthreads -O3 -fno-strict-aliasing -DHAVE_VSS64
+   CFLAGS := -g -Wall -mno-cygwin -mthreads -O3 -fno-strict-aliasing -DHAVE_VSS64 -Wno-unknown-pragmas
    LIBS_NETWORK := -lws2_32
    WIN_VERSION := 64
    BINDIR := $(BUILDDIR)/release64
    LIBDIR := $(BUILDDIR)/release64
    OBJDIR := obj64
 else
-   CFLAGS := -g -Wall -mno-cygwin -m32 -mwin32 -mthreads -O3 -fno-strict-aliasing
+   CFLAGS := -g -Wall -mno-cygwin -m32 -mwin32 -mthreads -O3 -fno-strict-aliasing -Wno-unknown-pragmas
    LIBS_NETWORK := -lwsock32
    WIN_VERSION := 32
    BINDIR := $(BUILDDIR)/release32
