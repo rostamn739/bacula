@@ -355,6 +355,11 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
    memset(jcr, 0, size);
    jcr->my_thread_id = pthread_self();
    jcr->msg_queue = New(dlist(item, &item->link));
+   if ((status = pthread_mutex_init(&jcr->msg_queue_mutex, NULL)) != 0) {
+      berrno be;
+      Jmsg(NULL, M_ABORT, 0, _("Could not init msg_queue mutex. ERR=%s\n"),
+         be.bstrerror(status));
+   }
    jcr->job_end_push.init(1, false);
    jcr->sched_time = time(NULL);
    jcr->daemon_free_jcr = daemon_free_jcr;    /* plug daemon free routine */
@@ -421,6 +426,7 @@ static void free_common_jcr(JCR *jcr)
    if (jcr->msg_queue) {
       delete jcr->msg_queue;
       jcr->msg_queue = NULL;
+      pthread_mutex_destroy(&jcr->msg_queue_mutex);
    }
    close_msg(jcr);                    /* close messages for this job */
 
@@ -1085,7 +1091,6 @@ void _dbg_print_jcr(FILE *fp)
       bstrftime(buf4, sizeof(buf4), jcr->wait_time);
       fprintf(fp, "\tsched_time=%s start_time=%s\n\tend_time=%s wait_time=%s\n",
               buf1, buf2, buf3, buf4);
-      fprintf(fp, "\tdequeing=%i\n", jcr->dequeuing);
       fprintf(fp, "\tdb=%p db_batch=%p batch_started=%i\n", 
               jcr->db, jcr->db_batch, jcr->batch_started);
       
