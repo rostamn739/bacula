@@ -62,6 +62,10 @@ SYSTEMSTATE_OBJS = \
 	$(OBJDIR)/systemstate_dfsr.o \
 	$(OBJDIR)/systemstate_complusregdb.o
 
+SHAREPOINT_OBJS = \
+	$(VSS_BASE_OBJS) \
+	$(OBJDIR)/sharepoint-fd.o
+
 BPIPE_OBJS = \
 	$(OBJDIR)/bpipe-fd.o
 
@@ -81,7 +85,7 @@ LIBS_DLL = \
 
 .PHONY: all clean
 
-all: $(BINDIR)/exchange-fd.dll $(BINDIR)/systemstate-fd.dll  $(BINDIR)/bpipe-fd.dll
+all: $(BINDIR)/exchange-fd.dll $(BINDIR)/systemstate-fd.dll $(BINDIR)/sharepoint-fd.dll $(BINDIR)/bpipe-fd.dll
 
 clean:
 	@echo "Cleaning `pwd`"
@@ -91,6 +95,9 @@ clean:
 	$(call clean_obj,$(SYSTEMSTATE_OBJS))
 	$(call clean_exe,$(BINDIR)/systemstate-fd.dll)
 	$(ECHO_CMD)rm -f $(OBJDIR)/systemstate-fd.a $(LIBDIR)/libsystemstate-fd.a
+	$(call clean_obj,$(SHAREPOINT_OBJS))
+	$(call clean_exe,$(BINDIR)/sharepoint-fd.dll)
+	$(ECHO_CMD)rm -f $(OBJDIR)/sharepoint-fd.a $(LIBDIR)/libsharepoint-fd.a
 	$(ECHO_CMD)rm -rf $(OBJDIRS)
 
 #
@@ -118,6 +125,13 @@ $(BINDIR)/systemstate-fd.dll: $(SYSTEMSTATE_OBJS) systemstate-fd.def $(LIBS_BACU
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/systemstate-fd.a $^ $(LIBS_DLL) -o $@
+
+$(BINDIR)/sharepoint-fd.dll: DLL_DEFINE=BUILDING_DLL
+
+$(BINDIR)/sharepoint-fd.dll: $(SHAREPOINT_OBJS) sharepoint-fd.def $(LIBS_BACULA)
+	@echo "Linking $@"
+	$(call checkdir,$@)
+	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/sharepoint-fd.a $^ $(LIBS_DLL) -o $@
 
 $(BINDIR)/bpipe-fd.dll: DLL_DEFINE=BUILDING_DLL
 
