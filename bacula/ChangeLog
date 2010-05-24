@@ -2,6 +2,10 @@
 
 General:
 
+Release Version 3.0.3b:
+24May10
+ebl  Backport messages.c from 5.0.2
+
 Release Version 3.0.3:
 13Oct09
 ebl  Fix #1352 about double free with regexp and big filenames on windows
