@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2009-10-17 15:18+0200\n"
+"POT-Creation-Date: 2010-05-25 11:05+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2246,8 +2247,8 @@ msgstr ""
 #, c-format
 msgid ""
 "Device: name=%s ok=%d num_writers=%d max_writers=%d\n"
-"      reserved=%d open=%d append=%d read=%d labeled=%d offline=%d autochgr=%"
-"d\n"
+"      reserved=%d open=%d append=%d read=%d labeled=%d offline=%d autochgr="
+"%d\n"
 "      poolid=%s volname=%s MediaType=%s\n"
 msgstr ""
 
@@ -2277,8 +2278,8 @@ msgstr ""
 #: src/dird/dird_conf.c:646
 #, c-format
 msgid ""
-"     MaxJobs=%u Resched=%d Times=%d Interval=%s Spool=%d WritePartAfterJob=%"
-"d\n"
+"     MaxJobs=%u Resched=%d Times=%d Interval=%s Spool=%d WritePartAfterJob="
+"%d\n"
 msgstr ""
 
 #: src/dird/dird_conf.c:652
@@ -4299,7 +4300,7 @@ msgid "New Pool is: %s\n"
 msgstr ""
 
 #: src/dird/ua_update.c:363 src/dird/ua_select.c:498 src/dird/ua_select.c:518
-#: src/baconfig.h:74
+#: src/baconfig.h:78
 msgid "*None*"
 msgstr ""
 
@@ -7725,8 +7726,8 @@ msgstr ""
 #: src/stored/reserve.c:873
 #, c-format
 msgid ""
-"3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive %"
-"s.\n"
+"3608 JobId=%u wants Pool=\"%s\" but have Pool=\"%s\" nreserve=%d on drive "
+"%s.\n"
 msgstr ""
 
 #: src/stored/reserve.c:899
@@ -7836,12 +7837,12 @@ msgstr ""
 msgid "Could not create JobMedia record for Volume=\"%s\" Job=%s\n"
 msgstr ""
 
-#: src/stored/acquire.c:521
+#: src/stored/acquire.c:520
 #, c-format
 msgid "Alert: %s"
 msgstr ""
 
-#: src/stored/acquire.c:529
+#: src/stored/acquire.c:528
 #, c-format
 msgid "3997 Bad alert command: %s: ERR=%s.\n"
 msgstr ""
@@ -8555,8 +8556,8 @@ msgstr ""
 #: src/stored/dvd.c:579
 #, c-format
 msgid ""
-"Error writing. Current part less than total number of parts (%d/%d, device=%"
-"s)\n"
+"Error writing. Current part less than total number of parts (%d/%d, device="
+"%s)\n"
 msgstr ""
 
 #: src/stored/dvd.c:586
@@ -10282,8 +10283,8 @@ msgstr ""
 #: src/stored/btape.c:1793
 #, c-format
 msgid ""
-"Blk_block: %u dev_blk=%u blen=%u First rec FI=%s SessId=%u SessTim=%u Strm=%"
-"s rlen=%d\n"
+"Blk_block: %u dev_blk=%u blen=%u First rec FI=%s SessId=%u SessTim=%u Strm="
+"%s rlen=%d\n"
 msgstr ""
 
 #: src/stored/btape.c:1815
@@ -11266,12 +11267,12 @@ msgstr ""
 msgid "Bacula Storage: Last Job had Warnings"
 msgstr ""
 
-#: src/stored/lock.c:220
+#: src/stored/lock.c:223
 #, c-format
 msgid "pthread_cond_wait failure. ERR=%s\n"
 msgstr ""
 
-#: src/stored/lock.c:316
+#: src/stored/lock.c:319
 msgid "unknown blocked code"
 msgstr ""
 
@@ -11843,12 +11844,12 @@ msgstr ""
 msgid "   Date=%s Level=%c Type=%c Files=%s Bytes=%s Errors=%d Status=%c\n"
 msgstr ""
 
-#: src/stored/vol_mgr.c:94
+#: src/stored/vol_mgr.c:95
 #, c-format
 msgid "Unable to initialize volume list lock. ERR=%s\n"
 msgstr ""
 
-#: src/stored/vol_mgr.c:484
+#: src/stored/vol_mgr.c:485
 #, c-format
 msgid "Device switch. New device %s chosen.\n"
 msgstr ""
@@ -11906,8 +11907,8 @@ msgstr ""
 #: src/stored/bls.c:327
 #, c-format
 msgid ""
-"File:blk=%u:%u blk_num=%u blen=%u First rec FI=%s SessId=%u SessTim=%u Strm=%"
-"s rlen=%d\n"
+"File:blk=%u:%u blk_num=%u blen=%u First rec FI=%s SessId=%u SessTim=%u Strm="
+"%s rlen=%d\n"
 msgstr ""
 
 #: src/stored/bls.c:336
@@ -13026,82 +13027,82 @@ msgstr ""
 msgid "Working Directory: \"%s\" is not a directory. Cannot continue.\n"
 msgstr ""
 
-#: src/lib/bsys.c:208 src/lib/bsys.c:225 src/lib/bsys.c:249 src/lib/bsys.c:262
+#: src/lib/bsys.c:223 src/lib/bsys.c:240 src/lib/bsys.c:264 src/lib/bsys.c:277
 #, c-format
 msgid "Out of memory: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:304
+#: src/lib/bsys.c:319
 msgid "Buffer overflow.\n"
 msgstr ""
 
-#: src/lib/bsys.c:370
+#: src/lib/bsys.c:385
 msgid "Bad errno"
 msgstr ""
 
-#: src/lib/bsys.c:385
+#: src/lib/bsys.c:400
 #, c-format
 msgid "Memset for %d bytes at %s:%d\n"
 msgstr ""
 
-#: src/lib/bsys.c:415
+#: src/lib/bsys.c:430
 #, c-format
 msgid "Cannot open pid file. %s ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:430
+#: src/lib/bsys.c:445
 #, c-format
 msgid ""
 "%s is already running. pid=%d\n"
 "Check file %s\n"
 msgstr ""
 
-#: src/lib/bsys.c:444
+#: src/lib/bsys.c:459
 #, c-format
 msgid "Could not open pid file. %s ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:552
+#: src/lib/bsys.c:567
 #, c-format
 msgid "Could not create state file. %s ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:571
+#: src/lib/bsys.c:586
 #, c-format
 msgid "Write final hdr error: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:607
+#: src/lib/bsys.c:622
 #, c-format
 msgid "Could not find userid=%s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:613
+#: src/lib/bsys.c:628
 #, c-format
 msgid "Could not find password entry. ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:626
+#: src/lib/bsys.c:641
 #, c-format
 msgid "Could not find group=%s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:634
+#: src/lib/bsys.c:649
 #, c-format
 msgid "Could not initgroups for group=%s, userid=%s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:637
+#: src/lib/bsys.c:652
 #, c-format
 msgid "Could not initgroups for userid=%s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:644
+#: src/lib/bsys.c:659
 #, c-format
 msgid "Could not set group=%s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/bsys.c:650
+#: src/lib/bsys.c:665
 #, c-format
 msgid "Could not set specified userid: %s\n"
 msgstr ""
@@ -13201,34 +13202,39 @@ msgstr ""
 msgid "pthread_once failed. ERR=%s\n"
 msgstr ""
 
-#: src/lib/jcr.c:407
+#: src/lib/jcr.c:360
+#, c-format
+msgid "Could not init msg_queue mutex. ERR=%s\n"
+msgstr ""
+
+#: src/lib/jcr.c:412
 msgid "NULL jcr.\n"
 msgstr ""
 
-#: src/lib/jcr.c:505
+#: src/lib/jcr.c:511
 #, c-format
 msgid "JCR use_count=%d JobId=%d\n"
 msgstr ""
 
-#: src/lib/jcr.c:601
+#: src/lib/jcr.c:607
 #, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr ""
 
-#: src/lib/jcr.c:995
+#: src/lib/jcr.c:1001
 #, c-format
 msgid ""
 "Watchdog sending kill after %d secs to thread stalled reading Storage "
 "daemon.\n"
 msgstr ""
 
-#: src/lib/jcr.c:1007
+#: src/lib/jcr.c:1013
 #, c-format
 msgid ""
 "Watchdog sending kill after %d secs to thread stalled reading File daemon.\n"
 msgstr ""
 
-#: src/lib/jcr.c:1019
+#: src/lib/jcr.c:1025
 #, c-format
 msgid ""
 "Watchdog sending kill after %d secs to thread stalled reading Director.\n"
@@ -14404,40 +14410,40 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: src/lib/message.c:278 src/lib/message.c:288
+#: src/lib/message.c:318 src/lib/message.c:328
 #, c-format
 msgid "Could not open console message file %s: ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:293
+#: src/lib/message.c:333
 #, c-format
 msgid "Could not get con mutex: ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:398
+#: src/lib/message.c:438
 msgid "Bacula Message"
 msgstr ""
 
-#: src/lib/message.c:402
+#: src/lib/message.c:442
 #, c-format
 msgid "open mail pipe %s failed: ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:462
+#: src/lib/message.c:502
 msgid "open mail pipe failed.\n"
 msgstr ""
 
-#: src/lib/message.c:474
+#: src/lib/message.c:514
 #, c-format
 msgid "close error: ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:485
+#: src/lib/message.c:525
 #, c-format
 msgid "Mail prog: %s"
 msgstr ""
 
-#: src/lib/message.c:494
+#: src/lib/message.c:534
 #, c-format
 msgid ""
 "Mail program terminated in error.\n"
@@ -14445,85 +14451,90 @@ msgid ""
 "ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:592 src/lib/message.c:746
+#: src/lib/message.c:631
 #, c-format
 msgid "fopen %s failed: ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:727
+#: src/lib/message.c:770
 #, c-format
 msgid ""
-"Operator mail program terminated in error.\n"
+"Msg delivery error: Operator mail program terminated in error.\n"
 "CMD=%s\n"
 "ERR=%s\n"
 msgstr ""
 
-#: src/lib/message.c:1042
+#: src/lib/message.c:788
+#, c-format
+msgid "Msg delivery error: fopen %s failed: ERR=%s\n"
+msgstr ""
+
+#: src/lib/message.c:1091
 #, c-format
 msgid "%s: ABORTING due to ERROR in %s:%d\n"
 msgstr ""
 
-#: src/lib/message.c:1046
+#: src/lib/message.c:1095
 #, c-format
 msgid "%s: ERROR TERMINATION at %s:%d\n"
 msgstr ""
 
-#: src/lib/message.c:1051
+#: src/lib/message.c:1100
 #, c-format
 msgid "%s: Fatal Error because: "
 msgstr ""
 
-#: src/lib/message.c:1053
+#: src/lib/message.c:1102
 #, c-format
 msgid "%s: Fatal Error at %s:%d because:\n"
 msgstr ""
 
-#: src/lib/message.c:1057
+#: src/lib/message.c:1106
 #, c-format
 msgid "%s: ERROR: "
 msgstr ""
 
-#: src/lib/message.c:1059
+#: src/lib/message.c:1108
 #, c-format
 msgid "%s: ERROR in %s:%d "
 msgstr ""
 
-#: src/lib/message.c:1062
+#: src/lib/message.c:1111
 #, c-format
 msgid "%s: Warning: "
 msgstr ""
 
-#: src/lib/message.c:1065
+#: src/lib/message.c:1114
 #, c-format
 msgid "%s: Security violation: "
 msgstr ""
 
-#: src/lib/message.c:1140
+#: src/lib/message.c:1189
 #, c-format
 msgid "%s ABORTING due to ERROR\n"
 msgstr ""
 
-#: src/lib/message.c:1143
+#: src/lib/message.c:1192
 #, c-format
 msgid "%s ERROR TERMINATION\n"
 msgstr ""
 
-#: src/lib/message.c:1146
+#: src/lib/message.c:1195
 #, c-format
 msgid "%s JobId %u: Fatal error: "
 msgstr ""
 
-#: src/lib/message.c:1152
+#: src/lib/message.c:1201
 #, c-format
 msgid "%s JobId %u: Error: "
 msgstr ""
 
-#: src/lib/message.c:1158
+#: src/lib/message.c:1207
 #, c-format
 msgid "%s JobId %u: Warning: "
 msgstr ""
 
-#: src/lib/message.c:1164
+#: src/lib/message.c:1213
 #, c-format
 msgid "%s JobId %u: Security violation: "
 msgstr ""
@@ -15401,8 +15412,8 @@ msgid "Plugin save packet not found.\n"
 msgstr ""
 
 #: src/filed/fd_plugins.c:337 src/filed/fd_plugins.c:351 src/filed/acl.c:95
-#: src/filed/acl.c:111 src/filed/acl.c:120 src/filed/xattr.c:85
-#: src/filed/xattr.c:100 src/filed/xattr.c:108 src/filed/backup.c:805
+#: src/filed/acl.c:111 src/filed/acl.c:120 src/filed/xattr.c:83
+#: src/filed/xattr.c:98 src/filed/xattr.c:106 src/filed/backup.c:805
 #: src/filed/backup.c:963 src/filed/backup.c:998 src/filed/backup.c:1009
 #: src/filed/backup.c:1067 src/filed/backup.c:1107
 #, c-format
@@ -15865,182 +15876,182 @@ msgstr ""
 msgid "No Director resource defined in %s\n"
 msgstr ""
 
-#: src/filed/xattr.c:248 src/filed/xattr.c:269
+#: src/filed/xattr.c:244 src/filed/xattr.c:265
 #, c-format
 msgid "llistxattr error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:346 src/filed/xattr.c:362
+#: src/filed/xattr.c:342 src/filed/xattr.c:358
 #, c-format
 msgid "lgetxattr error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:379 src/filed/xattr.c:1139
+#: src/filed/xattr.c:375 src/filed/xattr.c:1099
 #, c-format
 msgid "Xattr stream on file \"%s\" exceeds maximum size of %d bytes\n"
 msgstr ""
 
-#: src/filed/xattr.c:395
+#: src/filed/xattr.c:391
 #, c-format
 msgid "Failed to serialize extended attributes on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:436
+#: src/filed/xattr.c:432
 #, c-format
 msgid "Illegal xattr stream, no XATTR_MAGIC on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:478
+#: src/filed/xattr.c:474
 #, c-format
 msgid "lsetxattr error on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:508 src/filed/xattr.c:526 src/filed/xattr.c:544
-#: src/filed/xattr.c:562 src/filed/xattr.c:1866 src/filed/xattr.c:1922
+#: src/filed/xattr.c:504 src/filed/xattr.c:522 src/filed/xattr.c:1826
+#: src/filed/xattr.c:1882
 #, c-format
 msgid ""
 "Can't restore Extended Attributes of %s - incompatible xattr stream "
 "encountered - %d\n"
 msgstr ""
 
-#: src/filed/xattr.c:834 src/filed/xattr.c:879
+#: src/filed/xattr.c:794 src/filed/xattr.c:839
 #, c-format
 msgid "Unable to get acl on xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:893
+#: src/filed/xattr.c:853
 #, c-format
 msgid "Unable to get acl text on xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:958
+#: src/filed/xattr.c:918
 #, c-format
 msgid "Unable to get status on xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1075
+#: src/filed/xattr.c:1035
 #, c-format
 msgid "Unable to open xattr %s on \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1090
+#: src/filed/xattr.c:1050
 #, c-format
 msgid "Unable to read symlin %s on \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1151
+#: src/filed/xattr.c:1111
 #, c-format
 msgid "Unable to read content of xattr %s on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:1181
+#: src/filed/xattr.c:1141
 #, c-format
 msgid "Unable to chdir to xattr space of file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1231 src/filed/xattr.c:1457
+#: src/filed/xattr.c:1191 src/filed/xattr.c:1417
 #, c-format
 msgid "Unable to open file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1253 src/filed/xattr.c:1510
+#: src/filed/xattr.c:1213 src/filed/xattr.c:1470
 #, c-format
 msgid "Unable to open xattr space %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1267 src/filed/xattr.c:1478
+#: src/filed/xattr.c:1227 src/filed/xattr.c:1438
 #, c-format
 msgid "Unable to chdir to xattr space on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1286
+#: src/filed/xattr.c:1246
 #, c-format
 msgid "Unable to list the xattr space on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1374
+#: src/filed/xattr.c:1334
 #, c-format
 msgid "Unable to convert acl from text on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:1382 src/filed/xattr.c:1403
+#: src/filed/xattr.c:1342 src/filed/xattr.c:1363
 #, c-format
 msgid "Unable to restore acl of xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1469
+#: src/filed/xattr.c:1429
 #, c-format
 msgid "Unable to open xattr space on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1495 src/filed/xattr.c:1641
+#: src/filed/xattr.c:1455 src/filed/xattr.c:1601
 #, c-format
 msgid "Unable to open xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1525
+#: src/filed/xattr.c:1485
 #, c-format
 msgid "Unable to chdir to xattr space %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1562
+#: src/filed/xattr.c:1522
 #, c-format
 msgid "Unable to mkfifo xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1577
+#: src/filed/xattr.c:1537
 #, c-format
 msgid "Unable to mknod xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1593
+#: src/filed/xattr.c:1553
 #, c-format
 msgid "Unable to mkdir xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1611
+#: src/filed/xattr.c:1571
 #, c-format
 msgid "Unable to link xattr %s to %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1661
+#: src/filed/xattr.c:1621
 #, c-format
 msgid ""
 "Unable to restore data of xattr %s on file \"%s\": Not all data available in "
 "xattr stream\n"
 msgstr ""
 
-#: src/filed/xattr.c:1672
+#: src/filed/xattr.c:1632
 #, c-format
 msgid "Unable to restore data of xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1693
+#: src/filed/xattr.c:1653
 #, c-format
 msgid "Unable to symlink xattr %s to %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1724
+#: src/filed/xattr.c:1684
 #, c-format
 msgid "Unable to restore owner of xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1750
+#: src/filed/xattr.c:1710
 #, c-format
 msgid "Unable to restore filetimes of xattr %s on file \"%s\": ERR=%s\n"
 msgstr ""
 
-#: src/filed/xattr.c:1765
+#: src/filed/xattr.c:1725
 #, c-format
 msgid "Illegal xattr stream, failed to parse xattr stream on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:1797
+#: src/filed/xattr.c:1757
 #, c-format
 msgid "Failed to restore extensible attributes on file \"%s\"\n"
 msgstr ""
 
-#: src/filed/xattr.c:1810
+#: src/filed/xattr.c:1770
 #, c-format
 msgid "Failed to restore extended attributes on file \"%s\"\n"
 msgstr ""
@@ -16285,7 +16296,7 @@ msgstr ""
 msgid "Error scanning record header: %s\n"
 msgstr ""
 
-#: src/baconfig.h:67
+#: src/baconfig.h:71
 #, c-format
 msgid "Failed ASSERT: %s\n"
 msgstr ""
