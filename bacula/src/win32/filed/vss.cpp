@@ -56,28 +56,34 @@ VSSCleanup()
 {
    if (g_pVSSClient) {
       delete (g_pVSSClient);
+      g_pVSSClient = NULL;
    }
 }
 
+/*
+ * May be called multiple times 
+ */
 void VSSInit()
 {
+   if (g_pVSSClient) {
+      return;                   /* already initialized */
+   }
    /* decide which vss class to initialize */
    if (g_MajorVersion == 5) {
       switch (g_MinorVersion) {
       case 1: 
          g_pVSSClient = new VSSClientXP();
-         atexit(VSSCleanup);
-         return;
+         break;
       case 2: 
          g_pVSSClient = new VSSClient2003();
-         atexit(VSSCleanup);
-         return;
+         break;
       }
    /* Vista or Longhorn or later */
    } else if (g_MajorVersion >= 6) {
       g_pVSSClient = new VSSClientVista();
+   }
+   if (g_pVSSClient) {
       atexit(VSSCleanup);
-      return;
    }
 }
 
@@ -206,21 +212,19 @@ bool VSSClient::GetShadowPathW(const wchar_t *szFilePath, wchar_t *szShadowPath,
 
 const size_t VSSClient::GetWriterCount()
 {
-   alist* pV = m_pAlistWriterInfoText;
-   return pV->size();
+   return m_pAlistWriterInfoText->size();
 }
 
 const char* VSSClient::GetWriterInfo(int nIndex)
 {
-   alist* pV = m_pAlistWriterInfoText;
-   return (char*)pV->get(nIndex);
+   return (char*)m_pAlistWriterInfoText->get(nIndex);
 }
 
 
 const int VSSClient::GetWriterState(int nIndex)
 {
-   alist* pV = m_pAlistWriterState;   
-   void *item = pV->get(nIndex);
+   void *item = m_pAlistWriterState->get(nIndex);
+
 /* Eliminate compiler warnings */
 #ifdef HAVE_VSS64
    return (int64_t)(char *)item;
@@ -231,23 +235,23 @@ const int VSSClient::GetWriterState(int nIndex)
 
 void VSSClient::AppendWriterInfo(int nState, const char* pszInfo)
 {
-   alist* pT = m_pAlistWriterInfoText;
-   alist* pS = m_pAlistWriterState;
-
-   pT->push(bstrdup(pszInfo));
-   pS->push((void*)nState);   
+   m_pAlistWriterInfoText->push(bstrdup(pszInfo));
+   m_pAlistWriterState->push((void*)nState);   
 }
 
+/*
+ * Note, this is called at the end of every job, so release all
+ *  the items in the alists, but do not delete the alist.
+ */
 void VSSClient::DestroyWriterInfo()
 {
-   alist* pT = m_pAlistWriterInfoText;
-   alist* pS = m_pAlistWriterState;
+   while (!m_pAlistWriterInfoText->empty()) {
+      free(m_pAlistWriterInfoText->pop());
+   }
 
-   while (!pT->empty())
-      free(pT->pop());
-
-   while (!pS->empty())
-      pS->pop();      
+   while (!m_pAlistWriterState->empty()) {
+      m_pAlistWriterState->pop();      
+   }
 }
 
 #endif
