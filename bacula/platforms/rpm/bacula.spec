@@ -10,13 +10,13 @@
 %define _packager D. Scott Barninger <barninger@fairfieldcomputers.com>
 %define depkgs_version 18Dec09
 
-%define postgres_version 8
-%define postgres_package postgresql84
-%define postgres_server_package postgresql84-server
-%define postgres_devel_package postgresql84-devel
+%define postgres_version 7
+%define postgres_package postgresql
+%define postgres_server_package postgresql-server
+%define postgres_devel_package postgresql-devel
 
 
-%define single_dir 1
+%define single_dir 0
 %{?single_dir_install:%define single_dir 1}
 
 # Installation Directory locations
@@ -1082,7 +1082,7 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 
 %if %{mysql}
 %pre mysql
-# test for bacula database older than version 13
+# test for bacula database older than version 12
 # note: this ASSUMES no password has been set for bacula database
 DB_VER=`mysql 2>/dev/null bacula -e 'select * from Version;'|tail -n 1`
 %endif
@@ -1111,7 +1111,7 @@ if [ -s %{working_dir}/bacula.db ] && [ -s %{sqlite_bindir}/sqlite ];then
         echo "chown bacula.bacula bacula.db"
         exit 1
 fi
-# test for bacula database older than version 12 and sqlite3
+# test for bacula database older than version 11 and sqlite3
 if [ -s %{working_dir}/bacula.db ] && [ -s %{sqlite_bindir}/sqlite3 ];then
         DB_VER=`echo "select * from Version;" | %{sqlite_bindir}/sqlite3 2>/dev/null %{working_dir}/bacula.db | tail -n 1`
 %endif
@@ -1122,13 +1122,13 @@ DB_VER=`echo 'select * from Version;' | psql bacula 2>/dev/null | tail -3 | head
 %endif
 
 %if ! %{client_only}
-if [ -n "$DB_VER" ] && [ "$DB_VER" -lt "12" ]; then
-    echo "This bacula upgrade will update a bacula database from version 12 to 13."
+if [ -n "$DB_VER" ] && [ "$DB_VER" -lt "11" ]; then
+    echo "This bacula upgrade will update a bacula database from version 11 to 12."
     echo "You appear to be running database version $DB_VER. You must first update"
-    echo "your database to version 12 and then install this upgrade. The alternative"
+    echo "your database to version 11 and then install this upgrade. The alternative"
     echo "is to use %{script_dir}/drop_%{db_backend}_tables to delete all your your current"
     echo "catalog information, then do the upgrade. Information on updating a"
-    echo "database older than version 12 can be found in the release notes."
+    echo "database older than version 11 can be found in the release notes."
     exit 1
 fi
 %endif
@@ -1238,7 +1238,7 @@ if [ -z "$DB_VER" ]; then
     %{script_dir}/make_mysql_tables
 
 # check to see if we need to upgrade a 3.x database
-elif [ "$DB_VER" -lt "13" ]; then
+elif [ "$DB_VER" -lt "12" ]; then
     echo "This release requires an upgrade to your bacula database."
     echo "Backing up your current database..."
     mysqldump -f --opt bacula | bzip2 > %{working_dir}/bacula_backup.sql.bz2
@@ -1255,7 +1255,7 @@ fi
 if [ -s %{working_dir}/bacula.db ]; then
         DB_VER=`echo "select * from Version;" | %{sqlite_bindir}/sqlite3 2>/dev/null %{working_dir}/bacula.db | tail -n 1`
         # check to see if we need to upgrade a 3.x database
-        if [ "$DB_VER" -lt "13" ] && [ "$DB_VER" -ge "12" ]; then
+        if [ "$DB_VER" -lt "12" ] && [ "$DB_VER" -ge "11" ]; then
                 echo "This release requires an upgrade to your bacula database."
                 echo "Backing up your current database..."
                 echo ".dump" | %{sqlite_bindir}/sqlite3 %{working_dir}/bacula.db | bzip2 > %{working_dir}/bacula_backup.sql.bz2
@@ -1293,7 +1293,7 @@ if [ -z "$DB_VER" ]; then
     %{script_dir}/grant_postgresql_privileges
 
 # check to see if we need to upgrade a 5.0.x database
-elif [ "$DB_VER" -lt "13" ]; then
+elif [ "$DB_VER" -lt "12" ]; then
     echo "This release requires an upgrade to your bacula database."
     echo "Backing up your current database..."
     pg_dump bacula | bzip2 > %{working_dir}/bacula_backup.sql.bz2
