@@ -6,7 +6,7 @@ use strict ;
    Bweb - A Bacula web interface
    BaculaÂ® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2006-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -30,10 +30,6 @@ use strict ;
    The licensor of Bacula is the Free Software Foundation Europe
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
-
-=head1 VERSION
-
-    $Id$
 
 =cut
 
@@ -135,6 +131,9 @@ if ($action eq 'begin') {		# main display
 
 } elsif ($action eq 'cmd_storage') {
     $bweb->cmd_storage();
+
+} elsif ($action eq 'list_files') {
+    $bweb->display_files();
 
 } elsif ($action eq 'media') {
     $bweb->can_do('r_view_media');

@@ -6,7 +6,7 @@ use strict;
    Bweb - A Bacula web interface
    BaculaÂ® - The Network Backup Solution
 
-   Copyright (C) 2000-2009 Free Software Foundation Europe e.V.
+   Copyright (C) 2006-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -30,10 +30,6 @@ use strict;
    The licensor of Bacula is the Free Software Foundation Europe
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
-
-=head1 VERSION
-
-    $Id$
 
 =cut
 
@@ -4241,6 +4237,33 @@ sub restore
 # TODO : make this internal to not eject tape ?
 use Bconsole;
 
+
+sub display_files
+{
+    my ($self) = @_ ;
+    $self->can_do('r_view_job');
+
+    my $arg = $self->get_form(qw/limit offset jobid/);
+    if (!$arg->{jobid}) {
+        return $self->error("Can't get jobid");
+    }
+
+    $self->display({
+        title => "Content of JobId $arg->{jobid}  ",
+        name => "list files jobid=$arg->{jobid}",
+        notail => 1,
+        id => $cur_id++,
+    }, "command.tpl");  
+
+    my $b = new Bconsole(pref => $self->{info},timeout => 60);
+    $b->connect();
+    $b->log_stdout(1);
+    $b->send_cmd("list files jobid=$arg->{jobid} limit=$arg->{limit}"); # TODO: add offset
+
+    $self->display({
+        nohead => 1,
+    }, "command.tpl");  
+}
 
 sub ach_get
 {
