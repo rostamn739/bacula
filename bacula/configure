@@ -29048,6 +29048,7 @@ saved_LIBS="${LIBS}"
 LIBS="${saved_LIBS} ${SQL_LFLAGS}"
 
 if test x$DB_TYPE = xpostgresql; then
+   support_batch_insert=yes
    { echo "$as_me:$LINENO: checking for PQisthreadsafe in -lpq" >&5
 echo $ECHO_N "checking for PQisthreadsafe in -lpq... $ECHO_C" >&6; }
 if test "${ac_cv_lib_pq_PQisthreadsafe+set}" = set; then
@@ -29186,9 +29187,21 @@ _ACEOF
 
 fi
 
-   if test "x$ac_cv_lib_pq_PQputCopyData" != "xyes"
-    then
-	support_batch_insert=no
+   test "x$ac_cv_lib_pq_PQputCopyData" = "xyes"
+   pkg=$?
+   if test $pkg = 0; then
+      # Check whether --enable-batch-insert was given.
+if test "${enable_batch_insert+set}" = set; then
+  enableval=$enable_batch_insert;
+	     if test x$enableval = xno; then
+		support_batch_insert=no
+	     fi
+
+
+fi
+
+   else
+      support_batch_insert=no
    fi
 fi
 
@@ -29333,7 +29346,7 @@ _ACEOF
 
 fi
 
-      test "x$ac_cv_lib_pq_PQputCopyData" != "xyes"
+      test "x$ac_cv_lib_pq_PQputCopyData" = "xyes"
       pkg=$?
    fi
 
