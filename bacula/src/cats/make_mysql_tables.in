@@ -224,7 +224,7 @@ CREATE TABLE Media (
     'Read-Only', 'Disabled', 'Error', 'Busy', 'Used', 'Cleaning') NOT NULL,
    Enabled TINYINT DEFAULT 1,
    Recycle TINYINT DEFAULT 0,
-   ActionOnPurge     TINYINT    DEFAULT 0,
+   ActionOnPurge     TINYINT	DEFAULT 0,
    VolRetention BIGINT UNSIGNED DEFAULT 0,
    VolUseDuration BIGINT UNSIGNED DEFAULT 0,
    MaxVolJobs INTEGER UNSIGNED DEFAULT 0,
@@ -264,7 +264,7 @@ CREATE TABLE Pool (
    MaxVolBytes BIGINT UNSIGNED DEFAULT 0,
    AutoPrune TINYINT DEFAULT 0,
    Recycle TINYINT DEFAULT 0,
-   ActionOnPurge     TINYINT    DEFAULT 0,
+   ActionOnPurge     TINYINT	DEFAULT 0,
    PoolType ENUM('Backup', 'Copy', 'Cloned', 'Archive', 'Migration', 'Scratch') NOT NULL,
    LabelType TINYINT DEFAULT 0,
    LabelFormat TINYBLOB,
@@ -375,7 +375,7 @@ CREATE TABLE PathHierarchy
 );
 
 CREATE INDEX pathhierarchy_ppathid 
-          ON PathHierarchy (PPathId);
+	  ON PathHierarchy (PPathId);
 
 CREATE TABLE PathVisibility
 (
@@ -386,7 +386,7 @@ CREATE TABLE PathVisibility
       CONSTRAINT pathvisibility_pkey PRIMARY KEY (JobId, PathId)
 );
 CREATE INDEX pathvisibility_jobid
-             ON PathVisibility (JobId);
+	     ON PathVisibility (JobId);
 
 CREATE TABLE Version (
    VersionId INTEGER UNSIGNED NOT NULL 
