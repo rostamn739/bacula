@@ -357,7 +357,7 @@ int removeService()
                   if (status.dwCurrentState == SERVICE_STOP_PENDING) {
                      sleep(1);
                   } else {
-                     return 0;
+                     break;
                   }
                }
                if (status.dwCurrentState != SERVICE_STOPPED) {
