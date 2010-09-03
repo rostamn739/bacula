@@ -145,13 +145,14 @@ bRC
 root_node_t::endRestoreFile(exchange_fd_context_t *context)
 {
    _DebugMessage(0, "endRestoreFile_ROOT state = %d\n", state);
-   switch (state)
-   {
+   switch (state) {
    case 0:
       delete service_node;
       state = 1;
       return bRC_OK;
    case 1:
+      return bRC_OK;
+   case 900:
       return bRC_OK;
    default:
       _JobMessage(M_FATAL, "endRestore: invalid internal state %d", state);
