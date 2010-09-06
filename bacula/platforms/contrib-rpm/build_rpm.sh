@@ -21,7 +21,7 @@
 ###########################################################################################
 # script configuration section
 
-VERSION=5.0.2
+VERSION=5.0.3
 RELEASE=1
 
 # build platform for spec
@@ -106,14 +106,6 @@ rpmbuild --rebuild --define "build_${PLATFORM} 1" \
 --define "build_python 1" ${SRPM}
 rm -rf ${RPMBUILD}/*
 
-echo Building SQLite packages for "$PLATFORM"...
-sleep 2
-rpmbuild --rebuild --define "build_${PLATFORM} 1" \
---define "build_sqlite 1" \
---define "contrib_packager ${PACKAGER}" \
---define "build_python 1" ${SRPM}
-rm -rf ${RPMBUILD}/*
-
 if [ "$BUILDBAT" = "1" ]; then
 	echo Building Bat package for "$PLATFORM"...
 	sleep 2
@@ -148,9 +140,6 @@ mv -f ${RPMDIR}/bacula-mysql-${VERSION}-${RELEASE}.${ARCH}.rpm \
 
 mv -f ${RPMDIR}/bacula-postgresql-${VERSION}-${RELEASE}.${ARCH}.rpm \
 ./bacula-postgresql-${VERSION}-${RELEASE}.${FILENAME}.${ARCH}.rpm
-
-mv -f ${RPMDIR}/bacula-sqlite-${VERSION}-${RELEASE}.${ARCH}.rpm \
-./bacula-sqlite-${VERSION}-${RELEASE}.${FILENAME}.${ARCH}.rpm
 
 if [ "$BUILDMTX" = "1" ]; then
 	mv -f ${RPMDIR}/bacula-mtx-${VERSION}-${RELEASE}.${ARCH}.rpm \
@@ -200,3 +189,4 @@ ls
 # 05 Apr 2009 deprecate gconsole and wxconsole, bat built by default
 # 30 Jan 2010 adjust for mtx, bat and docs in separate srpm
 # 02 May 2010 add bacula-libs package
+# 06 Sep 2010 remove sqlite build
