@@ -1209,7 +1209,7 @@ sub get_events
 {
     use integer;
     my ($self, $s,$format) = @_;
-    my $year = $self->{year} || ((localtime)[5] + 1900);
+    my $year = $self->{year} || ((localtime($Bweb::btime))[5] + 1900);
     $format = $format || '%u-%02u-%02u %02u:%02u';
     my @ret;
     foreach my $m (@{$s->{month}})              # mois de l'annee
@@ -1308,6 +1308,8 @@ our %sql_func = (
               DB_SIZE => " SELECT pg_database_size(current_database()) ",
               CAT_POOL_TYPE => " MediaType || '_' || Pool.Name ",
               CONCAT_SEP => "",
+              NOW => "NOW()",
+              #NOW  => "TIMESTAMP '2010-07-15 00:00:00' "
           },
           mysql => {
               UNIX_TIMESTAMP => 'UNIX_TIMESTAMP',
@@ -1331,8 +1333,15 @@ our %sql_func = (
               DB_SIZE => " SELECT sum(DATA_LENGTH) FROM INFORMATION_SCHEMA.TABLES ",
               CAT_POOL_TYPE => " CONCAT(MediaType,'_',Pool.Name) ",
               CONCAT_SEP => " SEPARATOR '' ",
+              NOW => "NOW()",
           },
          );
+
+use Exporter 'import';
+our @EXPORT_OK = qw($btime);
+
+#our $btime = 1279144800;
+our $btime = time;
 
 sub dbh_is_mysql
 {
@@ -1683,22 +1692,20 @@ sub get_limit
 
     my $limit = '';
     my $label = '';
+    my $sql = $self->{sql};
 
     if ($arg{since} and $arg{age}) {
         my $now = "$self->{sql}->{UNIX_TIMESTAMP}(TIMESTAMP '$arg{since}')";
+        my $d = strftime('%Y-%m-%d %H:%M:%S', localtime($btime + $arg{age}));
         $limit .= "
- AND $self->{sql}->{UNIX_TIMESTAMP}(StartTime) > $now 
+ AND StartTime > '$arg{since}'  
  AND $self->{sql}->{UNIX_TIMESTAMP}(EndTime) < ($now + $self->{sql}->{TO_SEC}($arg{age}))";
+
         $label .= "since $arg{since} and during " . human_sec($arg{age});
 
     } elsif ($arg{age}) {
-        $limit .=
-  "AND $self->{sql}->{UNIX_TIMESTAMP}(EndTime)
-         >
-       ( $self->{sql}->{UNIX_TIMESTAMP}(NOW())
-         -
-         $self->{sql}->{TO_SEC}($arg{age})
-       )" ;
+        my $d = strftime('%Y-%m-%d %H:%M:%S', localtime($btime - $arg{age}));
+        $limit .=  "AND EndTime > '$d' " ;
 
         $label = "last " . human_sec($arg{age});
     }
@@ -1897,7 +1904,7 @@ sub get_form
 
     if ($what{since}) {
         my $age = $ret{age} || human_sec_unit($opt_i{age});
-        my $since = CGI::param('since') || strftime('%F %T', localtime(time - $age));
+        my $since = CGI::param('since') || strftime('%F %T', localtime($btime - $age));
         if ($since =~ /^(\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?)$/) {
             $ret{since} = $1;
         }
@@ -2185,7 +2192,7 @@ sub help_intern_compute
 AND (
  (  ($self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
       + $self->{sql}->{TO_SEC}(Media.VolRetention)
-    ) < NOW()
+    ) < $self->{sql}->{NOW}
  ) OR ( 
   Media.VolStatus IN ('Purged', 'Recycle')
  )
@@ -2602,7 +2609,7 @@ sub display_media
         AND VolStatus = ('Full', 'Used')
         AND (    $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
                + $self->{sql}->{TO_SEC}(Media.VolRetention)
-            ) < NOW()  " . $where ;
+            ) < $self->{sql}->{NOW}  " . $where ;
     }
 
     my $query="
@@ -3605,7 +3612,8 @@ sub location_change
     foreach my $vol (keys %$media) {
         $query = "
 INSERT INTO LocationLog (Date,Comment,MediaId,LocationId,NewEnabled,NewVolStatus)
- SELECT NOW(), $comm, Media.MediaId, Location.LocationId, $en, VolStatus 
+ SELECT $self->{sql}->{NOW}, $comm, Media.MediaId, Location.LocationId, 
+        $en, VolStatus 
    FROM Media, Location
   WHERE Media.VolumeName = '$vol'
     AND Location.Location = '$media->{$vol}->{location}'
@@ -3956,7 +3964,7 @@ SELECT jobname AS jobname,
         # and we need y when x=now()
         # CORR gives the correlation
         # (TODO: display progress bar only if CORR > 0.8)
-        my $now = scalar(time);
+        my $now = $btime;
         $query = "
 SELECT temp.jobname AS jobname, 
        CORR(jobbytes,jobtdate) AS corr_jobbytes,
@@ -4085,8 +4093,8 @@ SELECT Job.JobId AS jobid,
        Job.JobFiles  AS jobfiles,
        Job.JobBytes  AS jobbytes,
        Job.JobStatus AS jobstatus,
-$self->{sql}->{SEC_TO_TIME}(  $self->{sql}->{UNIX_TIMESTAMP}(NOW())  
-                            - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)) 
+$self->{sql}->{SEC_TO_TIME}($self->{sql}->{UNIX_TIMESTAMP}($self->{sql}->{NOW})
+                          - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)) 
          AS duration,
        Client.Name AS clientname
 FROM Job INNER JOIN Client USING (ClientId) $filter
@@ -4590,7 +4598,8 @@ SELECT count(1) AS nbline,
    WHERE ( Log.JobId = $arg->{jobid} 
       OR (Log.JobId = 0 
           AND Time >= (SELECT StartTime FROM Job WHERE JobId=$arg->{jobid}) 
-          AND Time <= (SELECT COALESCE(EndTime,NOW()) FROM Job WHERE JobId=$arg->{jobid})
+          AND Time <= (SELECT COALESCE(EndTime,$self->{sql}->{NOW}) 
+                         FROM Job WHERE JobId=$arg->{jobid})
        ) ) $filter
  ORDER BY LogId
  LIMIT $arg->{limit}
@@ -5154,10 +5163,10 @@ sub display_missing_job
     my $arg = $self->get_form(qw/begin end age/);
 
     if (!$arg->{begin}) { # TODO: change this
-        $arg->{begin} = strftime('%F %T', localtime(time - $arg->{age}));
+        $arg->{begin} = strftime('%F %T', localtime($btime - $arg->{age}));
     }
     if (!$arg->{end}) {
-        $arg->{end} = strftime('%F %T', localtime(time));
+        $arg->{end} = strftime('%F %T', localtime($btime));
     }
     $self->{tmp} = [];          # check_job use this for result
 
