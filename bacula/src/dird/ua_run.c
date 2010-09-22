@@ -766,14 +766,13 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->JobPriority);
       } else {
-         ua->send_msg(_("Run %s job\n"
+         ua->send_msg(_("Run Admin Job\n"
                      "JobName:  %s\n"
                      "FileSet:  %s\n"
                      "Client:   %s\n"
                      "Storage:  %s\n"
                      "When:     %s\n"
                      "Priority: %d\n"),
-                 _("Admin"),
                  job->name(),
                  jcr->fileset->name(),
                  NPRT(jcr->client->name()),
@@ -811,7 +810,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->plugin_options?jcr->plugin_options:"",
                  jcr->plugin_options?"\n":"");
          } else {
-            ua->send_msg(_("Run %s job\n"
+            ua->send_msg(_("Run Backup job\n"
                         "JobName:  %s\n"
                         "Level:    %s\n"
                         "Client:   %s\n"
@@ -871,7 +870,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
               bstrutime(dt, sizeof(dt), jcr->sched_time),
               jcr->JobPriority);
          } else {
-            ua->send_msg(_("Run %s job\n"
+            ua->send_msg(_("Run Verify Job\n"
                         "JobName:     %s\n"
                         "Level:       %s\n"
                         "Client:      %s\n"
@@ -882,7 +881,6 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                         "Verify List: %s\n"
                         "When:        %s\n"
                         "Priority:    %d\n"),
-              _("Verify"),
               job->name(),
               level_to_str(jcr->getJobLevel()),
               jcr->client->name(),
