@@ -1,6 +1,6 @@
 <br/>
 <div class='titlediv'>
-  <h1 class='newstitle'> __New location__ </h1>
+  <h1 class='newstitle'> __New volume location__ </h1>
 </div>
 <div class='bodydiv'>
    <form action="?" method='get'>
@@ -26,6 +26,6 @@
     <button type="submit" class="bp" name='action' value='location_add' title="__Save__" ><img src='/bweb/save.png' alt=''>__Save__</button>
    </form>
 
-__Tips: It's a good idea to have a location per autochanger.__
+__Tips: It's a good idea to have a volume location per autochanger.__
 
 </div>

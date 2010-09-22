@@ -1,6 +1,6 @@
 <br/>
 <div class='titlediv'>
-  <h1 class='newstitle'> __Location:__ <TMPL_VAR Location></h1>
+  <h1 class='newstitle'> __Volume location:__ <TMPL_VAR Location></h1>
 </div>
 <div class='bodydiv'>
    <form name='form1' action="?" method='get'>

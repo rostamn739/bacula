@@ -1,6 +1,6 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'>__Locations__</h1>
+  <h1 class='newstitle'>__Volume locations__</h1>
  </div>
  <div class="bodydiv">
    <form action='?' method='get'>
