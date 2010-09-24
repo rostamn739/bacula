@@ -117,7 +117,7 @@
 /* Define to use 4.3BSD getmntent to get filesystem type.  */
 /* #undef FSTYPE_MNTENT 1 */
 
-/* Define to use 4.4BSD and OSF1 statfs to get filesystem type.  */
+/* Define to use 4.4BSD and TRU64 statfs to get filesystem type.  */
 /* #undef FSTYPE_STATFS */
 
 /* Define to use Ultrix getmnt to get filesystem type.  */
@@ -188,7 +188,7 @@
 /* #undef HAVE_AIX_OS */
 /* #undef HAVE_SGI_OS */
 /* #define HAVE_CYGWIN 1 */
-/* #undef HAVE_OSF1_OS */
+/* #undef HAVE_TRU64_OS */
 /* #undef HAVE_DARWIN_OS */
 
 /* Set to correct scanf value for long long int */
