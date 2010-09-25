@@ -2606,7 +2606,7 @@ sub display_media
     }
     if ($arg->{expired}) {
         $where = " 
-        AND VolStatus = ('Full', 'Used')
+        AND VolStatus IN ('Full', 'Used')
         AND (    $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
                + $self->{sql}->{TO_SEC}(Media.VolRetention)
             ) < $self->{sql}->{NOW}  " . $where ;
