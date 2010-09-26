@@ -2235,7 +2235,8 @@ sub display_general
     my ($self, %arg) = @_ ;
 
     my ($limit, $label) = $self->get_limit(%arg);
-
+    my $filter = $self->get_client_filter();
+    $filter = $filter? " JOIN Client USING (ClientId) $filter " : '';
     my $query = "
 SELECT
     (SELECT count(Pool.PoolId)   FROM Pool)   AS nb_pool,
@@ -2244,7 +2245,7 @@ SELECT
     (SELECT sum(VolBytes)        FROM Media)  AS nb_bytes,
     ($self->{sql}->{DB_SIZE})                 AS db_size,
     (SELECT count(Job.JobId)
-      FROM Job
+      FROM Job $filter
       WHERE Job.JobStatus IN ('E','e','f','A')
       $limit
     )                                         AS nb_err,
