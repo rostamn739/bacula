@@ -188,7 +188,7 @@
 /* #undef HAVE_AIX_OS */
 /* #undef HAVE_SGI_OS */
 /* #define HAVE_CYGWIN 1 */
-/* #undef HAVE_TRU64_OS */
+/* #undef HAVE_OSF1_OS */
 /* #undef HAVE_DARWIN_OS */
 
 /* Set to correct scanf value for long long int */
