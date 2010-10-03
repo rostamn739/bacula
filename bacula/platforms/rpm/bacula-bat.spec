@@ -138,6 +138,9 @@ BuildRequires: freetype-devel
 %define blurb7 features that make it easy to find and recover lost or damaged files.
 %define blurb8 Bacula source code has been released under the AGPL version 3 license.
 
+%define group_file /etc/group
+%define groupadd /usr/sbin/groupadd
+
 Summary: Bacula - The Network Backup Solution
 Group: System Environment/Daemons
 
@@ -302,6 +305,8 @@ fi
 rm -rf $RPM_BUILD_DIR/depkgs-qt
 
 %changelog
+* Sun Oct 03 2010 D. Scott Barninger <barninger@fairfieldcomputers.com>
+- fix bug 1639
 * Sun Mar 14 2010 D. Scott Barninger <barninger@fairfieldcomputers.com>
 - Fix for QT mkspecs location on FC12
 - allow user to build without embedded static QT
