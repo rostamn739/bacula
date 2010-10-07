@@ -3740,7 +3740,7 @@ sub make_overview_tab
         $cur_name = $elt->[0];
         push @$events, 
           { num => $elt->[1], status => $elt->[2], 
-            joberrors => $elt->[3], title => "$elt->[4] jobs"};
+            joberrors => $elt->[3], title => "$elt->[4] jobs", date => $elt->[5]};
     }
     push @items, { name => $cur_name, events => $events};
     return \@items;
@@ -3757,7 +3757,7 @@ sub get_time_overview
         $type = 'DAY';
     }
     my $jobt = $self->get_stat_table();
-    my $stime1 = $self->{sql}->{"STARTTIME_P" . $type}; # get 1,2,3
+    my $stime1 = $self->{sql}->{"STARTTIME_P" . $type}; # get 1, 2, 3, 4
     $stime1 =~ s/Job.StartTime/date/;
     my $stime2 = $self->{sql}->{"STARTTIME_" . $type}; # get 2007-01-03, 2007-01-23
 
@@ -3777,6 +3777,7 @@ sub display_overview_zoom
     $self->can_do('r_view_stat');
 
     my $arg = $self->get_form(qw/jclient_groups age since type level/);
+    $arg->{type} = $arg->{type} || 'day';
 
     if (!$arg->{jclient_groups}) {
         return $self->error("Can't get client_group selection");
@@ -3787,7 +3788,7 @@ sub display_overview_zoom
     my $filter = $self->get_client_filter();
     my $q = "
 SELECT name, $stime1 AS num,
-       JobStatus AS value, joberrors, nb_job
+       JobStatus AS value, joberrors, nb_job, date
 FROM (
   SELECT $stime2        AS date,
          Client.Name    AS name,
@@ -3808,6 +3809,7 @@ FROM (
 ";
     my $items = $self->make_overview_tab($q);
     $self->display({label => $label,
+                    type => $arg->{type},
                     action => "job;since=$arg->{since};level=$arg->{level};type=$arg->{type};age=$arg->{age};client=", 
                     items => $items}, "overview.tpl");
 }
@@ -3818,13 +3820,14 @@ sub display_overview
     $self->can_do('r_view_stat');
 
     my $arg = $self->get_form(qw/jclient_groups age since type level/);
+    $arg->{type} = $arg->{type} || 'day';
     my ($filter2, undef) = $self->get_param(qw/client_groups level jobtype/);
     my $filter3 = $self->get_client_group_filter();
     my ($stime1, $stime2, $filter1, $label, $jobt) = $self->get_time_overview($arg);
 
     my $q = "
 SELECT name, $stime1 AS num, 
-       JobStatus AS value, joberrors, nb_job
+       JobStatus AS value, joberrors, nb_job, date
 FROM (
   SELECT $stime2        AS date, 
          client_group_name AS name,
@@ -3843,6 +3846,7 @@ FROM (
 ";
     my $items = $self->make_overview_tab($q);
     $self->display({label=>$label,
+                    type => $arg->{type},
                     action => "overview_zoom;since=$arg->{since};level=$arg->{level};type=$arg->{type};age=$arg->{age};client_group=", 
                     items => $items}, "overview.tpl");
 
