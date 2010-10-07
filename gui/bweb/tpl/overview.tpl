@@ -73,7 +73,6 @@ function init_tab() // initialize the table
     // javascript can't do foreach $j (sort keys %dates)
     var keys = new Array();
     for (var j in dates) {
-        console.log(j);
         keys.push(j);
     }
     keys.sort();
