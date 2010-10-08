@@ -41,6 +41,7 @@ var tr; var td; var img; var infos;
 var all = new Array();
 var dates = {};
 var dates_pos = {};
+var max_pos=0;
 
 <TMPL_LOOP items>
 infos = new Array();
@@ -104,6 +105,7 @@ function init_tab() // initialize the table
        dates_pos[j]=i++;        // position in the tab
        document.getElementById("days").appendChild(t);
     }
+    max_pos=i;
 }
 
 function add_client(name, infos)
@@ -137,6 +139,11 @@ function add_client(name, infos)
         img.setAttribute("title", infos[j][3]);
 //	a.appendChild(img);
         td.appendChild(img);        
+    }
+
+    while (cur_pos++ < max_pos) {
+       td=document.createElement("TD"); 
+       tr.appendChild(td);
     }
 }
 
