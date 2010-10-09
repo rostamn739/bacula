@@ -3972,7 +3972,7 @@ SELECT jobname AS jobname,
         my $now = $btime;
         $query = "
 SELECT temp.jobname AS jobname, 
-       CORR(jobbytes,jobtdate) AS corr_jobbytes,
+       COALESCE(CORR(jobbytes,jobtdate),0) AS corr_jobbytes,
        ($now*REGR_SLOPE(jobbytes,jobtdate) 
          + REGR_INTERCEPT(jobbytes,jobtdate)) AS jobbytes,
        COUNT(1) AS nb_jobbytes ";
