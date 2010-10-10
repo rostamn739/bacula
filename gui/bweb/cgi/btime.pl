@@ -32,6 +32,9 @@
 
 =cut
 
+# Do like cross road signal
+# red wait, green go, despooling blue
+
 use strict;
 use GTime;
 use Getopt::Long ;
