@@ -42,7 +42,7 @@ use strict;
 package Bconsole;
 use Expect;
 use POSIX qw/_exit/;
-
+use IPC::Open2;
 # my $pref = new Pref(config_file => 'brestore.conf');
 # my $bconsole = new Bconsole(pref => $pref);
 sub new
@@ -176,7 +176,7 @@ sub connect
 	
 	# TODO : we must verify that expect return the good value
 
-	$self->expect_it('*');
+#	$self->expect_it('*');
 	$self->send_cmd('gui on');
     }
     return 1 ;
@@ -193,6 +193,32 @@ sub before
 {
     my ($self) = @_;
     return $self->{bconsole}->before();
+}
+
+# use open2 to send a command, skip expect, faster
+sub send_one_cmd
+{
+    my ($self, $line) = @_;
+    my $ret='';
+    my $cmd = $self->{pref}->{bconsole} ;
+    if ($self->{dir}) {
+        $cmd = $cmd . " -D '$self->{dir}'";
+    }
+    my ($OUT, $IN);
+    my $pid = open2($OUT, $IN, $cmd);
+    print $IN "$line\n";
+    close($IN);
+    my $l = <$OUT>;             # Connecting to
+    $l = <$OUT>;                # 1000: OK
+    $l = <$OUT>;                # Enter a period
+    $l = <$OUT>;                # line
+
+    while ($l = <$OUT>) {
+        $ret .= $l;
+    }
+    close($OUT);
+    waitpid($pid, 0);
+    return $ret;
 }
 
 sub send_cmd
