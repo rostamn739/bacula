@@ -674,6 +674,11 @@ static int eolcmd(FILE *input, BSOCK *UA_sock)
    return 1;
 }
 
+/*
+ * Return 1 if OK
+ *        0 if no input
+ *       -1 error (must stop)
+ */
 int
 get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
 {
@@ -690,7 +695,7 @@ get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
        */
       line = readline((char *)prompt);   /* cast needed for old readlines */
       if (!line) {
-         exit(1);
+         return -1;                      /* error return and exit */
       }
       strip_trailing_junk(line);
       command = line;
@@ -700,7 +705,7 @@ get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
      sendit(_("Command logic problem\n"));
      sock->msglen = 0;
      sock->msg[0] = 0;
-     return 0;
+     return 0;                  /* No input */
    }
 
    /*
@@ -731,7 +736,7 @@ get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
       actuallyfree(line);       /* allocated by readline() malloc */
       line = NULL;
    }
-   return 1;
+   return 1;                    /* OK */
 }
 
 #else /* no readline, do it ourselves */
@@ -844,8 +849,9 @@ static int console_update_history(const char *histfile)
    int ret=0;
 
 #ifdef HAVE_READLINE
-/* first, try to truncate the history file, and if it
- * fail, the file is probably not present, and we
+/*
+ * first, try to truncate the history file, and if it
+ * fails, the file is probably not present, and we
  * can use write_history to create it
  */
 
@@ -854,7 +860,6 @@ static int console_update_history(const char *histfile)
    } else {
       ret = write_history(histfile);
    }
-
 #endif
 
    return ret;
@@ -865,7 +870,6 @@ static int console_init_history(const char *histfile)
    int ret=0;
 
 #ifdef HAVE_READLINE
-
    using_history();
    ret = read_history(histfile);
    /* Tell the completer that we want a complete . */
