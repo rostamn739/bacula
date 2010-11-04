@@ -204,7 +204,7 @@ foreach my $elt (@$all)
 #	    end   => $elt->[1],
 #	};
 #
-    } elsif ($elt->[2] =~ /(?:$regs{get_drive}) "([\w\d\s-\.]+)"/) {
+    } elsif ($elt->[2] =~ /(?:$regs{get_drive}) "([\w\d\s\-\.]+)"/) {
 	$drive = $1;
 
     } elsif ($elt->[2] =~ /(?:$regs{data_despool_time}).*? = (\d+):(\d+):(\d+)/) {
