@@ -381,7 +381,22 @@ void closelog();
 void openlog(const char *ident, int option, int facility);
 #endif //HAVE_MINGW
 
-extern void LogErrorMsg(const char *message);
+void LogErrorMsg(const char *message);
+
+/* Don't let OS go to sleep (usually a Laptop) while we are backing up */
+void prevent_os_suspensions();
+void allow_os_suspensions();
+
+typedef DWORD EXECUTION_STATE;
+#define ES_CONTINUOUS            0x80000000
+#define ES_SYSTEM_REQUIRED       0x00000001
+#define ES_DISPLAY_REQUIRED      0x00000002
+#ifndef ES_USER_PRESENT
+# define ES_USER_PRESENT          0x00000004
+#endif
+
+WINBASEAPI EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE esFlags);
+
 
 #if !defined(INVALID_FILE_ATTRIBUTES)
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
