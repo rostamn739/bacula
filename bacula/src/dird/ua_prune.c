@@ -409,6 +409,7 @@ int prune_jobs(UAContext *ua, CLIENT *client, POOL *pool, int JobType)
    JOB_DBR jr;
 
    db_lock(ua->db);
+   memset(&del, 0, sizeof(del));
    memset(&cr, 0, sizeof(cr));
 
    bstrncpy(cr.Name, client->name(), sizeof(cr.Name));
@@ -438,7 +439,6 @@ int prune_jobs(UAContext *ua, CLIENT *client, POOL *pool, int JobType)
    edit_int64(now - period, ed1); /* Jobs older than ed1 are good candidates */
    edit_int64(cr.ClientId, ed2);
 
-   memset(&del, 0, sizeof(del));
    del.max_ids = 100;
    del.JobId = (JobId_t *)malloc(sizeof(JobId_t) * del.max_ids);
    del.PurgedFiles = (char *)malloc(del.max_ids);
