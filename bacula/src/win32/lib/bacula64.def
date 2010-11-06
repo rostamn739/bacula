@@ -761,3 +761,4 @@ plugin_bclose DATA
 plugin_bwrite DATA
 plugin_bread DATA
 plugin_blseek DATA
+exepath DATA
