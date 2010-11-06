@@ -136,6 +136,7 @@ _Z22get_win32_drivelettersP6FF_PKTPc
 _Z25set_find_changed_functionP6FF_PKTPFbP3JCRS0_E
  
 ; find_one.o
+_Z13check_changesP3JCRP6FF_PKT
 _Z13find_one_fileP3JCRP6FF_PKTPFiS0_S2_bEPcjb
 _Z13term_find_oneP6FF_PKT
 _Z16has_file_changedP3JCRP6FF_PKT
