@@ -1,10 +1,4 @@
 /*
- * Define Host machine
- *
- *  Version $Id$
- *
- */
-/*
    Bacula® - The Network Backup Solution
 
    Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
@@ -32,6 +26,11 @@
    Switzerland, email:ftf@fsfeurope.org.
 */
 
+/*
+ * Define Host machine
+ */
+
+
 #include "host.h"
 #undef HOST_OS
 #undef DISTNAME
@@ -41,7 +40,9 @@
 
 #define HOST_OS  "Linux"
 #define DISTNAME "Cross-compile"
+#ifndef BACULA
 #define BACULA "Bacula"
+#endif
 #ifdef _WIN64
 # define DISTVER "Win64"
 #else
