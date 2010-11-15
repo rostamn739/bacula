@@ -199,7 +199,7 @@ sub before
 sub send_one_cmd
 {
     my ($self, $line) = @_;
-    my $ret='';
+    my @ret;
     my $cmd = $self->{pref}->{bconsole} ;
     if ($self->{dir}) {
         $cmd = $cmd . " -D '$self->{dir}'";
@@ -214,11 +214,11 @@ sub send_one_cmd
     $l = <$OUT>;                # line
 
     while ($l = <$OUT>) {
-        $ret .= $l;
+        push @ret, $l;
     }
     close($OUT);
     waitpid($pid, 0);
-    return $ret;
+    return wantarray? @ret : \@ret;
 }
 
 sub send_cmd
