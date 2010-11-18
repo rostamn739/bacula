@@ -5,7 +5,7 @@ use strict;
    Bweb - A Bacula web interface
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.   
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -30,10 +30,6 @@ use strict;
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
 
-=head1 VERSION
-
-    $Id$
-
 =cut
 
 
@@ -48,13 +44,25 @@ use IPC::Open2;
 sub new
 {
     my ($class, %arg) = @_;
-
+    my $dir = $arg{pref}->{current_conf};
+    if ($dir) {
+        if (!$arg{pref}->{main_conf}->{bconsole} ||
+            ($arg{pref}->{main_conf}->{bconsole} ne  $arg{pref}->{bconsole}))
+        {
+            # If bconsole string is different, don't use director option
+            $dir = undef;
+        }
+    }
+    if ($arg{director}) {
+        $dir = $arg{director};
+    }
     my $self = bless {
-	pref => $arg{pref},	# Pref object
-	bconsole => undef,	# Expect object
-	log_stdout => $arg{log_stdout} || 0,
-	timeout => $arg{timeout} || 20,
-	debug   => $arg{debug} || 0,
+        pref => $arg{pref},     # Pref object
+        dir  => $dir,           # Specify the director to connect
+        bconsole => undef,      # Expect object
+        log_stdout => $arg{log_stdout} || 0,
+        timeout => $arg{timeout} || 20,
+        debug   => $arg{debug} || 0,
     };
 
     return $self;
@@ -133,7 +141,9 @@ sub error
     my ($self, $error) = @_;
     $self->{error} = $error;
     if ($error) {
-	print STDERR "E: bconsole (", $self->{pref}->{bconsole}, ") $! $error\n";
+        print STDERR "E: bconsole (", $self->{pref}->{bconsole}, ") $! $error\n";
+        print STDERR "I: Check permissions on binary and configuration file\n";
+        print STDERR "I: Try to execute it in a terminal with a su command\n";
     }
     return 0;
 }
@@ -151,6 +161,17 @@ sub connect
 	unless (@cmd) {
 	    return $self->error("bconsole string not found");
 	}
+        if ($self->{dir}) {
+            push @cmd, "-D", $self->{dir}; # should handle spaces
+        }
+        if ($self->{pref}->{debug}) {
+            my $c = join(' ', @cmd, '-t');
+            my $out = `$c 2>&1`;
+            if ($? != 0) {
+                print "bconsole test ($c): $out";
+            }
+            print STDERR "bconsole test ($c) ret=$?: $out";
+        }
 	$self->{bconsole} = new Expect;
 	$self->{bconsole}->raw_pty(1);
 	$self->{bconsole}->debug($self->{debug});
@@ -381,6 +402,22 @@ sub list_job
     return sort split(/\r?\n/, $self->send_cmd(".jobs"));
 }
 
+sub set_director
+{
+    my ($self, $dir) = @_;
+    $self->{dir} = $dir;
+}
+
+sub list_directors
+{
+    my ($self) = @_;
+    my $lst = `$self->{pref}->{bconsole} -l`;
+    if ($? != 0) {
+        return $self->error("Director list unsupported by bconsole");
+    }
+    return sort split(/\r?\n/, $lst);
+}
+
 sub list_fileset
 {
     my ($self) = @_;
@@ -487,31 +524,107 @@ sub close
 
 __END__
 
-# to use this
+# to use this, run backup-bacula-test and run
 # grep -v __END__ Bconsole.pm | perl
 
 package main;
 
+use File::Copy 'copy';
 use Data::Dumper qw/Dumper/;
-print "test sans conio\n";
+use Test::More tests => 22;
+
+my $bin = "/tmp/regress/bin/bconsole";
+my $conf = "/tmp/regress/bin/bconsole.conf";
+print "Test without conio\n";
+
+ok(copy($conf, "$conf.org"), "Backup original conf");
+
+system("sed 's/Name = .*/Name = \"zog6 dir\"/' $conf > /tmp/1");
+system("sed 's/Name = .*/Name = zog5-dir/' $conf >> /tmp/1");
+system("grep zog5-dir $conf > /dev/null || cat /tmp/1 >> $conf");
 
 my $c = new Bconsole(pref => {
-    bconsole => '/tmp/regress/bin/bconsole -n -c /tmp/regress/bin/bconsole.conf',
+    bconsole => "$bin -n -c $conf",
 },
-		     debug => 0);
+    debug => 0);
 
-print "fileset : ", join(',', $c->list_fileset()), "\n";
-print "job : ",     join(',', $c->list_job()), "\n";
+ok($c, "Create Bconsole object");
+
+my @lst = $c->list_directors();
+is(scalar(@lst), 3, "Should find 3 directors");
+print "directors : ", join(',', @lst), "\n";
+$c->set_director(pop(@lst));
+is($c->{dir}, "zog6 dir", "Check current director");
+
+@lst = $c->list_fileset();
+is(scalar(@lst), 2, "Should find 2 fileset");
+print "fileset : ", join(',', @lst), "\n";
+
+@lst = $c->list_job();
+is(scalar(@lst), 3, "Should find 3 jobs");
+print "job : ",     join(',', @lst), "\n";
+
+@lst = $c->list_restore();
+is(scalar(@lst), 1, "Should find 1 jobs");
+print "restore : ",     join(',', @lst), "\n";
+
+@lst = $c->list_backup();
+is(scalar(@lst), 2, "Should find 2 jobs");
+print "backup : ",     join(',', @lst), "\n";
+
+@lst = $c->list_storage();
+is(scalar(@lst), 1, "Should find 1 storage");
 print "storage : ", join(',', $c->list_storage()), "\n";
+
 my $r = $c->get_fileset($c->list_fileset());
+ok(ref $r, "Check get_fileset return a ref");
+ok(ref $r->{I}, "Check Include is array");
 print Dumper($r);
 print "FS Include:\n", join (",", map { $_->{file} } @{$r->{I}}), "\n";
 print "FS Exclude:\n", join (",", map { $_->{file} } @{$r->{E}}), "\n";
-#print $c->label_barcodes(pool => 'Scratch', drive => 0, storage => 'LTO3', slots => '45');
-#print "prune : " . $c->prune_volume('000001'), "\n";
-#print "update : " . $c->send_cmd('update slots storage=SDLT-1-2, drive=0'), "\n";
-#print "label : ", join(',', $c->label_barcodes(storage => 'SDLT-1-2',
-#					       slots => 6,
-#					       drive => 0)), "\n";
+$c->close();
 
+
+ok(copy("$conf.org", $conf), "Restore conf");
+my $c = new Bconsole(pref => {
+    bconsole => "$bin -n -c $conf",
+},
+    debug => 0);
+
+
+ok($c, "Create Bconsole object");
+@lst = $c->list_directors();
+
+is(scalar(@lst), 1, "Should find 1 directors");
+print "directors : ", join(',', @lst), "\n";
+
+@lst  = $c->list_client();
+is(scalar(@lst), 1, "Should find 1 client");
+
+@lst  = $c->list_pool();
+is(scalar(@lst), 2, "Should find 2 pool");
+
+@lst = $c->list_fileset();
+is(scalar(@lst), 2, "Should find 2 fileset");
+print "fileset : ", join(',', @lst), "\n";
+
+@lst = $c->list_job();
+is(scalar(@lst), 3, "Should find 3 jobs");
+print "job : ",     join(',', @lst), "\n";
+
+@lst = $c->list_restore();
+is(scalar(@lst), 1, "Should find 1 jobs");
+print "restore : ",     join(',', @lst), "\n";
+
+@lst = $c->list_storage();
+is(scalar(@lst), 1, "Should find 1 storage");
+print "storage : ", join(',', @lst), "\n";
+
+my $r = $c->get_fileset($c->list_fileset());
+ok(ref $r, "Check get_fileset return a ref");
+ok(ref $r->{I}, "Check Include is array");
+print Dumper($r);
+print "FS Include:\n", join (",", map { $_->{file} } @{$r->{I}}), "\n";
+print "FS Exclude:\n", join (",", map { $_->{file} } @{$r->{E}}), "\n";
+$c->close();
 

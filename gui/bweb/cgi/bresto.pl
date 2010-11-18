@@ -8,7 +8,7 @@ die "bresto is not enabled" if (not $bresto_enable);
    Bweb - A Bacula web interface
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -33,10 +33,6 @@ die "bresto is not enabled" if (not $bresto_enable);
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
 
-=head1 VERSION
-
-    $Id$
-
 =cut
 
 use Bweb;
@@ -55,24 +51,6 @@ sub ch_dir
 {
     my ($self, $pathid) = @_;
     $self->{cwdid} = $pathid;
-}
-
-# do a cd ..
-sub up_dir
-{
-    my ($self) = @_ ;
-    my $query = "
-  SELECT PPathId
-    FROM brestore_pathhierarchy
-   WHERE PathId IN ($self->{cwdid}) ";
-
-    my $all = $self->dbh_selectall_arrayref($query);
-    return unless ($all);	# already at root
-
-    my $dir = join(',', map { $_->[0] } @$all);
-    if ($dir) {
-	$self->ch_dir($dir);
-    }
 }
 
 # return the current PWD
@@ -134,213 +112,16 @@ sub set_pattern
 sub update_cache
 {
     my ($self) = @_;
-
-    $self->{dbh}->begin_work();
-
-    # getting all Jobs to "cache"
-    my $query = "
-  SELECT JobId from Job
-   WHERE JobId NOT IN (SELECT JobId FROM brestore_knownjobid) 
-     AND Type IN ('B') AND JobStatus IN ('T', 'f', 'A') 
-   ORDER BY JobId";
-    my $jobs = $self->dbh_selectall_arrayref($query);
-
-    $self->update_brestore_table(map { $_->[0] } @$jobs);
-
-    $self->{dbh}->commit();
-    $self->{dbh}->begin_work();	# we can break here
-
-    print STDERR "Cleaning path visibility\n";
-
-    my $nb = $self->dbh_do("
-  DELETE FROM brestore_pathvisibility
-      WHERE NOT EXISTS
-   (SELECT 1 FROM Job WHERE JobId=brestore_pathvisibility.JobId)");
-
-    print STDERR "$nb rows affected\n";
-    print STDERR "Cleaning known jobid\n";
-
-    $nb = $self->dbh_do("
-  DELETE FROM brestore_knownjobid
-      WHERE NOT EXISTS
-   (SELECT 1 FROM Job WHERE JobId=brestore_knownjobid.JobId)");
-
-    print STDERR "$nb rows affected\n";
-
-    $self->{dbh}->commit();
+    my $b = $self->get_bconsole();
+    $b->send_one_cmd(".bvfs_update" . $self->{bvfs_user});
 }
 
 sub update_brestore_table
 {
     my ($self, @jobs) = @_;
-
-    $self->debug(\@jobs);
-
-    foreach my $job (sort {$a <=> $b} @jobs)
-    {
-	my $query = "SELECT 1 FROM brestore_knownjobid WHERE JobId = $job";
-	my $retour = $self->dbh_selectrow_arrayref($query);
-	next if ($retour and ($retour->[0] == 1)); # We have allready done this one ...
-
-	print STDERR "Inserting path records for JobId $job\n";
-	$query = "INSERT INTO brestore_pathvisibility (PathId, JobId)
-                   (SELECT DISTINCT PathId, JobId FROM File WHERE JobId = $job)";
-
-	$self->dbh_do($query);
-
-	# Now we have to do the directory recursion stuff to determine missing visibility
-	# We try to avoid recursion, to be as fast as possible
-	# We also only work on not allready hierarchised directories...
-
-	print STDERR "Creating missing recursion paths for $job\n";
-
-	$query = "
-SELECT brestore_pathvisibility.PathId, Path FROM brestore_pathvisibility
-  JOIN Path ON( brestore_pathvisibility.PathId = Path.PathId)
-       LEFT JOIN brestore_pathhierarchy ON (brestore_pathvisibility.PathId = brestore_pathhierarchy.PathId)
- WHERE brestore_pathvisibility.JobId = $job
-   AND brestore_pathhierarchy.PathId IS NULL
- ORDER BY Path";
-
-	my $sth = $self->dbh_prepare($query);
-	$sth->execute();
-	my $pathid; my $path;
-	$sth->bind_columns(\$pathid,\$path);
-
-	while ($sth->fetch)
-	{
-	    $self->build_path_hierarchy($path,$pathid);
-	}
-	$sth->finish();
-
-	# Great. We have calculated all dependancies. We can use them to add the missing pathids ...
-	# This query gives all parent pathids for a given jobid that aren't stored.
-	# It has to be called until no record is updated ...
-	$query = "
-INSERT INTO brestore_pathvisibility (PathId, JobId) (
- SELECT a.PathId,$job
-   FROM (
-     SELECT DISTINCT h.PPathId AS PathId
-       FROM brestore_pathhierarchy AS h
-       JOIN  brestore_pathvisibility AS p ON (h.PathId=p.PathId)
-      WHERE p.JobId=$job) AS a LEFT JOIN
-       (SELECT PathId
-          FROM brestore_pathvisibility
-         WHERE JobId=$job) AS b ON (a.PathId = b.PathId)
-  WHERE b.PathId IS NULL)";
-
-        my $rows_affected;
-	while (($rows_affected = $self->dbh_do($query)) and ($rows_affected !~ /^0/))
-	{
-	    print STDERR "Recursively adding $rows_affected records from $job\n";
-	}
-	# Job's done
-	$query = "INSERT INTO brestore_knownjobid (JobId) VALUES ($job)";
-	$self->dbh_do($query);
-    }
-}
-
-# compute the parent directory
-sub parent_dir
-{
-    my ($path) = @_;
-    # Root Unix case :
-    if ($path eq '/')
-    {
-        return '';
-    }
-    # Root Windows case :
-    if ($path =~ /^[a-z]+:\/$/i)
-    {
-	return '';
-    }
-    # Split
-    my @tmp = split('/',$path);
-    # We remove the last ...
-    pop @tmp;
-    my $tmp = join ('/',@tmp) . '/';
-    return $tmp;
-}
-
-sub build_path_hierarchy
-{
-    my ($self, $path,$pathid)=@_;
-    # Does the ppathid exist for this ? we use a memory cache...
-    # In order to avoid the full loop, we consider that if a dir is allready in the
-    # brestore_pathhierarchy table, then there is no need to calculate all the hierarchy
-    while ($path ne '')
-    {
-	if (! $self->{cache_ppathid}->{$pathid})
-	{
-	    my $query = "SELECT PPathId FROM brestore_pathhierarchy WHERE PathId = ?";
-	    my $sth2 = $self->{dbh}->prepare_cached($query);
-	    $sth2->execute($pathid);
-	    # Do we have a result ?
-	    if (my $refrow = $sth2->fetchrow_arrayref)
-	    {
-		$self->{cache_ppathid}->{$pathid}=$refrow->[0];
-		$sth2->finish();
-		# This dir was in the db ...
-		# It means we can leave, the tree has allready been built for
-		# this dir
-		return 1;
-	    } else {
-		$sth2->finish();
-		# We have to create the record ...
-		# What's the current p_path ?
-		my $ppath = parent_dir($path);
-		my $ppathid = $self->return_pathid_from_path($ppath);
-		$self->{cache_ppathid}->{$pathid}= $ppathid;
-
-		$query = "INSERT INTO brestore_pathhierarchy (pathid, ppathid) VALUES (?,?)";
-		$sth2 = $self->{dbh}->prepare_cached($query);
-		$sth2->execute($pathid,$ppathid);
-		$sth2->finish();
-		$path = $ppath;
-		$pathid = $ppathid;
-	    }
-	} else {
-	   # It's allready in the cache.
-	   # We can leave, no time to waste here, all the parent dirs have allready
-	   # been done
-	   return 1;
-	}
-    }
-    return 1;
-}
-
-sub return_pathid_from_path
-{
-    my ($self, $path) = @_;
-    my $query = "SELECT PathId FROM Path WHERE Path = ?";
-
-    #print STDERR $query,"\n" if $debug;
-    my $sth = $self->{dbh}->prepare_cached($query);
-    $sth->execute($path);
-    my $result =$sth->fetchrow_arrayref();
-    $sth->finish();
-    if (defined $result)
-    {
-	return $result->[0];
-
-    } else {
-        # A bit dirty : we insert into path, and we have to be sure
-        # we aren't deleted by a purge. We still need to insert into path to get
-        # the pathid, because of mysql
-        $query = "INSERT INTO Path (Path) VALUES (?)";
-        #print STDERR $query,"\n" if $debug;
-	$sth = $self->{dbh}->prepare_cached($query);
-	$sth->execute($path);
-	$sth->finish();
-
-	$query = "SELECT PathId FROM Path WHERE Path = ?";
-	#print STDERR $query,"\n" if $debug;
-	$sth = $self->{dbh}->prepare_cached($query);
-	$sth->execute($path);
-	$result = $sth->fetchrow_arrayref();
-	$sth->finish();
-	return $result->[0];
-    }
+    my $jobs = join(",", sort {$a <=> $b} @jobs);
+    my $b = $self->get_bconsole();
+    $b->send_one_cmd(".bvfs_update jobid=$jobs" . $self->{bvfs_user});
 }
 
 # list all files in a directory, accross curjobids
@@ -349,97 +130,40 @@ sub ls_files
     my ($self) = @_;
 
     return undef unless ($self->{curjobids});
-
-    my $inclause   = $self->{curjobids};
-    my $inpath = $self->{cwdid};
-    my $filter = '';
-    if ($self->{pattern}) {
-        $filter = " AND Filename.Name $self->{sql}->{MATCH} $self->{pattern} ";
-    }
-
-    my $query =
-"SELECT File.FilenameId, listfiles.id, listfiles.Name, File.LStat, File.JobId
- FROM File, (
-       SELECT Filename.Name, max(File.FileId) as id
-	 FROM File, Filename
-	WHERE File.FilenameId = Filename.FilenameId
-          AND Filename.Name != ''
-          AND File.PathId = $inpath
-          AND File.JobId IN ($inclause)
-          $filter
-        GROUP BY Filename.Name
-        ORDER BY Filename.Name LIMIT $self->{limit} OFFSET $self->{offset}
-     ) AS listfiles
-WHERE File.FileId = listfiles.id";
-
-#    print STDERR $query;
-    $self->debug($query);
-    my $result = $self->dbh_selectall_arrayref($query);
-    $self->debug($result);
-
-    return $result;
-}
-
-sub ls_special_dirs
-{
-    my ($self) = @_;
-    return undef unless ($self->{curjobids});
-
+    
     my $pathid = $self->{cwdid};
     my $jobclause = $self->{curjobids};
-    my $dir_filenameid = $self->get_dir_filenameid();
+    my $filter ='';
 
-    my $sq1 =  
-"((SELECT PPathId AS PathId, '..' AS Path
-    FROM  brestore_pathhierarchy 
-   WHERE  PathId = $pathid)
-UNION
- (SELECT $pathid AS PathId, '.' AS Path))";
+    if ($self->{pattern}) {
+        $filter = " pattern=\"$self->{pattern}\"";
+    }
+    my $b = $self->get_bconsole();
+    my $ret = $b->send_one_cmd(".bvfs_lsfiles jobid=$jobclause " .
+                               "pathid=$pathid " . $self->{bvfs_user} .
+                               "limit=$self->{limit} offset=$self->{offset} " .
+                               $filter);
 
-    my $sq2 = "
-SELECT tmp.PathId, tmp.Path, LStat, JobId 
-  FROM $sq1 AS tmp  LEFT JOIN ( -- get attributes if any
-       SELECT File1.PathId, File1.JobId, File1.LStat FROM File AS File1
-       WHERE File1.FilenameId = $dir_filenameid
-       AND File1.JobId IN ($jobclause)) AS listfile1
-  ON (tmp.PathId = listfile1.PathId)
-  ORDER BY tmp.Path, JobId DESC
-";
-
-    my $result = $self->dbh_selectall_arrayref($sq2);
-
+    #   0        1          2       3     4       5
+    # PathId, FilenameId, fileid, jobid, lstat, Name
     my @return_list;
-    my $prev_dir='';
-    foreach my $refrow (@{$result})
+    foreach my $line (@{$ret})
     {
-	my $dirid = $refrow->[0];
-        my $dir = $refrow->[1];
-        my $lstat = $refrow->[3];
-        my $jobid = $refrow->[2] || 0;
-        next if ($dirid eq $prev_dir);
-        my @return_array = ($dirid,$dir,$lstat,$jobid);
+        next unless ($line =~ /^\d+\t\d+/);
+        chomp($line);
+        my @row = split("\t", $line, 6);
+	my $fid = $row[2];
+        my $fnid = $row[1];
+        my $name = $row[5];
+        my $lstat = $row[4];
+        my $jobid = $row[3] || 0;
+        # We have to clean up this dirname ... we only want it's 'basename'
+        my @return_array = ($fnid, $fid,$name,$lstat,$jobid);
         push @return_list,(\@return_array);
-        $prev_dir = $dirid;
     }
- 
-    return \@return_list;
-}
+#FilenameId, listfiles.id, Name, File.LStat, File.JobId
 
-# Let's retrieve the list of the visible dirs in this dir ...
-# First, I need the empty filenameid to locate efficiently
-# the dirs in the file table
-sub get_dir_filenameid
-{
-    my ($self) = @_;
-    if ($self->{dir_filenameid}) {
-        return $self->{dir_filenameid};
-    }
-    my $query = "SELECT FilenameId FROM Filename WHERE Name = ''";
-    my $sth = $self->dbh_prepare($query);
-    $sth->execute();
-    my $result = $sth->fetchrow_arrayref();
-    $sth->finish();
-    return $self->{dir_filenameid} = $result->[0];
+    return \@return_list;
 }
 
 # list all directories in a directory, accross curjobids
@@ -449,75 +173,40 @@ sub ls_dirs
     my ($self) = @_;
 
     return undef unless ($self->{curjobids});
-
+    
     my $pathid = $self->{cwdid};
     my $jobclause = $self->{curjobids};
     my $filter ='';
 
     if ($self->{pattern}) {
-        $filter = " AND Path2.Path $self->{sql}->{MATCH} $self->{pattern} ";
+        $filter = " pattern=\"$self->{pattern}\" ";
     }
+    my $b = $self->get_bconsole();
+    my $ret = $b->send_one_cmd(".bvfs_lsdir jobid=$jobclause pathid=$pathid " .
+                               $self->{bvfs_user} .
+                               "limit=$self->{limit} offset=$self->{offset} " .
+                               $filter);
 
-    # Let's retrieve the list of the visible dirs in this dir ...
-    # First, I need the empty filenameid to locate efficiently
-    # the dirs in the file table
-    my $dir_filenameid = $self->get_dir_filenameid();
-
-    # Then we get all the dir entries from File ...
-    my $query = "
-SELECT PathId, Path, JobId, LStat FROM (
-
-    SELECT Path1.PathId, Path1.Path, lower(Path1.Path),
-           listfile1.JobId, listfile1.LStat
-    FROM (
-       SELECT DISTINCT brestore_pathhierarchy1.PathId
-       FROM brestore_pathhierarchy AS brestore_pathhierarchy1
-       JOIN Path AS Path2
-           ON (brestore_pathhierarchy1.PathId = Path2.PathId)
-       JOIN brestore_pathvisibility AS brestore_pathvisibility1
-           ON (brestore_pathhierarchy1.PathId = brestore_pathvisibility1.PathId)
-       WHERE brestore_pathhierarchy1.PPathId = $pathid
-       AND brestore_pathvisibility1.jobid IN ($jobclause)
-           $filter
-     ) AS listpath1
-   JOIN Path AS Path1 ON (listpath1.PathId = Path1.PathId)
-
-   LEFT JOIN ( -- get attributes if any
-       SELECT File1.PathId, File1.JobId, File1.LStat FROM File AS File1
-       WHERE File1.FilenameId = $dir_filenameid
-       AND File1.JobId IN ($jobclause)) AS listfile1
-       ON (listpath1.PathId = listfile1.PathId)
-     ) AS A ORDER BY 2,3 DESC LIMIT $self->{limit} OFFSET $self->{offset} 
-";
-#    print STDERR $query;
-    my $sth=$self->dbh_prepare($query);
-    $sth->execute();
-    my $result = $sth->fetchall_arrayref();
+    #   0     1     2      3      4     5
+    # PathId, 0, fileid, jobid, lstat, path
     my @return_list;
     my $prev_dir='';
-    foreach my $refrow (@{$result})
+    foreach my $line (@{$ret})
     {
-	my $dirid = $refrow->[0];
-        my $dir = $refrow->[1];
-        my $lstat = $refrow->[3];
-        my $jobid = $refrow->[2] || 0;
-        next if ($dirid eq $prev_dir);
+        next unless ($line =~ /^\d+\t\d+/);
+        chomp($line);
+        my @row = split("\t", $line, 6);
+	my $dirid = $row[0];
+        my $dir = $row[5];
+        my $lstat = $row[4];
+        my $jobid = $row[3] || 0;
+        next if ($self->{skipdot} && $dir =~ /^\.+$/);
         # We have to clean up this dirname ... we only want it's 'basename'
-        my $return_value;
-        if ($dir ne '/')
-        {
-            my @temp = split ('/',$dir);
-            $return_value = pop @temp;
-        }
-        else
-        {
-            $return_value = '/';
-        }
-        my @return_array = ($dirid,$return_value,$lstat,$jobid);
+        my @return_array = ($dirid,$dir,'', $lstat,$jobid);
         push @return_list,(\@return_array);
         $prev_dir = $dirid;
     }
-    $self->debug(\@return_list);
+
     return \@return_list;
 }
 
@@ -599,49 +288,40 @@ sub dbh_selectrow_arrayref
 
 # Returns list of versions of a file that could be restored
 # returns an array of
-# (jobid,fileindex,mtime,size,inchanger,md5,volname,fileid)
+# (jobid,fileindex,mtime,size,inchanger,md5,volname,fileid,LinkFI)
 # there will be only one jobid in the array of jobids...
 sub get_all_file_versions
 {
     my ($self,$pathid,$fileid,$client,$see_all,$see_copies)=@_;
 
     defined $see_all or $see_all=0;
-    my $backup_type=" AND Job.Type = 'B' ";
+    my $backup_type="";
     if ($see_copies) {
-        $backup_type=" AND Job.Type IN ('C', 'B') ";
+        $backup_type=" copies ";
     }
 
+    my $bc = $self->get_bconsole();
+    my $res = $bc->send_one_cmd(".bvfs_versions fnid=$fileid pathid=$pathid " . 
+                                "client=\"$client\" jobid=1 $backup_type" .
+                                $self->{bvfs_user});
+
     my @versions;
-    my $query;
-    $query =
-"SELECT File.JobId, File.FileId, File.LStat,
-        File.Md5, Media.VolumeName, Media.InChanger
- FROM File, Job, Client, JobMedia, Media
- WHERE File.FilenameId = $fileid
-   AND File.PathId=$pathid
-   AND File.JobId = Job.JobId
-   AND Job.ClientId = Client.ClientId
-   AND Job.JobId = JobMedia.JobId
-   AND File.FileIndex >= JobMedia.FirstIndex
-   AND File.FileIndex <= JobMedia.LastIndex
-   AND JobMedia.MediaId = Media.MediaId
-   AND Client.Name = '$client'
-   $backup_type
-";
-
-    $self->debug($query);
-    my $result = $self->dbh_selectall_arrayref($query);
-
-    foreach my $refrow (@$result)
+    # (pathid,fileid,jobid,fid,mtime,size,inchanger,md5,volname,LinkFI );
+    # PathId, FilenameId, fileid, jobid, lstat, Md5, VolName, VolInchanger
+    foreach my $row (@$res)
     {
-	my ($jobid, $fid, $lstat, $md5, $volname, $inchanger) = @$refrow;
+        next unless $row =~ /^\d+\t\d+/;
+	my ($pathid, $fid, $fileid, $jobid, $lstat, $md5, $volname, $inchanger) 
+            = split(/\t/, $row);
+
 	my @attribs = parse_lstat($lstat);
 	my $mtime = array_attrib('st_mtime',\@attribs);
 	my $size = array_attrib('st_size',\@attribs);
+	my $LinkFI = array_attrib('LinkFI',\@attribs);
 
-	my @list = ($pathid,$fileid,$jobid,
-		    $fid, $mtime, $size, $inchanger,
-		    $md5, $volname);
+        #              0     1      2       3        4      5        6
+	my @list = ($pathid,$fileid,$jobid, $fid, $mtime, $size, $inchanger,
+		    $md5, $volname, $LinkFI);
 	push @versions, (\@list);
     }
 
@@ -829,24 +509,52 @@ use Bweb;
 my $conf = new Bweb::Config(config_file => $Bweb::config_file);
 $conf->load();
 
-my $bvfs = new Bvfs(info => $conf);
+my $skipdot=0;
+if (CGI::param("skipdot")) {
+    $skipdot=1;
+}
+
+my $bvfs = new Bvfs(info => $conf, skipdot => $skipdot);
+my $user = $bvfs->{loginname};
+if ($bvfs->{loginname}) {
+    $bvfs->{bvfs_user} = " username=\"$bvfs->{loginname}\" ";
+} else {
+    $bvfs->{bvfs_user} = "";
+}
 $bvfs->connect_db();
 
 my $action = CGI::param('action') || '';
 
 my $args = $bvfs->get_form('pathid', 'filenameid', 'fileid', 'qdate',
-			   'limit', 'offset', 'client', 'qpattern');
+			   'limit', 'offset', 'client');
 
 if ($action eq 'batch') {
     $bvfs->update_cache();
     exit 0;
 }
 
+my $pattern = CGI::param('pattern') || '';
+if ($pattern =~ /^([\w\d,:\.\-% ]+)$/) {
+    $bvfs->set_pattern($1);
+}
+
+my $nodir;
+if ($conf->{subconf} 
+    && scalar(%{$conf->{subconf}}) # we have non empty subconf
+    && !$conf->{current_conf})
+{
+    $nodir=1;
+}
 # All these functions are returning JSON compatible data
 # for javascript parsing
 
 if ($action eq 'list_client') {	# list all client [ ['c1'],['c2']..]
     print CGI::header('application/x-javascript');
+
+    if ($nodir) {
+        print "[['Choose a Director first']]\n";
+        exit 0;
+    }
 
     my $filter = $bvfs->get_client_filter();
     my $q = "SELECT Name FROM Client $filter";
@@ -880,13 +588,14 @@ if ($action eq 'list_client') {	# list all client [ ['c1'],['c2']..]
 
     print "]\n";
     exit 0;
-} elsif ($action eq 'list_storage') { # TODO: use .storage here
+
+} elsif ($action eq 'list_storage') { 
     print CGI::header('application/x-javascript');
 
-    my $q="SELECT Name FROM Storage";
-    my $lst = $bvfs->dbh_selectall_arrayref($q);
+    my $bconsole = $bvfs->get_bconsole();
+    my @lst = $bconsole->list_storage();
     print "[";
-    print join(',', map { "[ '$_->[0]' ]" } @$lst);
+    print join(',', map { "[ '$_' ]" } @lst);
     print "]\n";
     exit 0;
 }
@@ -900,57 +609,20 @@ sub fill_table_for_restore
 
     my $fileid = join(',', grep { /^\d+$/ } CGI::param('fileid'));
     # can get dirid=("10,11", 10, 11)
-    my @dirid = grep { /^\d+$/ } map { split(/,/) } CGI::param('dirid') ;
+    my $dirid = join(',', grep { /^\d+$/ } 
+                           map { split(/,/) } CGI::param('dirid')) ;
+    my $findex = join(',', grep { /^\d+$/ } 
+                             map { split(/,|\//) } CGI::param('findex')) ;
     my $inclause = join(',', @jobid);
 
-    my @union;
-
-    if ($fileid) {
-      push @union,
-      "(SELECT JobId, FileIndex, FilenameId, PathId $FileId
-          FROM File WHERE FileId IN ($fileid))";
+    my $b = $bvfs->get_bconsole();
+    my $ret = $b->send_one_cmd(".bvfs_restore path=b2$$ fileid=$fileid " .
+                               "dirid=$dirid hardlink=$findex jobid=1" 
+                               . $bvfs->{bvfs_user});
+    if (grep (/OK/, @$ret)) {
+        return "b2$$";
     }
-
-    foreach my $dirid (@dirid) {
-        my $p = $bvfs->get_path($dirid);
-        $p =~ s/([%_\\])/\\$1/g;  # Escape % and _ for LIKE search
-        $p = $bvfs->dbh_quote($p);
-        push @union, "
-  (SELECT File.JobId, File.FileIndex, File.FilenameId, File.PathId $FileId
-    FROM Path JOIN File USING (PathId)
-   WHERE Path.Path LIKE " . $bvfs->dbh_strcat($p, "'%'") . "
-     AND File.JobId IN ($inclause))";
-    }
-
-    return unless scalar(@union);
-
-    my $u = join(" UNION ", @union);
-
-    $bvfs->dbh_do("CREATE TEMPORARY TABLE btemp AS $u");
-    # TODO: remove FilenameId et PathId
-
-    # now we have to choose the file with the max(jobid)
-    # for each file of btemp
-    if ($bvfs->dbh_is_mysql()) {
-       $bvfs->dbh_do("CREATE TABLE b2$$ AS (
-SELECT max(JobId) as JobId, FileIndex $FileId
-  FROM btemp
- GROUP BY PathId, FilenameId
- HAVING FileIndex > 0
-)");
-   } else { # postgresql have distinct with more than one criteria
-        $bvfs->dbh_do("CREATE TABLE b2$$ AS (
-SELECT JobId, FileIndex $FileId
-FROM (
- SELECT DISTINCT ON (PathId, FilenameId) JobId, FileIndex $FileId
-   FROM btemp
-  ORDER BY PathId, FilenameId, JobId DESC
- ) AS T
- WHERE FileIndex > 0
-)");
-    }
-
-    return "b2$$";
+    return;
 }
 
 sub get_media_list_with_dir
@@ -1027,15 +699,10 @@ $bvfs->ch_dir($pathid);
 
 #print STDERR "pathid=$pathid\n";
 
-# permit to use a regex filter
-if ($args->{qpattern}) {
-    $bvfs->set_pattern($args->{qpattern});
-}
-
 if ($action eq 'restore') {
 
     # TODO: pouvoir choisir le replace et le jobname
-    my $arg = $bvfs->get_form(qw/client storage regexwhere where/);
+    my $arg = $bvfs->get_form(qw/client storage regexwhere where comment dir/);
 
     if (!$arg->{client}) {
 	print "ERROR: missing client\n";
@@ -1044,17 +711,24 @@ if ($action eq 'restore') {
 
     my $table = fill_table_for_restore(@jobid);
     if (!$table) {
+	print "ERROR: can create restore table\n";
         exit 1;
+    }
+
+    # TODO: remove it after a while
+    if ($bvfs->get_db_field('Comment') ne 'Comment') {
+        delete $arg->{comment};
     }
 
     my $bconsole = $bvfs->get_bconsole();
     # TODO: pouvoir choisir le replace et le jobname
     my $jobid = $bconsole->run(client    => $arg->{client},
-			       storage   => $arg->{storage},
-			       where     => $arg->{where},
-			       regexwhere=> $arg->{regexwhere},
-			       restore   => 1,
-			       file      => "?$table");
+                               storage   => $arg->{storage},
+                               where     => $arg->{where},
+                               regexwhere=> $arg->{regexwhere},
+                               restore   => 1,
+                               comment   => $arg->{comment},
+                               file      => "?$table");
     
     $bvfs->dbh_do("DROP TABLE $table");
 
@@ -1065,8 +739,15 @@ if ($action eq 'restore') {
 	$bvfs->display_end();
 	exit 0;
     }
+
     sleep(2);
-    print CGI::redirect("bweb.pl?action=dsp_cur_job;jobid=$jobid") ;
+
+    my $dir='';
+    if ($arg->{dir}) {
+        $dir=";dir=$arg->{dir}";
+    }
+
+    print CGI::redirect("bweb.pl?action=dsp_cur_job;jobid=$jobid$dir") ;
     exit 0;
 }
 sub escape_quote
@@ -1097,29 +778,12 @@ print CGI::header('application/x-javascript');
 
 
 if ($action eq 'list_files_dirs') {
-# fileid, filenameid, pathid, jobid, name, size, mtime
+# fileid, filenameid, pathid, jobid, name, size, mtime, LinkFI
     my $jids = join(",", @jobid);
 
-    my $files = $bvfs->ls_special_dirs();
+    my $files = $bvfs->ls_dirs();
     # return ($dirid,$dir_basename,$lstat,$jobid)
-    print "[\n";
-    print join(',',
-	       map { my @p=Bvfs::parse_lstat($_->[3]); 
-		     '[' . join(',', 
-				0, # fileid
-				0, # filenameid
-				$_->[0], # pathid
-				"'$jids'", # jobid
-                                '"' . escape_quote($_->[1]) . '"', # name
-				"'" . $p[7] . "'",                 # size
-				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11]||0)) .  "'") .
-		    ']'; 
-	       } @$files);
-    print "," if (@$files);
-
-    $files = $bvfs->ls_dirs();
-    # return ($dirid,$dir_basename,$lstat,$jobid)
-    print join(',',
+    print '[', join(',',
 	       map { my @p=Bvfs::parse_lstat($_->[3]); 
 		     '[' . join(',', 
 				0, # fileid
@@ -1128,7 +792,8 @@ if ($action eq 'list_files_dirs') {
 				"'$jids'", # jobid
 				'"' . escape_quote($_->[1]) . '"', # name
 				"'" . $p[7] . "'",                 # size
-				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11]||0)) .  "'") .
+				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11]||0)) .  "'",
+                                0) . # LinkFI
 		    ']'; 
 	       } @$files);
 
@@ -1138,13 +803,14 @@ if ($action eq 'list_files_dirs') {
     print join(',',
 	       map { my @p=Bvfs::parse_lstat($_->[3]); 
 		     '[' . join(',', 
-				$_->[1],
-				$_->[0],
-				$pathid,
-				$_->[4],
+				$_->[1], # fileid
+				$_->[0], # fnid
+				$pathid, # pathid
+				$_->[4], # jobid
                                 '"' . escape_quote($_->[2]) . '"', # name
 				"'" . $p[7] . "'",
-				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11])) .  "'") .
+				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11])) .  "'",
+                                $p[13]) . # LinkFI
 		    ']'; 
 	       } @$files);
     print "]\n";
@@ -1153,7 +819,7 @@ if ($action eq 'list_files_dirs') {
     print "[[0,0,0,0,'.',4096,'1970-01-01 00:00:00'],";
     my $files = $bvfs->ls_files();
 #	[ 1, 2, 3, "Bill",  10, '2007-01-01 00:00:00'],
-#   File.FilenameId, listfiles.id, listfiles.Name, File.LStat, File.JobId
+#   File.FilenameId, listfiles.id, listfiles.Name, File.LStat, File.JobId,LinkFI
 
     print join(',',
 	       map { my @p=Bvfs::parse_lstat($_->[3]); 
@@ -1164,7 +830,8 @@ if ($action eq 'list_files_dirs') {
 				$_->[4],
                                 '"' . escape_quote($_->[2]) . '"', # name
 				"'" . $p[7] . "'",
-				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11])) .  "'") .
+				"'" . strftime('%Y-%m-%d %H:%m:%S', localtime($p[11])) .  "'",
+                                $p[13]) . # LinkFI
 		    ']'; 
 	       } @$files);
     print "]\n";
@@ -1173,11 +840,12 @@ if ($action eq 'list_files_dirs') {
 
     print "[";
     my $dirs = $bvfs->ls_dirs();
+
     # return ($dirid,$dir_basename,$lstat,$jobid)
 
     print join(',',
 	       map { "{ 'jobid': '$bvfs->{curjobids}', 'id': '$_->[0]'," . 
-		        "'text': '" . escape_quote($_->[1]) . "', 'cls':'folder'}" }
+                         "'text': '" . escape_quote($_->[1]) . "', 'cls':'folder'}" } 
 	       @$dirs);
     print "]\n";
 
@@ -1190,11 +858,11 @@ if ($action eq 'list_files_dirs') {
     $vcopies = ($vcopies eq 'false')?0:1;
 
     print "[";
-    #   0       1       2        3   4       5      6           7      8
-    #($pathid,$fileid,$jobid, $fid, $mtime, $size, $inchanger, $md5, $volname);
+    #   0     1      2     3   4     5     6        7      8     9
+    #(pathid,fileid,jobid,fid,mtime,size,inchanger,md5,volname,LinkFI );
     my $files = $bvfs->get_all_file_versions($args->{pathid}, $args->{filenameid}, $args->{client}, $vafv, $vcopies);
     print join(',',
-	       map { "[ $_->[3], $_->[1], $_->[0], $_->[2], '$_->[8]', $_->[6], '$_->[7]', $_->[5],'" . strftime('%Y-%m-%d %H:%m:%S', localtime($_->[4])) . "']" }
+	       map { "[ $_->[1], $_->[3], $_->[0], $_->[2], '$_->[8]', $_->[6], '$_->[7]', $_->[5],'" . strftime('%Y-%m-%d %H:%m:%S', localtime($_->[4])) . "',$_->[9]]" }
 	       @$files);
     print "]\n";
 
@@ -1229,7 +897,8 @@ if ($action eq 'list_files_dirs') {
     }
 
     if ($table) {
-        $bvfs->dbh_do("DROP TABLE $table");
+        my $b = $bvfs->get_bconsole();
+        $b->send_one_cmd(".bvfs_cleanup path=b2$$");
     }
 
 }

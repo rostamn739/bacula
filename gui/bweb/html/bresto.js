@@ -1,7 +1,7 @@
 //   Bweb - A Bacula web interface
 //   Bacula® - The Network Backup Solution
 //
-//   Copyright (C) 2000-2009 Free Software Foundation Europe e.V.
+//   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 //
 //   The main author of Bweb is Eric Bollengier.
 //   The main author of Bacula is Kern Sibbald, with contributions from
@@ -93,17 +93,14 @@ Ext.brestore.offset = 0;
 Ext.brestore.force_reload = 0;
 Ext.brestore.path_stack = Array();
 Ext.brestore.pathid_stack = Array();
+Ext.brestore.dir = get_current_director();
 
 function get_node_path(node)
 {
    var temp='';
    for (var p = node; p; p = p.parentNode) {
        if (p.parentNode) {
-          if (p.text == '/') {
-             temp = p.text + temp;
-          } else {
-          temp = p.text + '/' + temp;
-          }
+          temp = p.text + temp;
        }
    }
    return Ext.brestore.root_path + temp;
@@ -124,6 +121,9 @@ function init_params(baseParams)
         if (RegExp(Ext.brestore.fpattern)) {
             baseParams['pattern'] = Ext.brestore.fpattern;
         }
+    }
+    if (Ext.brestore.dir) {
+       baseParams['dir'] = Ext.brestore.dir;
     }
     return baseParams;
 }
@@ -222,7 +222,8 @@ Ext.onReady(function(){
           {name: 'name'      },
           {name: 'size',     type: 'int'  },
           {name: 'mtime',    type: 'date', dateFormat: 'Y-m-d h:i:s'},
-          {name: 'type'}
+//          {name: 'type'},
+          {name: 'LinkFI'}
         ]))
     });
     
@@ -266,6 +267,10 @@ Ext.onReady(function(){
     },{
         header:    "JobId",
         dataIndex: 'jobid',
+        hidden: true
+    },{
+        header:    "LinkFI",
+        dataIndex: 'LinkFI',
         hidden: true
     }]);
 
@@ -443,7 +448,7 @@ Ext.onReady(function(){
            } else if (r.json[4] == '/') {
               Ext.brestore.path = '/';
            } else if (r.json[4] != '.') {
-              Ext.brestore.path = Ext.brestore.path + r.json[4] + '/';
+              Ext.brestore.path = Ext.brestore.path + r.json[4];
            }
            Ext.brestore.pathid = r.json[2];
            Ext.brestore.filename = '';
@@ -489,7 +494,8 @@ Ext.onReady(function(){
               {name: 'pathid'    },
               {name: 'name'      },
               {name: 'size',     type: 'int'  },
-              {name: 'mtime'}//,    type: 'date', dateFormat: 'Y-m-d h:i:s'}
+              {name: 'mtime'},
+              {name: 'LinkFI'}
           ]))
     });
 
@@ -525,6 +531,10 @@ Ext.onReady(function(){
             header: 'FileId',
             dataIndex: 'fileid',
             hidden: true
+        },{
+            header: 'LinkFI',
+            dataIndex: 'LinkFI',
+            hidden: true
         }
     ]);
 
@@ -549,7 +559,8 @@ Ext.onReady(function(){
       {name: 'filenameid'},
       {name: 'pathid'},
       {name: 'size'},
-      {name: 'mtime'}
+      {name: 'mtime'},
+      {name: 'LinkFI'}
     );
 //    captureEvents(file_selection_grid);
 //    captureEvents(file_selection_store);
@@ -585,7 +596,8 @@ Ext.onReady(function(){
                {name: 'inchanger' },
                {name: 'md5'       },
                {name: 'size',     type: 'int'  },
-               {name: 'mtime',    type: 'date', dateFormat: 'Y-m-d h:i:s'}
+               {name: 'mtime',    type: 'date', dateFormat: 'Y-m-d h:i:s'},
+               {name: 'LinkFI'}
            ]))
     });
 
@@ -632,6 +644,10 @@ Ext.onReady(function(){
         header:    "fileid",
         dataIndex: 'fileid',
         hidden: true
+    },{
+        header:    "LinkFI",
+        dataIndex: 'LinkFI',
+        hidden: true
     }]);
 
     // by default columns are sortable
@@ -653,7 +669,7 @@ Ext.onReady(function(){
     });
 
     file_versions_grid.on('rowdblclick', function(e) { 
-        alert(e) ; file_versions_store.removeAll(); return true;
+        file_versions_store.removeAll(); return true;
     });
 
 
@@ -716,7 +732,7 @@ Ext.onReady(function(){
         while(root.firstChild){
             root.removeChild(root.firstChild);
         }
-        job_store.load( {params:{action: 'list_job',
+        job_store.load( {params:{action: 'list_job',dir: Ext.brestore.dir,
                                  client:Ext.brestore.client}});
         return true;
     });
@@ -756,7 +772,8 @@ Ext.onReady(function(){
         Ext.brestore.jobid = c.json[0];
         Ext.brestore.jobdate = c.json[1];
         root.setText("Root");
-        tree_loader.baseParams = init_params({init:1, action: 'list_dirs'});
+        tree_loader.baseParams = init_params({init:1, action: 'list_dirs', 
+                                              skipdot:1});
         root.reload();
 
         file_store.load({params:init_params({action: 'list_files_dirs',
@@ -850,7 +867,7 @@ Ext.onReady(function(){
                   Ext.brestore.root_path=where;
                   root.setText(where);
                   tree_loader.baseParams = init_params({ 
-                      action:'list_dirs', path: where
+                      action:'list_dirs', path: where, skipdot: 1
                   });
                   root.reload();
               }
@@ -928,7 +945,7 @@ Ext.onReady(function(){
                 items: file_selection_grid
             }
         ]});
-    client_store.load({params:{action: 'list_client'}});
+    client_store.load({params:{action: 'list_client', dir: Ext.brestore.dir}});
 
     // data.selections[0].json[]
     // data.node.id
@@ -955,7 +972,8 @@ Ext.onReady(function(){
                             pathid:    data.selections[i].json[2],
                             name: Ext.brestore.path + ((name=='..')?'':name),
                             size:      data.selections[i].json[5],
-                            mtime:     data.selections[i].json[6]
+                            mtime:     data.selections[i].json[6],
+                            LinkFI:    data.selections[i].json[7]
                         });
                         file_selection_store.add(r);
                     }
@@ -969,7 +987,8 @@ Ext.onReady(function(){
                         pathid:    data.selections[0].json[2],
                         name: Ext.brestore.path + Ext.brestore.filename,
                         size:      data.selections[0].json[7],
-                        mtime:     data.selections[0].json[8]     
+                        mtime:     data.selections[0].json[8],
+                        LinkFI:    data.selections[0].json[9],
                     });
                     file_selection_store.add(r)
                 }
@@ -984,7 +1003,8 @@ Ext.onReady(function(){
                     pathid:    data.node.id,
                     name:      path,
                     size:      4096,
-                    mtime:     0
+                    mtime:     0,
+                    LinkFI:    0
                 });
                 file_selection_store.add(r)
             }
@@ -1050,9 +1070,42 @@ Ext.onReady(function(){
             triggerAction: 'all',
             emptyText:'Select a client...',
             forceSelection: true,
-            value:  Ext.brestore.client,
             selectOnFocus:true
         });
+         
+        var storage_store = new Ext.data.Store({
+            proxy: new Ext.data.HttpProxy({
+                url: '/cgi-bin/bweb/bresto.pl',
+                method: 'GET',
+                params:{action:'list_storage'}
+            }),
+            
+            reader: new Ext.data.ArrayReader({
+            }, Ext.data.Record.create([
+                {name: 'name' }
+            ]))
+        });
+        
+        var storage_combo = new Ext.form.ComboBox({
+            value: Ext.brestore.storage,
+            fieldLabel: 'Storage',
+            hiddenName:'storage',
+            store: storage_store,
+            displayField:'name',
+            typeAhead: true,
+            mode: 'local',
+            triggerAction: 'all',
+            emptyText:'Select a storage...',
+            forceSelection: false,
+            selectOnFocus:true
+        });
+
+        var comment_text = new Ext.form.TextField({
+           fieldLabel: 'Comment',
+           name: 'comment',
+           allowBlank:true
+           });
+
         var where_text = new Ext.form.TextField({
             fieldLabel: 'Where',
             name: 'where',
@@ -1152,7 +1205,7 @@ Ext.onReady(function(){
             proxy: new Ext.data.HttpProxy({
                 url: '/cgi-bin/bweb/bresto.pl',
                 method: 'GET',
-                params:{offset:0, limit:50 }
+                params:{offset:0, limit:50}
             }),
             
             reader: new Ext.data.ArrayReader({
@@ -1211,7 +1264,7 @@ Ext.onReady(function(){
                         autoHeight     : true,
                         defaults       : {width: 210},
                         bodyStyle  : 'padding:5px 5px 0',
-                        items :[ rclient_combo, where_text, replace_combo ]
+                        items :[ rclient_combo, where_text, replace_combo, comment_text ]
                     }, {
                         xtype          : 'fieldset',
                         title          : 'Media needed',
@@ -1253,7 +1306,7 @@ Ext.onReady(function(){
                             fieldLabel: 'Priority',
                             disabled: true,
                             tooltip: '1-100'
-                        }]
+                        }, storage_combo]
                     }]
                 }]
             }],
@@ -1284,20 +1337,6 @@ Ext.onReady(function(){
 //        Ext.brestore.dlglaunch.addKeyListener(27, 
 //                                              Ext.brestore.dlglaunch.hide, 
 //                                              Ext.brestore.dlglaunch);
-/*        
- *       var storage_store = new Ext.data.Store({
- *           proxy: new Ext.data.HttpProxy({
- *               url: '/cgi-bin/bweb/bresto.pl',
- *               method: 'GET',
- *               params:{action:'list_storage'}
- *           }),
- *           
- *           reader: new Ext.data.ArrayReader({
- *           }, Ext.data.Record.create([
- *               {name: 'name' }
- *           ]))
- *       });
- */      
         ////////////////////////////////////////////////////////////////
 
         function launch_restore() {
@@ -1305,48 +1344,62 @@ Ext.onReady(function(){
             var tab_fileid=new Array();
             var tab_dirid=new Array();
             var tab_jobid=new Array();
+            var tab_findex=new Array();
             for(var i=0;i<items.length;i++) {
-                if (items[i].data['fileid']) {
-                    tab_fileid.push(items[i].data['fileid']);
-                } else {
-                    tab_dirid.push(items[i].data['pathid']);
-                }
-                tab_jobid.push(items[i].data['jobid']);
+               // For hardlinks, we include fileindex/jobid
+               if (items[i].data['LinkFI']) {
+                   tab_findex.push(items[i].data['jobid'] 
+                                   + '/' + items[i].data['LinkFI']);
+               } 
+               if (items[i].data['fileid']) {
+                  tab_fileid.push(items[i].data['fileid']);
+               } else {
+                  tab_dirid.push(items[i].data['pathid']);
+               }
+               tab_jobid.push(items[i].data['jobid']);
             }
-            var res = ';fileid=' + tab_fileid.join(";fileid=");
+            var dir='';
+            if (Ext.brestore.dir) {
+               dir = ";dir=" + encodeURIComponent(Ext.brestore.dir);
+            }
+
+            var res  = ';fileid=' + tab_fileid.join(";fileid=");
             var res2 = ';dirid=' + tab_dirid.join(";dirid=");
             var res3 = ';jobid=' + tab_jobid.join(";jobid=");
-
-            var res4 = ';client=' + rclient_combo.getValue();
-//            if (storage_combo.getValue()) {
-//                res4 = res4 + ';storage=' + storage_combo.getValue();
-//            }
+            var res4 = ';client=' + encodeURIComponent(rclient_combo.getValue());
+            var res5 = ';findex=' + tab_findex.join(";findex=");
+            if (comment_text.getValue()) {
+               res4 = res4 + ';comment=' + encodeURIComponent(comment_text.getValue());
+            }
+            if (storage_combo.getValue()) {
+                res4 = res4 + ';storage=' + storage_combo.getValue();
+            }
             if (Ext.brestore.use_filerelocation) {
                 if (useregexp_bp.getValue()) {
-                    res4 = res4 + ';regexwhere=' + rwhere_text.getValue();
+                   res4 = res4 + ';regexwhere=' + encodeURIComponent(rwhere_text.getValue());
                 } else {
                     var reg = new Array();
                     if (stripprefix_text.getValue()) {
-                        reg.push('!' + stripprefix_text.getValue() + '!!i');
+                       reg.push(encodeURIComponent('!' + stripprefix_text.getValue() + '!!i'));
                     }
                     if (addprefix_text.getValue()) {
-                        reg.push('!^!' + addprefix_text.getValue() + '!');
+                       reg.push(encodeURIComponent('!^!' + addprefix_text.getValue() + '!'));
                     }
                     if (addsuffix_text.getValue()) {
-                        reg.push('!([^/])$!$1' + addsuffix_text.getValue() + '!');
+                       reg.push(encodeURIComponent('!([^/])$!$1' + addsuffix_text.getValue() + '!'));
                     }
                     res4 = res4 + ';regexwhere=' + reg.join(',');
                 }
             } else {
-                res4 = res4 + ';where=' + where_text.getValue();
+               res4 = res4 + ';where=' + encodeURIComponent(where_text.getValue());
             }
-            window.location='/cgi-bin/bweb/bresto.pl?action=restore' + res + res2 + res3 + res4;
+            window.location='/cgi-bin/bweb/bresto.pl?action=restore' + dir + res + res2 + res3 + res5 + res4;
         } // end launch_restore
 
 
         ////////////////////////////////////////////////////////////////
         reload_media_store();
+        storage_store.load({params:init_params({action: 'list_storage'})});
         Ext.brestore.dlglaunch.show();
-//      storage_store.load({params:{action: 'list_storage'}});
     }
 });
