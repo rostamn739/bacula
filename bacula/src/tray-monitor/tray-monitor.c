@@ -1023,9 +1023,9 @@ int docmd(monitoritem* item, const char* command, GSList** list)
             //fprintf(stderr, "<< EOD >>\n");
             return 1;
          }
-         else if (item->D_sock->msglen == BNET_PROMPT) {
+         else if (item->D_sock->msglen == BNET_SUB_PROMPT) {
             //fprintf(stderr, "<< PROMPT >>\n");
-            *list = g_slist_append(*list, g_string_new(_("<< Error: BNET_PROMPT signal received. >>\n")));
+            *list = g_slist_append(*list, g_string_new(_("<< Error: BNET_SUB_PROMPT signal received. >>\n")));
             return 0;
          }
          else if (item->D_sock->msglen == BNET_HEARTBEAT) {
