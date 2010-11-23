@@ -177,6 +177,17 @@ process_zlib()
    do_make win32/Makefile.mingw32 PREFIX=${DEPPKG_DIR} install
 }
 
+process_rsync()
+{
+   get_source "${URL_RSYNC}" "${DIR_RSYNC}" "${MKD_RSYNC}"
+   ./configure --host=mingw32
+   echo Building librsync
+   do_make Makefile
+   echo Installing lib and headers
+   cp .libs/librsync.a ${DEPPKG_DIR}/lib
+   cp librsync*h ${DEPPKG_DIR}/include
+}
+
 process_pcre()
 {
    if get_source "${URL_PCRE}" "${DIR_PCRE}" "${MKD_PCRE}"
@@ -525,6 +536,7 @@ process_qt4()
 if [ "$#" -eq 0 ]
 then
    process_zlib
+   process_rsync
    process_pcre
    process_pthreads
    process_openssl
