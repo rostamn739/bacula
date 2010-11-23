@@ -164,6 +164,15 @@ do_make()
    fi | tee -a make.log | parse_output
 }
 
+process_rsync()
+{
+   get_source "${URL_RSYNC}" "${DIR_RSYNC}" "${MKD_RSYNC}"
+   ./configure --host=x86_64-pc-mingw32
+   make -k # rdiff.exe has a problem
+   cp .libs/librsync.a ${DEPPKG_DIR}/lib
+   cp librsync*h ${DEPPKG_DIR}/include
+}
+
 process_zlib()
 {
    if get_source "${URL_ZLIB}" "${DIR_ZLIB}" "${MKD_ZLIB}"
@@ -274,6 +283,7 @@ process_openssl()
 if [ "$#" -eq 0 ]
 then
    process_zlib
+   process_rsync
    process_pcre
    process_pthreads
    process_openssl
