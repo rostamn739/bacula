@@ -95,6 +95,9 @@ int32_t read_nbytes(BSOCK * bsock, char *ptr, int32_t nbytes)
       }
       nleft -= nread;
       ptr += nread;
+      if (bsock->use_bwlimit()) {
+         bsock->control_bwlimit(nread);
+      }
    }
    return nbytes - nleft;          /* return >= 0 */
 }
@@ -159,6 +162,9 @@ int32_t write_nbytes(BSOCK * bsock, char *ptr, int32_t nbytes)
       }
       nleft -= nwritten;
       ptr += nwritten;
+      if (bsock->use_bwlimit()) {
+         bsock->control_bwlimit(nwritten);
+      }
    }
    return nbytes - nleft;
 }
