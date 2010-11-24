@@ -118,6 +118,7 @@ static RES_ITEM cli_items[] = {
    {"tlscertificate",        store_dir,       ITEM(res_client.tls_certfile), 0, 0, 0},
    {"tlskey",                store_dir,       ITEM(res_client.tls_keyfile), 0, 0, 0},
    {"verid",                 store_str,       ITEM(res_client.verid), 0, 0, 0},
+   {"maximumbandwidth",      store_speed,     ITEM(res_client.max_bandwidth), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -138,6 +139,7 @@ static RES_ITEM dir_items[] = {
    {"tlskey",               store_dir,       ITEM(res_dir.tls_keyfile), 0, 0, 0},
    {"tlsdhfile",            store_dir,       ITEM(res_dir.tls_dhfile), 0, 0, 0},
    {"tlsallowedcn",         store_alist_str, ITEM(res_dir.tls_allowed_cns), 0, 0, 0},
+   {"maximumbandwidth",     store_speed,     ITEM(res_dir.max_bandwidth), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 

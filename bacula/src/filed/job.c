@@ -1694,6 +1694,15 @@ static int storage_cmd(JCR *jcr)
    /* Try to connect for 1 hour at 10 second intervals */
 
    sd->set_source_address(me->FDsrc_addr);
+
+   /* TODO: see if we put limit on restore and backup... */
+   if (jcr->director->max_bandwidth) {
+      sd->set_bwlimit(jcr->director->max_bandwidth);
+
+   } else if (me->max_bandwidth) {
+      sd->set_bwlimit(me->max_bandwidth);
+   }
+
    if (!sd->connect(jcr, 10, (int)me->SDConnectTimeout, me->heartbeat_interval,
                 _("Storage daemon"), jcr->stored_addr, NULL, stored_port, 1)) {
      sd->destroy();

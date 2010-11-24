@@ -69,7 +69,7 @@ struct DIRRES {
    char *tls_keyfile;                 /* TLS Server Key File */
    char *tls_dhfile;                  /* TLS Diffie-Hellman Parameters */
    alist *tls_allowed_cns;            /* TLS Allowed Clients */
-
+   uint64_t max_bandwidth;            /* Bandwidth limitation (per director) */
    TLS_CONTEXT *tls_ctx;              /* Shared TLS Context */
 };
 
@@ -105,6 +105,7 @@ struct CLIENT {
    alist *pki_recipients;             /* Shared PKI Recipients */
    TLS_CONTEXT *tls_ctx;              /* Shared TLS Context */
    char *verid;                       /* Custom Id to print in version command */
+   uint64_t max_bandwidth;            /* Bandwidth limitation (global) */
 };
 
 
