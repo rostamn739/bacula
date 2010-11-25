@@ -90,6 +90,7 @@ static int python_cmd(UAContext *ua, const char *cmd);
 static int release_cmd(UAContext *ua, const char *cmd);
 static int reload_cmd(UAContext *ua, const char *cmd);
 static int setdebug_cmd(UAContext *ua, const char *cmd);
+static int setbwlimit_cmd(UAContext *ua, const char *cmd);
 static int setip_cmd(UAContext *ua, const char *cmd);
 static int time_cmd(UAContext *ua, const char *cmd);
 static int trace_cmd(UAContext *ua, const char *cmd);
@@ -134,7 +135,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("help"),       help_cmd,      _("Print help on specific command"),  
    NT_("add autodisplay automount cancel create delete disable\n\tenable estimate exit gui label list llist"
        "\n\tmessages memory mount prune purge python quit query\n\trestore relabel release reload run status"
-       "\n\tsetdebug setip show sqlquery time trace unmount umount\n\tupdate use var version wait"),         false},
+       "\n\tsetbandwidth setdebug setip show sqlquery time trace unmount\n\tumount update use var version wait"),         false},
 
  { NT_("label"),      label_cmd,     _("Label a tape"), NT_("storage=<storage> volume=<vol> pool=<pool>"), false},
  { NT_("list"),       list_cmd,      _("List objects from catalog"), 
@@ -173,6 +174,9 @@ static struct cmdstruct commands[] = {                                      /* C
 
  { NT_("setdebug"),   setdebug_cmd,  _("Sets debug level"), 
    NT_("level=<nn> trace=0/1 client=<client-name> | dir | storage=<storage-name> | all"), true},
+
+ { NT_("setbandwidth"),   setbwlimit_cmd,  _("Sets bandwidth"), 
+   NT_("limit=<nn> client=<client-name> jobid=<number> job=<job-name> ujobid=<unique-jobid>"), true},
 
  { NT_("setip"),      setip_cmd,     _("Sets new client address -- if authorized"), NT_(""),   false},
  { NT_("show"),       show_cmd,      _("Show resource records"), 
@@ -444,126 +448,16 @@ int automount_cmd(UAContext *ua, const char *cmd)
    return 1;
 }
 
-
 /*
  * Cancel a job
  */
 static int cancel_cmd(UAContext *ua, const char *cmd)
 {
-   int i, ret;
-   int njobs = 0;
-   JCR *jcr = NULL;
-   char JobName[MAX_NAME_LENGTH];
-
-   for (i=1; i<ua->argc; i++) {
-      if (strcasecmp(ua->argk[i], NT_("jobid")) == 0) {
-         uint32_t JobId;
-         JobId = str_to_int64(ua->argv[i]);
-         if (!JobId) {
-            break;
-         }
-         if (!(jcr=get_jcr_by_id(JobId))) {
-            ua->error_msg(_("JobId %s is not running. Use Job name to cancel inactive jobs.\n"),  ua->argv[i]);
-            return 1;
-         }
-         break;
-      } else if (strcasecmp(ua->argk[i], NT_("job")) == 0) {
-         if (!ua->argv[i]) {
-            break;
-         }
-         if (!(jcr=get_jcr_by_partial_name(ua->argv[i]))) {
-            ua->warning_msg(_("Warning Job %s is not running. Continuing anyway ...\n"), ua->argv[i]);
-            jcr = new_jcr(sizeof(JCR), dird_free_jcr);
-            bstrncpy(jcr->Job, ua->argv[i], sizeof(jcr->Job));
-         }
-         break;
-      } else if (strcasecmp(ua->argk[i], NT_("ujobid")) == 0) {
-         if (!ua->argv[i]) {
-            break;
-         }
-         if (!(jcr=get_jcr_by_full_name(ua->argv[i]))) {
-            ua->warning_msg(_("Warning Job %s is not running. Continuing anyway ...\n"), ua->argv[i]);
-            jcr = new_jcr(sizeof(JCR), dird_free_jcr);
-            bstrncpy(jcr->Job, ua->argv[i], sizeof(jcr->Job));
-         }
-         break;
-      }
-
+   JCR *jcr = select_running_job(ua, "cancel");
+   if (!jcr) {
+      return 1;
    }
-   if (jcr) {
-      if (jcr->job && !acl_access_ok(ua, Job_ACL, jcr->job->name())) {
-         ua->error_msg(_("Unauthorized command from this console.\n"));
-         return 1;
-      }
-   } else {
-     /*
-      * If we still do not have a jcr,
-      *   throw up a list and ask the user to select one.
-      */
-      char buf[1000];
-      int tjobs = 0;                  /* total # number jobs */
-      /* Count Jobs running */
-      foreach_jcr(jcr) {
-         if (jcr->JobId == 0) {      /* this is us */
-            continue;
-         }
-         tjobs++;                    /* count of all jobs */
-         if (!acl_access_ok(ua, Job_ACL, jcr->job->name())) {
-            continue;               /* skip not authorized */
-         }
-         njobs++;                   /* count of authorized jobs */
-      }
-      endeach_jcr(jcr);
-
-      if (njobs == 0) {            /* no authorized */
-         if (tjobs == 0) {
-            ua->send_msg(_("No Jobs running.\n"));
-         } else {
-            ua->send_msg(_("None of your jobs are running.\n"));
-         }
-         return 1;
-      }
-
-      start_prompt(ua, _("Select Job:\n"));
-      foreach_jcr(jcr) {
-         char ed1[50];
-         if (jcr->JobId == 0) {      /* this is us */
-            continue;
-         }
-         if (!acl_access_ok(ua, Job_ACL, jcr->job->name())) {
-            continue;               /* skip not authorized */
-         }
-         bsnprintf(buf, sizeof(buf), _("JobId=%s Job=%s"), edit_int64(jcr->JobId, ed1), jcr->Job);
-         add_prompt(ua, buf);
-      }
-      endeach_jcr(jcr);
-
-      if (do_prompt(ua, _("Job"),  _("Choose Job to cancel"), buf, sizeof(buf)) < 0) {
-         return 1;
-      }
-      if (ua->api && njobs == 1) {
-         char nbuf[1000];
-         bsnprintf(nbuf, sizeof(nbuf), _("Cancel: %s\n\n%s"), buf,  
-                   _("Confirm cancel?"));
-         if (!get_yesno(ua, nbuf) || ua->pint32_val == 0) {
-            return 1;
-         }
-      } else {
-         if (njobs == 1) {
-            if (!get_yesno(ua, _("Confirm cancel (yes/no): ")) || ua->pint32_val == 0) {
-               return 1;
-            }
-         }
-      }
-      sscanf(buf, "JobId=%d Job=%127s", &njobs, JobName);
-      jcr = get_jcr_by_full_name(JobName);
-      if (!jcr) {
-         ua->warning_msg(_("Job \"%s\" not found.\n"), JobName);
-         return 1;
-      }
-   }
-
-   ret = cancel_job(ua, jcr);
+   int ret = cancel_job(ua, jcr);
    free_jcr(jcr);
    return ret;
 }
@@ -794,6 +688,67 @@ static int python_cmd(UAContext *ua, const char *cmd)
    return 1;
 }
 
+static int setbwlimit_cmd(UAContext *ua, const char *cmd)
+{
+   CLIENT *client=NULL;
+   char Job[MAX_NAME_LENGTH];
+   *Job=0;
+   int32_t limit=-1;
+   int i;
+
+   i = find_arg_with_value(ua, "limit");
+   if (i >= 0) {
+      limit = atoi(ua->argv[i]);
+   }
+   if (limit < 0) {
+      if (!get_pint(ua, _("Enter new bandwidth limit kb/s: "))) {
+         return 1;
+      }
+      limit = ua->pint32_val * 1024; /* kb/s */
+   }
+
+   if (find_arg(ua, "job") > 0) {
+      JCR *jcr = select_running_job(ua, "limit");
+      if (jcr) {
+         jcr->max_bandwidth = limit; /* TODO: see for locking (Should be safe)*/
+         bstrncpy(Job, jcr->Job, sizeof(Job));
+         client = jcr->client;
+         free_jcr(jcr);
+      } else {
+         return 1;
+      }
+
+   } else {
+      client = get_client_resource(ua);
+   }
+
+   if (!client) {
+      return 1;
+   }
+
+   /* Connect to File daemon */
+   ua->jcr->client = client;
+   ua->jcr->max_bandwidth = limit;
+
+   /* Try to connect for 15 seconds */
+   ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
+      client->name(), client->address, client->FDport);
+   if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
+      ua->error_msg(_("Failed to connect to Client.\n"));
+      return 1;
+   }
+   Dmsg0(120, "Connected to file daemon\n");
+   if (!send_bwlimit(ua->jcr, Job)) {
+      ua->error_msg(_("Failed to set bandwidth limit to Client.\n"));
+   }
+
+   ua->jcr->file_bsock->signal(BNET_TERMINATE);
+   ua->jcr->file_bsock->close();
+   ua->jcr->file_bsock = NULL;
+   ua->jcr->client = NULL;
+   ua->jcr->max_bandwidth = 0;
+   return 1;
+}
 
 /*
  * Set a new address in a Client resource. We do this only

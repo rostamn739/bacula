@@ -41,9 +41,10 @@ const int dbglvl = 50;
  *   prior to 10Mar08 no version
  *   1 10Mar08
  *   2 13Mar09 - added the ability to restore from multiple storages
- *   3 03Sep10 - added the restore object command for vss plugin
+ *   3 03Sep10 - added the restore object command for vss plugin 4.0
+ *   4 25Nov10 - added bandwidth command 5.1
  */
-static char OK_hello[]  = "2000 OK Hello 3\n";
+static char OK_hello[]  = "2000 OK Hello 4\n";
 static char Dir_sorry[] = "2999 Authentication failed.\n";
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 

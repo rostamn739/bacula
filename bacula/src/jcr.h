@@ -279,6 +279,7 @@ public:
    char *plugin_options;              /* user set options for plugin */
    bool cmd_plugin;                   /* Set when processing a command Plugin = */
    POOLMEM *comment;                  /* Comment for this Job */
+   int64_t max_bandwidth;             /* Bandwidth limit for this Job */
 
    /* Daemon specific part of JCR */
    /* This should be empty in the library */

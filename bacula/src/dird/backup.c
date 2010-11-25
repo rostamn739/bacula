@@ -399,6 +399,17 @@ bool do_backup(JCR *jcr)
       goto bail_out;
    }
 
+   /* TODO: See priority with bandwidth parameter */
+   if (jcr->job->max_bandwidth > 0) {
+      jcr->max_bandwidth = jcr->job->max_bandwidth;
+   } else if (jcr->client->max_bandwidth > 0) {
+      jcr->max_bandwidth = jcr->client->max_bandwidth;
+   }
+
+   if (jcr->max_bandwidth > 0) {
+      send_bwlimit(jcr, jcr->Job); /* Old clients don't have this command */
+   }
+
    /*
     * send Storage daemon address to the File daemon
     */

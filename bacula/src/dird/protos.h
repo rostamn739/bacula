@@ -96,6 +96,7 @@ extern int connect_to_file_daemon(JCR *jcr, int retry_interval,
 extern bool send_include_list(JCR *jcr);
 extern bool send_exclude_list(JCR *jcr);
 extern bool send_level_command(JCR *jcr);
+extern bool send_bwlimit(JCR *jcr, const char *Job);
 extern int get_attributes_and_put_in_catalog(JCR *jcr);
 extern void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId);
 extern int put_file_into_catalog(JCR *jcr, long file_index, char *fname,
@@ -267,6 +268,7 @@ bool    get_pool_dbr(UAContext *ua, POOL_DBR *pr, const char *argk="pool");
 bool    get_client_dbr(UAContext *ua, CLIENT_DBR *cr);
 POOL   *get_pool_resource(UAContext *ua);
 POOL   *select_pool_resource(UAContext *ua);
+JCR *select_running_job(UAContext *ua, const char *reason);
 CLIENT *get_client_resource(UAContext *ua);
 int     get_job_dbr(UAContext *ua, JOB_DBR *jr);
 
