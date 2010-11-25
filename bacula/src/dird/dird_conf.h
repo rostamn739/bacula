@@ -437,6 +437,8 @@ public:
    bool CancelLowerLevelDuplicates;   /* Cancel lower level backup jobs */
    bool CancelQueuedDuplicates;       /* Cancel queued jobs */
    bool CancelRunningDuplicates;      /* Cancel Running jobs */
+   bool PurgeMigrateJob;              /* Purges source job on completion */
+
    alist *base;                       /* Base jobs */   
    int64_t max_bandwidth;             /* Speed limit on this job */
 
