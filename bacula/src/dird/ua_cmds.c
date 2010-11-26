@@ -176,7 +176,7 @@ static struct cmdstruct commands[] = {                                      /* C
    NT_("level=<nn> trace=0/1 client=<client-name> | dir | storage=<storage-name> | all"), true},
 
  { NT_("setbandwidth"),   setbwlimit_cmd,  _("Sets bandwidth"), 
-   NT_("limit=<nn> client=<client-name> jobid=<number> job=<job-name> ujobid=<unique-jobid>"), true},
+   NT_("limit=<nn-kbs> client=<client-name> jobid=<number> job=<job-name> ujobid=<unique-jobid>"), true},
 
  { NT_("setip"),      setip_cmd,     _("Sets new client address -- if authorized"), NT_(""),   false},
  { NT_("show"),       show_cmd,      _("Show resource records"), 
@@ -698,7 +698,7 @@ static int setbwlimit_cmd(UAContext *ua, const char *cmd)
 
    i = find_arg_with_value(ua, "limit");
    if (i >= 0) {
-      limit = atoi(ua->argv[i]);
+      limit = atoi(ua->argv[i]) * 1024;
    }
    if (limit < 0) {
       if (!get_pint(ua, _("Enter new bandwidth limit kb/s: "))) {
@@ -707,7 +707,8 @@ static int setbwlimit_cmd(UAContext *ua, const char *cmd)
       limit = ua->pint32_val * 1024; /* kb/s */
    }
 
-   if (find_arg(ua, "job") > 0) {
+   const char *lst[] = { "job", "jobid", "jobname" };
+   if (find_arg_keyword(ua, lst) > 0) {
       JCR *jcr = select_running_job(ua, "limit");
       if (jcr) {
          jcr->max_bandwidth = limit; /* TODO: see for locking (Should be safe)*/
@@ -740,6 +741,10 @@ static int setbwlimit_cmd(UAContext *ua, const char *cmd)
    Dmsg0(120, "Connected to file daemon\n");
    if (!send_bwlimit(ua->jcr, Job)) {
       ua->error_msg(_("Failed to set bandwidth limit to Client.\n"));
+
+   } else {
+      ua->info_msg(_("OK Limiting bandwidth to %lldkb/s %s\n"),
+                   limit/1024, Job);
    }
 
    ua->jcr->file_bsock->signal(BNET_TERMINATE);
