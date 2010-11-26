@@ -495,10 +495,10 @@ static int setbandwidth_cmd(JCR *jcr)
       if(!(cjcr=get_jcr_by_full_name(Job))) {
          dir->fsend(_("2901 Job %s not found.\n"), Job);
       } else {
+         cjcr->max_bandwidth = bw;
          if (cjcr->store_bsock) {
             cjcr->store_bsock->set_bwlimit(bw);
          }
-         cjcr->max_bandwidth = bw;
          free_jcr(cjcr);
       }
 
