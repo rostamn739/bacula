@@ -138,8 +138,9 @@ static void  list_status_header(STATUS_PKT *sp)
          edit_uint64_with_commas(sm_buffers, b4),
          edit_uint64_with_commas(sm_max_buffers, b5));
    sendit(msg.c_str(), len, sp);
-   len = Mmsg(msg, _(" Sizeof: boffset_t=%d size_t=%d debug=%d trace=%d\n"),
-         sizeof(boffset_t), sizeof(size_t), debug_level, get_trace());
+   len = Mmsg(msg, _(" Sizeof: boffset_t=%d size_t=%d debug=%d trace=%d "
+                     "bwlimit=%lldkb/s\n"), sizeof(boffset_t), sizeof(size_t),
+              debug_level, get_trace(), me->max_bandwidth/1024);
    sendit(msg.c_str(), len, sp);
    if (debug_level > 0 && plugin_list->size() > 0) {
       Plugin *plugin;
