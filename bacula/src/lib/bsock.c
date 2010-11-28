@@ -1090,7 +1090,7 @@ void BSOCK::control_bwlimit(int bytes)
    }
 
    /* What exceed should be converted in sleep time */
-   int64_t usec_sleep = m_nb_bytes / (int64_t)((double)m_bwlimit / 1000000.0);
+   int64_t usec_sleep = (int64_t)(m_nb_bytes /((double)m_bwlimit / 1000000.0));
    if (usec_sleep > 100) {
       bmicrosleep(0, usec_sleep);
       m_last_tick = get_current_btime();
