@@ -707,7 +707,7 @@ static int setbwlimit_cmd(UAContext *ua, const char *cmd)
       limit = ua->pint32_val * 1024; /* kb/s */
    }
 
-   const char *lst[] = { "job", "jobid", "jobname" };
+   const char *lst[] = { "job", "jobid", "jobname", NULL };
    if (find_arg_keyword(ua, lst) > 0) {
       JCR *jcr = select_running_job(ua, "limit");
       if (jcr) {
