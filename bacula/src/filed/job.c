@@ -502,8 +502,8 @@ static int setbandwidth_cmd(JCR *jcr)
          free_jcr(cjcr);
       }
 
-   } else {                     /* No job requested, apply globally */
-      me->max_bandwidth = bw;   /* Overwrite directive */
+   } else {                           /* No job requested, apply globally */
+      me->max_bandwidth_per_job = bw; /* Overwrite directive */
    }
 
    return dir->fsend(OKBandwidth);
@@ -1736,11 +1736,11 @@ static int storage_cmd(JCR *jcr)
 
    /* TODO: see if we put limit on restore and backup... */
    if (!jcr->max_bandwidth) {
-      if (jcr->director->max_bandwidth) {
-         jcr->max_bandwidth = jcr->director->max_bandwidth;
+      if (jcr->director->max_bandwidth_per_job) {
+         jcr->max_bandwidth = jcr->director->max_bandwidth_per_job;
          
-      } else if (me->max_bandwidth) {
-         jcr->max_bandwidth = me->max_bandwidth;
+      } else if (me->max_bandwidth_per_job) {
+         jcr->max_bandwidth = me->max_bandwidth_per_job;
       }
    }
    sd->set_bwlimit(jcr->max_bandwidth);
