@@ -10,7 +10,7 @@ JobName=NightlySave
 scripts/cleanup
 scripts/copy-test-confs
 
-$bperl -e 'add_attribute("$conf/bacula-fd.conf", "MaximumBandwidth", "3MB/s", "FileDaemon")'
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "MaximumBandwidthPerJob", "3MB/s", "FileDaemon")'
 
 echo $cwd/build > $tmp/file-list
 
