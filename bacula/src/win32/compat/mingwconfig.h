@@ -375,4 +375,7 @@
 /* Use long unsigned int for ioctl request */
 #define HAVE_IOCTL_ULINT_REQUEST
 
+/* For now, we only support Little endian on Win32 */
+#define HAVE_LITTLE_ENDIAN 1
+
 #endif /* __MINGWNCONFIG_H */
