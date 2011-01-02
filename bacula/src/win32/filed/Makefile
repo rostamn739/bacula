@@ -23,11 +23,13 @@ INCLUDES = \
 	$(INCLUDE_ICONS)
 
 DEFINES = \
-	-DHAVE_TRAY_MONITOR \
 	-DUSING_DLL \
 	-DWIN32_VSS \
 	-DWINVER=0x500 \
 	$(HAVES)
+
+#	-DHAVE_TRAY_MONITOR \
+
 
 vpath %.c $(MAINDIR)/src/filed $(BUILDDIR)/libwin32
 vpath %.cpp $(MAINDIR)/src/filed $(BUILDDIR)/libwin32
@@ -53,13 +55,15 @@ FILED_OBJS = \
 	$(OBJDIR)/vss_XP.o \
 	$(OBJDIR)/vss_W2K3.o \
 	$(OBJDIR)/vss_Vista.o \
-	$(OBJDIR)/aboutDialog.o \
 	$(OBJDIR)/service.o \
-	$(OBJDIR)/statusDialog.o \
-	$(OBJDIR)/trayMonitor.o \
 	$(OBJDIR)/xattr.o \
 	$(OBJDIR)/main.o \
 	$(OBJDIR)/bacula.res
+
+#	$(OBJDIR)/trayMonitor.o \
+#	$(OBJDIR)/aboutDialog.o \
+#	$(OBJDIR)/statusDialog.o \
+
 
 ALL_OBJS = $(FILED_OBJS)
 
