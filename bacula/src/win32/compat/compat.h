@@ -388,9 +388,11 @@ void prevent_os_suspensions();
 void allow_os_suspensions();
 
 typedef DWORD EXECUTION_STATE;
+#ifndef ES_CONTINUOUS
 #define ES_CONTINUOUS            0x80000000
 #define ES_SYSTEM_REQUIRED       0x00000001
 #define ES_DISPLAY_REQUIRED      0x00000002
+#endif
 #ifndef ES_USER_PRESENT
 # define ES_USER_PRESENT          0x00000004
 #endif
