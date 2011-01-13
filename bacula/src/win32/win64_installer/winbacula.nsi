@@ -509,6 +509,7 @@ Section "Bat Console" SecBatConsole
   Call InstallCommonFiles
   File "${SRC_DIR}\QtCore4.dll"
   File "${SRC_DIR}\QtGui4.dll"
+  File "${SRC_DIR}\libgcc_s_dw2-1.dll"
   File "${SRC_DIR}\mingwm10.dll"
   File "${SRC_DIR}\ssleay32.dll"
   File "${SRC_DIR}\libeay32.dll"

@@ -47,7 +47,8 @@ DEPKGS_BINARIES := \
 	mkisofs.exe \
 	growisofs.exe \
 	QtCore4.dll \
-	QtGui4.dll
+	QtGui4.dll \
+	libgcc_s_dw2-1.dll
 
 NONGCC_BINARIES :=
 

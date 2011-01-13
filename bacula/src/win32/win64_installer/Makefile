@@ -159,6 +159,7 @@ $(INSTALL_EXE): winbacula.nsi $(addprefix release64/,$(BACULA_BINARIES) $(DEPKGS
 	cp -f ../release32/bat.exe release64
 	cp -f ../release32/QtCore4.dll release64
 	cp -f ../release32/QtGui4.dll release64
+	cp -f ../win32_installer/release32/libgcc_s_dw2-1.dll release64
 	cp -f ../win32_installer/release32/mingwm10.dll release64
 	cp -f ../win32_installer/release32/ssleay32.dll release64
 	cp -f ../win32_installer/release32/libeay32.dll release64
