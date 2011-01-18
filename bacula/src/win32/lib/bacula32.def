@@ -571,8 +571,6 @@ _ZN8POOL_MEM8max_sizeEv
  
 ; message.o
 _Z10my_name_isiPPcPKc
-_Z11get_db_typev
-_Z11set_db_typePKc
 _Z12add_msg_destP4MSGSiiPcS1_
 _Z12rem_msg_destP4MSGSiiPc
 _Z13free_msgs_resP4MSGS
