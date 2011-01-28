@@ -41,6 +41,17 @@
 #include "jcr.h"
 #include "findlib/find.h"
 
+/* Note, if you want to see what Windows variables and structures
+ * are defined, bacula.h includes <windows.h>, which is found in:
+ *
+ *   cross-tools/mingw32/mingw32/include
+ * or
+ *   cross-tools/mingw-w64/x86_64-pc-mingw32/include
+ * 
+ * depending on whether we are building the 32 bit version or
+ * the 64 bit version. 
+ */
+
 static const int dbglvl = 500;
 
 #define b_errno_win32 (1<<29)
@@ -404,6 +415,30 @@ make_wchar_win32_path(POOLMEM *pszUCSPath, BOOL *pBIsRawPath /*= NULL*/)
    return (POOLMEM *)pwszBuf;
 }
 
+/*
+ * Convert from WCHAR (UCS) to UTF-8
+ */
+int
+wchar_2_UTF8(POOLMEM **pszUTF, const wchar_t *pszUCS)
+{
+   /**
+    * The return value is the number of bytes written to the buffer.
+    * The number includes the byte for the null terminator.
+    */
+
+   if (p_WideCharToMultiByte) {
+      int nRet = p_WideCharToMultiByte(CP_UTF8,0,pszUCS,-1,NULL,0,NULL,NULL);
+      *pszUTF = check_pool_memory_size(*pszUTF, nRet);
+      return p_WideCharToMultiByte(CP_UTF8,0,pszUCS,-1,*pszUTF,nRet,NULL,NULL);
+
+   } else {
+      return 0;
+   }
+}
+
+/*
+ * Convert from WCHAR (UCS) to UTF-8
+ */
 int
 wchar_2_UTF8(char *pszUTF, const wchar_t *pszUCS, int cchChar)
 {
@@ -638,6 +673,11 @@ static const char *errorString(void)
 }
 
 
+/*
+ * This is only called for directories, and is used to get the directory
+ *  attributes and find out if we have a junction point or a mount point
+ *  or other kind of "funny" directory.
+ */
 static int
 statDir(const char *file, struct stat *sb)
 {
@@ -652,6 +692,7 @@ statDir(const char *file, struct stat *sb)
    FILETIME *pftLastAccessTime;
    FILETIME *pftLastWriteTime;
    FILETIME *pftCreationTime;
+   HANDLE h = INVALID_HANDLE_VALUE;
 
    /* 
     * Oh, cool, another exception: Microsoft doesn't let us do 
@@ -669,7 +710,6 @@ statDir(const char *file, struct stat *sb)
       return 0;
     }
 
-   HANDLE h = INVALID_HANDLE_VALUE;
 
    // use unicode
    if (p_FindFirstFileW) {
@@ -737,10 +777,62 @@ statDir(const char *file, struct stat *sb)
     *  filesystem).
     */
    if (*pdwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-      if (*pdwReserved0 & IO_REPARSE_TAG_MOUNT_POINT) {
-         sb->st_rdev = WIN32_MOUNT_POINT;           /* mount point */
+      sb->st_rdev = WIN32_MOUNT_POINT;
+   } else {
+      sb->st_rdev = 0;
+   }
+   if ((*pdwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+        (*pdwReserved0 & IO_REPARSE_TAG_MOUNT_POINT)) {
+      sb->st_rdev = WIN32_MOUNT_POINT;           /* mount point */
+      /* 
+       * Now to find out if the directory is a mount point or
+       * a reparse point, we must do a song and a dance.
+       * Explicitly open the file to read the reparse point, then
+       * call DeviceIoControl to find out if it points to a Volume
+       * or to a directory.
+       */
+      h = INVALID_HANDLE_VALUE;
+      if (p_GetFileAttributesW) {
+         POOLMEM* pwszBuf = get_pool_memory(PM_FNAME);
+         make_win32_path_UTF8_2_wchar(&pwszBuf, file);
+         if (p_CreateFileW) {
+            h = CreateFileW((LPCWSTR)pwszBuf, GENERIC_READ,
+                   FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+                   FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+                   NULL);
+         }
+         free_pool_memory(pwszBuf);
+      } else if (p_GetFileAttributesA) {
+         h = CreateFileA(file, GENERIC_READ,
+                FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+                FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+                NULL);         
+      }
+      if (h != INVALID_HANDLE_VALUE) {
+         char dummy[1000];
+         REPARSE_DATA_BUFFER *rdb = (REPARSE_DATA_BUFFER *)dummy;
+         rdb->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+         DWORD bytes;
+         bool ok;
+         ok = DeviceIoControl(h, FSCTL_GET_REPARSE_POINT, 
+                 NULL, 0,                           /* in buffer, bytes */
+                 (LPVOID)rdb, (DWORD)sizeof(dummy), /* out buffer, btyes */
+                 (LPDWORD)&bytes, (LPOVERLAPPED)0);
+         if (ok) {
+            POOLMEM *utf8 = get_pool_memory(PM_NAME);
+            wchar_2_UTF8(&utf8, (wchar_t *)rdb->SymbolicLinkReparseBuffer.PathBuffer);
+            Dmsg2(dbglvl, "Junction %s points to: %s\n", file, utf8);
+            if (strncasecmp(utf8, "\\??\\volume{", 11) == 0) {
+               sb->st_rdev = WIN32_MOUNT_POINT;
+            } else { 
+               /* It points to a directory so we ignore it. */
+               sb->st_rdev = WIN32_JUNCTION_POINT;
+            }
+            free_pool_memory(utf8);
+         }
+         CloseHandle(h);
       } else {
-         sb->st_rdev = WIN32_REPARSE_POINT;         /* reparse point */
+         Dmsg1(dbglvl, "Invalid handle from CreateFile(%s)\n", file);
       }
    }  
    Dmsg2(dbglvl, "st_rdev=%d file=%s\n", sb->st_rdev, file);
@@ -1297,9 +1389,10 @@ readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 
       // copy unicode
       if (dp->valid_w) {
-         char szBuf[MAX_PATH_UTF8+1];
-         wchar_2_UTF8(szBuf,dp->data_w.cFileName);
+         POOLMEM *szBuf = get_pool_memory(PM_NAME);
+         wchar_2_UTF8(&szBuf, dp->data_w.cFileName);
          dp->offset += copyin(*entry, szBuf);
+         free_pool_memory(szBuf);
       } else if (dp->valid_a) { // copy ansi (only 1 will be valid)
          dp->offset += copyin(*entry, dp->data_a.cFileName);
       }
@@ -1543,7 +1636,7 @@ win32_getcwd(char *buf, int maxlen)
    } else if (p_GetCurrentDirectoryA)
       n = p_GetCurrentDirectoryA(maxlen, buf);
 
-   if (n == 0 || n > maxlen) return NULL;
+   if (n <= 0 || n > maxlen) return NULL;
 
    if (n+1 > maxlen) return NULL;
    if (n != 3) {
@@ -2151,10 +2244,11 @@ typedef struct s_bpipe {
 */
 
 static void
-CloseIfValid(HANDLE handle)
+CloseHandleIfValid(HANDLE handle)
 {
-    if (handle != INVALID_HANDLE_VALUE)
+    if (handle != INVALID_HANDLE_VALUE) {
         CloseHandle(handle);
+    }
 }
 
 BPIPE *
@@ -2272,12 +2366,12 @@ open_bpipe(char *prog, int wait, const char *mode)
 
 cleanup:
 
-    CloseIfValid(hChildStdoutRd);
-    CloseIfValid(hChildStdoutRdDup);
-    CloseIfValid(hChildStdinWr);
-    CloseIfValid(hChildStdinWrDup);
+    CloseHandleIfValid(hChildStdoutRd);
+    CloseHandleIfValid(hChildStdoutRdDup);
+    CloseHandleIfValid(hChildStdinWr);
+    CloseHandleIfValid(hChildStdinWrDup);
 
-    free((void *) bpipe);
+    free((void *)bpipe);
     errno = b_errno_win32;            /* do GetLastError() for error code */
     return NULL;
 }

@@ -632,4 +632,7 @@
 /* Use long unsigned int for ioctl request */
 #define HAVE_IOCTL_ULINT_REQUEST
 
+/* Little Endian */
+#define HAVE_LITTLE_ENDIAN 1
+
 #endif /* __WINCONFIG_H */
