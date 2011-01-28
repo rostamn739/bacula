@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2004-2009 Free Software Foundation Europe e.V.
+   Copyright (C) 2004-2010 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -34,10 +34,6 @@
 /*
  * Author          : Christopher S. Hull
  * Created On      : Fri Jan 30 13:00:51 2004
- * Last Modified By: Thorsten Engel
- * Last Modified On: Fri Apr 22 19:30:00 2004
- * Update Count    : 218
- * $Id$
  */
 
 
@@ -60,7 +56,36 @@
 #ifdef MINGW64
 #include <direct.h>
 #define _declspec __declspec
+
+/* Missing in 64 bit mingw */
+typedef struct _REPARSE_DATA_BUFFER {
+        DWORD  ReparseTag;
+        WORD   ReparseDataLength;
+        WORD   Reserved;
+        union {
+                struct {
+                        WORD   SubstituteNameOffset;
+                        WORD   SubstituteNameLength;
+                        WORD   PrintNameOffset;
+                        WORD   PrintNameLength;
+                        WCHAR PathBuffer[1];
+                } SymbolicLinkReparseBuffer;
+                struct {
+                        WORD   SubstituteNameOffset;
+                        WORD   SubstituteNameLength;
+                        WORD   PrintNameOffset;
+                        WORD   PrintNameLength;
+                        WCHAR PathBuffer[1];
+                } MountPointReparseBuffer;
+                struct {
+                        BYTE   DataBuffer[1];
+                } GenericReparseBuffer;
+        } DUMMYUNIONNAME;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+
 #endif
+
+#include <winioctl.h>
 
 #ifdef _WIN64
 # define GWL_USERDATA  GWLP_USERDATA
@@ -381,8 +406,6 @@ void closelog();
 void openlog(const char *ident, int option, int facility);
 #endif //HAVE_MINGW
 
-void LogErrorMsg(const char *message);
-
 /* Don't let OS go to sleep (usually a Laptop) while we are backing up */
 void prevent_os_suspensions();
 void allow_os_suspensions();
@@ -390,7 +413,11 @@ void allow_os_suspensions();
 typedef DWORD EXECUTION_STATE;
 #ifndef ES_CONTINUOUS
 #define ES_CONTINUOUS            0x80000000
+#endif
+#ifndef ES_SYSTEM_REQUIRED
 #define ES_SYSTEM_REQUIRED       0x00000001
+#endif
+#ifndef ES_DISPLAY_REQUIRED
 #define ES_DISPLAY_REQUIRED      0x00000002
 #endif
 #ifndef ES_USER_PRESENT
@@ -399,6 +426,8 @@ typedef DWORD EXECUTION_STATE;
 
 WINBASEAPI EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE esFlags);
 
+
+extern void LogErrorMsg(const char *message);
 
 #if !defined(INVALID_FILE_ATTRIBUTES)
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
