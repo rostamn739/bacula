@@ -86,6 +86,7 @@ private:
    int m_port;                        /* desired port */
    btimer_t *m_tid;                   /* timer id */
    boffset_t m_data_end;              /* offset of last valid data written */
+   int32_t m_FileIndex;               /* last valid attr spool FI */
    volatile bool m_timed_out: 1;      /* timed out in read/write */
    volatile bool m_terminated: 1;     /* set when BNET_TERMINATE arrives */
    bool m_duped: 1;                   /* set if duped BSOCK */
@@ -147,7 +148,14 @@ public:
    bool is_timed_out() { return m_timed_out; };
    bool is_stop() { return errors || is_terminated(); }
    bool is_error() { errno = b_errno; return errors; }
-   void set_data_end() { if (m_spool) m_data_end = ftello(m_spool_fd); };
+   void set_data_end(int32_t FileIndex) { 
+          if (m_spool && FileIndex > m_FileIndex) {
+              m_FileIndex = FileIndex - 1;
+              m_data_end = ftello(m_spool_fd);
+           }
+        };
+   boffset_t get_data_end() { return m_data_end; };
+   int32_t get_FileIndex() { return m_FileIndex; };
    void set_bwlimit(int64_t maxspeed) { m_bwlimit = maxspeed; };
    bool use_bwlimit() { return m_bwlimit > 0;};
    void set_spooling() { m_spool = true; };
