@@ -59,6 +59,7 @@ nice tests/span-vol-test
 nice tests/maxbytes-test
 nice tests/maxbw-test
 nice tests/maxtime-test
+nice tests/maxuseduration-test
 nice tests/maxvol-test
 nice tests/maxvol2-test
 nice tests/messages-test
