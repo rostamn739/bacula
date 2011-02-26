@@ -15,6 +15,7 @@ _Z12UTF8_2_wcharPPcPKc
 _Z12gettimeofdayP7timevalP8timezone
 _Z12init_signalsPFviE
 _Z12wchar_2_UTF8PcPKwi
+_Z12wchar_2_UTF8PPcPKw
 _Z12win32_getcwdPci
 _Z12win32_unlinkPKc
 _Z15init_stack_dumpv
@@ -130,10 +131,10 @@ _Z22get_win32_drivelettersP6FF_PKTPc
 _Z25set_find_changed_functionP6FF_PKTPFbP3JCRS0_E
  
 ; find_one.o
-_Z13check_changesP3JCRP6FF_PKT
 _Z13find_one_fileP3JCRP6FF_PKTPFiS0_S2_bEPcjb
 _Z13term_find_oneP6FF_PKT
 _Z16has_file_changedP3JCRP6FF_PKT
+_Z13check_changesP3JCRP6FF_PKT
  
 ; fstype.o
 _Z6fstypePKcPci
@@ -444,7 +445,7 @@ _Z11edit_uint64yPc
 _Z11is_a_numberPKc
 _Z12str_to_int64Pc
 _Z13is_an_integerPKc
-_Z13is_name_validPcPS_
+_Z13is_name_validPKcPPc
 _Z13str_to_uint64Pc
 _Z14size_to_uint64PciPy
 _Z15speed_to_uint64PciPy
@@ -469,7 +470,7 @@ _Z8hmac_md5PhiS_iS_
 _ZN6htable11hash_mallocEi
 _ZN6htable10grow_tableEv
 _ZN6htable10hash_indexEPc
-_ZN6htable4initEPvS0_i
+_ZN6htable4initEPvS0_ii
 _ZN6htable4nextEv
 _ZN6htable4sizeEv
 _ZN6htable5firstEv
@@ -477,8 +478,8 @@ _ZN6htable5statsEv
 _ZN6htable6insertEPcPv
 _ZN6htable6lookupEPc
 _ZN6htable7destroyEv
-_ZN6htableC1EPvS0_i
-_ZN6htableC2EPvS0_i
+_ZN6htableC1EPvS0_ii
+_ZN6htableC2EPvS0_ii
     
  
 ; jcr.o
@@ -495,7 +496,6 @@ _Z16get_jcr_from_tsdv
 _Z18get_jobid_from_tsdv
 _Z18get_jcr_by_sessionjj
 _Z18init_jcr_subsystemv
-_Z18set_jcr_job_statusP3JCRi
 _ZN3JCR12setJobStatusEi
 _Z19init_last_jobs_listv
 _Z19lock_last_jobs_listv
@@ -563,6 +563,8 @@ _ZN8POOL_MEM6strcpyEPKc
 _ZN8POOL_MEM8max_sizeEv
  
 ; message.o
+_Z10get_hangupv
+_Z10set_hangupi
 _Z10my_name_isiPPcPKc
 _Z12add_msg_destP4MSGSiiPcS1_
 _Z12rem_msg_destP4MSGSiiPc
@@ -589,7 +591,13 @@ _Z8term_msgv
 _Z9close_msgP3JCR
 _Z9get_tracev
 _Z9set_tracei
- 
+
+; mkpath.o
+_Z13path_list_addP3JCRjPc
+_Z14free_path_listP3JCR
+_Z16path_list_lookupP3JCRPc
+_Z8makepathP4ATTRPKcttjji
+
 ; priv.o
 _Z4dropPcS_b
 
