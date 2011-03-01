@@ -780,3 +780,6 @@ plugin_bwrite DATA
 plugin_bread DATA
 plugin_blseek DATA
 exepath DATA
+beef DATA
+version DATA
+dist_name DATA
