@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2004-2010 Free Software Foundation Europe e.V.
+   Copyright (C) 2004-2011 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -40,8 +40,11 @@
 #if !defined(__COMPAT_H_)
 #define __COMPAT_H_
 #if !defined(_STAT_H)
-#define _STAT_H       /* don't pull in MinGW stat.h */
-#define _STAT_DEFINED /* don't pull in MinGW stat.h */
+#define _STAT_H         /* don't pull in MinGW stat.h */
+#endif
+
+#ifndef _STAT_DEFINED
+#define _STAT_DEFINED 1 /* don't pull in MinGW struct stat from wchar.h */
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1400) // VC8+
