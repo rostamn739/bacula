@@ -157,6 +157,7 @@ $(foreach file,$(addprefix $(DEPKGS32)/ssl/, $(SSL_FILES)),$(eval $(call Copy_Bi
 
 $(INSTALL_EXE): winbacula.nsi $(addprefix release64/,$(BACULA_BINARIES) $(DEPKGS_BINARIES) $(DEPKGS32_BINARIES) $(SSL_FILES) )
 	cp -f ../release32/bat.exe release64
+	cp -f ../release32/bacula-tray-monitor.exe release64
 	cp -f ../release32/QtCore4.dll release64
 	cp -f ../release32/QtGui4.dll release64
 	cp -f ../win32_installer/release32/libgcc_s_dw2-1.dll release64

@@ -35,7 +35,10 @@ all: Makefile.inc $(DIRS) $(SPECIAL) $(INSTALLER)
 
 clean: $(DIRS) win32_installer win64_installer
 	$(MAKE) -C tools clean
-	$(ECHO_CMD)-rm -rf release32 release64
+	$(ECHO_CMD)-rm -rf release32 release64 ../qt-console/obj32 ../cats/obj32 ../wx-console/obj32
+	$(ECHO_CMD)-rm -rf stored/obj32 dird/obj32 cats/obj32 wx-console/obj32
+	$(ECHO_CMD)-rm -f ../qt-console/release/bat.exe ../qt-console/debug/bat.exe
+	$(ECHO_CMD)-rm -f ../qt-console/tray-monitor/release/bacula-tray-monitor.exe ../qt-console/tray-monitor/debug/bacula-tray-monitor.exe
 
 bat:
 	(cd ../qt-console; ./make-win32)
