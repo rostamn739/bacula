@@ -37,7 +37,7 @@
 #undef DISTVER
 
 #ifdef HAVE_MINGW
-
+extern char win_os[];
 #define HOST_OS  "Linux"
 #define DISTNAME "Cross-compile"
 #ifndef BACULA
