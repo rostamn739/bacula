@@ -4616,7 +4616,9 @@ SELECT count(1) AS nbline,
 
     my $log = $self->dbh_selectrow_hashref($query);
     unless ($log) {
-        return $self->error("Can't get log for jobid $arg->{jobid}");
+        return $self->error("Can't get log for jobid $arg->{jobid}, check that
+your 'Messages' resources include 'catalog = all' and you loaded Bweb SQL
+functions in your Catalog.");
     }
     $log->{logtxt} =~ s/\0//g;
     $self->display({ lines=> $log->{logtxt},
