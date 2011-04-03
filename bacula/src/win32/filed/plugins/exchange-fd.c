@@ -355,7 +355,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 
    default:
       _DebugMessage(0, "Ignored event=%d\n", event->eventType);
-
+      break;
    }
    bfuncs->getBaculaValue(ctx, bVarFDName, (void *)&name);
    return bRC_OK;
