@@ -354,7 +354,8 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       break;
 
    default:
-      _JobMessage(M_FATAL, "unknown event=%d\n", event->eventType);
+      _DebugMessage(0, "Ignored event=%d\n", event->eventType);
+
    }
    bfuncs->getBaculaValue(ctx, bVarFDName, (void *)&name);
    return bRC_OK;
