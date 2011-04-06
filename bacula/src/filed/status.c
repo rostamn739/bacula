@@ -147,8 +147,8 @@ static void  list_status_header(STATUS_PKT *sp)
          edit_uint64_with_commas(sm_max_buffers, b5));
    sendit(msg.c_str(), len, sp);
    len = Mmsg(msg, _(" Sizeof: boffset_t=%d size_t=%d debug=%d trace=%d "
-                     "bwlimit=%lldkB/s\n"), sizeof(boffset_t), sizeof(size_t),
-              debug_level, get_trace(), me->max_bandwidth_per_job/1024);
+                     "bwlimit=%skB/s\n"), sizeof(boffset_t), sizeof(size_t),
+              debug_level, get_trace(), edit_uint64_with_commas(me->max_bandwidth_per_job/1024, b1));
    sendit(msg.c_str(), len, sp);
    if (debug_level > 0 && plugin_list->size() > 0) {
       Plugin *plugin;
@@ -214,7 +214,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
            edit_uint64_with_commas(njcr->JobFiles, b1),
            edit_uint64_with_commas(njcr->JobBytes, b2),
            edit_uint64_with_commas(bps, b3),
-           njcr->JobErrors, edit_int64(njcr->max_bandwidth, b4));
+           njcr->JobErrors, edit_uint64_with_commas(njcr->max_bandwidth, b4));
       sendit(msg.c_str(), len, sp);
       len = Mmsg(msg, _("    Files Examined=%s\n"),
            edit_uint64_with_commas(njcr->num_files_examined, b1));
