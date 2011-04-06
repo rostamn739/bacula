@@ -171,7 +171,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
 {
    int sec, bps;
    POOL_MEM msg(PM_MESSAGE);
-   char b1[32], b2[32], b3[32];
+   char b1[32], b2[32], b3[32], b4[32];
    int len;
    bool found = false;
    JCR *njcr;
@@ -209,11 +209,12 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
          sec = 1;
       }
       bps = (int)(njcr->JobBytes / sec);
-      len = Mmsg(msg,  _("    Files=%s Bytes=%s Bytes/sec=%s Errors=%d\n"),
+      len = Mmsg(msg,  _("    Files=%s Bytes=%s Bytes/sec=%s Errors=%d\n"
+                         "    Bwlimit=%s\n"),
            edit_uint64_with_commas(njcr->JobFiles, b1),
            edit_uint64_with_commas(njcr->JobBytes, b2),
            edit_uint64_with_commas(bps, b3),
-           njcr->JobErrors);
+           njcr->JobErrors, edit_int64(njcr->max_bandwidth, b4));
       sendit(msg.c_str(), len, sp);
       len = Mmsg(msg, _("    Files Examined=%s\n"),
            edit_uint64_with_commas(njcr->num_files_examined, b1));
@@ -248,7 +249,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
 {
    int sec, bps;
    POOL_MEM msg(PM_MESSAGE);
-   char b1[32], b2[32], b3[32];
+   char b1[32], b2[32], b3[32], b4[32];
    int len;
    bool found = false;
    JCR *njcr;
@@ -284,11 +285,11 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       }
       bps = (int)(njcr->JobBytes / sec);
       len = Mmsg(msg, " Files=%s\n Bytes=%s\n Bytes/sec=%s\n Errors=%d\n"
-                 " Bwlimit=%d\n",
+                      " Bwlimit=%s\n",
                  edit_uint64(njcr->JobFiles, b1),
                  edit_uint64(njcr->JobBytes, b2),
                  edit_uint64(bps, b3),
-                 njcr->JobErrors, njcr->max_bandwidth);
+                 njcr->JobErrors, edit_int64(njcr->max_bandwidth, b4));
       sendit(msg.c_str(), len, sp);
       len = Mmsg(msg, " Files Examined=%s\n",
            edit_uint64(njcr->num_files_examined, b1));
