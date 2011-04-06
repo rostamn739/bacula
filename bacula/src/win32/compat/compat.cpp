@@ -1461,7 +1461,7 @@ nanosleep(const struct timespec *req, struct timespec *rem)
 {
     if (rem)
         rem->tv_sec = rem->tv_nsec = 0;
-    Sleep((req->tv_sec * 1000) + (req->tv_nsec/100000));
+    Sleep((req->tv_sec * 1000) + (req->tv_nsec/1000000));
     return 0;
 }
 
