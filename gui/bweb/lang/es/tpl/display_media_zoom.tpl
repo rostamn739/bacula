@@ -1,16 +1,16 @@
 <table>
 <td valign='top'>
  <div class='titlediv'>
-  <h1 class='newstitle'> Medium : <TMPL_VAR volumename> <TMPL_VAR comment></h1>
+  <h1 class='newstitle'> Volume: <TMPL_VAR volumename> <TMPL_VAR comment></h1>
  </div>
  <div class='bodydiv'>
-    <b> Medium Infos</b><br/>
+    <b> Volume Infos</b><br/>
     <table id='id_info_<TMPL_VAR volumename>'></table>
-    <b> Medium Stats</b><br/>
+    <b> Volume Stats</b><br/>
     <table id='id_media_<TMPL_VAR volumename>'></table>
     <b> Job List </b></br>
     <table id='id_jobs_<TMPL_VAR volumename>'></table>
-    <b> Acciones </b></br>
+    <b> Actions </b></br>
    <form action='?' method='get'>
       <input type='hidden' name='media' value='<TMPL_VAR volumename>'>
 <TMPL_IF online>&nbsp;
@@ -18,7 +18,7 @@
 <TMPL_ELSE>
       <button type="submit" class="bp" name='action' value='intern' title='move in'> <img src='/bweb/intern.png' alt=''>Load</button>
 </TMPL_IF>
-      <button type="submit" class="bp" name='action' value='update_media' title='Actualizar'><img src='/bweb/edit.png' alt=''>Editar</button>
+      <button type="submit" class="bp" name='action' value='update_media' title='Update'><img src='/bweb/edit.png' alt=''>Edit</button>
       <button type="submit" class="bp" name='action' value='purge' title='Purge'> <img src='/bweb/purge.png' onclick="return confirm('Do you want to purge this volume?')" alt=''>Purge</button>
       <button type="submit" class="bp" name='action' value='prune' title='Prune'> <img src='/bweb/prune.png' alt=''>Prune</button>
 <TMPL_IF Locationlog>
@@ -40,7 +40,7 @@
 </table>
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Pool","Online","Enabled", "Ubicación","Vol Status", "Bytes Vol", "Expire",
+var header = new Array("Pool","Online","Enabled", "Location","Vol Status", "Vol Bytes", "Expire",
 	               "Retention","Max use duration", "Max jobs" );
 
 var data = new Array();
@@ -56,7 +56,7 @@ human_enabled("<TMPL_VAR enabled>"),
 "<TMPL_VAR location>",
 "<TMPL_VAR volstatus>",
 human_size(<TMPL_VAR nb_bytes>),
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 human_sec(<TMPL_VAR volretention>),
 human_sec(<TMPL_VAR voluseduration>),
 "<TMPL_VAR maxvoljobs>"
@@ -80,7 +80,7 @@ nrsTable.setup(
 }
 );
 
-var header = new Array( "Vol Mounts", "Recycle count", "Read time", "Write time", "Errores");
+var header = new Array( "Vol Mounts", "Recycle count", "Read time", "Write time", "Errors");
 
 var data = new Array();
 data.push( new Array(
@@ -110,8 +110,8 @@ nrsTable.setup(
 );
 
 
-var header = new Array("JobId","Nombre","Start Time","Tipo",
-	               "Nivel","Files","Bytes","Estado");
+var header = new Array("JobId","Name","Start Time","Type",
+	               "Level","Files","Bytes","Status");
 
 var data = new Array();
 var a;

@@ -24,7 +24,7 @@ Autochanger: <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
 <button type="submit" class="bp" name='action' value='eject'
  title='put selected media on i/o'><img src='/bweb/extern.png' alt=''>Eject</button>
 <button type="submit" class="bp" name='action' value='clear_io'
- title='Clear I/O'> <img src='/bweb/intern.png' alt=''>Clear I/O</button>
+ title='clear I/O'> <img src='/bweb/intern.png' alt=''>Clear I/O</button>
 </TMPL_IF>
 <button type="submit" class="bp" name='action' value='update_slots'
  title='run update slots'> <img src='/bweb/update.png' alt=''>Update</button>
@@ -72,7 +72,7 @@ human_size(<TMPL_VAR volbytes>),
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

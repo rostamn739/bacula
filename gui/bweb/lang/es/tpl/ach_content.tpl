@@ -1,14 +1,14 @@
 <br/>
  <div class='titlediv'>
   <h1 class='newstitle'> 
-Autochanger : <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
+Autochanger: <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
 <TMPL_IF nb_io><TMPL_VAR nb_io> IMPORT/EXPORT</TMPL_IF>)</h1>
  </div>
  <div class='bodydiv'>
    <form action='?' method='get'>
     <input type='hidden' name='ach' value='<TMPL_VAR name>'>
     <TMPL_IF "Update">
-    <font color='red'> Debe ejecutar el comando update slot, El estado del Autochanger es diferente al de las slots de bacula </font>
+    <font color='red'> You must run update slot, Autochanger status is different from bacula slots </font>
     <br/>
     </TMPL_IF>
     <table border='0'>
@@ -24,10 +24,10 @@ Autochanger : <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
 <button type="submit" class="bp" name='action' value='eject'
  title='put selected media on i/o'><img src='/bweb/extern.png' alt=''>Eject</button>
 <button type="submit" class="bp" name='action' value='clear_io'
- title='Limpiar I/O'> <img src='/bweb/intern.png' alt=''>Limpiar I/O</button>
+ title='clear I/O'> <img src='/bweb/intern.png' alt=''>Clear I/O</button>
 </TMPL_IF>
 <button type="submit" class="bp" name='action' value='update_slots'
- title='run update slots'> <img src='/bweb/update.png' alt=''>Actualizar</button>
+ title='run update slots'> <img src='/bweb/update.png' alt=''>Update</button>
 <br/><br/>
 <button type="submit" class="bp" name='action' value='ach_load'
  title='mount drive'> <img src='/bweb/load.png' alt=''>Mount</button>
@@ -42,16 +42,16 @@ Autochanger : <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
     </td>
     </tr>
     </table>
-    <b> Contenido: </b><br/>
+    <b> Content: </b><br/>
     <table id='id_ach'></table>
    </form>
  </div>
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Slot Real", "Slot", "Nombre Volumen",
-		       "Bytes Vol","Vol Status",
-	               "Tipo Medio","Pool Name","Fecha Escritura", 
+var header = new Array("Real Slot", "Slot", "Volume Name",
+		       "Vol Bytes","Vol Status",
+	               "Media Type","Pool Name","Last Written", 
                        "When expire ?", "Select");
 
 var data = new Array();
@@ -72,7 +72,7 @@ human_size(<TMPL_VAR volbytes>),
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );
@@ -101,7 +101,7 @@ nrsTable.setup(
 );
 
 var header = new Array("Index", "Drive Name", 
-		       "Nombre Volumen", "Select");
+		       "Volume Name", "Select");
 
 var data = new Array();
 var chkbox;

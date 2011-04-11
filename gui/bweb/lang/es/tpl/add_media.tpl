@@ -14,7 +14,7 @@
             </select>
          </td>
      </tr>
-     <tr><td>Almacenamiento :</td> 
+     <tr><td>Storage:</td> 
          <td>
             <select name='storage' size='5' class='formulaire'>
             <TMPL_LOOP storage>
@@ -29,12 +29,12 @@
      <tr><td>Starting number:</td> 
          <td><input size='3' type='text' name='offset' class='formulaire' value='1'></td>
      </tr>
-     <tr><td>Nombre :</td> 
+     <tr><td>Name:</td> 
          <td><input size='8' type='text' name='media' class='formulaire' value='Vol'></td>
      </tr>
     </table>
     <button type="submit" class="bp" name='action' value='add_media'>
-     <img src='/bweb/add.png' alt=''>Add<button>
+     <img src='/bweb/add.png' alt=''>Add</button>
    </form>
 </div>
 

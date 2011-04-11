@@ -1,15 +1,15 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'> <TMPL_IF title><TMPL_VAR title><TMPL_ELSE>Próximos Jobs </TMPL_IF></h1>
+  <h1 class='newstitle'> <TMPL_IF title><TMPL_VAR title><TMPL_ELSE>Next Jobs </TMPL_IF></h1>
  </div>
  <div class='bodydiv'>
-    <form name='form1' action='<TMPL_VAR cginame>?' method='GET'>
+    <form name='form1' action='?' method='GET'>
      <table id='id<TMPL_VAR ID>'></table>
-     <button type="submit" class="bp" name='action' title='Ejecutar Ahora' value='run_job_mod'>
-       <img src='/bweb/R.png' alt=''>  Ejecutar Ahora </button>
-      <button type="submit" class="bp" name='action' title='Desactivar' value='disable_job'>
-       <img src='/bweb/inflag0.png' alt=''> Desactivar </button>
-       <button type="submit" onsubmit='document.form1.level.value="all"' class="bp" name='action' value='job' title='view <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>Ver jobs</button>
+     <button type="submit" class="bp" name='action' title='Run now' value='run_job_mod'>
+       <img src='/bweb/R.png' alt=''>  Run now </button>
+      <button type="submit" class="bp" name='action' title='Disable' value='disable_job'>
+       <img src='/bweb/inflag0.png' alt=''> Disable </button>
+       <button type="submit" onsubmit='document.form1.level.value="all"' class="bp" name='action' value='job' title='view <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>View jobs</button>
 <TMPL_IF missing_mode>
       <button type="submit" class="bp" name='action' title='Mark this job as canceled in job history' value='cancel_future_job'>
        <img src='/bweb/f.png' alt=''> Mark it as canceled </button>
@@ -27,12 +27,12 @@
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Programado",
-                       "Nivel",
-	               "Tipo",
-	               "Prioridad", 
-                       "Nombre",
-                       "Volumen",
+var header = new Array("Scheduled",
+                       "Level",
+	               "Type",
+	               "Priority", 
+                       "Name",
+                       "Volume",
 	               "Select");
 
 var data = new Array();

@@ -14,14 +14,15 @@ document.getElementById('status_<TMPL_VAR status>').checked = true;
 
 var header = new Array("JobId",
 	               "Client",
-	               "Job Name", 
+	               "Job Name",
+                       "Comment",
 		       "FileSet",
 //                     "Pool",
                        "Level",
                        "StartTime",
 	               "Duration",
                        "JobFiles",
-                       "JobBytes", 
+                       "JobBytes",
                        "Errors",
 	               "Status");
 
@@ -42,12 +43,13 @@ a.appendChild(img);
 data.push( new Array(
 "<TMPL_VAR JobId>",
 "<TMPL_VAR Client>",     
-"<TMPL_VAR JobName>",    
+"<TMPL_VAR JobName>",
+"<TMPL_VAR Comment>",
 "<TMPL_VAR FileSet>",    
 //"<TMPL_VAR Pool>",
 "<TMPL_VAR Level>",      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR Duration>",
+human_duration("<TMPL_VAR Duration>"),
 "<TMPL_VAR JobFiles>",   
 human_size(<TMPL_VAR JobBytes>),
 "<TMPL_VAR joberrors>",   

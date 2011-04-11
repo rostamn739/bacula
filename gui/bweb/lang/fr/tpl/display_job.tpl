@@ -1,5 +1,5 @@
  <div class='titlediv'>
-  <h1 class='newstitle'> Historique (<TMPL_VAR Filter>)</h1>
+  <h1 class='newstitle'> Last Jobs (<TMPL_VAR Filter>)</h1>
  </div>
  <div class='bodydiv'>
     <table id='id<TMPL_VAR ID>'></table>
@@ -14,16 +14,17 @@ document.getElementById('status_<TMPL_VAR status>').checked = true;
 
 var header = new Array("JobId",
 	               "Client",
-	               "Nom du Job", 
+	               "Job Name",
+                       "Comment",
 		       "FileSet",
 //                     "Pool",
-                       "Niveau",
-                       "Début",
-	               "Durée",
-                       "Fichiers",
-                       "Taille", 
-                       "Erreurs",
-	               "Statut");
+                       "Level",
+                       "StartTime",
+	               "Duration",
+                       "JobFiles",
+                       "JobBytes",
+                       "Errors",
+	               "Status");
 
 var data = new Array();
 
@@ -42,12 +43,13 @@ a.appendChild(img);
 data.push( new Array(
 "<TMPL_VAR JobId>",
 "<TMPL_VAR Client>",     
-"<TMPL_VAR JobName>",    
+"<TMPL_VAR JobName>",
+"<TMPL_VAR Comment>",
 "<TMPL_VAR FileSet>",    
 //"<TMPL_VAR Pool>",
 "<TMPL_VAR Level>",      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR Duration>",
+human_duration("<TMPL_VAR Duration>"),
 "<TMPL_VAR JobFiles>",   
 human_size(<TMPL_VAR JobBytes>),
 "<TMPL_VAR joberrors>",   

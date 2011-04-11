@@ -54,7 +54,7 @@ data.push( new Array(
 "<TMPL_VAR JobName>",    
 joblevel['<TMPL_VAR Level>'],      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR duration>",
+human_sec2("<TMPL_VAR duration>"),
 //"<TMPL_VAR JobFiles>",   
 //"<TMPL_VAR JobBytes>",
 a,

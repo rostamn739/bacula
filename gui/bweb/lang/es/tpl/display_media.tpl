@@ -1,6 +1,6 @@
  <div class='titlediv'>
   <h1 class='newstitle'> 
-   Medios
+   Media
   </h1>
  </div>
  <div class='bodydiv'>
@@ -14,7 +14,7 @@ Pool: <a href="?action=pool;pool=<TMPL_VAR Pool>">
 </TMPL_IF>
 <TMPL_IF Location>
 <h2>
-Ubicación : <TMPL_VAR location>
+Location: <TMPL_VAR location>
 </h2>
 </TMPL_IF>
 
@@ -22,8 +22,8 @@ Ubicación : <TMPL_VAR location>
     <table id='id_pool_<TMPL_VAR ID>'></table>
       <button type="submit" class="bp" name='action' value='extern' title='Move out'> <img src='/bweb/extern.png' onclick='return confirm("Do you want to eject selected media ?");' alt=''>Eject</button>
       <button type="submit" class="bp" name='action' value='intern' title='Move in'> <img src='/bweb/intern.png' alt=''>Load</button>
-      <button type="submit" class="bp" name='action' value='update_media' title='Update medium'> <img src='/bweb/edit.png' alt=''>Editar</button>
-      <button type="submit" class="bp" name='action' value='media_zoom' title='Information'> <img src='/bweb/zoom.png' alt=''>Ver</button>
+      <button type="submit" class="bp" name='action' value='update_media' title='Update media'> <img src='/bweb/edit.png' alt=''>Edit</button>
+      <button type="submit" class="bp" name='action' value='media_zoom' title='Information'> <img src='/bweb/zoom.png' alt=''>View</button>
 <!--
       <button type="submit" class="bp" name='action' value='purge' title='Purge'> <img src='/bweb/purge.png' alt=''>Purge</button>
 -->
@@ -33,9 +33,9 @@ Ubicación : <TMPL_VAR location>
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Nombre Volumen","Online","Bytes Vol", "Vol Usage", "Vol Status",
-                       "Pool", "Tipo Medio",
-                       "Fecha Escritura", "When expire ?", "Select");
+var header = new Array("Volume Name","Online","Vol Bytes", "Vol Usage", "Vol Status",
+                       "Pool", "Media Type",
+                       "Last Written", "When expire ?", "Select");
 
 var data = new Array();
 var img;
@@ -62,7 +62,7 @@ d,
 "<TMPL_VAR poolname>",
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

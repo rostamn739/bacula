@@ -1,31 +1,31 @@
  <div class='titlediv'>
   <h1 class='newstitle'> 
-   Médias
+   Media
   </h1>
  </div>
  <div class='bodydiv'>
 
 <TMPL_IF Pool>
 <h2>
-Pool : <a href="?action=pool;pool=<TMPL_VAR Pool>">
+Pool: <a href="?action=pool;pool=<TMPL_VAR Pool>">
          <TMPL_VAR Pool>
        </a>
 </h2>
 </TMPL_IF>
 <TMPL_IF Location>
 <h2>
-Localisation : <TMPL_VAR location>
+Location: <TMPL_VAR location>
 </h2>
 </TMPL_IF>
 
    <form action='?action=test' method='get'>
     <table id='id_pool_<TMPL_VAR ID>'></table>
-      <button type="submit" class="bp" name='action' value='extern' title='Externaliser'> <img src='/bweb/extern.png' onclick='return confirm("Voulez vous vraiment éjecter ces médias ?");' alt=''>Externaliser</button>
-      <button type="submit" class="bp" name='action' value='intern' title='Internaliser'> <img src='/bweb/intern.png' alt=''>Load</button>
-      <button type="submit" class="bp" name='action' value='update_media' title='Modifier le media'> <img src='/bweb/edit.png' alt=''>Modifier</button>
-      <button type="submit" class="bp" name='action' value='media_zoom' title='Informations'> <img src='/bweb/zoom.png' alt=''>Voir</button>
+      <button type="submit" class="bp" name='action' value='extern' title='Move out'> <img src='/bweb/extern.png' onclick='return confirm("Do you want to eject selected media ?");' alt=''>Eject</button>
+      <button type="submit" class="bp" name='action' value='intern' title='Move in'> <img src='/bweb/intern.png' alt=''>Load</button>
+      <button type="submit" class="bp" name='action' value='update_media' title='Update media'> <img src='/bweb/edit.png' alt=''>Edit</button>
+      <button type="submit" class="bp" name='action' value='media_zoom' title='Information'> <img src='/bweb/zoom.png' alt=''>View</button>
 <!--
-      <button type="submit" class="bp" name='action' value='purge' title='Purger'> <img src='/bweb/purge.png' alt=''>Purger</button>
+      <button type="submit" class="bp" name='action' value='purge' title='Purge'> <img src='/bweb/purge.png' alt=''>Purge</button>
 -->
       <button type="submit" class="bp" name='action' value='prune' title='Prune'> <img src='/bweb/prune.png' alt=''>Prune</button>
    </form>
@@ -33,9 +33,9 @@ Localisation : <TMPL_VAR location>
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Nom de volume","Online","Taille", "Utilisation du volume", "Vol Statut",
-                       "Pool", "Type",
-                       "Dernière écriture", "Expiration", "Sélection");
+var header = new Array("Volume Name","Online","Vol Bytes", "Vol Usage", "Vol Status",
+                       "Pool", "Media Type",
+                       "Last Written", "When expire ?", "Select");
 
 var data = new Array();
 var img;
@@ -62,7 +62,7 @@ d,
 "<TMPL_VAR poolname>",
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

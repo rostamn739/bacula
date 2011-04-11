@@ -1,35 +1,35 @@
 <table>
 <td valign='top'>
  <div class='titlediv'>
-  <h1 class='newstitle'> Media : <TMPL_VAR volumename> <TMPL_VAR comment></h1>
+  <h1 class='newstitle'> Volume: <TMPL_VAR volumename> <TMPL_VAR comment></h1>
  </div>
  <div class='bodydiv'>
-    <b> Informations</b><br/>
+    <b> Volume Infos</b><br/>
     <table id='id_info_<TMPL_VAR volumename>'></table>
-    <b> Statistiques</b><br/>
+    <b> Volume Stats</b><br/>
     <table id='id_media_<TMPL_VAR volumename>'></table>
-    <b> Contenu </b></br>
+    <b> Job List </b></br>
     <table id='id_jobs_<TMPL_VAR volumename>'></table>
     <b> Actions </b></br>
    <form action='?' method='get'>
       <input type='hidden' name='media' value='<TMPL_VAR volumename>'>
 <TMPL_IF online>&nbsp;
-      <button type="submit" class="bp" name='action' value='extern' onclick='return confirm("Voulez vous vraiment éjecter ce média ?");' title='Externaliser'> <img src='/bweb/extern.png' alt=''>Externaliser</button>
+      <button type="submit" class="bp" name='action' value='extern' onclick='return confirm("Do you want to eject this volume ?");' title='move out'> <img src='/bweb/extern.png' alt=''>Eject</button>
 <TMPL_ELSE>
-      <button type="submit" class="bp" name='action' value='intern' title='Internaliser'> <img src='/bweb/intern.png' alt=''>Load</button>
+      <button type="submit" class="bp" name='action' value='intern' title='move in'> <img src='/bweb/intern.png' alt=''>Load</button>
 </TMPL_IF>
-      <button type="submit" class="bp" name='action' value='update_media' title='Scanner'><img src='/bweb/edit.png' alt=''>Modifier</button>
-      <button type="submit" class="bp" name='action' value='purge' title='Purger'> <img src='/bweb/purge.png' onclick="return confirm('Voulez vous vraiment purger ce média ?')" alt=''>Purger</button>
+      <button type="submit" class="bp" name='action' value='update_media' title='Update'><img src='/bweb/edit.png' alt=''>Edit</button>
+      <button type="submit" class="bp" name='action' value='purge' title='Purge'> <img src='/bweb/purge.png' onclick="return confirm('Do you want to purge this volume?')" alt=''>Purge</button>
       <button type="submit" class="bp" name='action' value='prune' title='Prune'> <img src='/bweb/prune.png' alt=''>Prune</button>
 <TMPL_IF Locationlog>
-      <a href='#' onclick='document.getElementById("locationlog").style.visibility="visible";'><img title='Voir les déplacements' src='/bweb/zoom.png'></a>
+      <a href='#' onclick='document.getElementById("locationlog").style.visibility="visible";'><img title='View location log' src='/bweb/zoom.png'></a>
 </TMPL_IF>
    </form>
  </div>
 </td>
 <td valign='top'style="visibility:hidden;" id='locationlog'>
  <div class='titlediv'>
-  <h1 class='newstitle'>Log sur les déplacements </h1>
+  <h1 class='newstitle'>Location log </h1>
  </div>
  <div class='bodydiv'>
 <pre>
@@ -40,8 +40,8 @@
 </table>
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Pool","Online","Active", "Localisation","Vol Statut", "Taille", "Expiration",
-	               "Rétention","Temps maxi d'utilisation", "Nombre de jobs maxi :" );
+var header = new Array("Pool","Online","Enabled", "Location","Vol Status", "Vol Bytes", "Expire",
+	               "Retention","Max use duration", "Max jobs" );
 
 var data = new Array();
 var img;
@@ -56,7 +56,7 @@ human_enabled("<TMPL_VAR enabled>"),
 "<TMPL_VAR location>",
 "<TMPL_VAR volstatus>",
 human_size(<TMPL_VAR nb_bytes>),
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 human_sec(<TMPL_VAR volretention>),
 human_sec(<TMPL_VAR voluseduration>),
 "<TMPL_VAR maxvoljobs>"
@@ -80,7 +80,7 @@ nrsTable.setup(
 }
 );
 
-var header = new Array( "Nb montages", "Nb de recyclage", "Temps de lecture", "Temp d'écriture", "Erreurs");
+var header = new Array( "Vol Mounts", "Recycle count", "Read time", "Write time", "Errors");
 
 var data = new Array();
 data.push( new Array(
@@ -110,8 +110,8 @@ nrsTable.setup(
 );
 
 
-var header = new Array("JobId","Nom","Début","Type",
-	               "Niveau","Fichiers","Taille","Statut");
+var header = new Array("JobId","Name","Start Time","Type",
+	               "Level","Files","Bytes","Status");
 
 var data = new Array();
 var a;
