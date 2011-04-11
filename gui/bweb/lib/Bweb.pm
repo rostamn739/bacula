@@ -6,7 +6,7 @@ use strict;
    Bweb - A Bacula web interface
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2006-2010 Free Software Foundation Europe e.V.
+   Copyright (C) 2006-2011 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -68,6 +68,7 @@ sub new
     my ($class, %arg) = @_;
     my $self = bless {
         name => undef,
+        info => undef,
     }, $class;
 
     map { $self->{lc($_)} = $arg{$_} } keys %arg ;
@@ -86,6 +87,13 @@ sub debug
             print "<pre>$what</pre>";
         }
     }
+}
+
+sub ldebug
+{
+    open(FP, ">>/tmp/log");
+    print FP Data::Dumper::Dumper(\@_);
+    close(FP);
 }
 
 sub fdebug
@@ -123,6 +131,22 @@ sub error
     return 0;
 }
 
+# send content type the first time, see man CGI to overwrite
+# values
+my $send_content_type_done=0;
+sub send_content_type
+{
+    my ($self, %arg) = @_;
+    my $info = $self->{info} || $self;
+
+    if (!$send_content_type_done) { # display it once
+        $send_content_type_done = 1;
+
+        %arg = (-type => 'text/html', %arg);
+        print CGI::header(%arg);
+    }
+}
+
 =head1 FUNCTION
 
     display - display an html page with HTML::Template
@@ -138,6 +162,8 @@ sub error
     hash keys are not sensitive. See HTML::Template for more
     explanations about the hash ref. (it's can be quiet hard to understand) 
 
+    It uses the following variables: template_dir lang director
+
 =head2 EXAMPLE
 
     $ref = { name => 'me', age => 26 };
@@ -148,8 +174,10 @@ sub error
 sub display
 {
     my ($self, $hash, $tpl) = @_ ;
-    my $dir = $self->{template_dir} || $template_dir;
-    my $lang = $self->{lang} || 'en';
+    my $info = $self->{info} || $self;
+
+    my $dir = $info->{template_dir} || $template_dir;
+    my $lang = $self->{current_lang} || $info->{lang} || 'en';
     my $template = HTML::Template->new(filename => $tpl,
                                        path =>["$dir/$lang",
                                                "$dir/$lang/tpl",
@@ -172,6 +200,7 @@ sub display
     $template->param('loginname', CGI::remote_user());
 
     $template->param($hash);
+    $self->send_content_type();
     print $template->output();
 }
 1;
@@ -213,7 +242,7 @@ use CGI;
 
 =cut
 
-our %k_re = ( dbi      => qr/^(dbi:(Pg|mysql):(?:\w+=[\w\d\.-]+;?)+)$/i,
+our %k_re = ( dbi      => qr/^(dbi:(Pg|mysql|SQLite):(?:\w+=[\w\d\.\/\-]+;?)+)$/i,
               user     => qr/^([\w\d\.-]+)$/i,
               password => qr/^(.*)$/,
               fv_write_path => qr!^([/\w\d\.-]*)$!,
@@ -223,14 +252,19 @@ our %k_re = ( dbi      => qr/^(dbi:(Pg|mysql):(?:\w+=[\w\d\.-]+;?)+)$/i,
               email_media => qr/^([\w\d\.-]+@[\d\w\.-]+)$/,
               graph_font  => qr!^([/\w\d\.-]+.ttf)?$!,
               bconsole    => qr!^(.+)?$!,
-              syslog_file => qr!^(.+)?$!,
-              log_dir     => qr!^(.+)?$!,
               wiki_url    => qr!(.*)$!,
               stat_job_table => qr!^(\w*)$!,
               display_log_time => qr!^(on)?$!,
               enable_security => qr/^(on)?$/,
               enable_security_acl => qr/^(on)?$/,
               default_age => qr/^((?:\d+(?:[ywdhms]\s*?)?)+)\s*$/,
+              name => qr/^([\w\s\d\.\-]+)$/,
+              dir_ver => qr/^(\d+(\.\d+)?)$/,
+              # can be subitem
+              subconf => qr/^$/,
+              achs => qr/^$/,
+              ach_list => qr/^$/,
+              url => qr!^(https?://[\w\.\d/@?;]+)$!,
               );
 
 =head1 FUNCTION
@@ -265,46 +299,15 @@ sub load
     use strict;
 
     if ($f and $@) {
-        $self->load_old();
-        $self->save();
-        return $self->error("If you update from an old bweb install, your must reload this page and if it's fail again, you have to configure bweb again...") ;
+        return $self->error("Something is wrong with your configuration file...") ;
     }
 
-    # set default values
-    $self->{default_age} = '7d';
-
+    # keep a backup of the original config
     foreach my $k (keys %$VAR1) {
-        $self->{$k} = $VAR1->{$k};
-    }
-
-    return 1;
-}
-
-=head1 FUNCTION
-
-    load_old - load old configuration format
-
-=cut
-
-sub load_old
-{
-    my ($self) = @_ ;
-
-    unless (open(FP, $self->{config_file}))
-    {
-        return $self->error("$self->{config_file} : $!");
-    }
-
-    while (my $line = <FP>)
-    {
-        chomp($line);
-        my ($k, $v) = split(/\s*=\s*/, $line, 2);
-        if ($k_re{$k}) {
-            $self->{$k} = $v;
+        if (exists $k_re{$k} and defined $VAR1->{$k}) {
+            $self->{main_conf}->{$k} = $VAR1->{$k};
         }
     }
-
-    close(FP);
     return 1;
 }
 
@@ -972,10 +975,7 @@ SELECT Media.VolumeName  AS volumename,
        Media.Slot        AS slot,
        Media.InChanger   AS inchanger,
        Pool.Name         AS name,
-       $bweb->{sql}->{FROM_UNIXTIME}(
-          $bweb->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-        + $bweb->{sql}->{TO_SEC}(Media.VolRetention)
-       ) AS expire
+       $self->{sql}->{MEDIA_EXPIRE} AS expire
 FROM Media 
  INNER JOIN Pool USING (PoolId) 
 
@@ -1089,6 +1089,7 @@ sub new
         my $sel = $self->{name}?"=\"$self->{name}\"":'';
         my $b = $self->{bconsole};
         my $out = $b->send_cmd("show schedule$sel");
+        $self->{show_output}=$out;
         $self->parse_scheds(split(/\r?\n/, $out));
         undef $self->{bconsole}; # useless now
     }
@@ -1296,7 +1297,10 @@ our %sql_func = (
               SEC_TO_INT => "SEC_TO_INT",
               SEC_TO_TIME => '',
               MATCH => " ~* ",
-              STARTTIME_SEC  => " date_trunc('sec', Job.StartTime) ",
+              MEDIA_EXPIRE => "date_part('epoch', Media.LastWritten) + Media.VolRetention",
+              ENDTIME_SEC => " date_part('epoch', EndTime) ",
+              JOB_DURATION => " date_part('epoch', EndTime) -  date_part('epoch', StartTime) ",
+              STARTTIME_SEC  => " date_part('epoch', Job.StartTime) ",
               STARTTIME_DAY  => " date_trunc('day', Job.StartTime) ",
               STARTTIME_HOUR => " date_trunc('hour', Job.StartTime) ",
               STARTTIME_MONTH  => " date_trunc('month', Job.StartTime) ",
@@ -1318,7 +1322,10 @@ our %sql_func = (
               TO_SEC => '',
               SEC_TO_TIME => 'SEC_TO_TIME',
               MATCH => " REGEXP ",
-              STARTTIME_SEC => " DATE_FORMAT(Job.StartTime, '%Y-%m-%d %T') ",
+              MEDIA_EXPIRE => 'UNIX_TIMESTAMP(Media.LastWritten)+Media.VolRetention',
+              ENDTIME_SEC => " UNIX_TIMESTAMP(EndTime) ",
+              JOB_DURATION => " UNIX_TIMESTAMP(EndTime) - UNIX_TIMESTAMP(StartTime) ",
+              STARTTIME_SEC => " UNIX_TIMESTAMP(Job.StartTime) ",
               STARTTIME_DAY  => " DATE_FORMAT(Job.StartTime, '%Y-%m-%d') ",
               STARTTIME_HOUR => " DATE_FORMAT(Job.StartTime, '%Y-%m-%d %H') ",
               STARTTIME_MONTH => " DATE_FORMAT(Job.StartTime, '%Y-%m') ",
@@ -1335,6 +1342,31 @@ our %sql_func = (
               CONCAT_SEP => " SEPARATOR '' ",
               NOW => "NOW()",
           },
+          SQLite => {
+              UNIX_TIMESTAMP => '',
+              FROM_UNIXTIME => '',
+              SEC_TO_INT => '',
+              TO_SEC => '',
+              SEC_TO_TIME => '',
+              MATCH => " REGEXP ",
+              MEDIA_EXPIRE => "strftime('%s', Media.LastWritten) + Media.VolRetention",
+              ENDTIME_SEC => " strftime('%s', EndTime) ",
+              STARTTIME_SEC =>  " strftime('%s', Job.StartTime) ",
+              JOB_DURATION => " strftime('%s', EndTime) -  strftime('%s', StartTime)",
+
+              STARTTIME_DAY  => " strftime('%Y-%m-%d', Job.StartTime) ",
+              STARTTIME_HOUR => " strftime('%Y-%m-%d %H', Job.StartTime) ",
+              STARTTIME_MONTH => " strftime('%Y-%m', Job.StartTime) ",
+              STARTTIME_WEEK => " strftime('%Y-%W', Job.StartTime) ",
+              STARTTIME_PHOUR=> " strftime('%H', Job.StartTime) ",
+              STARTTIME_PDAY => " strftime('%d', Job.StartTime) ",
+              STARTTIME_PMONTH => " strftime('%m', Job.StartTime) ",
+              STARTTIME_PWEEK => " strftime('%W', Job.StartTime) ",
+              DB_SIZE => " SELECT 0 ",
+              CAT_POOL_TYPE => " MediaType || Pool.Name ",
+              CONCAT_SEP => "",
+              NOW => "strftime('%Y-%m-%d %H:%M:%S', 'now')",
+          },
          );
 
 use Exporter 'import';
@@ -1347,6 +1379,18 @@ sub dbh_is_mysql
 {
     my ($self) = @_;
     return $self->{info}->{dbi} =~ /dbi:mysql/i;
+}
+
+sub dbh_is_sqlite
+{
+    my ($self) = @_;
+    return $self->{info}->{dbi} =~ /dbi:sqlite/i;
+}
+
+sub dbh_is_pg
+{
+    my ($self) = @_;
+    return $self->{info}->{dbi} =~ /dbi:pg/i;
 }
 
 sub dbh_disconnect
@@ -1390,6 +1434,16 @@ sub dbh_do
     $self->connect_db();
     $self->debug($query);
     return $self->{dbh}->do($query);
+}
+
+# For sqlite, convert UNIX_TIMESTAMP(a) to strftime('%s', a)
+sub dbh_convert
+{
+    my ($self, $query) = @_ ; 
+    if ($self->dbh_is_sqlite()) {
+        $query =~ s/UNIX_TIMESTAMP\(([^)]+)\)/strftime('%s', $1)/gs;
+    }
+    return $query;
 }
 
 sub dbh_selectall_hashref
@@ -1558,14 +1612,14 @@ sub connect_db
                                     $self->{info}->{user},
                                     $self->{info}->{password});
 
-        $self->error("Can't connect to your database:\n$DBI::errstr\n")
+        return $self->error("Can't connect to your database:\n$DBI::errstr\n")
             unless ($self->{dbh});
 
         $self->{dbh}->{FetchHashKeyName} = 'NAME_lc';
 
         if ($self->dbh_is_mysql()) {
             $self->{dbh}->do("SET group_concat_max_len=1000000");
-        } else {
+        } elsif ($self->dbh_is_pg()) {
             $self->{dbh}->do("SET datestyle TO 'ISO, YMD'");
         }
     }
@@ -1591,8 +1645,10 @@ sub new
 
     $self->{loginname} = CGI::remote_user();
     $self->{debug} = $self->{info}->{debug};
-    $self->{lang} = $self->{info}->{lang};
     $self->{template_dir} = $self->{info}->{template_dir};
+
+    my $args = $self->get_form('dir', 'lang');
+    $self->set_lang($args->{lang});
 
     return $self;
 }
@@ -1603,6 +1659,7 @@ sub display_begin
     if ($self->{info}->{enable_security}) {
         $self->get_roles();     # get lang
     }
+
     $self->display($self->{info}, "begin.tpl");
 }
 
@@ -1695,17 +1752,16 @@ sub get_limit
     my $sql = $self->{sql};
 
     if ($arg{since} and $arg{age}) {
-        my $now = "$self->{sql}->{UNIX_TIMESTAMP}(TIMESTAMP '$arg{since}')";
         my $d = strftime('%Y-%m-%d %H:%M:%S', localtime($btime + $arg{age}));
         $limit .= "
  AND StartTime > '$arg{since}'  
- AND $self->{sql}->{UNIX_TIMESTAMP}(EndTime) < ($now + $self->{sql}->{TO_SEC}($arg{age}))";
+ AND EndTime < '$d' ";
 
         $label .= "since $arg{since} and during " . human_sec($arg{age});
 
     } elsif ($arg{age}) {
-        my $d = strftime('%Y-%m-%d %H:%M:%S', localtime($btime - $arg{age}));
-        $limit .=  "AND EndTime > '$d' " ;
+        my $when = $btime - $arg{age};
+        $limit .= "AND JobTDate > $when";
 
         $label = "last " . human_sec($arg{age});
     }
@@ -1733,6 +1789,22 @@ sub get_limit
     }
 
     return ($limit, $label);
+}
+
+sub get_item
+{
+    my ($what, $default) = @_;
+    my %opt_cookies = ( dir => 1 );
+
+    my $ret = CGI::param($what);
+
+    if ($opt_cookies{$what} && !$ret) {
+        $ret = CGI::cookie($what);
+    }
+    
+    $ret = $ret || $default;
+    return $ret;
+    
 }
 
 =head1 FUNCTION
@@ -1786,6 +1858,9 @@ sub get_form
                  );
 
     my %opt_ss =(               # string with space
+                 name    => 1,
+                 dir     => 1,
+                 new_dir => 1,
                  job     => 1,
                  storage => 1,
                  );
@@ -1830,7 +1905,7 @@ sub get_form
 
     foreach my $i (@what) {
         if (exists $opt_i{$i}) {# integer param
-            my $value = CGI::param($i) || $opt_i{$i} ;
+            my $value = get_item($i, $opt_i{$i}) ;
             if ($value =~ /^(\d+)$/) {
                 $ret{$i} = $1;
             } elsif ($i eq 'age' &&  # can have unit
@@ -1839,12 +1914,12 @@ sub get_form
                 $ret{$i} = human_sec_unit($value);
             }
         } elsif ($opt_s{$i}) {  # simple string param
-            my $value = CGI::param($i) || '';
+            my $value = get_item($i, '');
             if ($value =~ /^([\w\d\.-]+)$/) {
                 $ret{$i} = $1;
             }
         } elsif ($opt_ss{$i}) { # simple string param (with space)
-            my $value = CGI::param($i) || '';
+            my $value = get_item($i, '');
             if ($value =~ /^([\w\d\.\-\s]+)$/) {
                 $ret{$i} = $1;
             }
@@ -1864,27 +1939,35 @@ sub get_form
             $ret{$i} = [ map { { name => $self->dbh_quote($_) } } 
                                            grep { ! /^\s*$/ } CGI::param($1) ];
         } elsif (exists $opt_p{$i}) {
-            my $value = CGI::param($i) || '';
+            my $value = get_item($i, '');
             if ($value =~ /^([\w\d\.\/\s:\@\-]+)$/) {
                 $ret{$i} = $1;
             }
         } elsif (exists $opt_r{$i}) {
-            my $value = CGI::param($i) || '';
+            my $value = get_item($i, '');
             if ($value =~ /^([^'"']+)$/) {
                 $ret{$i} = $1;
             }
         } elsif (exists $opt_d{$i}) {
-            my $value = CGI::param($i) || '';
+            my $value = get_item($i, '');
             if ($value =~ /^\s*(\d+\s+\w+)$/) {
                 $ret{$i} = $1;
             }
         } elsif (exists $opt_t{$i}) { # 1: hh:min optionnal, 2: hh:min required
-            my $when = CGI::param($i) || '';
+            my $when = get_item($i, '');
             if ($when =~ /(\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?)/) {
                 if ($opt_t{$i} == 1 or defined $2) {
                     $ret{$i} = $1;
                 }
             }
+        }
+    }
+
+    if ($what{comment}) {
+        my $s = CGI::param('comment');
+        if ($s) {
+            $s =~ s/["\\'<>]/ /g; # strip some characters
+            $ret{comment}=$s;
         }
     }
 
@@ -1911,7 +1994,7 @@ sub get_form
     }
 
     if ($what{lang}) {
-        my $lang = CGI::param('lang') || 'en';
+        my $lang = get_item('lang', 'en');
         if ($lang =~ /^(\w\w)$/) {
             $ret{lang} = $1;
         }
@@ -2144,10 +2227,7 @@ SELECT Media.VolumeName  AS volumename,
        Media.VolMounts   AS volmounts,
        Pool.Name         AS name,
        Media.Recycle     AS recycle,
-       $self->{sql}->{FROM_UNIXTIME}(
-          $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-        + $self->{sql}->{TO_SEC}(Media.VolRetention)
-       ) AS expire
+       $self->{sql}->{MEDIA_EXPIRE} AS expire
 FROM Media 
  INNER JOIN Pool     ON (Pool.PoolId = Media.PoolId)
  LEFT  JOIN Location ON (Media.LocationId = Location.LocationId)
@@ -2190,9 +2270,7 @@ sub help_intern_compute
         # we take only expired volumes or purged/recycle ones
         $sql = "
 AND (
- (  ($self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-      + $self->{sql}->{TO_SEC}(Media.VolRetention)
-    ) < $self->{sql}->{NOW}
+ ( ($self->{sql}->{MEDIA_EXPIRE}) < $btime
  ) OR ( 
   Media.VolStatus IN ('Purged', 'Recycle')
  )
@@ -2207,10 +2285,7 @@ SELECT Media.VolumeName  AS volumename,
        Media.MediaType   AS mediatype,
        Media.VolMounts   AS volmounts,
        Pool.Name         AS name,
-       $self->{sql}->{FROM_UNIXTIME}(
-          $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-        + $self->{sql}->{TO_SEC}(Media.VolRetention)
-       ) AS expire
+       $self->{sql}->{MEDIA_EXPIRE} AS expire
 FROM Media 
  INNER JOIN Pool ON (Pool.PoolId = Media.PoolId) 
  LEFT  JOIN Location ON (Location.LocationId = Media.LocationId)
@@ -2432,7 +2507,8 @@ JOIN client_group USING (client_group_id)
 ";
     }
     my $filter = $self->get_client_filter();
-
+    my $comment = $self->get_db_field('Comment');
+    my $rb = $self->get_db_field('ReadBytes');
     my $query="
 SELECT  Job.JobId       AS jobid,
         Client.Name     AS client,
@@ -2446,10 +2522,9 @@ SELECT  Job.JobId       AS jobid,
         JobBytes        AS jobbytes,
         JobStatus       AS jobstatus,
         Type            AS jobtype,
-     $self->{sql}->{SEC_TO_TIME}(  $self->{sql}->{UNIX_TIMESTAMP}(EndTime)  
-                                 - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)) 
-                        AS duration,
-
+        $rb             AS readbytes,
+        $comment        AS comment,
+        $self->{sql}->{JOB_DURATION} AS duration,
         JobErrors       AS joberrors
 
  FROM Client $filter $cgq, 
@@ -2474,6 +2549,24 @@ SELECT  Job.JobId       AS jobid,
                    "display_job.tpl");
 }
 
+# Adapt the code to the Schema version
+# TODO: can use the Version field
+sub get_db_field
+{
+    my ($self, $what) = @_ ;
+
+    my %feature = ('Comment' => 4, 'ReadBytes' => 4);
+    my %replacement = ('Comment' => "''", 'ReadBytes' => 'JobBytes');
+
+    if (!$self->{info}->{dir_ver} or 
+        $self->{info}->{dir_ver} >= $feature{$what})
+    {
+        return $what;
+    } else {
+        return $replacement{$what};
+    }
+}
+
 # display job informations
 sub display_job_zoom
 {
@@ -2484,7 +2577,8 @@ sub display_job_zoom
 
     # get security filter
     my $filter = $self->get_client_filter();
-
+    my $comment = $self->get_db_field('Comment');
+    my $rb = $self->get_db_field('ReadBytes');
     my $query="
 SELECT DISTINCT Job.JobId       AS jobid,
                 Client.Name     AS client,
@@ -2498,9 +2592,9 @@ SELECT DISTINCT Job.JobId       AS jobid,
                 JobStatus       AS jobstatus,
                 JobErrors       AS joberrors,
                 Type            AS jobtype,
-                $self->{sql}->{SEC_TO_TIME}(  $self->{sql}->{UNIX_TIMESTAMP}(EndTime)  
-                                            - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)) AS duration
-
+                $rb             AS readbytes,
+                $comment        AS comment,
+                $self->{sql}->{JOB_DURATION} AS duration
  FROM Client $filter,
       Job LEFT JOIN FileSet ON (Job.FileSetId = FileSet.FileSetId)
           LEFT JOIN Pool    ON (Job.PoolId    = Pool.PoolId)
@@ -2546,16 +2640,13 @@ SELECT client_group_name AS client_group_name,
        COALESCE(jobok.joberrors,0) + COALESCE(joberr.joberrors,0) AS joberrors,
        COALESCE(jobok.nbjobs,0)  AS nbjobok,
        COALESCE(joberr.nbjobs,0) AS nbjoberr,
-       COALESCE(jobok.duration, '0:0:0') AS duration
+       COALESCE(jobok.duration, '0') AS duration
 
 FROM client_group $filter LEFT JOIN (
     SELECT client_group_name AS client_group_name, COUNT(1) AS nbjobs, 
            SUM(JobFiles) AS jobfiles, SUM(JobBytes) AS jobbytes, 
            SUM(JobErrors) AS joberrors,
-           SUM($self->{sql}->{SEC_TO_TIME}(  $self->{sql}->{UNIX_TIMESTAMP}(EndTime)  
-                              - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)))
-                        AS duration
-
+           $self->{sql}->{JOB_DURATION} AS duration
     FROM Job JOIN client_group_member ON (Job.ClientId = client_group_member.ClientId)
              JOIN client_group USING (client_group_id)
     
@@ -2608,9 +2699,7 @@ sub display_media
     if ($arg->{expired}) {
         $where = " 
         AND VolStatus IN ('Full', 'Used')
-        AND (    $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-               + $self->{sql}->{TO_SEC}(Media.VolRetention)
-            ) < $self->{sql}->{NOW}  " . $where ;
+        AND ( $self->{sql}->{MEDIA_EXPIRE} ) < $btime  " . $where ;
     }
 
     my $query="
@@ -2623,10 +2712,7 @@ SELECT Media.VolumeName  AS volumename,
        Location.Location AS location,
        (volbytes*100/COALESCE(media_avg_size.size,-1))  AS volusage,
        Pool.Name         AS poolname,
-       $self->{sql}->{FROM_UNIXTIME}(
-          $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-        + $self->{sql}->{TO_SEC}(Media.VolRetention)
-       ) AS expire
+       $self->{sql}->{MEDIA_EXPIRE} AS expire
 FROM      Pool, Media 
 LEFT JOIN Location ON (Media.LocationId = Location.LocationId)
 LEFT JOIN (SELECT avg(Media.VolBytes) AS size,
@@ -2640,7 +2726,6 @@ WHERE Media.PoolId=Pool.PoolId
 $where
 $limit
 ";
-
     my $all = $self->dbh_selectall_hashref($query, 'volumename') ;
 
     $self->display({ ID => $cur_id++,
@@ -2694,10 +2779,7 @@ SELECT InChanger     AS online,
        Media.VolWriteTime/1000000 AS volwritetime,
        Media.RecycleCount AS recyclecount,
        Media.Comment      AS comment,
-       $self->{sql}->{FROM_UNIXTIME}(
-          $self->{sql}->{UNIX_TIMESTAMP}(Media.LastWritten) 
-        + $self->{sql}->{TO_SEC}(Media.VolRetention)
-       ) AS expire
+       $self->{sql}->{MEDIA_EXPIRE} AS expire
  FROM Pool,
       Media LEFT JOIN Location ON (Media.LocationId = Location.LocationId)
  WHERE Pool.PoolId = Media.PoolId
@@ -2878,7 +2960,6 @@ FROM Location
 ";
 
     my $location = $self->dbh_selectall_hashref($query, 'location');
-
     $self->display({ ID => $cur_id++,
                      Locations => [ values %$location ] },
                    "display_location.tpl");
@@ -3141,7 +3222,7 @@ sub get_roles
     }
     $self->{security}->{use_acl} = $rows->[0]->[0];
     if ($rows->[0]->[2] =~ /^(\w\w)$/) {
-        $self->{lang} = $1;
+        $self->set_lang($1);
     }
     return 1;
 }
@@ -3827,7 +3908,7 @@ sub display_overview
 
     my $q = "
 SELECT name, $stime1 AS num, 
-       JobStatus AS value, joberrors, nb_job, date
+       Status.JobStatus AS value, joberrors, nb_job, date
 FROM (
   SELECT $stime2        AS date, 
          client_group_name AS name,
@@ -3838,7 +3919,7 @@ FROM (
     JOIN client_group_member USING (ClientId)
     JOIN client_group        USING (client_group_id) $filter3
     JOIN Status              USING (JobStatus)
-   WHERE JobStatus IN ('T', 'W', 'f', 'A', 'e', 'E')
+   WHERE Job.JobStatus IN ('T', 'W', 'f', 'A', 'e', 'E')
        $filter1 $filter2
    GROUP BY client_group_name, date
 ) AS sub JOIN Status USING (severity)
@@ -4098,9 +4179,7 @@ SELECT Job.JobId AS jobid,
        Job.JobFiles  AS jobfiles,
        Job.JobBytes  AS jobbytes,
        Job.JobStatus AS jobstatus,
-$self->{sql}->{SEC_TO_TIME}($self->{sql}->{UNIX_TIMESTAMP}($self->{sql}->{NOW})
-                          - $self->{sql}->{UNIX_TIMESTAMP}(StartTime)) 
-         AS duration,
+       $btime - Job.JobTDate AS duration,
        Client.Name AS clientname
 FROM Job INNER JOIN Client USING (ClientId) $filter
 WHERE 
@@ -4249,7 +4328,6 @@ sub restore
 # TODO : move this to Bweb::Autochanger ?
 # TODO : make this internal to not eject tape ?
 use Bconsole;
-
 
 sub display_files
 {
@@ -4620,7 +4698,7 @@ SELECT count(1) AS nbline,
 your 'Messages' resources include 'catalog = all' and you loaded Bweb SQL
 functions in your Catalog.");
     }
-    $log->{logtxt} =~ s/\0//g;
+    $log->{logtxt} =~ s/(\0|\\,)//g;
     $self->display({ lines=> $log->{logtxt},
                      nbline => $log->{nbline},
                      jobid => $arg->{jobid},
@@ -4684,7 +4762,7 @@ INSERT INTO $jobtable
                             pool => $arg->{pool},
                             level => $arg->{level},
                             starttime => $arg->{when},
-                            duration => '00:00:00',
+                            duration => 0,
                             jobfiles => 0,
                             jobbytes => 0,
                             joberrors => 0,
@@ -4720,8 +4798,10 @@ sub add_media
         $b->send("0\n");
         $b->send("$arg->{media}\n");
     }
+    $b->close();
 
-    $b->expect_it('-re','^[*]');
+    sleep(2);
+    #$b->expect_it('-re','^[*]');
 
     CGI::param('media', '');
     CGI::param('re_media', $arg->{media});
@@ -4791,7 +4871,7 @@ sub purge
         return $self->error("Can't get media selection");
     }
 
-    my $b = new Bconsole(pref => $self->{info}, timeout => 60);
+    my $b = $self->get_bconsole(timeout => 60);
 
     foreach my $v (@volume) {
         $self->display({
@@ -4814,7 +4894,7 @@ sub prune
         return $self->error("Can't get media selection");
     }
 
-    my $b = new Bconsole(pref => $self->{info}, timeout => 60);
+    my $b = $self->get_bconsole(timeout => 60);
 
     foreach my $v (@volume) {
         $self->display({
@@ -4906,10 +4986,16 @@ sub enable_disable_job
     }, "command.tpl");  
 }
 
+sub set_lang
+{
+    my ($self, $lang) = @_;
+    $self->{current_lang} = $lang;
+}
+
 sub get_bconsole
 {
-    my ($self) = @_;
-    return new Bconsole(pref => $self->{info});
+    my ($self, @opts) = @_;
+    return new Bconsole(pref => $self->{info}, @opts);
 }
 
 sub cmd_storage
@@ -4980,7 +5066,7 @@ sub run_job_mod
     $self->can_do('r_run_job');
 
     my $b = $self->get_bconsole();
-    my $arg = $self->get_form(qw/pool level client fileset storage media job/);
+    my $arg = $self->get_form(qw/pool level client fileset storage media job comment/);
 
     if (!$arg->{job}) {
         return $self->error("Can't get job name");
@@ -5004,7 +5090,7 @@ SELECT Pool.Name AS name
 
     my %job_opt = (%$attr, %$arg);
     
-    my $jobs   = [ map {{ name => $_ }} $b->list_job() ];
+    my $jobs   = [ map {{ name => $_ }} $b->list_backup() ];
 
     my $pools  = [ map { { name => $_ } } $b->list_pool() ];
     my $clients = [ map { { name => $_ } }$b->list_client()];
@@ -5028,8 +5114,10 @@ sub run_job
 
     my $b = $self->get_bconsole();
     
-    my $jobs   = [ map {{ name => $_ }} $b->list_job() ];
-
+    my $jobs   = [ map {{ name => $_ }} $b->list_backup() ];
+    if ($b->{error}) {
+        return $self->error("Bconsole returns an error, check your setup. ERR=$b->{error}");
+    }
     $self->display({
         jobs     => $jobs,
     }, "run_job.tpl");
@@ -5045,7 +5133,7 @@ sub run_job_now
     # TODO: check input (don't use pool, level)
 
     my $arg = $self->get_form(qw/pool level client priority when 
-                                 fileset job storage/);
+                                 fileset job storage comment/);
     if (!$arg->{job}) {
         return $self->error("Can't get your job name");
     }
@@ -5058,6 +5146,7 @@ sub run_job_now
                         pool => $arg->{pool},
                         fileset => $arg->{fileset},
                         when => $arg->{when},
+                        comment => $arg->{comment}
                         );
 
     print $b->{error};    
@@ -5122,6 +5211,8 @@ sub check_job
     my ($self, $sched, $schedname, $job, $job_pool, $client, $type) = @_;
     return undef if (!$self->can_view_client($client));
 
+    $self->debug("checking $job, $job_pool, $client, $type, $schedname");
+
     my $sch = $sched->get_scheds($schedname);    
     return undef if (!$sch);
 
@@ -5152,7 +5243,7 @@ sub check_job
  LIMIT 1
 ");             
             if ($all) {
-#               print "ok $job ";
+                $self->debug("found job record for $job on $client");
             } else {
                 push @{$self->{tmp}}, {date => $evt, level => $level,
                                        type => 'Backup', name => $job,
@@ -5182,7 +5273,7 @@ sub display_missing_job
     my $sched = new Bweb::Sched(bconsole => $bconsole,
                                 begin => $arg->{begin},
                                 end => $arg->{end});
-
+    $self->debug($sched);
     my $job = $bconsole->send_cmd("show job");
     my ($jname, $jsched, $jclient, $jpool, $jtype);
     foreach my $j (split(/\r?\n/, $job)) {

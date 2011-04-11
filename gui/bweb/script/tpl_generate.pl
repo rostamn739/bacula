@@ -6,7 +6,7 @@ use strict;
    Bweb - A Bacula web interface
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -36,10 +36,6 @@ use strict;
     cd bweb
     rm -f lang/fr/tpl/*.tpl
     LANGUAGE=fr ./script/tpl_generate.pl tpl/*.pl
-
-=head1 VERSION
-
-    $Id$
 
 =cut
 
@@ -76,6 +72,9 @@ foreach my $f (@ARGV)
     print "Converting $f -> $out/$file ";
     while (my $l = <FP>)
     {
+#        $l =~ s:bresto.html:bresto.html<TMPL_IF cur_name>?dir=<TMPL_VAR cur_name></TMPL_IF>:;
+#        $l =~ s:(href=['"](\w+.pl)?\?):${1}<TMPL_IF cur_name>dir=<TMPL_VAR cur_name>;</TMPL_IF>:g;
+#        $l =~ s:(<form [^>]+>):$1<TMPL_IF cur_name><input type='hidden' name='dir' value='<TMPL_VAR cur_name>'></TMPL_IF>:g;
 	my (@str) = ($l =~ m/__(.+?)__/g);
         
         while (my $s = shift @str) {

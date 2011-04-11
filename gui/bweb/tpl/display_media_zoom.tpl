@@ -56,7 +56,7 @@ human_enabled("<TMPL_VAR enabled>"),
 "<TMPL_VAR location>",
 "<TMPL_VAR volstatus>",
 human_size(<TMPL_VAR nb_bytes>),
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 human_sec(<TMPL_VAR volretention>),
 human_sec(<TMPL_VAR voluseduration>),
 "<TMPL_VAR maxvoljobs>"

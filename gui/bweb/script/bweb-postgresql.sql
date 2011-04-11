@@ -2,6 +2,22 @@
 CREATE PROCEDURAL LANGUAGE plpgsql;
 
 -- --------------------------------------------------
+-- Upgrade from 5.0
+-- --------------------------------------------------
+
+BEGIN;
+
+-- PG 8.4 drops implicit cast from double to bigint
+CREATE FUNCTION SEC_TO_TIME(double precision)
+RETURNS interval AS $$
+    select date_trunc('second', $1 * interval '1 second');
+$$ LANGUAGE SQL;
+
+COMMIT;
+
+CREATE UNIQUE INDEX location_idx ON Location (Location);
+
+-- --------------------------------------------------
 -- Upgrade from 2.2
 -- --------------------------------------------------
 

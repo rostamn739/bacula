@@ -67,7 +67,6 @@ if ($jobid and $batch eq 'batch') {
     exit 1;
 }
 
-print CGI::header('text/html');
 $bweb->display_begin();
 $bweb->display_job_zoom($jobid);
 

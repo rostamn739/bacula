@@ -39,7 +39,6 @@ use strict;
 use GTime;
 use Getopt::Long ;
 use Bweb;
-use Time::ParseDate qw/parsedate/;
 use POSIX qw/strftime/;
 use CGI;
 
@@ -48,7 +47,6 @@ $conf->load();
 
 my $bweb = new Bweb(info => $conf);
 
-print CGI::header('text/html');
 $bweb->display_begin();
 $bweb->can_do('r_view_stat');
 
@@ -216,25 +214,25 @@ foreach my $elt (@$all)
 #		l => $elt->[2],
 		type  => "waiting",
 		begin => $begin,
-		end   => parsedate($elt->[1]) - $t,
+		end   => $elt->[1] - $t,
 	    };
 
 	    push @$data, {
 #		l => $elt->[2],
 		type  => "despool",
-		begin => parsedate($elt->[1]) - $t,
+		begin => $elt->[1] - $t,
 		end   => $elt->[1],
 	    };
 
 	    push @{$write->{$drive}}, {	# display only write time
 		type  => "despool",
-		begin => parsedate($elt->[1]) - $t,
+		begin => $elt->[1] - $t,
 		end   => $elt->[1],
 	    };
 
 	    push @{$pool->{"$drive: $elt->[4]"}}, {
 		type  => "despool",
-		begin => parsedate($elt->[1]) - $t,
+		begin => $elt->[1] - $t,
 		end   => $elt->[1],
 	    };
 	} else {

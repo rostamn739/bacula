@@ -76,9 +76,12 @@ if ('__Main__' == ('_' + '_Main_' + '_')) {
 </TMPL_IF>
 </li>
  <li> <a href="bweb.pl?action=about"> __About__ </a> </li>
- <li style="padding: 0.25em 2em;float: right;">&nbsp;__Logged as__ <TMPL_VAR NAME=loginname> </li>
+ <li style="padding: 0.25em 2em;float: right;">&nbsp;
+<TMPL_IF loginname>__Logged as__ <TMPL_VAR loginname></TMPL_IF>
+<TMPL_IF cur_name>__on__ <TMPL_VAR cur_name></TMPL_IF>
+</li>
  <li style="float: right;white-space: nowrap;">
-<button type="submit" class="bp" class="button" title="__Search media__" onclick="search_media();"><img src="/bweb/tape.png" alt=''></button><button type="submit" title="__Search client__" onclick="search_client();" class='bp'><img src="/bweb/client.png" alt=''></button><input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value='__search...__' onclick="this.value='';" title="__Search media or client__"></button></li>
+<button type="submit" class="bp" class="button" title="__Search media__" onclick="search_media();"><img src="/bweb/tape.png" alt=''></button><button type="submit" title="__Search client__" onclick="search_client();" class='bp'><img src="/bweb/client.png" alt=''></button><input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value='__search...__' onclick="this.value='';" title="__Search media or client__"></li>
 </ul>
 
 <form name="search" action="bweb.pl?" method='GET'>

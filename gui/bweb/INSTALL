@@ -106,7 +106,9 @@ Click: Main -- you should see the charts
 
 ################ FILE COPY (Full Apache methode) ###############
  # you must get bweb svn files
- svn checkout https://bacula.svn.sourceforge.net/svnroot/bacula/trunk/gui/bweb bweb
+ git clone git://bacula.git.sourceforge.net/gitroot/bacula/bacula
+ git checkout origin/master
+ cd bacula/gui/
 
  # or get them from the released tar files or from the apt or rpms.
 
@@ -145,8 +147,8 @@ Click: Main -- you should see the charts
 
  # done !
 
- WARNING : Your www-data (or wwwrun on SuSE) user must be able to execute bconsole and able 
-           to read the bconsole.conf file!
+ WARNING : Your www-data (or wwwrun on SuSE) user must be able to execute
+           bconsole and able to read the bconsole.conf file!
            You can create an bconsole group for that.
 
 ################ USE FRENCH/SPANISH VERSION ####################
@@ -324,8 +326,8 @@ You MUST use brestore.pl -b or bresto.pl action=batch to initialize the
 database, and you CAN use bfileview.pl mode=batch jobid=xxx where=/ to compute
 tree size.
 
-At this time, it's a good idea to schedule brestore.pl -b after your 
-BackupCatalog job.
+At this time, it's a good idea to schedule brestore.pl -b or bresto.pl after
+your BackupCatalog job.
 
 Job {
   Name = "BackupCatalog"
@@ -383,6 +385,7 @@ For postgresql, it will be done with bweb/script/bweb-postgresql.sql (already do
 It will do some basics things on a working bweb/brestore setup.
 
 1) Go to http://extjs.com and download their toolkit (use the 2.2 release)
+   You can also get it from http://www.bacula.org/downloads/extjs-2.2.zip
 
 2) Install files in /bweb/ext web root 
  example on debian : 
@@ -390,15 +393,7 @@ It will do some basics things on a working bweb/brestore setup.
 
 3) Make sure that brestore cache tables are in your catalog (bweb-xxx.sql files)
 
-4) Enable bresto.pl cgi. 
-  edit the bweb/cgi/bresto.pl script and change $bresto_enable=0; to $bresto_enable=1;
-  on the top of the file.
-
-5) Use the last Bweb.pm
-  If you are trying bresto in a working bweb/brestore setup, you must make sure that you use 
-  the last Bweb.pm git version.
-
-6) Go on http://you-director/bweb/bresto.html
+4) Go on http://you-director/bweb/bresto.html
 
 ################################################################
 

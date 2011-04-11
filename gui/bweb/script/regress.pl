@@ -6,7 +6,7 @@ use strict;
    Bweb - A Bacula web interface
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -34,13 +34,14 @@ use strict;
 =head1 USAGE
 
     Get it working with a regress environment:
-     * get regress module from SVN
+     * get regress module from git
      * use postgresql or mysql in config
      * make setup
      * add catalog = all, !skipped, !saved into Messages Standard (scripts/bacula-dir.conf)
      * add exit 0 to scripts/cleanup
      * run bacula-backup-test
-     * uncomment job schedule in bacula-dir.conf
+     * uncomment job schedule in bacula-dir.conf 
+       $ sed -i 's/# Sc/  Sc/' bacula-dir.conf
      * load bweb-(mysql|postgresql).sql
      * ./bin/bacula start
      * configure bweb to point to bconsole and the catalog
