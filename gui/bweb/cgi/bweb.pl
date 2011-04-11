@@ -41,26 +41,19 @@ my $client_re = qr/^([\w\d\.-]+)$/;
 
 my $action = CGI::param('action') || 'begin';
 
-if ($action eq 'restore') {
-    print CGI::header('text/brestore');	# specialy to run brestore.pl
-
-} else {
-    print CGI::header('text/html');
-}
-
 # loading config file
 my $conf = new Bweb::Config(config_file => $Bweb::config_file);
 $conf->load();
 
 my $bweb = new Bweb(info => $conf);
+my $arg = $bweb->get_form('jobid', 'limit', 'offset', 'age', 'new_dir');
 
 # just send data with text/brestore content
 if ($action eq 'restore') {
+    print CGI::header('text/brestore');	# specialy to run brestore.pl
     $bweb->restore();
     exit 0;
 }
-
-my $arg = $bweb->get_form('jobid', 'limit', 'offset', 'age');
 
 $bweb->display_begin();
 

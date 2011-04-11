@@ -1,5 +1,5 @@
 // Bweb - A Bacula web interface
-// Bacula® - The Network Backup Solution
+// BaculaÂ® - The Network Backup Solution
 //
 // Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
 //
@@ -22,7 +22,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-// Bacula® is a registered trademark of Kern Sibbald.
+// BaculaÂ® is a registered trademark of Kern Sibbald.
 // The licensor of Bacula is the Free Software Foundation Europe
 // (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zurich,
 // Switzerland, email:ftf@fsfeurope.org.
@@ -77,6 +77,7 @@ var joblevelname = {
  'F': 'Full',
  'I': 'Incremental',
  'D': 'Differential',
+ 'B': 'Base'
 };
 
 
@@ -131,24 +132,84 @@ function human_sec(val)
    val /= 60;			// sec -> min
    
    if ((val / 60) <= 1) {
-      return val.toFixed(0) + ' mins';
+      return val.toFixed(0) + ' min' + add_s(val) ;
    }
 
    val /= 60;			// min -> hour
 
    if ((val / 24) <= 1) { 
-      return val.toFixed(0) + ' hours';
+      return val.toFixed(0) + ' hour' + add_s(val) ;
    }
 
    val /= 24;                   // hour -> day
 
    if ((val / 365) < 2) { 
-      return val.toFixed(0) + ' days';
+      return val.toFixed(0) + ' day' + add_s(val);
    }
 
    val /= 365;
 
-   return val.toFixed(0) + ' years';
+   return val.toFixed(0) + ' year' + add_s(val);
+}
+
+function add_s(val)
+{
+    if (val >= 2) {
+        return "s ";
+    } else {
+        return " ";
+    }
+}
+
+function human_sec2(val)
+{
+   if (!val) {
+      val = 0;
+   }
+   val = parseInt(val);
+   if (val < 60) {
+       return val.toFixed(0) + ' sec' + add_s(val);
+   }
+
+   val /= 60;			// sec -> min
+   if ((val / 60) <= 1) {
+       return val.toFixed(0) + ' min' + add_s(val);
+   }
+
+   var prev = val % 60;
+   val /= 60;			// min -> hour
+
+   if ((val / 24) <= 1) { 
+       return val.toFixed(0) + ' hour' + add_s(val) 
+           + prev.toFixed(0) + ' min' + add_s(prev);
+   }
+ 
+   prev = val % 24;
+   val /= 24;                   // hour -> day
+
+   if ((val / 365) < 2) { 
+       return val.toFixed(0) + ' day' + add_s(val) 
+           + prev.toFixed(0) + ' hour' + add_s(prev);
+   }
+
+   prev = val % 365;
+   val /= 365;
+
+    return val.toFixed(0) + ' year' + add_s(val) 
+        + prev.toFixed(0) + ' day' + add_s(prev);
+}
+
+function human_duration(val)
+{
+    if (!val) {
+        val = 0;
+    }
+    val = parseInt(val);
+    var sec = val % 60;
+    val = val / 60;
+    var min = val % 60;
+    val = val / 60;
+    return pad(val.toFixed(0)) + ':' + pad(min.toFixed(0)) + ':' + pad(sec.toFixed(0));
 }
 
 
@@ -306,6 +367,18 @@ function percent_usage(value, parent)
    } 
 
    return parent;
+}
+
+function pad(n){return n<10 ? '0'+n : n}
+
+function timestamp_to_iso(ts)
+{
+    if(ts < 1000000000000){
+        ts=(ts*1000);
+    }
+    var datum = new Date(ts);
+    
+    return datum.getFullYear() + '-' + pad(datum.getMonth()+1) + '-' + pad(datum.getDay()+1) + ' ' + pad(datum.getHours()) + ':' + pad(datum.getMinutes()) + ':' + pad(datum.getSeconds());
 }
 
 function bweb_get_job_img(status, errors, type)

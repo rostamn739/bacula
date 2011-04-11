@@ -3,7 +3,7 @@
   <h1 class='newstitle'> <TMPL_IF title><TMPL_VAR title><TMPL_ELSE>__Next Jobs__ </TMPL_IF></h1>
  </div>
  <div class='bodydiv'>
-    <form name='form1' action='<TMPL_VAR cginame>?' method='GET'>
+    <form name='form1' action='?' method='GET'>
      <table id='id<TMPL_VAR ID>'></table>
      <button type="submit" class="bp" name='action' title='__Run now__' value='run_job_mod'>
        <img src='/bweb/R.png' alt=''>  __Run now__ </button>

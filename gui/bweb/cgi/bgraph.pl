@@ -6,7 +6,7 @@ use strict;
    Bweb - A Bacula web interface
    BaculaÂ® - The Network Backup Solution
 
-   Copyright (C) 2000-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2010 Free Software Foundation Europe e.V.
 
    The main author of Bweb is Eric Bollengier.
    The main author of Bacula is Kern Sibbald, with contributions from
@@ -30,10 +30,6 @@ use strict;
    The licensor of Bacula is the Free Software Foundation Europe
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
-
-=head1 VERSION
-
-    $Id$
 
 =cut
 
@@ -148,9 +144,8 @@ if ($gtype eq 'balloon') {
     $b->set_legend_axis(%legend);
 
     my $all = $dbh->selectall_arrayref("
-SELECT $bweb->{sql}->{SEC_TO_INT}(  $bweb->{sql}->{UNIX_TIMESTAMP}(EndTime)
-                                  - $bweb->{sql}->{UNIX_TIMESTAMP}(StartTime))
-         AS duration, $order, JobId, Job.Name
+SELECT $bweb->{sql}->{JOB_DURATION} AS duration,
+       $order, JobId, Job.Name
        
  FROM $jobt AS Job, Client $filter $groupf
 WHERE Job.ClientId = Client.ClientId
@@ -184,7 +179,7 @@ $limitq
     exit 0;
 }
 
-print CGI::header('image/png');
+$bweb->send_content_type(-type => 'image/png');
 
 sub get_graph
 {
@@ -291,7 +286,7 @@ if ($graph eq 'job_size') {
 
     my $query = "
 SELECT 
-       UNIX_TIMESTAMP(Job.StartTime)  AS starttime,
+       $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
        Client.Name                    AS clientname,
        Job.Name                       AS jobname,
        Job.JobBytes                   AS jobbytes,
@@ -330,7 +325,7 @@ if ($graph eq 'job_file') {
 
     my $query = "
 SELECT 
-       UNIX_TIMESTAMP(Job.StartTime)  AS starttime,
+       $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
        Client.Name                    AS clientname,
        Job.Name                       AS jobname,
        Job.JobFiles                   AS jobfiles,
@@ -372,7 +367,7 @@ elsif ($graph eq 'file_histo' and $arg->{where}) {
     my $file = $dbh->quote(basename($arg->{where}));
 
     my $query = "
-SELECT UNIX_TIMESTAMP(Job.StartTime)    AS starttime,
+SELECT $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
        Client.Name                      AS client,
        Job.Name                         AS jobname,
        base64_decode_lstat(8,LStat)     AS lstat,
@@ -423,7 +418,7 @@ elsif ($graph eq 'rep_histo' and $arg->{where}) {
     $dir = $dbh->quote($dir);
 
     my $query = "
-SELECT UNIX_TIMESTAMP(Job.StartTime) AS starttime,
+SELECT $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
        Client.Name                   AS client,
        Job.Name                      AS jobname,
        brestore_pathvisibility.size  AS size,
@@ -467,14 +462,11 @@ elsif ($graph eq 'job_rate') {
 
     my $query = "
 SELECT 
-       UNIX_TIMESTAMP(Job.StartTime)  AS starttime,
+       $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
        Client.Name                    AS clientname,
        Job.Name                       AS jobname,
        Job.JobBytes /
-       ($bweb->{sql}->{SEC_TO_INT}(
-                          $bweb->{sql}->{UNIX_TIMESTAMP}(EndTime)  
-                        - $bweb->{sql}->{UNIX_TIMESTAMP}(StartTime)) + 0.01) 
-         AS rate,
+               ($bweb->{sql}->{JOB_DURATION} + 0.01) AS rate,
        Job.Level                      AS joblevel
 
 FROM $jobt AS Job, FileSet, Client $filter $groupf
@@ -513,12 +505,10 @@ elsif ($graph eq 'job_duration') {
 
     my $query = "
 SELECT 
-       UNIX_TIMESTAMP(Job.StartTime)       AS starttime,
-       Client.Name                         AS clientname,
-       Job.Name                            AS jobname,
-  $bweb->{sql}->{SEC_TO_INT}(  $bweb->{sql}->{UNIX_TIMESTAMP}(EndTime)  
-                             - $bweb->{sql}->{UNIX_TIMESTAMP}(StartTime)) 
-         AS duration,
+       $bweb->{sql}->{STARTTIME_SEC}  AS starttime,
+       Client.Name                    AS clientname,
+       Job.Name                       AS jobname,
+       $bweb->{sql}->{JOB_DURATION}   AS duration,
        Job.Level                      AS joblevel
 
 FROM $jobt AS Job, FileSet, Client $filter $groupf
@@ -574,12 +564,16 @@ $limitq
     if ($t eq 'sum' or $t eq 'avg') {
 	push @arg, ('y_number_format' => \&Bweb::human_size);
     }
-    
-    my $stime = $bweb->{sql}->{"STARTTIME_$d"};
+    my $stime;
+    if ($per_t) {
+        $stime = $bweb->{sql}->{"STARTTIME_$d"};
+    } else {
+        $stime = $bweb->{sql}->{STARTTIME_SEC};
+    }
 
     my $query = "
 SELECT
-     " . ($per_t?"":"UNIX_TIMESTAMP") . "($stime) AS A,
+     $stime AS A,
      $t(JobBytes)                  AS nb
 FROM $jobt AS Job, FileSet, Client $filter $groupf
 WHERE Job.ClientId = Client.ClientId
@@ -593,7 +587,6 @@ WHERE Job.ClientId = Client.ClientId
   $groupq
 $limit
 ";
-
     print STDERR $query  if ($debug);
 
     my $obj = get_graph('title' => "Job $t : $arg->{jclients}/$arg->{jjobnames}",

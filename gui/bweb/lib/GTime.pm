@@ -84,10 +84,10 @@ sub new
     map { $self->{$_} = $arg{$_} } keys %arg ;
 
     if ($self->{begin}) {
-        $self->{begin} = parsedate($self->{begin});
+        $self->{begin} = $self->{begin};
     }
     if ($self->{end}) {
-        $self->{end} = parsedate($self->{end});
+        $self->{end} = $self->{end};
     }
 
     bless $self ;
@@ -349,20 +349,20 @@ $top->add_job(label => "label",
               data => [
                        {
                            type  => "init",
-                           begin => $begin1,
-                           end   => $end1,
+                           begin => parsedate($begin1),
+                           end   => parsedate($end1),
                        },
 
                        {
                            type  => "write",
-                           begin => $end1,
-                           end   => $begin2,
+                           begin => parsedate($end1),
+                           end   => parsedate($begin2),
                        },
 
                        {
                            type  => "commit",
-                           begin => $begin2,
-                           end   => $end2,
+                           begin => parsedate($begin2),
+                           end   => parsedate($end2),
                        },
                        ]);
 
@@ -370,20 +370,20 @@ $top->add_job(label => "label2",
               data => [
                        {
                            type  => "init",
-                           begin => $begin1,
-                           end   => $end1,
+                           begin => parsedate($begin1),
+                           end   => parsedate($end1),
                        },
 
                        {
                            type  => "write",
-                           begin => $end1,
-                           end   => $begin2,
+                           begin => parsedate($end1),
+                           end   => parsedate($begin2),
                        },
 
                        {
                            type  => "commit",
-                           begin => $begin2,
-                           end   => $end2,
+                           begin => parsedate($begin2),
+                           end   => parsedate($end2),
                        },
                        ]);
 
