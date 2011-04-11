@@ -1,5 +1,6 @@
  <div class='titlediv'>
-  <h1 class='newstitle'>Information about job</h1>
+  <h1 class='newstitle'>Information about job <i><TMPL_VAR JobName></i>
+       <TMPL_IF comment>(<TMPL_VAR comment>)</TMPL_IF></h1>
  </div>
  <div class="bodydiv">
  <table id='id0'></table>
@@ -88,6 +89,7 @@ var header = new Array("JobId",
 	               "Duration",
                        "JobFiles",
                        "JobBytes",
+//                       "Comp",
                        "Errors",
 	               "Pool",
                        "Volume Name",
@@ -108,9 +110,10 @@ data.push( new Array(
 "<TMPL_VAR FileSet>",    
 "<TMPL_VAR Level>",      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR duration>",
+human_duration("<TMPL_VAR duration>"),
 "<TMPL_VAR JobFiles>",   
 human_size(<TMPL_VAR JobBytes>),
+//parseInt(100-100*<TMPL_VAR JobBytes>/(<TMPL_VAR ReadBytes>+0.00001), 10) + "%",
 "<TMPL_VAR joberrors>",
 "<TMPL_VAR poolname>",
 "<TMPL_LOOP volumes><TMPL_VAR VolumeName>\n</TMPL_LOOP>",   

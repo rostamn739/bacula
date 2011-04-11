@@ -1,21 +1,21 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'> <TMPL_IF title><TMPL_VAR title><TMPL_ELSE>Prochains jobs </TMPL_IF></h1>
+  <h1 class='newstitle'> <TMPL_IF title><TMPL_VAR title><TMPL_ELSE>Next Jobs </TMPL_IF></h1>
  </div>
  <div class='bodydiv'>
-    <form name='form1' action='<TMPL_VAR cginame>?' method='GET'>
+    <form name='form1' action='?' method='GET'>
      <table id='id<TMPL_VAR ID>'></table>
-     <button type="submit" class="bp" name='action' title='Lancer maintenant' value='run_job_mod'>
-       <img src='/bweb/R.png' alt=''>  Lancer maintenant </button>
-      <button type="submit" class="bp" name='action' title='Désactiver' value='disable_job'>
-       <img src='/bweb/inflag0.png' alt=''> Désactiver </button>
-       <button type="submit" onsubmit='document.form1.level.value="all"' class="bp" name='action' value='job' title='voir <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>Voir les jobs</button>
+     <button type="submit" class="bp" name='action' title='Run now' value='run_job_mod'>
+       <img src='/bweb/R.png' alt=''>  Run now </button>
+      <button type="submit" class="bp" name='action' title='Disable' value='disable_job'>
+       <img src='/bweb/inflag0.png' alt=''> Disable </button>
+       <button type="submit" onsubmit='document.form1.level.value="all"' class="bp" name='action' value='job' title='view <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>View jobs</button>
 <TMPL_IF missing_mode>
       <button type="submit" class="bp" name='action' title='Mark this job as canceled in job history' value='cancel_future_job'>
        <img src='/bweb/f.png' alt=''> Mark it as canceled </button>
 </TMPL_IF>
 <TMPL_IF wiki_url>
-       <a id='wiki' href="<TMPL_VAR wiki_url>" title='Documentation'><img src='/bweb/doc.png' alt='Documentation'></a>Documentation
+       <a id='wiki' href="<TMPL_VAR wiki_url>" title='View doc'><img src='/bweb/doc.png' alt='View doc'></a>View doc
 </TMPL_IF>
      <input type='hidden' name='pool' value=''>
      <input type='hidden' name='level' value=''>
@@ -27,13 +27,13 @@
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Quand",
-                       "Niveau",
+var header = new Array("Scheduled",
+                       "Level",
 	               "Type",
-	               "Priorité", 
-                       "Nom",
+	               "Priority", 
+                       "Name",
                        "Volume",
-	               "Sélection");
+	               "Select");
 
 var data = new Array();
 var chkbox;

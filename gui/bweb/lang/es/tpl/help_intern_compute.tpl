@@ -1,14 +1,14 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'>Ayuda para cargar medios (part 2/2)</h1>
+  <h1 class='newstitle'>Help to load media (part 2/2)</h1>
  </div>
  <div class='bodydiv'>
-  Ahora puede verificar la selección y cargar el medio cargar selección
+  Now, you can verify the selection and load the media.
    <form action='?' method='get'>
     <table id='compute'></table>
     <table><tr>
     <td style='align: left;'>
-    <button type="submit" class="bp" onclick='javascript:window.history.go(-2);' title='Volver'> <img src='/bweb/prev.png' alt=''>Volver</button>
+    <button type="submit" class="bp" onclick='javascript:window.history.go(-2);' title='Back'> <img src='/bweb/prev.png' alt=''>Back</button>
     </td><td style='align: right;'>
     <input type="hidden" name='enabled' value='yes'>
     <button type="submit" class="bp" name='action' value='move_media'> 
@@ -19,8 +19,8 @@
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Nombre Volumen","Vol Status",
-                       "Tipo Medio","Pool Name","Fecha Escritura", 
+var header = new Array("Volume Name","Vol Status",
+                       "Media Type","Pool Name","Last Written", 
                        "When expire ?", "Select");
 
 var data = new Array();
@@ -39,7 +39,7 @@ data.push( new Array(
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

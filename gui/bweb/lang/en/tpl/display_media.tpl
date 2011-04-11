@@ -62,7 +62,7 @@ d,
 "<TMPL_VAR poolname>",
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

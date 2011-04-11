@@ -34,7 +34,7 @@
      </tr>
     </table>
     <button type="submit" class="bp" name='action' value='add_media'>
-     <img src='/bweb/add.png' alt=''>Add<button>
+     <img src='/bweb/add.png' alt=''>Add</button>
    </form>
 </div>
 

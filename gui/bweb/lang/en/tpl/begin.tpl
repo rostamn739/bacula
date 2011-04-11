@@ -76,9 +76,12 @@ if ('Main' == ('_' + '_Main_' + '_')) {
 </TMPL_IF>
 </li>
  <li> <a href="bweb.pl?action=about"> About </a> </li>
- <li style="padding: 0.25em 2em;float: right;">&nbsp;Logged as <TMPL_VAR NAME=loginname> </li>
+ <li style="padding: 0.25em 2em;float: right;">&nbsp;
+<TMPL_IF loginname>Logged as <TMPL_VAR loginname></TMPL_IF>
+<TMPL_IF cur_name>on <TMPL_VAR cur_name></TMPL_IF>
+</li>
  <li style="float: right;white-space: nowrap;">
-<button type="submit" class="bp" class="button" title="Search media" onclick="search_media();"><img src="/bweb/tape.png" alt=''></button><button type="submit" title="Search client" onclick="search_client();" class='bp'><img src="/bweb/client.png" alt=''></button><input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value='search...' onclick="this.value='';" title="Search media or client"></button></li>
+<button type="submit" class="bp" class="button" title="Search media" onclick="search_media();"><img src="/bweb/tape.png" alt=''></button><button type="submit" title="Search client" onclick="search_client();" class='bp'><img src="/bweb/client.png" alt=''></button><input class='formulaire' style="margin: 0 2px 0 2px; padding: 0 0 0 0;" id='searchbox' type='text' size='8' value='search...' onclick="this.value='';" title="Search media or client"></li>
 </ul>
 
 <form name="search" action="bweb.pl?" method='GET'>

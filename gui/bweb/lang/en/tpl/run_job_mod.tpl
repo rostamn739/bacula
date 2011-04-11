@@ -57,7 +57,11 @@
      <option id='level_Incremental' value='Incremental'>Incremental</option>
      <option id='level_Full' value='Full'>Full</option>
      <option id='level_Differential' value='Differential'>Differential</option>
+     <option id='level_Base' value='Base'>Base</option>
    </select>
+   </td></tr><tr><td>Comment: </td><td>
+   <input type='text' title='Comment about this job'
+          size='17' name='comment' value='<TMPL_VAR comment>'>
 
    </td></tr><tr id='more1' style="visibility:hidden"><td>Start Time: </td><td>
    <input type='text' title='YYYY-MM-DD HH:MM:SS'

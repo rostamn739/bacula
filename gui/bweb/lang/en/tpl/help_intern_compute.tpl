@@ -39,7 +39,7 @@ data.push( new Array(
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

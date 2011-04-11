@@ -1,58 +1,58 @@
 <br/>
  <div class='titlediv'>
   <h1 class='newstitle'> 
-Robotique : <TMPL_VAR Name> (<TMPL_VAR nb_drive> Lecteurs
+Autochanger: <TMPL_VAR Name> (<TMPL_VAR nb_drive> Drives
 <TMPL_IF nb_io><TMPL_VAR nb_io> IMPORT/EXPORT</TMPL_IF>)</h1>
  </div>
  <div class='bodydiv'>
    <form action='?' method='get'>
     <input type='hidden' name='ach' value='<TMPL_VAR name>'>
     <TMPL_IF "Update">
-    <font color='red'> Vous devez lancer la mise à jour des slots, le contenu de la robotique est différent de ce qui est indiqué dans la base de bacula. </font>
+    <font color='red'> You must run update slot, Autochanger status is different from bacula slots </font>
     <br/>
     </TMPL_IF>
     <table border='0'>
     <tr>
     <td valign='top'>
     <div class='otherboxtitle'>
-     Options
+     Tools
     </div>
     <div class='otherbox'>
 <button type="submit" class="bp" name='action' value='label_barcodes'
- title='Labélisation des médias, (label barcodes)'><img src='/bweb/label.png' alt=''>Label</button>
+ title='run label barcodes'><img src='/bweb/label.png' alt=''>Label</button>
 <TMPL_IF nb_io>
 <button type="submit" class="bp" name='action' value='eject'
- title='Mettre les médias sélectionnés dans le guichet'><img src='/bweb/extern.png' alt=''>Externaliser</button>
+ title='put selected media on i/o'><img src='/bweb/extern.png' alt=''>Eject</button>
 <button type="submit" class="bp" name='action' value='clear_io'
- title='Vider le guichet'> <img src='/bweb/intern.png' alt=''>Vider le guichet</button>
+ title='clear I/O'> <img src='/bweb/intern.png' alt=''>Clear I/O</button>
 </TMPL_IF>
 <button type="submit" class="bp" name='action' value='update_slots'
- title='Mettre à jour la base bacula, (update slots)'> <img src='/bweb/update.png' alt=''>Scanner</button>
+ title='run update slots'> <img src='/bweb/update.png' alt=''>Update</button>
 <br/><br/>
 <button type="submit" class="bp" name='action' value='ach_load'
- title='Charger un lecteur'> <img src='/bweb/load.png' alt=''>Mount</button>
+ title='mount drive'> <img src='/bweb/load.png' alt=''>Mount</button>
 <button type="submit" class="bp" name='action' value='ach_unload'
- title='Décharger un lecteur'> <img src='/bweb/unload.png' alt=''>Umount</button>
+ title='umount drive'> <img src='/bweb/unload.png' alt=''>Umount</button>
 
    </div>
     <td width='200'/>
     <td>
-    <b> Lecteurs : </b><br/>
+    <b> Drives: </b><br/>
     <table id='id_drive'></table> <br/>
     </td>
     </tr>
     </table>
-    <b> Contenu : </b><br/>
+    <b> Content: </b><br/>
     <table id='id_ach'></table>
    </form>
  </div>
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Slot réel", "Slot", "Nom de volume",
-		       "Taille","Vol Statut",
-	               "Type","Nom du Pool","Dernière écriture", 
-                       "Expiration", "Sélection");
+var header = new Array("Real Slot", "Slot", "Volume Name",
+		       "Vol Bytes","Vol Status",
+	               "Media Type","Pool Name","Last Written", 
+                       "When expire ?", "Select");
 
 var data = new Array();
 var chkbox;
@@ -72,7 +72,7 @@ human_size(<TMPL_VAR volbytes>),
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );
@@ -100,8 +100,8 @@ nrsTable.setup(
 }
 );
 
-var header = new Array("Index", "Lecteurs", 
-		       "Nom de volume", "Sélection");
+var header = new Array("Index", "Drive Name", 
+		       "Volume Name", "Select");
 
 var data = new Array();
 var chkbox;

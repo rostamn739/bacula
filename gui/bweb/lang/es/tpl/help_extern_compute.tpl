@@ -1,24 +1,24 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'>Ayuda para expulsar medios (part 2/2)</h1>
+  <h1 class='newstitle'>Help to eject media (part 2/2)</h1>
  </div>
  <div class='bodydiv'>
-  Ahora puede verificar la selección y expulsar el medio.
+  Now, you can verify the selection and eject the media.
    <form action='?' method='get'>
     <table id='compute'></table>
     <table><tr>
     <td style='align: left;'>
-    <button type="submit" class="bp" onclick='javascript:window.history.go(-2);' title='Volver'> <img src='/bweb/prev.png' alt=''>Volver</button>
+    <button type="submit" class="bp" onclick='javascript:window.history.go(-2);' title='Back'> <img src='/bweb/prev.png' alt=''>Back</button>
     </td><td style='align: right;'>
-    <button type="submit" class="bp" name='action' value='extern' title='Expulsar selección'> <img src='/bweb/extern.png' alt=''>Eject</button>
+    <button type="submit" class="bp" name='action' value='extern' title='Eject selection'> <img src='/bweb/extern.png' alt=''>Eject</button>
    </td></tr>
    </form>
  </div>
 
 <script type="text/javascript" language="JavaScript">
 
-var header = new Array("Nombre Volumen","Vol Status",
-                       "Tipo Medio","Pool Name","Fecha Escritura", 
+var header = new Array("Volume Name","Vol Status",
+                       "Media Type","Pool Name","Last Written", 
                        "When expire ?", "Select");
 
 var data = new Array();
@@ -37,7 +37,7 @@ data.push( new Array(
 "<TMPL_VAR mediatype>",
 "<TMPL_VAR name>",
 "<TMPL_VAR lastwritten>",
-"<TMPL_VAR expire>",
+timestamp_to_iso("<TMPL_VAR expire>"),
 chkbox
  )
 );

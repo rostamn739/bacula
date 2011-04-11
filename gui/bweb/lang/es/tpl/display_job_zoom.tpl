@@ -1,5 +1,6 @@
  <div class='titlediv'>
-  <h1 class='newstitle'>Información acerca jobs</h1>
+  <h1 class='newstitle'>Information about job <i><TMPL_VAR JobName></i>
+       <TMPL_IF comment>(<TMPL_VAR comment>)</TMPL_IF></h1>
  </div>
  <div class="bodydiv">
  <table id='id0'></table>
@@ -8,21 +9,21 @@
   <input type='hidden' name='jobid' value='<TMPL_VAR jobid>'>
   <button type="submit" name='action' class="bp" value='delete' title='delete this job'
  onclick="return confirm('Do you want to delete this job from the catalog?');">
-   <img src='/bweb/purge.png' alt=''>Borrar</button>
+   <img src='/bweb/purge.png' alt=''>Delete</button>
  </form>
  </td><td>
  <form name="media" action='bweb.pl?'>
   <TMPL_LOOP volumes>
    <input type='hidden' name='media' value='<TMPL_VAR VolumeName>'>
   </TMPL_LOOP>   
-  <button type="submit" name='action' value='media' title='Ver medio' class="bp">
-   <img src='/bweb/zoom.png'alt=''>Ver medio</button>
+  <button type="submit" name='action' value='media' title='View media' class="bp">
+   <img src='/bweb/zoom.png'alt=''>View media</button>
  </form>
  </td>
  <td>
  <form name="job" action='bweb.pl?'>
   <input type='hidden' name='client' value='<TMPL_VAR Client>'>
-  <button type="submit" class="bp" name='action' value='job' title='view <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>Ver jobs</button>
+  <button type="submit" class="bp" name='action' value='job' title='view <TMPL_VAR Client> jobs'><img src='/bweb/zoom.png'>View jobs</button>
  </form>
  </td>
  <td>
@@ -31,14 +32,14 @@
   <input type='hidden' name='client' value='<TMPL_VAR Client>'>
   <input type='hidden' name='jobname' value='<TMPL_VAR jobname>'>
   <button type="submit" class="bp" name='action' value='graph' title='View trends'>
-   <img src='/bweb/chart.png' alt=''> Ver estadísticas </button>
+   <img src='/bweb/chart.png' alt=''> View stats </button>
  </form>
  </td>
  <td>
  <form name="fileset_view" action='bweb.pl?'>
   <input type='hidden' name='fileset' value='<TMPL_VAR FileSet>'>
-  <button type="submit" class="bp" name='action' value='fileset_view' title='Ver FileSet'> 
- <img src='/bweb/zoom.png' alt=''>Ver FileSet</button>
+  <button type="submit" class="bp" name='action' value='fileset_view' title='View FileSet'> 
+ <img src='/bweb/zoom.png' alt=''>View FileSet</button>
  </form>
  </td>
  <td>
@@ -80,18 +81,19 @@
 
 <script type="text/javascript" language='JavaScript'>
 var header = new Array("JobId",
-	               "Cliente",
-	               "Nombre Job", 
+	               "Client",
+	               "Job Name", 
 		       "FileSet",
-                       "Nivel",
-                       "Inicio", 
-	               "Archivos Job",
-                       "Bytes Job",
+                       "Level",
+                       "StartTime", 
+	               "Duration",
+                       "JobFiles",
                        "JobBytes",
-                       "Errores",
+//                       "Comp",
+                       "Errors",
 	               "Pool",
-                       "Nombre Volumen",
-	               "Estado");
+                       "Volume Name",
+	               "Status");
 
 var data = new Array();
 
@@ -108,9 +110,10 @@ data.push( new Array(
 "<TMPL_VAR FileSet>",    
 "<TMPL_VAR Level>",      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR duration>",
+human_duration("<TMPL_VAR duration>"),
 "<TMPL_VAR JobFiles>",   
 human_size(<TMPL_VAR JobBytes>),
+//parseInt(100-100*<TMPL_VAR JobBytes>/(<TMPL_VAR ReadBytes>+0.00001), 10) + "%",
 "<TMPL_VAR joberrors>",
 "<TMPL_VAR poolname>",
 "<TMPL_LOOP volumes><TMPL_VAR VolumeName>\n</TMPL_LOOP>",   

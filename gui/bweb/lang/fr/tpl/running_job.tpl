@@ -1,6 +1,6 @@
 <br/>
  <div class='titlediv'>
-  <h1 class='newstitle'> Jobs en cours </h1>
+  <h1 class='newstitle'> Running Jobs </h1>
  </div>
  <div class='bodydiv'>
    <form action='?' method='GET'>
@@ -8,10 +8,10 @@
    <br/>
 <label>
 <button type="submit" class="bp" name='action' value='dsp_cur_job' 
- title='Voir le job'> <img src='/bweb/zoom.png' alt=''>Voir</button>
+ title='View job'> <img src='/bweb/zoom.png' alt=''>View</button>
 <button type="submit" class="bp" type='submit' name='action' value='cancel_job'
- onclick="return confirm('Vous voulez vraiment annuler ce job ?')"
- title='Annuler le job'> <img src='/bweb/cancel.png' alt=''>Annuler</button>
+ onclick="return confirm('Do you want to cancel the selected job?')"
+ title='Cancel job'> <img src='/bweb/cancel.png' alt=''>Cancel</button>
    </form>
 
  </div>
@@ -19,14 +19,14 @@
 <script type="text/javascript" language="JavaScript">
 var header = new Array("JobId",
                        "Client",
-                       "Nom du Job", 
-                       "Niveau",
-                       "Début", 
-                       "Durée", 
+                       "Job Name", 
+                       "Level",
+                       "Start Time", 
+                       "Duration", 
 //                       "Job Files",
 //                       "Job Bytes", 
-                       "Statut",
-                       "Sélection"
+                       "Status",
+                       "Select"
         );
 
 var data = new Array();
@@ -54,7 +54,7 @@ data.push( new Array(
 "<TMPL_VAR JobName>",    
 joblevel['<TMPL_VAR Level>'],      
 "<TMPL_VAR StartTime>",
-"<TMPL_VAR duration>",
+human_sec2("<TMPL_VAR duration>"),
 //"<TMPL_VAR JobFiles>",   
 //"<TMPL_VAR JobBytes>",
 a,
