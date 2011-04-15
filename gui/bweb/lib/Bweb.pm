@@ -1863,6 +1863,8 @@ sub get_form
                  new_dir => 1,
                  job     => 1,
                  storage => 1,
+                 pool   => 1,
+                 poolrecycle => 1,
                  );
     my %opt_s = (               # default to ''
                  ach    => 1,
@@ -1871,14 +1873,12 @@ sub get_form
                  inchanger => 1,
                  client => 1,
                  level  => 1,
-                 pool   => 1,
                  media  => 1,
                  ach    => 1,
                  jobtype=> 1,
                  graph  => 1,
                  gtype  => 1,
                  type   => 1,
-                 poolrecycle => 1,
                  replace => 1,
                  expired => 1,
                  enabled => 1,
@@ -4569,7 +4569,9 @@ sub do_update_media
 
     if (defined $arg->{poolrecycle}) {
         $update .= " recyclepool=\"$arg->{poolrecycle}\" " ;
-    }        
+    } else {
+        $update .= " recyclepool= " ;
+    }
     
     my $b = $self->get_bconsole();
 
