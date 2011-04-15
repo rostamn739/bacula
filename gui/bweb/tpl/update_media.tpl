@@ -97,6 +97,7 @@
     </tr>
     <tr><td>__Recycle Pool:__</td>
         <td><select name='poolrecycle' class='formulaire'>
+             <option value='' title='*__None__*'></option>
 <TMPL_LOOP db_pools>
              <option value='<TMPL_VAR name>'><TMPL_VAR name></option>
 </TMPL_LOOP>
