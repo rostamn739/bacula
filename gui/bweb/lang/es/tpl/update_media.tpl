@@ -1,6 +1,6 @@
 <br/>
 <div class='titlediv'>
- <h1 class='newstitle'>Update medium <TMPL_VAR volumename></h1>
+ <h1 class='newstitle'>Update media <TMPL_VAR volumename></h1>
 </div>
 <div class='bodydiv'>
   <form name='form1' action="?" method='GET'>
@@ -17,7 +17,7 @@
            </select>
         </td>
     </tr>
-    <tr><td>Estado:</td>
+    <tr><td>Status:</td>
         <td><select name='volstatus' class='formulaire'>
            <option value='Append'>Append</option>
            <option value='Archive'>Archive</option>
@@ -40,14 +40,14 @@
         </td>
     </tr>
 
-    <tr><td>Cargado:</td>
+    <tr><td>InChanger Flag:</td>
         <td> 
           <input class='formulaire' type='checkbox' 
                name='inchanger' <TMPL_IF inchanger>checked</TMPL_IF>>
         </td>
     </tr>
 
-    <tr><td>Activado :</td>
+    <tr><td>Enabled:</td>
         <td> <select name='enabled' class='formulaire'>
            <option value='yes'>yes</option>
            <option value='no'>no</option>
@@ -56,7 +56,7 @@
         </td>
     </tr>
 
-    <tr><td> Ubicación : </td>
+    <tr><td> Location: </td>
         <td><select name='location' class='formulaire'>
         <option value=''></option>
   <TMPL_LOOP db_locations>
@@ -65,7 +65,7 @@
     </select>
         </td>
     </tr>
-    <tr><td> Período de Retención: </td>
+    <tr><td> Retention period: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 3 days, 1 month'
                name='volretention' value='<TMPL_VAR volretention>'>
@@ -77,19 +77,19 @@
                name='voluseduration' value='<TMPL_VAR voluseduration>'>
         </td>
     </tr>
-    <tr><td> Jobs Máximos: </td>
+    <tr><td> Max Jobs: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10'
                name='maxvoljobs' value='<TMPL_VAR maxvoljobs>'>
         </td>
     </tr>
-    <tr><td> Archivos Máximos: </td>
+    <tr><td> Max Files: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10000'
                name='maxvolfiles' value='<TMPL_VAR maxvolfiles>'>
         </td>
     </tr>
-    <tr><td> Bytes Máximos: </td>
+    <tr><td> Max Bytes: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10M, 11G'
                name='maxvolbytes' value='<TMPL_VAR maxvolbytes>'>
@@ -97,13 +97,14 @@
     </tr>
     <tr><td>Recycle Pool:</td>
         <td><select name='poolrecycle' class='formulaire'>
+             <option value='' title='*None*'></option>
 <TMPL_LOOP db_pools>
              <option value='<TMPL_VAR name>'><TMPL_VAR name></option>
 </TMPL_LOOP>
            </select>
         </td>
     </tr>
-    <tr><td> Comentario: </td>
+    <tr><td> Comment: </td>
         <td>
           <input class='formulaire' type='text' title='a comment'
                name='comment' value='<TMPL_VAR comment>'>
@@ -114,15 +115,15 @@
 <table>
  <td>
   <button type="submit" class="bp" name='action' value='do_update_media'> <img src='/bweb/apply.png' alt=''> Apply </button>
-  <button type="submit" class="bp" name='action' title='Actualizar del Pool'
-    value='update_from_pool'> <img src='/bweb/update.png' alt=''> Actualizar del Pool </button>
+  <button type="submit" class="bp" name='action' title='Update from pool'
+    value='update_from_pool'> <img src='/bweb/update.png' alt=''> Update from pool </button>
  </form>
  </td>
  <td>
   <form action='?' method='GET'>
    <input type='hidden' name='pool' value='<TMPL_VAR poolname>'>
     <button type="submit" class="bp" name='action' value='media'>
-     <img src='/bweb/zoom.png' alt=''>Ver Pool </button>
+     <img src='/bweb/zoom.png' alt=''>View Pool </button>
   </form>
  </td>
 </table>
