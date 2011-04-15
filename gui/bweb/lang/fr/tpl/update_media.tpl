@@ -1,15 +1,15 @@
 <br/>
 <div class='titlediv'>
- <h1 class='newstitle'>Modifier le media <TMPL_VAR volumename></h1>
+ <h1 class='newstitle'>Update media <TMPL_VAR volumename></h1>
 </div>
 <div class='bodydiv'>
   <form name='form1' action="?" method='GET'>
    <table>
-    <tr><td>Nom du volume :</td>
-        <td><input type='text' name='media' class='formulaire' value='<TMPL_VAR volumename>' title='Modifiez ce champs pour mettre à jour un autre média'>
+    <tr><td>Volume Name:</td>
+        <td><input type='text' name='media' class='formulaire' value='<TMPL_VAR volumename>' title='Change this to update an other volume'>
         </td>
     </tr>
-    <tr><td>Pool :</td>
+    <tr><td>Pool:</td>
         <td><select name='pool' class='formulaire'>
 <TMPL_LOOP db_pools>
              <option value='<TMPL_VAR name>'><TMPL_VAR name></option>
@@ -17,7 +17,7 @@
            </select>
         </td>
     </tr>
-    <tr><td>Statut :</td>
+    <tr><td>Status:</td>
         <td><select name='volstatus' class='formulaire'>
            <option value='Append'>Append</option>
            <option value='Archive'>Archive</option>
@@ -33,30 +33,30 @@
         </td>
     </tr>
 
-    <tr><td>Slot :</td>
+    <tr><td>Slot:</td>
         <td> 
           <input class='formulaire' type='text' 
                  name='slot' value='<TMPL_VAR slot>'>
         </td>
     </tr>
 
-    <tr><td>En ligne :</td>
+    <tr><td>InChanger Flag:</td>
         <td> 
           <input class='formulaire' type='checkbox' 
                name='inchanger' <TMPL_IF inchanger>checked</TMPL_IF>>
         </td>
     </tr>
 
-    <tr><td>En ligne :</td>
+    <tr><td>Enabled:</td>
         <td> <select name='enabled' class='formulaire'>
-           <option value='yes'>oui</option>
-           <option value='no'>non</option>
-           <option value='archived'>archivé</option>
+           <option value='yes'>yes</option>
+           <option value='no'>no</option>
+           <option value='archived'>archived</option>
            </select>
         </td>
     </tr>
 
-    <tr><td> Localisation : </td>
+    <tr><td> Location: </td>
         <td><select name='location' class='formulaire'>
         <option value=''></option>
   <TMPL_LOOP db_locations>
@@ -65,47 +65,48 @@
     </select>
         </td>
     </tr>
-    <tr><td> Période de rétention : </td>
+    <tr><td> Retention period: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 3 days, 1 month'
                name='volretention' value='<TMPL_VAR volretention>'>
         </td>
     </tr>
-    <tr><td> Durée d'utilisation : </td>
+    <tr><td> Use duration: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 3 days, 1 month'
                name='voluseduration' value='<TMPL_VAR voluseduration>'>
         </td>
     </tr>
-    <tr><td> Nombre de jobs maxi : </td>
+    <tr><td> Max Jobs: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10'
                name='maxvoljobs' value='<TMPL_VAR maxvoljobs>'>
         </td>
     </tr>
-    <tr><td> Nombre de fichiers maxi : </td>
+    <tr><td> Max Files: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10000'
                name='maxvolfiles' value='<TMPL_VAR maxvolfiles>'>
         </td>
     </tr>
-    <tr><td> Taille maxi : </td>
+    <tr><td> Max Bytes: </td>
         <td>
           <input class='formulaire' type='text' title='ex: 10M, 11G'
                name='maxvolbytes' value='<TMPL_VAR maxvolbytes>'>
         </td>
     </tr>
-    <tr><td>Pool de recyclage :</td>
+    <tr><td>Recycle Pool:</td>
         <td><select name='poolrecycle' class='formulaire'>
+             <option value='' title='*None*'></option>
 <TMPL_LOOP db_pools>
              <option value='<TMPL_VAR name>'><TMPL_VAR name></option>
 </TMPL_LOOP>
            </select>
         </td>
     </tr>
-    <tr><td> Commentaire : </td>
+    <tr><td> Comment: </td>
         <td>
-          <input class='formulaire' type='text' title='un commentaire'
+          <input class='formulaire' type='text' title='a comment'
                name='comment' value='<TMPL_VAR comment>'>
         </td>
     </tr>
@@ -113,16 +114,16 @@
     </table>
 <table>
  <td>
-  <button type="submit" class="bp" name='action' value='do_update_media'> <img src='/bweb/apply.png' alt=''> Appliquer </button>
-  <button type="submit" class="bp" name='action' title='Mettre à jour à partir du pool'
-    value='update_from_pool'> <img src='/bweb/update.png' alt=''> Mettre à jour à partir du pool </button>
+  <button type="submit" class="bp" name='action' value='do_update_media'> <img src='/bweb/apply.png' alt=''> Apply </button>
+  <button type="submit" class="bp" name='action' title='Update from pool'
+    value='update_from_pool'> <img src='/bweb/update.png' alt=''> Update from pool </button>
  </form>
  </td>
  <td>
   <form action='?' method='GET'>
    <input type='hidden' name='pool' value='<TMPL_VAR poolname>'>
     <button type="submit" class="bp" name='action' value='media'>
-     <img src='/bweb/zoom.png' alt=''>Voir le pool </button>
+     <img src='/bweb/zoom.png' alt=''>View Pool </button>
   </form>
  </td>
 </table>
