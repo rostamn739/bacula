@@ -305,7 +305,7 @@ sub load
     # keep a backup of the original config
     foreach my $k (keys %$VAR1) {
         if (exists $k_re{$k} and defined $VAR1->{$k}) {
-            $self->{main_conf}->{$k} = $VAR1->{$k};
+            $self->{$k} = $VAR1->{$k};
         }
     }
     return 1;
