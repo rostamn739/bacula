@@ -205,7 +205,7 @@ static acl_type_t bac_to_os_acltype(bacl_type acltype)
       ostype = ACL_TYPE_DEFAULT;
       break;
 
-#ifdef ACL_TYPE_DEFAULT_DIR
+#ifdef HAVE_ACL_TYPE_DEFAULT_DIR
    case BACL_TYPE_DEFAULT_DIR:
       /*
        * OSF1 has an additional acl type named ACL_TYPE_DEFAULT_DIR.
@@ -213,7 +213,7 @@ static acl_type_t bac_to_os_acltype(bacl_type acltype)
       ostype = ACL_TYPE_DEFAULT_DIR;
       break;
 #endif
-#ifdef ACL_TYPE_EXTENDED
+#ifdef HAVE_ACL_TYPE_EXTENDED
    case BACL_TYPE_EXTENDED:
       /*
        * MacOSX has an additional acl type named ACL_TYPE_EXTENDED.
@@ -502,7 +502,7 @@ static int os_default_acl_streams[1] = { -1 };
 
 static bacl_exit_code darwin_build_acl_streams(JCR *jcr, FF_PKT *ff_pkt)
 {
-#if defined(ACL_TYPE_EXTENDED)
+#if defined(HAVE_ACL_TYPE_EXTENDED)
    /*
     * On MacOS X, acl_get_file (name, ACL_TYPE_ACCESS)
     * and acl_get_file (name, ACL_TYPE_DEFAULT)
@@ -530,7 +530,7 @@ static bacl_exit_code darwin_build_acl_streams(JCR *jcr, FF_PKT *ff_pkt)
 
 static bacl_exit_code darwin_parse_acl_streams(JCR *jcr, int stream)
 {
-#if defined(ACL_TYPE_EXTENDED)
+#if defined(HAVE_ACL_TYPE_EXTENDED)
       return generic_set_acl_on_os(jcr, BACL_TYPE_EXTENDED);
 #else
       return generic_set_acl_on_os(jcr, BACL_TYPE_ACCESS);

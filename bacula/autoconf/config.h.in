@@ -258,14 +258,11 @@
 /* Normal acl support */
 #undef HAVE_ACL
 
-/* Defines if your system has AFS support */
-#undef HAVE_AFS
+/* Defines if your system have the ACL_TYPE_DEFAULT_DIR acl type */
+#undef HAVE_ACL_TYPE_DEFAULT_DIR
 
-/* Andrew FileSystem ACL support */
-#undef HAVE_AFS_ACL
-
-/* Define to 1 if you have the <afs/stds.h> header file. */
-#undef HAVE_AFS_STDS_H
+/* Defines if your system have the ACL_TYPE_EXTENDED acl type */
+#undef HAVE_ACL_TYPE_EXTENDED
 
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
