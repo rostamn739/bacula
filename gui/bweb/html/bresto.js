@@ -1097,6 +1097,7 @@ Ext.onReady(function(){
             triggerAction: 'all',
             emptyText:'Select a storage...',
             forceSelection: false,
+            minListWidth: 210,
             selectOnFocus:true
         });
 
