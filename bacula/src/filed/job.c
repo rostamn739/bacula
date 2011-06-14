@@ -70,7 +70,6 @@ static int backup_cmd(JCR *jcr);
 static int bootstrap_cmd(JCR *jcr);
 static int cancel_cmd(JCR *jcr);
 static int setdebug_cmd(JCR *jcr);
-static int setbandwidth_cmd(JCR *jcr);
 static int estimate_cmd(JCR *jcr);
 static int hello_cmd(JCR *jcr);
 static int job_cmd(JCR *jcr);
@@ -112,7 +111,6 @@ static struct s_cmds cmds[] = {
    {"backup",       backup_cmd,    0},
    {"cancel",       cancel_cmd,    0},
    {"setdebug=",    setdebug_cmd,  0},
-   {"setbandwidth=",setbandwidth_cmd, 0},
    {"estimate",     estimate_cmd,  0},
    {"Hello",        hello_cmd,     1},
    {"fileset",      fileset_cmd,   0},
@@ -154,7 +152,6 @@ static char estimatecmd[] = "estimate listing=%d";
 static char runbefore[]   = "RunBeforeJob %s";
 static char runafter[]    = "RunAfterJob %s";
 static char runscript[]   = "Run OnSuccess=%d OnFailure=%d AbortOnError=%d When=%d Command=%s";
-static char setbandwidth[]= "setbandwidth=%lld Job=%127s";
 
 /* Responses sent to Director */
 static char errmsg[]      = "2999 Invalid command\n";
@@ -471,42 +468,6 @@ static int cancel_cmd(JCR *jcr)
    }
    dir->signal(BNET_EOD);
    return 1;
-}
-
-/**
- * Set bandwidth limit as requested by the Director
- *
- */
-static int setbandwidth_cmd(JCR *jcr)
-{
-   BSOCK *dir = jcr->dir_bsock;
-   int64_t bw=0;
-   JCR *cjcr;
-   char Job[MAX_NAME_LENGTH];
-   *Job=0;
-
-   if (sscanf(dir->msg, setbandwidth, &bw, Job) != 2 || bw < 0) {
-      pm_strcpy(jcr->errmsg, dir->msg);
-      dir->fsend(_("2991 Bad setbandwidth command: %s\n"), jcr->errmsg);
-      return 0;
-   }
-   
-   if (*Job) {
-      if(!(cjcr=get_jcr_by_full_name(Job))) {
-         dir->fsend(_("2901 Job %s not found.\n"), Job);
-      } else {
-         cjcr->max_bandwidth = bw;
-         if (cjcr->store_bsock) {
-            cjcr->store_bsock->set_bwlimit(bw);
-         }
-         free_jcr(cjcr);
-      }
-
-   } else {                           /* No job requested, apply globally */
-      me->max_bandwidth_per_job = bw; /* Overwrite directive */
-   }
-
-   return dir->fsend(OKBandwidth);
 }
 
 /**
@@ -1752,17 +1713,6 @@ static int storage_cmd(JCR *jcr)
    /* Try to connect for 1 hour at 10 second intervals */
 
    sd->set_source_address(me->FDsrc_addr);
-
-   /* TODO: see if we put limit on restore and backup... */
-   if (!jcr->max_bandwidth) {
-      if (jcr->director->max_bandwidth_per_job) {
-         jcr->max_bandwidth = jcr->director->max_bandwidth_per_job;
-         
-      } else if (me->max_bandwidth_per_job) {
-         jcr->max_bandwidth = me->max_bandwidth_per_job;
-      }
-   }
-   sd->set_bwlimit(jcr->max_bandwidth);
 
    if (!sd->connect(jcr, 10, (int)me->SDConnectTimeout, me->heartbeat_interval,
                 _("Storage daemon"), jcr->stored_addr, NULL, stored_port, 1)) {

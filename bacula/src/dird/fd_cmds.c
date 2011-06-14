@@ -52,7 +52,6 @@ static char jobcmd[]      = "JobId=%s Job=%s SDid=%u SDtime=%u Authorization=%s\
 static char levelcmd[]    = "level = %s%s%s mtime_only=%d\n";
 static char runscript[]   = "Run OnSuccess=%u OnFailure=%u AbortOnError=%u When=%u Command=%s\n";
 static char runbeforenow[]= "RunBeforeNow\n";
-static char bandwidthcmd[] = "setbandwidth=%lld Job=%s\n";
 
 /* Responses received from File daemon */
 static char OKinc[]          = "2000 OK include\n";
@@ -287,19 +286,6 @@ static void send_since_time(JCR *jcr)
    while (bget_dirmsg(fd) >= 0) {  /* allow him to poll us to sync clocks */
       Jmsg(jcr, M_INFO, 0, "%s\n", fd->msg);
    }
-}
-
-bool send_bwlimit(JCR *jcr, const char *Job)
-{
-   BSOCK *fd = jcr->file_bsock;
-   if (jcr->FDVersion >= 4) {
-      fd->fsend(bandwidthcmd, jcr->max_bandwidth, Job);
-      if (!response(jcr, fd, OKBandwidth, "Bandwidth", DISPLAY_ERROR)) {
-         jcr->max_bandwidth = 0;      /* can't set bandwidth limit */
-         return false;
-      }
-   }
-   return true;
 }
 
 /*

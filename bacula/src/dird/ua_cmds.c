@@ -89,7 +89,6 @@ static int python_cmd(UAContext *ua, const char *cmd);
 static int release_cmd(UAContext *ua, const char *cmd);
 static int reload_cmd(UAContext *ua, const char *cmd);
 static int setdebug_cmd(UAContext *ua, const char *cmd);
-static int setbwlimit_cmd(UAContext *ua, const char *cmd);
 static int setip_cmd(UAContext *ua, const char *cmd);
 static int time_cmd(UAContext *ua, const char *cmd);
 static int trace_cmd(UAContext *ua, const char *cmd);
@@ -134,7 +133,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("help"),       help_cmd,      _("Print help on specific command"),  
    NT_("add autodisplay automount cancel create delete disable\n\tenable estimate exit gui label list llist"
        "\n\tmessages memory mount prune purge python quit query\n\trestore relabel release reload run status"
-       "\n\tsetbandwidth setdebug setip show sqlquery time trace unmount\n\tumount update use var version wait"),         false},
+       "\n\tsetdebug setip show sqlquery time trace unmount\n\tumount update use var version wait"),         false},
 
  { NT_("label"),      label_cmd,     _("Label a tape"), NT_("storage=<storage> volume=<vol> pool=<pool> slot=<slot> barcodes"), false},
  { NT_("list"),       list_cmd,      _("List objects from catalog"), 
@@ -174,9 +173,6 @@ static struct cmdstruct commands[] = {                                      /* C
 
  { NT_("setdebug"),   setdebug_cmd,  _("Sets debug level"), 
    NT_("level=<nn> trace=0/1 client=<client-name> | dir | storage=<storage-name> | all"), true},
-
- { NT_("setbandwidth"),   setbwlimit_cmd,  _("Sets bandwidth"), 
-   NT_("limit=<nn-kbs> client=<client-name> jobid=<number> job=<job-name> ujobid=<unique-jobid>"), true},
 
  { NT_("setip"),      setip_cmd,     _("Sets new client address -- if authorized"), NT_(""),   false},
  { NT_("show"),       show_cmd,      _("Show resource records"), 
@@ -685,73 +681,6 @@ static int python_cmd(UAContext *ua, const char *cmd)
 #ifdef HAVE_PYTHON
    }
 #endif /* HAVE_PYTHON */
-   return 1;
-}
-
-static int setbwlimit_cmd(UAContext *ua, const char *cmd)
-{
-   CLIENT *client=NULL;
-   char Job[MAX_NAME_LENGTH];
-   *Job=0;
-   int32_t limit=-1;
-   int i;
-
-   i = find_arg_with_value(ua, "limit");
-   if (i >= 0) {
-      limit = atoi(ua->argv[i]) * 1024;
-   }
-   if (limit < 0) {
-      if (!get_pint(ua, _("Enter new bandwidth limit kb/s: "))) {
-         return 1;
-      }
-      limit = ua->pint32_val * 1024; /* kb/s */
-   }
-
-   const char *lst[] = { "job", "jobid", "jobname", NULL };
-   if (find_arg_keyword(ua, lst) > 0) {
-      JCR *jcr = select_running_job(ua, "limit");
-      if (jcr) {
-         jcr->max_bandwidth = limit; /* TODO: see for locking (Should be safe)*/
-         bstrncpy(Job, jcr->Job, sizeof(Job));
-         client = jcr->client;
-         free_jcr(jcr);
-      } else {
-         return 1;
-      }
-
-   } else {
-      client = get_client_resource(ua);
-   }
-
-   if (!client) {
-      return 1;
-   }
-
-   /* Connect to File daemon */
-   ua->jcr->client = client;
-   ua->jcr->max_bandwidth = limit;
-
-   /* Try to connect for 15 seconds */
-   ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
-      client->name(), client->address, client->FDport);
-   if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
-      return 1;
-   }
-   Dmsg0(120, "Connected to file daemon\n");
-   if (!send_bwlimit(ua->jcr, Job)) {
-      ua->error_msg(_("Failed to set bandwidth limit to Client.\n"));
-
-   } else {
-      ua->info_msg(_("OK Limiting bandwidth to %lldkb/s %s\n"),
-                   limit/1024, Job);
-   }
-
-   ua->jcr->file_bsock->signal(BNET_TERMINATE);
-   ua->jcr->file_bsock->close();
-   ua->jcr->file_bsock = NULL;
-   ua->jcr->client = NULL;
-   ua->jcr->max_bandwidth = 0;
    return 1;
 }
 

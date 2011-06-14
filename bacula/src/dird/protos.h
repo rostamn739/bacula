@@ -96,7 +96,6 @@ extern int connect_to_file_daemon(JCR *jcr, int retry_interval,
 extern bool send_include_list(JCR *jcr);
 extern bool send_exclude_list(JCR *jcr);
 extern bool send_level_command(JCR *jcr);
-extern bool send_bwlimit(JCR *jcr, const char *Job);
 extern int get_attributes_and_put_in_catalog(JCR *jcr);
 extern void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId);
 extern int put_file_into_catalog(JCR *jcr, long file_index, char *fname,

@@ -271,7 +271,6 @@ public:
    bool tls_enable;                   /* Enable TLS */
    bool tls_require;                  /* Require TLS */
    bool AutoPrune;                    /* Do automatic pruning? */
-   int64_t max_bandwidth;             /* Limit speed on this client */
 
    /* Methods */
    char *name() const;
@@ -442,7 +441,6 @@ public:
    bool PurgeMigrateJob;              /* Purges source job on completion */
 
    alist *base;                       /* Base jobs */   
-   int64_t max_bandwidth;             /* Speed limit on this job */
 
    /* Methods */
    char *name() const;

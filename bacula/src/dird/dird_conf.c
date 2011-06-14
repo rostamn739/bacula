@@ -202,7 +202,6 @@ static RES_ITEM cli_items[] = {
    {"tlscertificate",       store_dir,       ITEM(res_client.tls_certfile), 0, 0, 0},
    {"tlskey",               store_dir,       ITEM(res_client.tls_keyfile), 0, 0, 0},
    {"tlsallowedcn",         store_alist_str, ITEM(res_client.tls_allowed_cns), 0, 0, 0},
-   {"maximumbandwidthperjob", store_speed, ITEM(res_client.max_bandwidth), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -296,7 +295,6 @@ RES_ITEM job_items[] = {
    {"writebootstrap",store_dir, ITEM(res_job.WriteBootstrap), 0, 0, 0},
    {"writeverifylist",store_dir,ITEM(res_job.WriteVerifyList), 0, 0, 0},
    {"replace",  store_replace,  ITEM(res_job.replace), 0, ITEM_DEFAULT, REPLACE_ALWAYS},
-   {"maximumbandwidth", store_speed, ITEM(res_job.max_bandwidth), 0, 0, 0},
    {"maxrunschedtime", store_time, ITEM(res_job.MaxRunSchedTime), 0, 0, 0},
    {"maxruntime",   store_time, ITEM(res_job.MaxRunTime), 0, 0, 0},
    /* xxxMaxWaitTime are deprecated */
@@ -608,10 +606,6 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, const char *fm
          edit_utime(res->res_client.JobRetention, ed1, sizeof(ed1)),
          edit_utime(res->res_client.FileRetention, ed2, sizeof(ed2)),
          res->res_client.AutoPrune);
-      if (res->res_client.max_bandwidth) {
-         sendit(sock, _("     MaximumBandwidth=%lld\n"), 
-                res->res_client.max_bandwidth);
-      }
       if (res->res_client.catalog) {
          sendit(sock, _("  --> "));
          dump_resource(-R_CATALOG, (RES *)res->res_client.catalog, sendit, sock);
@@ -667,10 +661,6 @@ void dump_resource(int type, RES *reshdr, void sendit(void *sock, const char *fm
       }
       if (res->res_job.JobType == JT_BACKUP) {
          sendit(sock, _("     Accurate=%d\n"), res->res_job.accurate);
-      }
-      if (res->res_job.max_bandwidth) {
-         sendit(sock, _("     MaximumBandwidth=%lld\n"), 
-                res->res_job.max_bandwidth);
       }
       if (res->res_job.JobType == JT_MIGRATE || res->res_job.JobType == JT_COPY) {
          sendit(sock, _("     SelectionType=%d\n"), res->res_job.selection_type);

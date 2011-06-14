@@ -146,9 +146,9 @@ static void  list_status_header(STATUS_PKT *sp)
          edit_uint64_with_commas(sm_buffers, b4),
          edit_uint64_with_commas(sm_max_buffers, b5));
    sendit(msg.c_str(), len, sp);
-   len = Mmsg(msg, _(" Sizeof: boffset_t=%d size_t=%d debug=%d trace=%d "
-                     "bwlimit=%skB/s\n"), sizeof(boffset_t), sizeof(size_t),
-              debug_level, get_trace(), edit_uint64_with_commas(me->max_bandwidth_per_job/1024, b1));
+   len = Mmsg(msg, _(" Sizeof: boffset_t=%d size_t=%d debug=%d trace=%d "),
+                   sizeof(boffset_t), sizeof(size_t),
+              debug_level, get_trace());
    sendit(msg.c_str(), len, sp);
    if (debug_level > 0 && plugin_list->size() > 0) {
       Plugin *plugin;
@@ -209,12 +209,11 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
          sec = 1;
       }
       bps = (int)(njcr->JobBytes / sec);
-      len = Mmsg(msg,  _("    Files=%s Bytes=%s Bytes/sec=%s Errors=%d\n"
-                         "    Bwlimit=%s\n"),
+      len = Mmsg(msg,  _("    Files=%s Bytes=%s Bytes/sec=%s Errors=%d\n"),
            edit_uint64_with_commas(njcr->JobFiles, b1),
            edit_uint64_with_commas(njcr->JobBytes, b2),
            edit_uint64_with_commas(bps, b3),
-           njcr->JobErrors, edit_uint64_with_commas(njcr->max_bandwidth, b4));
+           njcr->JobErrors);
       sendit(msg.c_str(), len, sp);
       len = Mmsg(msg, _("    Files Examined=%s\n"),
            edit_uint64_with_commas(njcr->num_files_examined, b1));
@@ -283,12 +282,11 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
          sec = 1;
       }
       bps = (int)(njcr->JobBytes / sec);
-      len = Mmsg(msg, " Files=%s\n Bytes=%s\n Bytes/sec=%s\n Errors=%d\n"
-                      " Bwlimit=%s\n",
+      len = Mmsg(msg, " Files=%s\n Bytes=%s\n Bytes/sec=%s\n Errors=%d\n",
                  edit_uint64(njcr->JobFiles, b1),
                  edit_uint64(njcr->JobBytes, b2),
                  edit_uint64(bps, b3),
-                 njcr->JobErrors, edit_int64(njcr->max_bandwidth, b4));
+                 njcr->JobErrors);
       sendit(msg.c_str(), len, sp);
       len = Mmsg(msg, " Files Examined=%s\n",
            edit_uint64(njcr->num_files_examined, b1));

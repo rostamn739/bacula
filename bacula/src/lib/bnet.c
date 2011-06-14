@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
+   Copyright (C) 2000-2011 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -33,7 +33,6 @@
  * Adapted and enhanced for Bacula, originally written
  * for inclusion in the Apcupsd package
  *
- *   Version $Id$
  */
 
 
@@ -95,9 +94,6 @@ int32_t read_nbytes(BSOCK * bsock, char *ptr, int32_t nbytes)
       }
       nleft -= nread;
       ptr += nread;
-      if (bsock->use_bwlimit()) {
-         bsock->control_bwlimit(nread);
-      }
    }
    return nbytes - nleft;          /* return >= 0 */
 }
@@ -162,9 +158,6 @@ int32_t write_nbytes(BSOCK * bsock, char *ptr, int32_t nbytes)
       }
       nleft -= nwritten;
       ptr += nwritten;
-      if (bsock->use_bwlimit()) {
-         bsock->control_bwlimit(nwritten);
-      }
    }
    return nbytes - nleft;
 }
