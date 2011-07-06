@@ -677,8 +677,11 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\help\*"
 
   ; Check for existing installation
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-  "Would you like to delete the current configuration files and the working state file?" IDNO NoDel
+  IfSilent +2
+    MessageBox MB_YESNO|MB_ICONQUESTION \
+    "Would you like to delete the current configuration files and the working state file?" IDNO NoDel
+
+
     Delete /REBOOTOK "$INSTDIR\*"
     Delete /REBOOTOK "$INSTDIR\working\*"
     Delete /REBOOTOK "$INSTDIR\plugins\*"
