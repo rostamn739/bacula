@@ -158,7 +158,6 @@ static char runscript[]   = "Run OnSuccess=%d OnFailure=%d AbortOnError=%d When=
 static char errmsg[]      = "2999 Invalid command\n";
 static char no_auth[]     = "2998 No Authorization\n";
 static char invalid_cmd[] = "2997 Invalid command for a Director with Monitor directive enabled.\n";
-static char OKBandwidth[] = "2000 OK Bandwidth\n";
 static char OKinc[]       = "2000 OK include\n";
 static char OKest[]       = "2000 OK estimate files=%s bytes=%s\n";
 static char OKlevel[]     = "2000 OK level\n";

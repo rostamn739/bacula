@@ -171,7 +171,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
 {
    int sec, bps;
    POOL_MEM msg(PM_MESSAGE);
-   char b1[32], b2[32], b3[32], b4[32];
+   char b1[32], b2[32], b3[32];
    int len;
    bool found = false;
    JCR *njcr;
@@ -248,7 +248,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
 {
    int sec, bps;
    POOL_MEM msg(PM_MESSAGE);
-   char b1[32], b2[32], b3[32], b4[32];
+   char b1[32], b2[32], b3[32];
    int len;
    JCR *njcr;
    char dt[MAX_TIME_LENGTH];
