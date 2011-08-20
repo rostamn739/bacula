@@ -312,7 +312,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       }
       {
       _DebugMessage(0, "backup command=%s\n", (char *)value);    
-      char *command = new char[strlen((char *)value)];
+      char *command = new char[strlen((char *)value) + 1];
       strcpy(command, (char *)value);
       char *plugin_name = strtok((char *)command, ":");
       char *path = strtok(NULL, ":");
