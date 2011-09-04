@@ -60,7 +60,6 @@ static char OKlevel[]        = "2000 OK level\n";
 static char OKRunScript[]    = "2000 OK RunScript\n";
 static char OKRunBeforeNow[] = "2000 OK RunBeforeNow\n";
 static char OKRestoreObject[] = "2000 OK ObjectRestored\n";
-static char OKBandwidth[]    = "2000 OK Bandwidth\n"; 
 
 /* Forward referenced functions */
 static bool send_list_item(JCR *jcr, const char *code, char *item, BSOCK *fd);
