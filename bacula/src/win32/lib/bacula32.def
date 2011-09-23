@@ -774,7 +774,7 @@ _Z6lmgr_vPP16pthread_mutex_t_
 ;_Z17lmgr_cleanup_mainv
 
 console_command DATA
-plugin_list DATA
+bplugin_list DATA
 plugin_bopen DATA
 plugin_bclose DATA
 plugin_bwrite DATA
