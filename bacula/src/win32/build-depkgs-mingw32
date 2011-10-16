@@ -46,7 +46,7 @@ elif [ -e /mingw/bin/mingw32-gcc ]
 then
    BIN_DIR=/mingw/bin
 else
-   echo "The GCC cross compiler isn\'t installed."
+   echo "The GCC cross compiler is not installed."
    echo "You must run build-win32-cross-tools first"
    exit 1
 fi
