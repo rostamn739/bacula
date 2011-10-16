@@ -65,6 +65,7 @@ static bRC startRestoreFile(bpContext *ctx, const char *cmd);
 static bRC endRestoreFile(bpContext *ctx);
 static bRC createFile(bpContext *ctx, struct restore_pkt *rp);
 static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
+static bRC checkFile(bpContext *ctx, char *fname);
 
 static pFuncs pluginFuncs = {
    sizeof(pluginFuncs),
@@ -82,7 +83,8 @@ static pFuncs pluginFuncs = {
    endRestoreFile,
    pluginIO,
    createFile,
-   setFileAttributes
+   setFileAttributes,
+   checkFile,
 };
 
 extern "C" {
@@ -512,3 +514,12 @@ static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp)
    _DebugMessage(100, "setFileAttributes\n");
    return bRC_OK;
 }
+
+static bRC checkFile(bpContext *ctx, char *fname)
+{
+   exchange_fd_context_t *context = (exchange_fd_context_t *)ctx->pContext;
+   _DebugMessage(100, "checkFile\n");
+   /* previous files are always Seen */
+   return bRC_Seen;
+}
+
