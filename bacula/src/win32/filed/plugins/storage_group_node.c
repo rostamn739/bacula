@@ -168,7 +168,7 @@ storage_group_node_t::startBackupFile(exchange_fd_context_t *context, struct sav
             {
                if (GetFileTime(handle, NULL, NULL, &modified_time) == 0)
                {
-                  //_JobMessage(M_WARNING, "Could check last modified date for '%S' (0x%08x), including anyway\n", tmp_logfile_ptr, GetLastError());
+                  //_JobMessage(M_WARNING, "Could not check last modified date for '%S' (0x%08x), including anyway\n", tmp_logfile_ptr, GetLastError());
                   include_file = true;
                }
             }
@@ -188,6 +188,8 @@ storage_group_node_t::startBackupFile(exchange_fd_context_t *context, struct sav
                logfile_ptr += wcslen(logfile_ptr) + 1;
                //_DebugMessage(100, "Including file %S\n", logfile_ptr);
             }
+#if 0
+/* this is handled via checkFile now */
             else
             {
                if (context->accurate) {
@@ -198,6 +200,7 @@ storage_group_node_t::startBackupFile(exchange_fd_context_t *context, struct sav
                   delete tmp;
                }
             }
+#endif
 
             if (handle != INVALID_HANDLE_VALUE)
                CloseHandle(handle);
