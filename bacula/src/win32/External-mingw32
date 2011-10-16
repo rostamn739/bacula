@@ -41,6 +41,7 @@ WX|http://www.bacula.org/depkgs-mingw32/wxWidgets-2.8.7.tar.gz
 ZLIB|http://www.bacula.org/depkgs-mingw32/zlib-1.2.3.tar.gz
 RSYNC|http://www.bacula.org/depkgs-mingw32/librsync-0.9.7.tar.gz
 DB|http://www.bacula.org/depkgs-mingw32/db-4.7.25.tar.gz
+LZO|http://www.bacula.org/depkgs-mingw32/lzo-2.05.tar.gz
 # 
 # 
 # Original file locations
@@ -67,3 +68,4 @@ DB|http://www.bacula.org/depkgs-mingw32/db-4.7.25.tar.gz
 # WX|http://superb-west.dl.sourceforge.net/sourceforge/wxwindows/wxWidgets-2.7.0.tar.gz
 # ZLIB|http://www.zlib.net/zlib-1.2.3.tar.gz
 # DB|http://download.oracle.com/berkeley-db/db-4.7.25.tar.gz
+# LZO|http://www.oberhumer.com/opensource/lzo/download/lzo-2.05.tar.gz
