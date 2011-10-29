@@ -309,11 +309,11 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
    HRESULT result;
    int len;
 
-   _DebugMessage(0, "createFile_STORAGE_GROUP state = %d\n", state);
+   _ DebugMessage(100, "createFile_STORAGE_GROUP state = %d\n", state);
 
    if (strcmp(context->path_bits[level], name) != 0)
    {
-      _DebugMessage(0, "Different storage group - switching back to parent\n", state);
+      _ DebugMessage(100, "Different storage group - switching back to parent\n", state);
       saved_log_path = new WCHAR[wcslen(restore_environment->m_wszRestoreLogPath) + 1];
       wcscpy(saved_log_path, restore_environment->m_wszRestoreLogPath);
       _DebugMessage(100, "Calling HrESERestoreSaveEnvironment\n");
@@ -339,7 +339,7 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
    }
    if (saved_log_path != NULL)
    {
-      _DebugMessage(0, "Calling HrESERestoreReopen\n");
+      _ DebugMessage(100, "Calling HrESERestoreReopen\n");
       result = HrESERestoreReopen(context->computer_name, service_name, saved_log_path, &hccx);
       if (result != 0)
       {
@@ -349,7 +349,7 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
          rp->create_status = CF_CREATED;
          return bRC_OK;
       }
-      _DebugMessage(0, "Calling HrESERestoreGetEnvironment\n");
+      _ DebugMessage(100, "Calling HrESERestoreGetEnvironment\n");
       result = HrESERestoreGetEnvironment(hccx, &restore_environment);
       if (result != 0)
       {
@@ -377,7 +377,7 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
          storage_group_name = new WCHAR[strlen(name) + 1];
          mbstowcs(service_name, parent->name, strlen(parent->name) + 1);
          mbstowcs(storage_group_name, name, strlen(name) + 1);
-         _DebugMessage(0, "Calling HrESERestoreOpen\n");
+         _ DebugMessage(100, "Calling HrESERestoreOpen\n");
          result = HrESERestoreOpen(context->computer_name, service_name, storage_group_name, NULL, &hccx);
          if (result != 0)
          {
@@ -385,7 +385,7 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
             state = 999;
             break;
          }
-         _DebugMessage(0, "Calling HrESERestoreGetEnvironment\n");
+         _ DebugMessage(100, "Calling HrESERestoreGetEnvironment\n");
          result = HrESERestoreGetEnvironment(hccx, &restore_environment);
          if (result != 0)
          {
@@ -490,7 +490,7 @@ storage_group_node_t::createFile(exchange_fd_context_t *context, struct restore_
 bRC
 storage_group_node_t::endRestoreFile(exchange_fd_context_t *context)
 {
-   _DebugMessage(0, "endRestoreFile_STORAGE_GROUP state = %d\n", state);
+   _ DebugMessage(100, "endRestoreFile_STORAGE_GROUP state = %d\n", state);
    switch (state)
    {
    case 0:
