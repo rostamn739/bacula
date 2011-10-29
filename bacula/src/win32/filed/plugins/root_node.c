@@ -112,7 +112,7 @@ root_node_t::endBackupFile(exchange_fd_context_t *context)
 bRC
 root_node_t::createFile(exchange_fd_context_t *context, struct restore_pkt *rp)
 {
-   _DebugMessage(0, "createFile_ROOT state = %d\n", state);
+   _ DebugMessage(100, "createFile_ROOT state = %d\n", state);
    switch (state) {
    case 0:
       if (strcmp(name, PLUGIN_PATH_PREFIX_BASE) != 0) {
@@ -144,7 +144,7 @@ root_node_t::createFile(exchange_fd_context_t *context, struct restore_pkt *rp)
 bRC
 root_node_t::endRestoreFile(exchange_fd_context_t *context)
 {
-   _DebugMessage(0, "endRestoreFile_ROOT state = %d\n", state);
+   _ DebugMessage(100, "endRestoreFile_ROOT state = %d\n", state);
    switch (state) {
    case 0:
       delete service_node;

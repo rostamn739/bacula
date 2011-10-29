@@ -170,7 +170,7 @@ static bRC newPlugin(bpContext *ctx)
    context->notrunconfull_option = false;
    context->plugin_active = false;
    bfuncs->getBaculaValue(ctx, bVarJobId, (void *)&JobId);
-   _DebugMessage(0, "newPlugin JobId=%d\n", JobId);
+   _DebugMessage(100, "newPlugin JobId=%d\n", JobId);
    bfuncs->registerBaculaEvents(ctx, 1, 2, 0);
    size = MAX_COMPUTERNAME_LENGTH + 1;
    context->computer_name = new WCHAR[size];
@@ -218,14 +218,14 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 
    switch (event->eventType) {
    case bEventJobStart:
-      _DebugMessage(0, "JobStart=%s\n", (char *)value);
+      _DebugMessage(100, "JobStart=%s\n", (char *)value);
       context->plugin_active = false;
       break;
    case bEventJobEnd:
-      _DebugMessage(0, "JobEnd\n");
+      _DebugMessage(100, "JobEnd\n");
       break;
    case bEventPluginCommand:
-      _DebugMessage(0, "bEventPluginCommand %s\n", value);
+      _DebugMessage(100, "bEventPluginCommand %s\n", value);
       command = bstrdup((char *)value);
       /* this isn't really unused */
       plugin_name = strtok((char *)command, ":");
@@ -240,7 +240,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       if (!context->plugin_active) {
          break;
       }
-      _DebugMessage(0, "BackupStart\n");
+      _DebugMessage(100, "BackupStart\n");
       bfuncs->getBaculaValue(ctx, bVarAccurate, (void *)&accurate);
       context->accurate = accurate;
       context->job_type = JOB_TYPE_BACKUP;
@@ -261,12 +261,12 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          context->truncate_logs = false;
          break;
       default:
-         _DebugMessage(0, "Invalid job level %c\n", context->job_level);
+         _DebugMessage(100, "Invalid job level %c\n", context->job_level);
          return bRC_Error;
       }
       break;
    case bEventEndBackupJob:
-      _DebugMessage(0, "BackupEnd\n");
+      _DebugMessage(100, "BackupEnd\n");
       if (!context->plugin_active) {
          break;
       }
@@ -276,7 +276,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          break;
       }
       intval = (intptr_t)value;
-      _DebugMessage(0, "JobLevel=%c %d\n", intval, intval);
+      _DebugMessage(100, "JobLevel=%c %d\n", intval, intval);
       context->job_level = intval;
       break;
    case bEventSince:
@@ -284,11 +284,11 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          break;
       }
       intval = (intptr_t)value;
-      _DebugMessage(0, "since=%d\n", intval);
+      _DebugMessage(100, "since=%d\n", intval);
       context->job_since = (time_t)value;
       break;
    case bEventStartRestoreJob:
-      _DebugMessage(0, "StartRestoreJob\n");
+      _DebugMessage(100, "StartRestoreJob\n");
       context->job_type = JOB_TYPE_RESTORE;
       context->plugin_active = true;
       break;
@@ -296,13 +296,13 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       if (!context->plugin_active) {
          break;
       }
-      _DebugMessage(0, "EndRestoreJob\n");
+      _DebugMessage(100, "EndRestoreJob\n");
       context->plugin_active = false;
       break;
    
    /* Plugin command e.g. plugin = <plugin-name>:<name-space>:command */
    case bEventRestoreCommand:
-      _DebugMessage(0, "restore\n"); // command=%s\n", (char *)value);
+      _DebugMessage(100, "restore\n"); // command=%s\n", (char *)value);
       if (!context->plugin_active) {
          break;
       }
@@ -313,7 +313,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          break;
       }
       {
-      _DebugMessage(0, "backup command=%s\n", (char *)value);    
+      _DebugMessage(100, "backup command=%s\n", (char *)value);    
       char *command = new char[strlen((char *)value) + 1];
       strcpy(command, (char *)value);
       char *plugin_name = strtok((char *)command, ":");
@@ -327,8 +327,8 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
             _JobMessage(M_WARNING, "Unknown plugin option '%s'\n", option);
          }
       }
-      _DebugMessage(0, "name = %s\n", plugin_name);
-      _DebugMessage(0, "path = %s\n", path);
+      _DebugMessage(100, "name = %s\n", plugin_name);
+      _DebugMessage(100, "path = %s\n", path);
       if (*path != '/') {
          _JobMessage(M_FATAL, "Path does not begin with a '/'\n");
          return bRC_Error;
@@ -356,7 +356,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       break;
 
    default:
-      _DebugMessage(0, "Ignored event=%d\n", event->eventType);
+      _DebugMessage(100, "Ignored event=%d\n", event->eventType);
       break;
    }
    bfuncs->getBaculaValue(ctx, bVarFDName, (void *)&name);
@@ -522,4 +522,3 @@ static bRC checkFile(bpContext *ctx, char *fname)
    /* previous files are always Seen */
    return bRC_Seen;
 }
-
