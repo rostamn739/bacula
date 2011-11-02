@@ -483,7 +483,7 @@ void* console_thread::Entry() {
          csprint(UA_sock->msg);
       }
       else if (stat == BNET_SIGNAL) {
-         if (UA_sock->msglen == BNET_PROMPT) {
+         if (UA_sock->msglen == BNET_SUB_PROMPT) {
             csprint(NULL, CS_PROMPT);
          } else if (UA_sock->msglen == BNET_EOD) {
             last_is_eod = 1;
@@ -534,7 +534,7 @@ void console_thread::Write(const char* str)
    if (UA_sock) {
       UA_sock->msglen = (int32_t)strlen(str);
       pm_strcpy(&UA_sock->msg, str);
-      UA_sock->_send();
+      UA_sock->send();
    } else if (choosingdirector) {
 //      wxString number = str;
 //      number.RemoveLast(); /* Removes \n */
