@@ -326,6 +326,8 @@ _Z8bstrncatPcPKci
 _Z8bstrncatPcR8POOL_MEMi
 _Z8bstrncpyPcPKci
 _Z8bstrncpyPcR8POOL_MEMi
+
+; binflate.o
 _Z8ZdeflatePciS_Ri
 _Z8ZinflatePciS_Ri
  
