@@ -93,6 +93,7 @@ LIB_OBJS = \
 	$(OBJDIR)/var.o \
 	$(OBJDIR)/watchdog.o \
 	$(OBJDIR)/workq.o \
+	$(OBJDIR)/binflate.o \
 	$(OBJDIR)/lockmgr.o
 
 DLL_OBJS = \
