@@ -197,7 +197,7 @@ sub connect
 	
 	# TODO : we must verify that expect return the good value
 
-#	$self->expect_it('*');
+	$self->expect_it('*');
 	$self->send_cmd('gui on');
     }
     return 1 ;

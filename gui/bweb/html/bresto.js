@@ -93,7 +93,6 @@ Ext.brestore.offset = 0;
 Ext.brestore.force_reload = 0;
 Ext.brestore.path_stack = Array();
 Ext.brestore.pathid_stack = Array();
-Ext.brestore.dir = get_current_director();
 
 function get_node_path(node)
 {
