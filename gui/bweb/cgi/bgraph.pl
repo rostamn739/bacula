@@ -261,6 +261,14 @@ sub make_tab
     my $date = $ret->{date} ;
     delete $ret->{date};
 
+    # turn off legend if too many elements to display
+    my $nb_legend = scalar(keys %$ret);
+    if ($nb_legend > 100) {
+        $legend = 0;
+    } elsif ($nb_legend > 10) {
+        $arg->{height} += $nb_legend / 4 * 15;
+    }
+
     return ($date, $ret);
 }
 
@@ -306,15 +314,15 @@ $limitq
 
     print STDERR $query if ($debug);
 
+    my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);
+
     my $obj = get_graph('title' => "Job Size : $arg->{jclients}/$arg->{jjobnames}",
 			'y_label' => 'Size',
 			'y_min_value' => 0,
 			'y_number_format' => \&Bweb::human_size,
 			);
 
-    my $all = $dbh->selectall_arrayref($query) ;
-
-    my ($d, $ret) = make_tab($all);
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -345,14 +353,15 @@ $limitq
 
     print STDERR $query if ($debug);
 
+    my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);
+
     my $obj = get_graph('title' => "Job Files : $arg->{jclients}/$arg->{jjobnames}",
 			'y_label' => 'Number Files',
 			'y_min_value' => 0,
 			);
 
-    my $all = $dbh->selectall_arrayref($query) ;
 
-    my ($d, $ret) = make_tab($all);
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -393,6 +402,7 @@ $limitq
     print STDERR $query if ($debug);
 
     my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);
 
     my $obj = get_graph('title' => "File size : $arg->{where}",
 			'y_label' => 'File size',
@@ -401,8 +411,6 @@ $limitq
 			'y_number_format' => \&Bweb::human_size,
 			);
 
-
-    my ($d, $ret) = make_tab($all);
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -442,6 +450,7 @@ $limitq
     print STDERR $query if ($debug);
 
     my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);
 
     my $obj = get_graph('title' => "Directory size : $arg->{where}",
 			'y_label' => 'Directory size',
@@ -449,9 +458,6 @@ $limitq
 			'y_min_value' => 0,
 			'y_number_format' => \&Bweb::human_size,
 			);
-
-
-    my ($d, $ret) = make_tab($all);
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -484,15 +490,15 @@ $limitq
 
     print STDERR $query if ($debug);
 
+    my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);    
+
     my $obj = get_graph('title' => "Job Rate : $arg->{jclients}/$arg->{jjobnames}",
 			'y_label' => 'Rate b/s',
 			'y_min_value' => 0,
 			'y_number_format' => \&Bweb::human_size,
 			);
 
-    my $all = $dbh->selectall_arrayref($query) ;
-
-    my ($d, $ret) = make_tab($all);    
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -526,14 +532,14 @@ $limitq
 
     print STDERR $query if ($debug);
 
+    my $all = $dbh->selectall_arrayref($query) ;
+    my ($d, $ret) = make_tab($all);
+
     my $obj = get_graph('title' => "Job Duration : $arg->{jclients}/$arg->{jjobnames}",
 			'y_label' => 'Duration',
 			'y_min_value' => 0,
 			'y_number_format' => \&Bweb::human_sec,
 			);
-    my $all = $dbh->selectall_arrayref($query) ;
-
-    my ($d, $ret) = make_tab($all);
     if ($legend) {
 	$obj->set_legend(keys %$ret);
     }
@@ -589,15 +595,14 @@ $limit
 ";
     print STDERR $query  if ($debug);
 
+    my $all = $dbh->selectall_arrayref($query) ;
+    my ($ret) = make_tab_sum($all);
+
     my $obj = get_graph('title' => "Job $t : $arg->{jclients}/$arg->{jjobnames}",
 			'y_label' => $t,
 			'y_min_value' => 0,
 			@arg,
 			);
-
-    my $all = $dbh->selectall_arrayref($query) ;
-#    print STDERR Data::Dumper::Dumper($all);
-    my ($ret) = make_tab_sum($all);
 
     print $obj->plot([$ret->{date}, $ret->{nb}])->png;    
 
