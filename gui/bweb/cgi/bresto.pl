@@ -613,11 +613,13 @@ sub fill_table_for_restore
                            map { split(/,/) } CGI::param('dirid')) ;
     my $findex = join(',', grep { /^\d+$/ } 
                              map { split(/,|\//) } CGI::param('findex')) ;
+    my $jobid = join(',', grep { /^\d+$/ }
+                           map { split(/,/) } CGI::param('jobid')) ;
     my $inclause = join(',', @jobid);
 
     my $b = $bvfs->get_bconsole();
     my $ret = $b->send_one_cmd(".bvfs_restore path=b2$$ fileid=$fileid " .
-                               "dirid=$dirid hardlink=$findex jobid=1" 
+                               "dirid=$dirid hardlink=$findex jobid=$jobid"
                                . $bvfs->{bvfs_user});
     if (grep (/OK/, @$ret)) {
         return "b2$$";
