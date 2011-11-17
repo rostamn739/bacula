@@ -444,8 +444,10 @@ Ext.onReady(function(){
 
            if (r.json[4] == '..') {
               Ext.brestore.path = dirname(Ext.brestore.path);
-           } else if (r.json[4] == '/') {
+           } else if (r.json[4] == '/') {                // unix root
               Ext.brestore.path = '/';
+           } else if (r.json[4].match('^[a-zA-Z]:/$')) { // windows drive
+              Ext.brestore.path = r.json[4];
            } else if (r.json[4] != '.') {
               Ext.brestore.path = Ext.brestore.path + r.json[4];
            }
@@ -961,7 +963,7 @@ Ext.onReady(function(){
                     for(var i=0;i<data.selections.length;i++) {
                         var name = data.selections[i].json[4];
                         var fnid = data.selections[i].json[1];
-                        if (fnid == 0 && name != '..') {
+                        if (fnid == 0 && name != '..' && !name.match('/$')) {
                             name = name + '/';
                         }
                         r = new file_selection_record({
