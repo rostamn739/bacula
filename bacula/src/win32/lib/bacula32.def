@@ -605,6 +605,10 @@ _Z9set_tracei
 ; mkpath.o
 _Z8makepathP4ATTRPKcttjji
 
+; mntent_cache.o
+_Z18flush_mntent_cachev
+_Z19find_mntent_mappingj
+
 ; priv.o
 _Z4dropPcS_b
 

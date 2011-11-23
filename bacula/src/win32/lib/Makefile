@@ -74,6 +74,7 @@ LIB_OBJS = \
 	$(OBJDIR)/md5.o \
 	$(OBJDIR)/mem_pool.o \
 	$(OBJDIR)/message.o \
+	$(OBJDIR)/mntent_cache.o \
 	$(OBJDIR)/openssl.o \
 	$(OBJDIR)/plugins.o \
 	$(OBJDIR)/priv.o \
