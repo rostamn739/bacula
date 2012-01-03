@@ -42768,15 +42768,7 @@ $as_echo "$ac_cv_lib_acl_acl_get_file" >&6; }
 if test "x$ac_cv_lib_acl_acl_get_file" = x""yes; then
 
 		 have_acl=yes;
-		 if test $have_afs = yes; then
-		    		    		    		    if test -d /usr/lib64/; then
-		       FDLIBS="-L/usr/lib64 -lacl $FDLIBS"
-		    else
-		       FDLIBS="-L/usr/lib -lacl $FDLIBS"
-		    fi
-		 else
-		    FDLIBS="-lacl $FDLIBS"
-		 fi
+		 FDLIBS="-lacl $FDLIBS"
 
 else
 
@@ -48676,7 +48668,6 @@ Configuration on `date`:
    build-dird:		    ${build_dird}
    build-stored:	    ${build_stored}
    Plugin support:	    ${have_plugins}
-   AFS support: 	    ${have_afs}
    ACL support: 	    ${have_acl}
    XATTR support:	    ${have_xattr}
    Python support:	    ${support_python} ${PYTHON_LIBS}
