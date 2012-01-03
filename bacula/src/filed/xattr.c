@@ -532,12 +532,12 @@ static bxattr_exit_code linux_xattr_build_streams(JCR *jcr, FF_PKT *ff_pkt)
             free(current_xattr);
             goto bail_out;
          }
+         break;
       }
 
       xattr_value_list->append(current_xattr);
       xattr_count++;
       bp = strchr(bp, '\0') + 1;
-      break;
    }
 
    free(xattr_list);
