@@ -238,8 +238,9 @@ bool do_migration_init(JCR *jcr)
 /*
  * set_migration_next_pool() called by do_migration_init()
  * at differents stages.
- * The  idea here is tofactorize the NextPool's search code and
- * to permit do_migration_init() to return with NextPool set in jcr struct.
+ * The  idea here is to make a common subroutine for the 
+ *   NextPool's search code and to permit do_migration_init() 
+ *   to return with NextPool set in jcr struct.
  */
 static bool set_migration_next_pool(JCR *jcr, POOL **retpool)
 {
@@ -667,6 +668,7 @@ static int getJob_to_migrate(JCR *jcr)
    struct tm tm;
    char dt[MAX_TIME_LENGTH];
    int count = 0;
+   int limit = 99;           /* limit + 1 is max jobs to start */
 
    ids.list = get_pool_memory(PM_MESSAGE);
    ids.list[0] = 0;
@@ -850,6 +852,10 @@ static int getJob_to_migrate(JCR *jcr)
          jcr->get_ActionName(1), ids.list);
 
       Dmsg2(dbglevel, "Before loop count=%d ids=%s\n", ids.count, ids.list);
+      /*
+       * Note: to not over load the system, limit the number
+       *  of new jobs started to 100 (see limit above)
+       */
       for (int i=1; i < (int)ids.count; i++) {
          JobId = 0;
          stat = get_next_jobid_from_list(&p, &JobId);
@@ -862,8 +868,12 @@ static int getJob_to_migrate(JCR *jcr)
             goto ok_out;
          }
          jcr->MigrateJobId = JobId;
-         start_migration_job(jcr);
-         Dmsg0(dbglevel, "Back from start_migration_job\n");
+         /* Don't start any more when limit reaches zero */
+         limit--;
+         if (limit > 0) {
+            start_migration_job(jcr);
+            Dmsg0(dbglevel, "Back from start_migration_job\n");
+         }
       }
    
       /* Now get the last JobId and handle it in the current job */

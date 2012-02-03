@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2001-2011 Free Software Foundation Europe e.V.
+   Copyright (C) 2001-2012 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -153,6 +153,7 @@ void *handle_connection_request(void *arg)
 
    if (bs->recv() <= 0) {
       Emsg1(M_ERROR, 0, _("Connection request from %s failed.\n"), bs->who());
+      bmicrosleep(5, 0);   /* make user wait 5 seconds */
       bs->close();
       return NULL;
    }
@@ -163,6 +164,7 @@ void *handle_connection_request(void *arg)
    if (bs->msglen < 25 || bs->msglen > (int)sizeof(name)) {
       Dmsg1(000, "<filed: %s", bs->msg);
       Emsg2(M_ERROR, 0, _("Invalid connection from %s. Len=%d\n"), bs->who(), bs->msglen);
+      bmicrosleep(5, 0);   /* make user wait 5 seconds */
       bs->close();
       return NULL;
    }
@@ -287,7 +289,7 @@ static bool die_cmd(JCR *jcr)
 static bool setdebug_cmd(JCR *jcr)
 {
    BSOCK *dir = jcr->dir_bsock;
-   int level, trace_flag;
+   int32_t level, trace_flag;
 
    Dmsg1(10, "setdebug_cmd: %s", dir->msg);
    if (sscanf(dir->msg, "setdebug=%d trace=%d", &level, &trace_flag) != 2 || level < 0) {
@@ -374,8 +376,7 @@ static bool do_label(JCR *jcr, int relabel)
    DCR *dcr;
    DEVICE *dev;
    bool ok = false;
-   int slot;
-   int drive;
+   int32_t slot, drive;
 
    newname = get_memory(dir->msglen+1);
    oldname = get_memory(dir->msglen+1);
@@ -655,8 +656,8 @@ static bool mount_cmd(JCR *jcr)
    BSOCK *dir = jcr->dir_bsock;
    DEVICE *dev;
    DCR *dcr;
-   int drive;
-   int slot = 0;
+   int32_t drive;
+   int32_t slot = 0;
    bool ok;
 
    ok = sscanf(dir->msg, "mount %127s drive=%d slot=%d", devname.c_str(), 
@@ -664,6 +665,7 @@ static bool mount_cmd(JCR *jcr)
    if (!ok) {
       ok = sscanf(dir->msg, "mount %127s drive=%d", devname.c_str(), &drive) == 2;
    }
+   Dmsg3(100, "ok=%d drive=%d slot=%d\n", ok, drive, slot);
    if (ok) {
       dcr = find_device(jcr, devname, drive);
       if (dcr) {
@@ -687,6 +689,7 @@ static bool mount_cmd(JCR *jcr)
          /* In both of these two cases, we (the user) unmounted the Volume */
          case BST_UNMOUNTED_WAITING_FOR_SYSOP:
          case BST_UNMOUNTED:
+            Dmsg2(100, "Unmounted changer=%d slot=%d\n", dev->is_autochanger(), slot);
             if (dev->is_autochanger() && slot > 0) {
                try_autoload_device(jcr, dcr, slot, "");
             }
@@ -735,6 +738,7 @@ static bool mount_cmd(JCR *jcr)
             break;
 
          case BST_NOT_BLOCKED:
+            Dmsg2(100, "Not blocked changer=%d slot=%d\n", dev->is_autochanger(), slot);
             if (dev->is_autochanger() && slot > 0) {
                try_autoload_device(jcr, dcr, slot, "");
             }
@@ -807,7 +811,7 @@ static bool unmount_cmd(JCR *jcr)
    BSOCK *dir = jcr->dir_bsock;
    DEVICE *dev;
    DCR *dcr;
-   int drive;
+   int32_t drive;
 
    if (sscanf(dir->msg, "unmount %127s drive=%d", devname.c_str(), &drive) == 2) {
       dcr = find_device(jcr, devname, drive);
@@ -906,7 +910,7 @@ static bool action_on_purge_cmd(JCR *jcr)
 
    char devname[MAX_NAME_LENGTH];
    char volumename[MAX_NAME_LENGTH];
-   int action;
+   int32_t action;
 
    /* TODO: Need to find a free device and ask for slot to the director */
    if (sscanf(dir->msg, 
@@ -944,7 +948,7 @@ static bool release_cmd(JCR *jcr)
    BSOCK *dir = jcr->dir_bsock;
    DEVICE *dev;
    DCR *dcr;
-   int drive;
+   int32_t drive;
 
    if (sscanf(dir->msg, "release %127s drive=%d", devname.c_str(), &drive) == 2) {
       dcr = find_device(jcr, devname, drive);
@@ -1117,7 +1121,7 @@ static bool changer_cmd(JCR *jcr)
       }
    } else {  /* error on scanf */
       pm_strcpy(jcr->errmsg, dir->msg);
-      dir->fsend(_("3908 Error scanning autocharger drives/list/slots command: %s\n"),
+      dir->fsend(_("3908 Error scanning autochanger drives/list/slots command: %s\n"),
          jcr->errmsg);
    }
    dir->signal(BNET_EOD);
@@ -1133,8 +1137,7 @@ static bool readlabel_cmd(JCR *jcr)
    BSOCK *dir = jcr->dir_bsock;
    DEVICE *dev;
    DCR *dcr;
-   int Slot;
-   int drive;
+   int32_t Slot, drive;
 
    if (sscanf(dir->msg, "readlabel %127s Slot=%d drive=%d", devname.c_str(), 
        &Slot, &drive) == 3) {

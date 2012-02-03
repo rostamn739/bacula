@@ -49,6 +49,7 @@ static bRC baculaDebugMsg(bpContext *ctx, const char *file, int line,
   int level, const char *fmt, ...);
 static char *baculaEditDeviceCodes(DCR *dcr, char *omsg, 
   const char *imsg, const char *cmd);
+static bool is_plugin_compatible(Plugin *plugin);
 
 
 /* Bacula info */
@@ -103,13 +104,23 @@ int generate_plugin_event(JCR *jcr, bsdEventType eventType, void *value)
    bpContext *plugin_ctx;
    bsdEvent event;
    Plugin *plugin;
-   int i = 0;
+   int i;
    bRC rc = bRC_OK;
 
-   if (!bplugin_list || !jcr || !jcr->plugin_ctx_list) {
+   if (!bplugin_list) {
+      Dmsg0(dbglvl, "No bplugin_list: generate_plugin_event ignored.\n");
+      return bRC_OK;
+   }
+   if (!jcr) {
+      Dmsg0(dbglvl, "No jcr: generate_plugin_event ignored.\n");
+      return bRC_OK;
+   }
+   if (!jcr->plugin_ctx_list) {
+      Dmsg0(dbglvl, "No plugin_ctx_list: generate_plugin_event ignored.\n");
       return bRC_OK;                  /* Return if no plugins loaded */
    }
    if (jcr->is_job_canceled()) {
+      Dmsg0(dbglvl, "Cancel return from generate_plugin_event\n");
       return bRC_Cancel;
    }
 
@@ -118,8 +129,8 @@ int generate_plugin_event(JCR *jcr, bsdEventType eventType, void *value)
 
    Dmsg2(dbglvl, "sd-plugin_ctx_list=%p JobId=%d\n", jcr->plugin_ctx_list, jcr->JobId);
 
-   foreach_alist(plugin, bplugin_list) {
-      plugin_ctx = &plugin_ctx_list[i++];
+   foreach_alist_index(i, plugin, bplugin_list) {
+      plugin_ctx = &plugin_ctx_list[i];
       if (is_plugin_disabled(plugin_ctx)) {
          continue;
       }
@@ -132,7 +143,10 @@ int generate_plugin_event(JCR *jcr, bsdEventType eventType, void *value)
    return rc;
 }
 
-static void dump_sd_plugin(Plugin *plugin, FILE *fp)
+/*
+ * Print to file the plugin info.
+ */
+void dump_sd_plugin(Plugin *plugin, FILE *fp)
 {
    if (!plugin) {
       return ;
@@ -147,18 +161,89 @@ static void dump_sd_plugin(Plugin *plugin, FILE *fp)
    fprintf(fp, "\tdescription=%s\n", NPRTB(info->plugin_description));
 }
 
+/**
+ * This entry point is called internally by Bacula to ensure
+ *  that the plugin IO calls come into this code.
+ */
 void load_sd_plugins(const char *plugin_dir)
 {
+   Plugin *plugin;
+   int i;
+
    Dmsg0(dbglvl, "Load sd plugins\n");
    if (!plugin_dir) {
       Dmsg0(dbglvl, "No sd plugin dir!\n");
       return;
    }
    bplugin_list = New(alist(10, not_owned_by_alist));
-   load_plugins((void *)&binfo, (void *)&bfuncs, plugin_dir, plugin_type, NULL);
+   if (!load_plugins((void *)&binfo, (void *)&bfuncs, plugin_dir, plugin_type, 
+                is_plugin_compatible)) {
+      /* Either none found, or some error */
+      if (bplugin_list->size() == 0) {
+         delete bplugin_list;
+         bplugin_list = NULL;
+         Dmsg0(dbglvl, "No plugins loaded\n");
+         return;
+      }
+   }
+   /* 
+    * Verify that the plugin is acceptable, and print information
+    *  about it.
+    */
+   foreach_alist_index(i, plugin, bplugin_list) {
+      Jmsg(NULL, M_INFO, 0, _("Loaded plugin: %s\n"), plugin->file);
+      Dmsg1(dbglvl, "Loaded plugin: %s\n", plugin->file);
+   }
+
    Dmsg1(dbglvl, "num plugins=%d\n", bplugin_list->size());
    dbg_plugin_add_hook(dump_sd_plugin);
 }
+
+/**
+ * Check if a plugin is compatible.  Called by the load_plugin function
+ *  to allow us to verify the plugin.
+ */
+static bool is_plugin_compatible(Plugin *plugin)
+{
+   psdInfo *info = (psdInfo *)plugin->pinfo;
+   Dmsg0(50, "is_plugin_compatible called\n");
+   if (debug_level >= 50) {
+      dump_sd_plugin(plugin, stdin);
+   }
+   if (strcmp(info->plugin_magic, SD_PLUGIN_MAGIC) != 0) {
+      Jmsg(NULL, M_ERROR, 0, _("Plugin magic wrong. Plugin=%s wanted=%s got=%s\n"),
+           plugin->file, SD_PLUGIN_MAGIC, info->plugin_magic);
+      Dmsg3(50, "Plugin magic wrong. Plugin=%s wanted=%s got=%s\n",
+           plugin->file, SD_PLUGIN_MAGIC, info->plugin_magic);
+
+      return false;
+   }
+   if (info->version != SD_PLUGIN_INTERFACE_VERSION) {
+      Jmsg(NULL, M_ERROR, 0, _("Plugin version incorrect. Plugin=%s wanted=%d got=%d\n"),
+           plugin->file, SD_PLUGIN_INTERFACE_VERSION, info->version);
+      Dmsg3(50, "Plugin version incorrect. Plugin=%s wanted=%d got=%d\n",
+           plugin->file, SD_PLUGIN_INTERFACE_VERSION, info->version);
+      return false;
+   }
+   if (strcmp(info->plugin_license, "Bacula AGPLv3") != 0 &&
+       strcmp(info->plugin_license, "AGPLv3") != 0 &&
+       strcmp(info->plugin_license, "Bacula Systems(R) SA") != 0) {
+      Jmsg(NULL, M_ERROR, 0, _("Plugin license incompatible. Plugin=%s license=%s\n"),
+           plugin->file, info->plugin_license);
+      Dmsg2(50, "Plugin license incompatible. Plugin=%s license=%s\n",
+           plugin->file, info->plugin_license);
+      return false;
+   }
+   if (info->size != sizeof(psdInfo)) {
+      Jmsg(NULL, M_ERROR, 0,
+           _("Plugin size incorrect. Plugin=%s wanted=%d got=%d\n"),
+           plugin->file, sizeof(psdInfo), info->size);
+      return false;
+   }
+      
+   return true;
+}
+
 
 /*
  * Create a new instance of each plugin for this Job
@@ -166,7 +251,7 @@ void load_sd_plugins(const char *plugin_dir)
 void new_plugins(JCR *jcr)
 {
    Plugin *plugin;
-   int i = 0;
+   int i;
 
    Dmsg0(dbglvl, "=== enter new_plugins ===\n");
    if (!bplugin_list) {
@@ -174,6 +259,12 @@ void new_plugins(JCR *jcr)
       return;
    }
    if (jcr->is_job_canceled()) {
+      return;
+   }
+   /*
+    * If plugins already loaded, just return
+    */
+   if (jcr->plugin_ctx_list) {
       return;
    }
 
@@ -188,14 +279,14 @@ void new_plugins(JCR *jcr)
 
    bpContext *plugin_ctx_list = jcr->plugin_ctx_list;
    Dmsg2(dbglvl, "Instantiate sd-plugin_ctx_list=%p JobId=%d\n", jcr->plugin_ctx_list, jcr->JobId);
-   foreach_alist(plugin, bplugin_list) {
+   foreach_alist_index(i, plugin, bplugin_list) {
       /* Start a new instance of each plugin */
       bacula_ctx *b_ctx = (bacula_ctx *)malloc(sizeof(bacula_ctx));
       memset(b_ctx, 0, sizeof(bacula_ctx));
       b_ctx->jcr = jcr;
       plugin_ctx_list[i].bContext = (void *)b_ctx;
       plugin_ctx_list[i].pContext = NULL;
-      if (sdplug_func(plugin)->newPlugin(&plugin_ctx_list[i++]) != bRC_OK) {
+      if (sdplug_func(plugin)->newPlugin(&plugin_ctx_list[i]) != bRC_OK) {
          b_ctx->disabled = true;
       }
    }
@@ -207,17 +298,18 @@ void new_plugins(JCR *jcr)
 void free_plugins(JCR *jcr)
 {
    Plugin *plugin;
-   int i = 0;
+   int i;
 
-   if (!bplugin_list) {
+   if (!bplugin_list || !jcr->plugin_ctx_list) {
       return;
    }
 
    bpContext *plugin_ctx_list = (bpContext *)jcr->plugin_ctx_list;
    Dmsg2(dbglvl, "Free instance sd-plugin_ctx_list=%p JobId=%d\n", jcr->plugin_ctx_list, jcr->JobId);
-   foreach_alist(plugin, bplugin_list) {
+   foreach_alist_index(i, plugin, bplugin_list) {
       /* Free the plugin instance */
-      sdplug_func(plugin)->freePlugin(&plugin_ctx_list[i++]);
+      sdplug_func(plugin)->freePlugin(&plugin_ctx_list[i]);
+      free(plugin_ctx_list[i].bContext);     /* free Bacula private context */
    }
    free(plugin_ctx_list);
    jcr->plugin_ctx_list = NULL;

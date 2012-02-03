@@ -1,4 +1,3 @@
-File daemon ( actually work well)
 # This file is part of package Bacula File Daemon
 #
 # Copyright (c) 2011 Free Software Foundation Europe e.V.
@@ -22,7 +21,7 @@ After=var-run.mount nss-lookup.target network.target remote-fs.target syslog.tar
 
 [Service]
 Type=forking
-PIDFile=@piddir@/bacula-fd.pid
+PIDFile=@piddir@/bacula-fd.@fd_port@.pid
 StandardOutput=syslog
 ExecStart=@sbindir@/bacula-fd -u @fd_user@ -g @fd_group@ -c @sysconfdir@/bacula-fd.conf
 

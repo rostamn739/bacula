@@ -608,6 +608,11 @@ void backup_cleanup(JCR *jcr, int TermCode)
    memset(&cr, 0, sizeof(cr));
 
 #ifdef xxxx
+   /* The current implementation of the JS_Warning status is not
+    * completed. SQL part looks to be ok, but the code is using
+    * JS_Terminated almost everywhere instead of (JS_Terminated || JS_Warning)
+    * as we do with is_canceled()
+    */
    if (jcr->getJobStatus() == JS_Terminated && 
         (jcr->JobErrors || jcr->SDErrors || jcr->JobWarnings)) {
       TermCode = JS_Warnings;

@@ -67,14 +67,14 @@ static char BAD_job[]   = "3915 Bad Job command. stat=%d CMD: %s\n";
  */
 bool job_cmd(JCR *jcr)
 {
-   int JobId;
+   int32_t JobId;
    char auth_key[100];
    char spool_size[30];
    char seed[100];
    BSOCK *dir = jcr->dir_bsock;
    POOL_MEM job_name, client_name, job, fileset_name, fileset_md5;
-   int JobType, level, spool_attributes, no_attributes, spool_data;
-   int write_part_after_job, PreferMountedVols;
+   int32_t JobType, level, spool_attributes, no_attributes, spool_data;
+   int32_t write_part_after_job, PreferMountedVols;
    int stat;
    JCR *ojcr;
 
@@ -152,7 +152,9 @@ bool job_cmd(JCR *jcr)
    Dmsg2(50, ">dird jid=%u: %s", (uint32_t)jcr->JobId, dir->msg);
    jcr->sd_auth_key = bstrdup(auth_key);
    memset(auth_key, 0, sizeof(auth_key));
+   new_plugins(jcr);            /* instantiate the plugins */
    generate_daemon_event(jcr, "JobStart");
+   generate_plugin_event(jcr, bsdEventJobStart, (void *)"JobStart");
    return true;
 }
 
@@ -174,8 +176,7 @@ bool run_cmd(JCR *jcr)
       return false;
    }
 
-   jcr->setJobStatus(JS_WaitFD);          /* wait for FD to connect */
-   dir_send_job_status(jcr);
+   jcr->sendJobStatus(JS_WaitFD);          /* wait for FD to connect */
 
    gettimeofday(&tv, &tz);
    timeout.tv_nsec = tv.tv_usec * 1000;

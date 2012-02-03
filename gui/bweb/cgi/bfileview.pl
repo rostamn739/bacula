@@ -97,7 +97,7 @@ if (!$r || $r->{ok}) {
     exit 0;    
 } 
 
-$r = $bweb->dbh_selectrow_hashref("SELECT JobId AS ok FROM brestore_knownjobid WHERE JobId = $jobid");
+$r = $bweb->dbh_selectrow_hashref("SELECT JobId AS ok FROM Job WHERE JobId = $jobid AND HasCache=1");
 if (!$r || !$r->{ok}) {		# TODO: compute information
     $bweb->error("Path information for job $jobid has not been updated in the catalog");
     $bweb->display_end();
@@ -261,8 +261,8 @@ sub fv_list_dirs
              ( SELECT Path FROM Path WHERE PathId = P.PathId) AS Path
         FROM (
           SELECT PathId
-            FROM brestore_pathvisibility 
-      INNER JOIN brestore_pathhierarchy USING (PathId)
+            FROM PathVisibility 
+      INNER JOIN PathHierarchy USING (PathId)
            WHERE PPathId  = $rep
              AND JobId = $jobid
              ) AS P
@@ -339,7 +339,7 @@ sub fv_get_size
 
     my $ret = $bweb->dbh_selectrow_hashref("
  SELECT Size AS size
-   FROM brestore_pathvisibility
+   FROM PathVisibility
   WHERE PathId = $rep
     AND JobId = $jobid
 ");
@@ -387,7 +387,7 @@ sub fv_update_size
     my ($jobid, $rep, $size) = @_;
 
     my $nb = $bweb->dbh_do("
- UPDATE brestore_pathvisibility SET Size = $size 
+ UPDATE PathVisibility SET Size = $size 
   WHERE JobId = $jobid 
     AND PathId = $rep 
 ");

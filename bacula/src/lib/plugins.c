@@ -1,7 +1,7 @@
 /*
-   Bacula® - The Network Backup Solution
+   Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2007-2011 Free Software Foundation Europe e.V.
+   Copyright (C) 2007-2012 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -20,7 +20,7 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
    02110-1301, USA.
 
-   Bacula® is a registered trademark of Kern Sibbald.
+   Bacula(R) is a registered trademark of Kern Sibbald.
    The licensor of Bacula is the Free Software Foundation Europe
    (FSFE), Fiduciary Program, Sumatrastrasse 25, 8006 Zürich,
    Switzerland, email:ftf@fsfeurope.org.
@@ -49,7 +49,12 @@ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 
 static const int dbglvl = 50;
 
-/* All loaded plugins */
+/* 
+ * List of all loaded plugins.
+ *
+ * NOTE!!! This is a global do not try walking it with
+ *   foreach_alist, you must use foreach_alist_index !!!!!!
+ */
 alist *bplugin_list = NULL;
 
 /*
@@ -101,6 +106,7 @@ bool load_plugins(void *binfo, void *bfuncs, const char *plugin_dir,
    int len, type_len;
 
 
+   Dmsg0(dbglvl, "load_plugins\n");
    name_max = pathconf(".", _PC_NAME_MAX);
    if (name_max < 1024) {
       name_max = 1024;
@@ -142,7 +148,7 @@ bool load_plugins(void *binfo, void *bfuncs, const char *plugin_dir,
          Dmsg3(dbglvl, "Rejected plugin: want=%s name=%s len=%d\n", type, result->d_name, len);
          continue;
       }
-      Dmsg2(dbglvl, "Loaded plugin: name=%s len=%d\n", result->d_name, len);
+      Dmsg2(dbglvl, "Found plugin: name=%s len=%d\n", result->d_name, len);
        
       pm_strcpy(fname, plugin_dir);
       if (need_slash) {
@@ -158,10 +164,11 @@ bool load_plugins(void *binfo, void *bfuncs, const char *plugin_dir,
       plugin->file_len = strstr(plugin->file, type) - plugin->file;
       plugin->pHandle = dlopen(fname.c_str(), RTLD_NOW);
       if (!plugin->pHandle) {
-         Jmsg(NULL, M_ERROR, 0, _("Plugin load %s failed: ERR=%s\n"), 
-              fname.c_str(), NPRT(dlerror()));
-         Dmsg2(dbglvl, "Plugin load %s failed: ERR=%s\n", fname.c_str(), 
-               NPRT(dlerror()));
+         char *error = (char *)dlerror();
+         Jmsg(NULL, M_ERROR, 0, _("dlopen plugin %s failed: ERR=%s\n"), 
+              fname.c_str(), NPRT(error));
+         Dmsg2(dbglvl, "dlopen plugin %s failed: ERR=%s\n", fname.c_str(), 
+               NPRT(error));
          close_plugin(plugin);
          continue;
       }
