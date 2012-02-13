@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2006-2010 Free Software Foundation Europe e.V.
+   Copyright (C) 2006-2012 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -116,7 +116,11 @@ public:
    virtual bool CloseBackup();
    virtual bool CloseRestore();
    virtual WCHAR *GetMetadata();
-   virtual const char* GetDriverName() { return "VSS WinXP"; };
+#ifdef _WIN64
+   virtual const char* GetDriverName() { return "Win64 VSS"; };
+#else
+   virtual const char* GetDriverName() { return "Win32 VSS"; };
+#endif
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync* pAsync);
@@ -133,7 +137,11 @@ public:
    virtual bool CloseBackup();   
    virtual bool CloseRestore();
    virtual WCHAR *GetMetadata();
-   virtual const char* GetDriverName() { return "VSS Win 2003"; };
+#ifdef _WIN64
+   virtual const char* GetDriverName() { return "Win64 VSS"; };
+#else
+   virtual const char* GetDriverName() { return "Win32 VSS"; };
+#endif
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
@@ -150,7 +158,11 @@ public:
    virtual bool CloseBackup();   
    virtual bool CloseRestore();
    virtual WCHAR *GetMetadata();
-   virtual const char* GetDriverName() { return "VSS Vista"; };
+#ifdef _WIN64
+   virtual const char* GetDriverName() { return "Win64 VSS"; };
+#else
+   virtual const char* GetDriverName() { return "Win32 VSS"; };
+#endif
 private:
    virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
