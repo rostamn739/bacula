@@ -518,7 +518,9 @@ static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp)
 static bRC checkFile(bpContext *ctx, char *fname)
 {
    exchange_fd_context_t *context = (exchange_fd_context_t *)ctx->pContext;
-   _DebugMessage(100, "checkFile\n");
-   /* previous files are always Seen */
-   return bRC_Seen;
+   if (context->plugin_active) {
+      _DebugMessage(100, "marked as seen %s\n", fname);
+      return bRC_Seen;
+   }
+   return bRC_OK;
 }
