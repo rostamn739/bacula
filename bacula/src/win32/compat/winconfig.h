@@ -38,9 +38,6 @@
 /* Define if you want to use MySQL */
 /* #define HAVE_MYSQL 1 */
 
-/* Defined if MySQL thread safe library is present */
-/* #undef HAVE_THREAD_SAFE_MYSQL */
-
 /* Define if you want to use embedded MySQL */
 /* #undef HAVE_EMBEDDED_MYSQL */
 
