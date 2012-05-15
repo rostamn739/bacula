@@ -272,17 +272,13 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       }
       break;
    case bEventLevel:
-      if (!context->plugin_active) {
-         break;
-      }
+      /* We don't know if the plugin is active here yet */
       intval = (intptr_t)value;
       _DebugMessage(100, "JobLevel=%c %d\n", intval, intval);
       context->job_level = intval;
       break;
    case bEventSince:
-      if (!context->plugin_active) {
-         break;
-      }
+      /* We don't know if the plugin is active here yet */
       intval = (intptr_t)value;
       _DebugMessage(100, "since=%d\n", intval);
       context->job_since = (time_t)value;
