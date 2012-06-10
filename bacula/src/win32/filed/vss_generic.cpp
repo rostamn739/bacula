@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2005-2010 Free Software Foundation Europe e.V.
+   Copyright (C) 2005-2012 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -231,7 +231,8 @@ VSSClientGeneric::~VSSClientGeneric()
 }
 
 // Initialize the COM infrastructure and the internal pointers
-bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int))
+bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, 
+                                  bool (*VssInitCallback)(JCR *, int))
 {
    CComPtr<IVssAsync>  pAsync1;
    VSS_BACKUP_TYPE backup_type;
@@ -286,9 +287,8 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
    // Create the internal backup components object
    hr = p_CreateVssBackupComponents((IVssBackupComponents**) &m_pVssObject);
    if (FAILED(hr)) {
-      berrno be;
-      Dmsg2(0, "VSSClientGeneric::Initialize: CreateVssBackupComponents returned 0x%08X. ERR=%s\n",
-            hr, be.bstrerror(b_errno_win32));
+      Dmsg1(0, "VSSClientGeneric::Initialize: CreateVssBackupComponents returned 0x%08X.\n",
+            hr);
       errno = b_errno_win32;
       return false;
    }
@@ -353,21 +353,6 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore, bool (*V
     */
 
       HRESULT hr;
-
-#if 0
-      WCHAR *xml;
-      int fd;
-      struct stat stat;
-      /* obviously this is just temporary - the xml should come from somewhere like the catalog */
-      fd = open("C:\\james.xml", O_RDONLY);
-      Dmsg1(0, "fd = %d\n", fd);
-      fstat(fd, &stat);
-      Dmsg1(0, "size = %d\n", stat.st_size);
-      xml = new WCHAR[stat.st_size / sizeof(WCHAR) + 1];
-      read(fd, xml, stat.st_size);
-      close(fd);
-      xml[stat.st_size / sizeof(WCHAR)] = 0;
-#endif
 
       // 1. InitializeForRestore
       hr = ((IVssBackupComponents*) m_pVssObject)->InitializeForRestore(m_metadata);
