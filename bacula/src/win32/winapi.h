@@ -1,7 +1,7 @@
 /*
    Bacula® - The Network Backup Solution
 
-   Copyright (C) 2003-2008 Free Software Foundation Europe e.V.
+   Copyright (C) 2003-2010 Free Software Foundation Europe e.V.
 
    The main author of Bacula is Kern Sibbald, with contributions from
    many others, a complete list can be found in the file AUTHORS.
@@ -67,6 +67,7 @@ typedef char POOLMEM;
 // "\\?\" to the path. For more information, see Naming a File.
 #define MAX_PATH_W 32767
 
+int wchar_2_UTF8(POOLMEM **pszUTF, const wchar_t *pszUCS);
 int wchar_2_UTF8(char *pszUTF, const WCHAR *pszUCS, int cchChar = MAX_PATH_UTF8);
 int UTF8_2_wchar(POOLMEM **pszUCS, const char *pszUTF);
 int make_win32_path_UTF8_2_wchar(POOLMEM **pszUCS, const char *pszUTF, BOOL* pBIsRawPath = NULL);

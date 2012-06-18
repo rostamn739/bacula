@@ -50,7 +50,6 @@ VSSClient *g_pVSSClient;
 static const GUID VSS_SWPRV_ProviderID =
    { 0xb5946137, 0x7b9f, 0x4925, { 0xaf, 0x80, 0x51, 0xab, 0xd6, 0x0b, 0x20, 0xd5 } };
 
-
 void 
 VSSCleanup()
 {
@@ -102,17 +101,10 @@ VSSPathConvertW(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen)
 // Constructor
 VSSClient::VSSClient()
 {
-    m_bCoInitializeCalled = false;
-    m_bCoInitializeSecurityCalled = false;
-    m_dwContext = 0; // VSS_CTX_BACKUP;
-    m_bDuringRestore = false;
-    m_bBackupIsInitialized = false;
-    m_pVssObject = NULL;
+    memset(this, 0, sizeof(VSSClient));
     m_pAlistWriterState = New(alist(10, not_owned_by_alist));
     m_pAlistWriterInfoText = New(alist(10, owned_by_alist));
     m_uidCurrentSnapshotSet = GUID_NULL;
-    memset(m_wszUniqueVolumeName, 0, sizeof(m_wszUniqueVolumeName));
-    memset(m_szShadowCopyName, 0, sizeof(m_szShadowCopyName));
 }
 
 // Destructor
@@ -121,7 +113,7 @@ VSSClient::~VSSClient()
    // Release the IVssBackupComponents interface 
    // WARNING: this must be done BEFORE calling CoUninitialize()
    if (m_pVssObject) {
-      m_pVssObject->Release();
+//      m_pVssObject->Release();
       m_pVssObject = NULL;
    }
 
@@ -130,8 +122,9 @@ VSSClient::~VSSClient()
    delete m_pAlistWriterInfoText;
 
    // Call CoUninitialize if the CoInitialize was performed successfully
-   if (m_bCoInitializeCalled)
+   if (m_bCoInitializeCalled) {
       CoUninitialize();
+   }
 }
 
 bool VSSClient::InitializeForBackup(JCR *jcr)
@@ -142,11 +135,11 @@ bool VSSClient::InitializeForBackup(JCR *jcr)
 }
 
 
-bool VSSClient::InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int), WCHAR *job_metadata)
+bool VSSClient::InitializeForRestore(JCR *jcr)
 {
-   m_metadata = job_metadata;
+   m_metadata = NULL;
    m_jcr = jcr;
-   return Initialize(0, true/*=>Restore*/, VssInitCallback);
+   return Initialize(0, true/*=>Restore*/);
 }
 
 bool VSSClient::GetShadowPath(const char *szFilePath, char *szShadowPath, int nBuflen)

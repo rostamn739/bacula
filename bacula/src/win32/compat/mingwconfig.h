@@ -49,13 +49,13 @@
 /* #undef HAVE_SYS_BITYPES_H */
 
 /* Define if you have zlib */
-/*   #define HAVE_LIBZ 1 */
+#define HAVE_LIBZ 1
 
 /* Define if you have lzo lib */
-/*   #define HAVE_LZO 1 */
+/* #define HAVE_LZO 1 */
 
 /* Define to 1 if you have the <lzo/lzoconf.h> header file. */
-/*   #define HAVE_LZO_LZOCONF_H 1 */
+/* #define HAVE_LZO_LZOCONF_H 1  */
 
 
 /* File daemon specif libraries */

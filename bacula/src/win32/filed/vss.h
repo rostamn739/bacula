@@ -60,7 +60,7 @@ public:
 
     // Backup Process
     bool InitializeForBackup(JCR *jcr);
-    bool InitializeForRestore(JCR *jcr, bool (*VssInitCallback)(JCR *, int) = NULL, WCHAR *job_metadata = NULL);
+    bool InitializeForRestore(JCR *jcr);
     virtual bool CreateSnapshots(char* szDriveLetters) = 0;
     virtual bool CloseBackup() = 0;
     virtual bool CloseRestore() = 0;
@@ -79,7 +79,7 @@ public:
     IUnknown *GetVssObject() { return m_pVssObject; };
          
 private:
-    virtual bool Initialize(DWORD dwContext, bool bDuringRestore = FALSE, bool (*VssInitCallback)(JCR *, int) = NULL) = 0;
+    virtual bool Initialize(DWORD dwContext, bool bDuringRestore = FALSE) = 0;
     virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync) = 0;
     virtual void QuerySnapshotSet(GUID snapshotSetID) = 0;
 
@@ -103,6 +103,7 @@ protected:
     bool       m_bCoInitializeSecurityCalled;
     bool       m_bDuringRestore;  /* true if we are doing a restore */
     bool       m_bBackupIsInitialized;
+    bool       m_bWriterStatusCurrent;
 
     WCHAR     *m_metadata;
 };
@@ -122,7 +123,7 @@ public:
    virtual const char* GetDriverName() { return "Win32 VSS"; };
 #endif
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync* pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();   
@@ -143,7 +144,7 @@ public:
    virtual const char* GetDriverName() { return "Win32 VSS"; };
 #endif
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();
@@ -164,7 +165,7 @@ public:
    virtual const char* GetDriverName() { return "Win32 VSS"; };
 #endif
 private:
-   virtual bool Initialize(DWORD dwContext, bool bDuringRestore, bool (*VssInitCallback)(JCR *, int) = NULL);
+   virtual bool Initialize(DWORD dwContext, bool bDuringRestore);
    virtual bool WaitAndCheckForAsyncOperation(IVssAsync*  pAsync);
    virtual void QuerySnapshotSet(GUID snapshotSetID);
    bool CheckWriterStatus();
