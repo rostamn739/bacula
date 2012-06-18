@@ -2733,3 +2733,18 @@ void LogErrorMsg(const char *message)
       DeregisterEventSource(eventHandler);
    }
 }
+
+/*
+ * Don't allow OS to suspend while backup running
+ *   Note, the OS automatically tracks these for each thread
+ */
+void prevent_os_suspensions()
+{
+   /* not in mingw */
+//   SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+}
+
+void allow_os_suspensions()
+{
+//   SetThreadExecutionState(ES_CONTINUOUS);
+}
