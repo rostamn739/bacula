@@ -975,7 +975,7 @@ SELECT Media.VolumeName  AS volumename,
        Media.Slot        AS slot,
        Media.InChanger   AS inchanger,
        Pool.Name         AS name,
-       $self->{sql}->{MEDIA_EXPIRE} AS expire
+       $bweb->{sql}->{MEDIA_EXPIRE} AS expire
 FROM Media 
  INNER JOIN Pool USING (PoolId) 
 
