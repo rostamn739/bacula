@@ -378,7 +378,7 @@ function timestamp_to_iso(ts)
     }
     var datum = new Date(ts);
     
-    return datum.getFullYear() + '-' + pad(datum.getMonth()+1) + '-' + pad(datum.getDay()+1) + ' ' + pad(datum.getHours()) + ':' + pad(datum.getMinutes()) + ':' + pad(datum.getSeconds());
+    return datum.getFullYear() + '-' + pad(datum.getMonth()+1) + '-' + pad(datum.getDate()+1) + ' ' + pad(datum.getHours()) + ':' + pad(datum.getMinutes()) + ':' + pad(datum.getSeconds());
 }
 
 function bweb_get_job_img(status, errors, type)
