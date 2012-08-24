@@ -376,7 +376,11 @@ sub get_fileset
 
     foreach my $l (split(/\r?\n/, $out)) { 
         #              I /usr/local
-	if ($l =~ /^\s+([I|E])\s+(.+)$/) { # include
+	if ($l =~ /^\s+([O|I|E|P])\s+(.+)$/) { # include
+            # if a plugin, add it to the include list
+            if ($1 eq 'P') {
+                push @{$ret->{'I'}}, { file => $2 };
+            }
 	    push @{$ret->{$1}}, { file => $2 };
 	}
     }
