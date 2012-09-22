@@ -231,6 +231,8 @@ use base q/Bweb::Gui/;
 =cut
 
 use CGI;
+$CGI::POST_MAX=102400; # Limit post to 100kB
+$CGI::DISABLE_UPLOADS=0; # Allow file uploads
 
 =head1 PACKAGE VARIABLE
 
