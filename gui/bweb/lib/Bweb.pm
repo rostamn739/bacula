@@ -2509,7 +2509,7 @@ JOIN client_group USING (client_group_id)
 ";
     }
     my $filter = $self->get_client_filter();
-    my $comment = $self->get_db_field('Comment');
+    my $comment = $self->get_db_field('Job.Comment');
     my $rb = $self->get_db_field('ReadBytes');
     my $query="
 SELECT  Job.JobId       AS jobid,
@@ -2557,8 +2557,8 @@ sub get_db_field
 {
     my ($self, $what) = @_ ;
 
-    my %feature = ('Comment' => 4, 'ReadBytes' => 4);
-    my %replacement = ('Comment' => "''", 'ReadBytes' => 'JobBytes');
+    my %feature = ('Job.Comment' => 4, 'ReadBytes' => 4);
+    my %replacement = ('Job.Comment' => "''", 'ReadBytes' => 'JobBytes');
 
     if (!$self->{info}->{dir_ver} or 
         $self->{info}->{dir_ver} >= $feature{$what})
@@ -2579,7 +2579,7 @@ sub display_job_zoom
 
     # get security filter
     my $filter = $self->get_client_filter();
-    my $comment = $self->get_db_field('Comment');
+    my $comment = $self->get_db_field('Job.Comment');
     my $rb = $self->get_db_field('ReadBytes');
     my $query="
 SELECT DISTINCT Job.JobId       AS jobid,
