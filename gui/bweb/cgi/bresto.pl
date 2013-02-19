@@ -718,7 +718,7 @@ if ($action eq 'restore') {
     }
 
     # TODO: remove it after a while
-    if ($bvfs->get_db_field('Comment') ne 'Comment') {
+    if ($bvfs->get_db_field('Job.Comment') ne 'Job.Comment') {
         delete $arg->{comment};
     }
 
