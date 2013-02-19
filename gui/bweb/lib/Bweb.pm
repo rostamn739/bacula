@@ -4170,6 +4170,12 @@ sub display_running_jobs
     my ($self, $display_action) = @_;
     return if $self->cant_do('r_view_running_job');
 
+    my $arg = $self->get_form('client');
+    my $client = "";
+    if ($arg->{client}) {
+        $client = " AND Client.Name = \'$arg->{client}\' ";
+    }
+
     # get security filter
     my $filter = $self->get_client_filter();
 
@@ -4186,6 +4192,7 @@ SELECT Job.JobId AS jobid,
 FROM Job INNER JOIN Client USING (ClientId) $filter
 WHERE 
   JobStatus IN ('C','R','B','e','D','F','S','m','M','s','j','c','d','t','p')
+  $client
 ";      
     my $all = $self->dbh_selectall_hashref($query, 'jobid') ;
     
