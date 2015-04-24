@@ -486,6 +486,12 @@ src/qt-console/tray-monitor/moc/
 src/qt-console/tray-monitor/tray-monitor.conf
 src/qt-console/tray-monitor/tray-monitor.pro
 src/qt-console/tray-monitor/ui/
+src/qt-console/tray-monitor/ui32/
+src/qt-console/tray-monitor/ui64/
+src/qt-console/tray-monitor/moc32/
+src/qt-console/tray-monitor/moc64/
+src/qt-console/tray-monitor/tray-monitor.pro.mingw32
+src/qt-console/tray-monitor/tray-monitor.pro.mingw64
 
 # src/qt-console/ts/
 src/qt-console/ts/bat_fr.qm
@@ -523,6 +529,9 @@ src/stored/unmount-simulator
 src/stored/.libs
 
 # src/tools/
+src/tools/bsnapshot
+src/tools/bpluginfo
+src/tools/timelimit
 src/tools/ing_test
 src/tools/bregex
 src/tools/bwild
@@ -792,6 +801,20 @@ updatedb/update_mysql_tables_9_to_10
 updatedb/update_postgresql_tables_9_to_10
 updatedb/update_sqlite3_tables_9_to_10
 updatedb/update_sqlite_tables_9_to_10
+updatedb/update_mysql_tables_1014_to_1015
+updatedb/update_mysql_tables_12_to_13
+updatedb/update_mysql_tables_13_to_14
+updatedb/update_mysql_tables_14_to_1014
+updatedb/update_mysql_tables_1015_to_1016
+updatedb/update_mysql_tables_1016_to_1017
+updatedb/update_postgresql_tables_1014_to_1015
+updatedb/update_postgresql_tables_12_to_13
+updatedb/update_postgresql_tables_13_to_14
+updatedb/update_postgresql_tables_14_to_1014
+updatedb/update_postgresql_tables_1015_to_1016
+updatedb/update_postgresql_tables_1016_to_1017
+updatedb/update_sqlite3_tables_1015_to_1016
+
 
 # /docs/
 /docs/manual-fr-base
